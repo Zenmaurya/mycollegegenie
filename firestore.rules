@@ -1,0 +1,236 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: forum_posts
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required, 1-200 chars)
+    //   - content: string (required, 1-5000 chars)
+    //   - authorId: string (required, immutable)
+    //   - authorName: string (required, 1-100 chars)
+    //   - course: string (required)
+    //   - topic: string (required)
+    //   - createdAt: timestamp (required, immutable)
+    //   - commentCount: number (required, >= 0)
+    //   - upvotes: list (required, max 10000 items)
+    //   - downvotes: list (required, max 10000 items)
+    //
+    // Collection: forum_posts/{postId}/comments
+    // Document ID: auto-generated
+    // Fields:
+    //   - postId: string (required, immutable)
+    //   - authorId: string (required, immutable)
+    //   - authorName: string (required, 1-100 chars)
+    //   - content: string (required, 1-1000 chars)
+    //   - createdAt: timestamp (required, immutable)
+    //   - upvotes: list (required, max 10000 items)
+    //   - downvotes: list (required, max 10000 items)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.authorId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          ((request.auth.token.email == "amanmaurya9.AM@gmail.com" || request.auth.token.email == "mycollegegenie@gmail.com") && request.auth.token.email_verified == true));
+    }
+
+    function isRecent(timestamp) {
+      return timestamp > request.time - duration.value(5, 'm') &&
+             timestamp < request.time + duration.value(5, 'm');
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidString(field, min, max) {
+      return request.resource.data[field] is string && 
+             request.resource.data[field].size() >= min && 
+             request.resource.data[field].size() <= max;
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidForumPost(data) {
+      return hasRequiredFields(['title', 'content', 'authorId', 'authorName', 'course', 'topic', 'createdAt', 'commentCount', 'upvotes', 'downvotes']) &&
+             hasOnlyAllowedFields(['title', 'content', 'authorId', 'authorName', 'course', 'topic', 'createdAt', 'commentCount', 'upvotes', 'downvotes']) &&
+             isValidString('title', 1, 200) &&
+             isValidString('content', 1, 5000) &&
+             data.authorId is string &&
+             isValidString('authorName', 1, 100) &&
+             data.course is string &&
+             data.topic is string &&
+             data.createdAt is timestamp &&
+             data.commentCount is number && data.commentCount >= 0 &&
+             data.upvotes is list && data.upvotes.size() <= 10000 &&
+             data.downvotes is list && data.downvotes.size() <= 10000;
+    }
+
+    function isValidComment(data) {
+      return hasRequiredFields(['postId', 'authorId', 'authorName', 'content', 'createdAt', 'upvotes', 'downvotes']) &&
+             hasOnlyAllowedFields(['postId', 'authorId', 'authorName', 'content', 'createdAt', 'upvotes', 'downvotes']) &&
+             data.postId is string &&
+             data.authorId is string &&
+             isValidString('authorName', 1, 100) &&
+             isValidString('content', 1, 1000) &&
+             data.createdAt is timestamp &&
+             data.upvotes is list && data.upvotes.size() <= 10000 &&
+             data.downvotes is list && data.downvotes.size() <= 10000;
+    }
+
+    function isValidResource(data) {
+      return hasRequiredFields(['title', 'type', 'subCategory', 'course', 'semester', 'link', 'uploader', 'uploadDate']) &&
+             hasOnlyAllowedFields(['title', 'type', 'subCategory', 'course', 'semester', 'tags', 'description', 'link', 'directDownloadLink', 'uploader', 'uploaderId', 'uploadDate', 'ratings', 'reports', 'isApproved']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.type in ['Note', 'PYQ', 'Playlist', 'Book'] &&
+             data.subCategory is string &&
+             data.course is string &&
+             data.semester is int &&
+             data.link is string &&
+             data.uploader is string &&
+             data.uploadDate is string &&
+             (!('isApproved' in data) || data.isApproved is bool) &&
+             (!('uploaderId' in data) || data.uploaderId is string) &&
+             (!('ratings' in data) || (data.ratings is list && data.ratings.size() <= 10000)) &&
+             (!('reports' in data) || (data.reports is list && data.reports.size() <= 1000));
+    }
+
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'email', 'role', 'createdAt']) &&
+             hasOnlyAllowedFields(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt', 'college', 'course']) &&
+             data.uid == request.auth.uid &&
+             data.email == request.auth.token.email &&
+             data.role in ['user', 'admin'] &&
+             data.createdAt is timestamp &&
+             (!('displayName' in data) || data.displayName is string) &&
+             (!('photoURL' in data) || data.photoURL is string) &&
+             (!('college' in data) || data.college is string) &&
+             (!('course' in data) || data.course is string);
+    }
+
+    function isValidPGListing(data) {
+      return hasRequiredFields(['authorId', 'authorName', 'college', 'location', 'budget', 'gender', 'description', 'socialLink', 'createdAt']) &&
+             hasOnlyAllowedFields(['authorId', 'authorName', 'authorPhoto', 'college', 'location', 'budget', 'gender', 'description', 'socialLink', 'createdAt']) &&
+             data.authorId == request.auth.uid &&
+             isValidString('authorName', 1, 100) &&
+             isValidString('college', 1, 200) &&
+             isValidString('location', 1, 200) &&
+             isValidString('budget', 1, 100) &&
+             data.gender in ['Male', 'Female', 'Any'] &&
+             isValidString('description', 1, 1000) &&
+             isValidString('socialLink', 1, 500) &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    match /forum_posts/{postId} {
+      allow read: if true; // Allow public read for forum posts
+      allow create: if isAuthenticated() && 
+                      isValidForumPost(request.resource.data) && 
+                      request.resource.data.authorId == request.auth.uid &&
+                      request.resource.data.commentCount == 0 &&
+                      request.resource.data.upvotes.size() == 0 &&
+                      request.resource.data.downvotes.size() == 0;
+      allow update: if isAuthenticated() && 
+                      isValidForumPost(request.resource.data) && 
+                      (
+                        // Author can update content/title
+                        (isDocOwner() && 
+                         request.resource.data.authorId == resource.data.authorId &&
+                         request.resource.data.createdAt == resource.data.createdAt) ||
+                        // Anyone can upvote/downvote (atomic update)
+                        (request.resource.data.diff(resource.data).affectedKeys().hasAny(['upvotes', 'downvotes']) &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes']) &&
+                         request.resource.data.upvotes.size() <= resource.data.upvotes.size() + 1 &&
+                         request.resource.data.downvotes.size() <= resource.data.downvotes.size() + 1) ||
+                        // System-like update for commentCount (atomic increment)
+                        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount']) &&
+                         math.abs(request.resource.data.commentCount - resource.data.commentCount) == 1)
+                      );
+      allow delete: if isDocOwner() || isAdmin();
+
+      match /comments/{commentId} {
+        allow read: if true; // Allow public read for comments
+        allow create: if isAuthenticated() && 
+                        isValidComment(request.resource.data) && 
+                        request.resource.data.authorId == request.auth.uid &&
+                        request.resource.data.postId == postId &&
+                        request.resource.data.upvotes.size() == 0 &&
+                        request.resource.data.downvotes.size() == 0;
+        allow update: if isAuthenticated() && 
+                        isValidComment(request.resource.data) &&
+                        (
+                          // Author can update content
+                          (isDocOwner() && 
+                           request.resource.data.authorId == resource.data.authorId &&
+                           request.resource.data.postId == resource.data.postId &&
+                           request.resource.data.createdAt == resource.data.createdAt) ||
+                          // Anyone can upvote/downvote (atomic update)
+                          (request.resource.data.diff(resource.data).affectedKeys().hasAny(['upvotes', 'downvotes']) &&
+                           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes']) &&
+                           request.resource.data.upvotes.size() <= resource.data.upvotes.size() + 1 &&
+                           request.resource.data.downvotes.size() <= resource.data.downvotes.size() + 1)
+                        );
+        allow delete: if isDocOwner();
+      }
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
+      allow update: if isAuthenticated() && (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /resources/{resourceId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidResource(request.resource.data);
+      allow update: if isAdmin() || (
+        isAuthenticated() && 
+        isValidResource(request.resource.data) &&
+        (
+          // Allow rating: only 'ratings' field changed, and it's an increment in size
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratings']) &&
+           request.resource.data.ratings.size() == resource.data.ratings.size() + 1) ||
+          // Allow reporting: only 'reports' field changed, and it's an increment in size
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reports']) &&
+           request.resource.data.reports.size() == resource.data.reports.size() + 1)
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /pg_listings/{listingId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidPGListing(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.authorId == request.auth.uid && isValidPGListing(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
+    }
+  }
+}

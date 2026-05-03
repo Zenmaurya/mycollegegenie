@@ -1,0 +1,1280 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import { useDropzone } from 'react-dropzone';
+import { 
+  LayoutDashboard, 
+  FileText, 
+  Youtube, 
+  CheckCircle2, 
+  XCircle, 
+  Trash2, 
+  Upload, 
+  Search, 
+  Filter, 
+  ChevronRight, 
+  AlertCircle,
+  Clock,
+  User as UserIcon,
+  ExternalLink,
+  Plus,
+  GraduationCap,
+  Newspaper,
+  Calendar,
+  Edit3,
+  Save,
+  X,
+  MessageSquare,
+  Home,
+  RefreshCw,
+  LogIn,
+  Eye
+} from 'lucide-react';
+import { Resource, User, News, ForumPost, PGListing, Testimonial } from '../types';
+import { getResources, approveResource, deleteResource, uploadResource, updateResource, uploadFile } from '../services/resourceService';
+import { getNews, addNews, updateNews, deleteNews } from '../services/newsService';
+import { ForumService } from '../services/forumService';
+import { getPGListings, deletePGListing } from '../services/pgService';
+import { getTestimonials, addTestimonial, updateTestimonial, deleteTestimonial } from '../services/testimonialService';
+import { auth } from '../firebase';
+import { Card as TestimonialPreviewCard } from '../components/ui/demo';
+import { DU_COURSES, COURSE_METADATA, SUB_CATEGORIES } from '../constants';
+import { toast } from 'sonner';
+import { ConfirmationModal } from '../components/ConfirmationModal';
+
+interface AdminPanelProps {
+  user: User | null;
+}
+
+export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
+  const navigate = useNavigate();
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [news, setNews] = useState<News[]>([]);
+  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [listings, setListings] = useState<PGListing[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'upload' | 'news' | 'forum' | 'pg' | 'testimonials'>('pending');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('All Courses');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [resourceToDelete, setResourceToDelete] = useState<string | null>(null);
+  const [newsToDelete, setNewsToDelete] = useState<string | null>(null);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [pgToDelete, setPgToDelete] = useState<string | null>(null);
+  const [testimonialToDelete, setTestimonialToDelete] = useState<string | null>(null);
+  const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [editingNews, setEditingNews] = useState<News | null>(null);
+  const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
+
+  const [testimonialFormData, setTestimonialFormData] = useState({
+    name: '',
+    handle: '',
+    image: '',
+    text: ''
+  });
+
+  const [formData, setFormData] = useState({
+    title: '',
+    type: 'Note' as any,
+    course: '',
+    semester: 1,
+    subCategory: 'Lecture Notes',
+    description: '',
+    link: '',
+    directDownloadLink: '',
+    tags: '',
+    file: null as File | null
+  });
+
+  const [isUploading, setIsUploading] = useState(false);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setFormData(prev => ({ ...prev, file: acceptedFiles[0] }));
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+    onDrop,
+    maxFiles: 1,
+    multiple: false,
+    maxSize: 10 * 1024 * 1024, // 10MB
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'image/*': ['.png', '.jpg', '.jpeg']
+    }
+  } as any);
+
+  const [newsFormData, setNewsFormData] = useState({
+    title: '',
+    date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+    summary: '',
+    url: '',
+    category: 'News' as 'News' | 'Event',
+    college: 'Delhi University'
+  });
+
+  useEffect(() => {
+    fetchResources();
+    fetchNewsData();
+    fetchTestimonials();
+  }, []);
+
+  const fetchTestimonials = async () => {
+    try {
+      const data = await getTestimonials();
+      setTestimonials(data);
+    } catch (error) {
+      console.error('Error fetching testimonials:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'forum') {
+      const unsubscribe = ForumService.getPosts(undefined, undefined, undefined, (data) => {
+        setPosts(data);
+      });
+      return () => unsubscribe();
+    }
+    if (activeTab === 'pg') {
+      const unsubscribe = getPGListings((data) => {
+        setListings(data);
+      });
+      return () => unsubscribe();
+    }
+  }, [activeTab]);
+
+  const fetchResources = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getResources(true);
+      if (data) setResources(data);
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchNewsData = async () => {
+    try {
+      const data = await getNews();
+      setNews(data);
+    } catch (error) {
+      console.error('Error fetching news:', error);
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      await approveResource(id);
+      setResources(prev => prev.map(r => r.id === id ? { ...r, isApproved: true } : r));
+      toast.success('Resource approved successfully!');
+    } catch (error) {
+      console.error('Failed to approve resource:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to approve resource.');
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    setResourceToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleNewsDelete = (id: string) => {
+    setNewsToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handlePostDelete = (id: string) => {
+    setPostToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handlePGDelete = (id: string) => {
+    setPgToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleTestimonialDelete = (id: string) => {
+    setTestimonialToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (resourceToDelete) {
+      try {
+        await deleteResource(resourceToDelete);
+        setResources(prev => prev.filter(r => r.id !== resourceToDelete));
+        toast.success('Resource deleted successfully!');
+      } catch (error) {
+        console.error('Failed to delete resource:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to delete resource.');
+      } finally {
+        setResourceToDelete(null);
+      }
+    } else if (newsToDelete) {
+      try {
+        await deleteNews(newsToDelete);
+        setNews(prev => prev.filter(n => n.id !== newsToDelete));
+        toast.success('News item deleted successfully!');
+      } catch (error) {
+        console.error('Failed to delete news:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to delete news.');
+      } finally {
+        setNewsToDelete(null);
+      }
+    } else if (postToDelete) {
+      try {
+        await ForumService.deletePost(postToDelete);
+        toast.success('Forum post deleted successfully!');
+      } catch (error) {
+        console.error('Failed to delete post:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to delete post.');
+      } finally {
+        setPostToDelete(null);
+      }
+    } else if (pgToDelete) {
+      try {
+        await deletePGListing(pgToDelete);
+        toast.success('PG listing deleted successfully!');
+      } catch (error) {
+        console.error('Failed to delete listing:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to delete listing.');
+      } finally {
+        setPgToDelete(null);
+      }
+    } else if (testimonialToDelete) {
+      try {
+        await deleteTestimonial(testimonialToDelete);
+        setTestimonials(prev => prev.filter(t => t.id !== testimonialToDelete));
+      } catch (error) {
+        console.error('Failed to delete testimonial:', error);
+      } finally {
+        setTestimonialToDelete(null);
+      }
+    }
+    setIsDeleteModalOpen(false);
+  };
+
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.course) {
+      toast.error('Please select a course');
+      return;
+    }
+    setIsUploading(true);
+    try {
+      let finalLink = formData.link;
+      let finalDirectDownloadLink = formData.directDownloadLink;
+
+      if (formData.file) {
+        toast.loading('Uploading file...', { id: 'upload-toast' });
+        const fileUrl = await uploadFile(formData.file);
+        finalLink = fileUrl;
+        finalDirectDownloadLink = fileUrl;
+        toast.dismiss('upload-toast');
+      } else if (!finalDirectDownloadLink && finalLink) {
+        const directExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif'];
+        if (directExtensions.some(ext => finalLink.toLowerCase().endsWith(ext))) {
+          finalDirectDownloadLink = finalLink;
+        }
+      }
+
+      if (editingResource) {
+        const updatedData: any = {
+          ...formData,
+          link: finalLink,
+          tags: formData.tags.split(',').map(t => t.trim()).filter(t => t !== ''),
+        };
+        
+        if (finalDirectDownloadLink) {
+          updatedData.directDownloadLink = finalDirectDownloadLink;
+        } else {
+          // If it's empty, we might want to remove it or set to null
+          updatedData.directDownloadLink = null;
+        }
+
+        const { file, ...dataToUpload } = updatedData;
+        await updateResource(editingResource.id, dataToUpload);
+        toast.success('Resource updated successfully!');
+        setEditingResource(null);
+      } else {
+        const resourceData: any = {
+          ...formData,
+          link: finalLink || 'https://example.com',
+          tags: formData.tags.split(',').map(t => t.trim()).filter(t => t !== ''),
+          uploader: user?.displayName || 'Admin',
+          isApproved: true // Admin uploads are auto-approved
+        };
+
+        if (finalDirectDownloadLink) {
+          resourceData.directDownloadLink = finalDirectDownloadLink;
+        } else {
+          resourceData.directDownloadLink = null;
+        }
+
+        const { file, ...dataToUpload } = resourceData;
+        await uploadResource(dataToUpload);
+        toast.success('Resource published successfully!');
+      }
+      
+      fetchResources();
+      setFormData({
+        title: '',
+        type: 'Note',
+        course: '',
+        semester: 1,
+        subCategory: 'Lecture Notes',
+        description: '',
+        link: '',
+        directDownloadLink: '',
+        tags: '',
+        file: null
+      });
+      setActiveTab('approved');
+    } catch (error) {
+      console.error('Failed to process resource:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to process resource. Please check if there are missing fields.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleNewsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingNews) {
+        await updateNews(editingNews.id, newsFormData);
+        toast.success('News item updated successfully!');
+        setEditingNews(null);
+      } else {
+        await addNews(newsFormData);
+        toast.success('News item added successfully!');
+      }
+      
+      fetchNewsData();
+      setNewsFormData({
+        title: '',
+        date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+        summary: '',
+        url: '',
+        category: 'News',
+        college: 'Delhi University'
+      });
+    } catch (error) {
+      console.error('Failed to process news:', error);
+    }
+  };
+
+  const handleTestimonialSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingTestimonial) {
+        await updateTestimonial(editingTestimonial.id, testimonialFormData);
+        setEditingTestimonial(null);
+        toast.success("Testimonial updated successfully!");
+      } else {
+        await addTestimonial(testimonialFormData);
+        toast.success("Testimonial added successfully!");
+      }
+      fetchTestimonials();
+      setTestimonialFormData({ name: '', handle: '', image: '', text: '' });
+    } catch (error) {
+      console.error('Failed to process testimonial', error);
+      toast.error('Failed to process testimonial.');
+    }
+  };
+
+  const startEditingResource = (resource: Resource) => {
+    setEditingResource(resource);
+    setFormData({
+      title: resource.title,
+      type: resource.type,
+      course: resource.course,
+      semester: resource.semester,
+      subCategory: resource.subCategory,
+      description: resource.description,
+      link: resource.link,
+      directDownloadLink: resource.directDownloadLink || '',
+      tags: resource.tags.join(', '),
+      file: null
+    });
+    setActiveTab('upload');
+  };
+
+  const startEditingNews = (n: News) => {
+    setEditingNews(n);
+    setNewsFormData({
+      title: n.title,
+      date: n.date,
+      summary: n.summary,
+      url: n.url,
+      category: n.category,
+      college: n.college
+    });
+  };
+
+  const startEditingTestimonial = (t: Testimonial) => {
+    setEditingTestimonial(t);
+    setTestimonialFormData({
+      name: t.name,
+      handle: t.handle,
+      image: t.image,
+      text: t.text
+    });
+  };
+
+  const filteredResources = resources.filter(r => {
+    const matchesTab = activeTab === 'pending' ? !r.isApproved : r.isApproved;
+    const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         r.course.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCourse = selectedCourse === 'All Courses' || r.course === selectedCourse;
+    return matchesTab && matchesSearch && matchesCourse;
+  });
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-transparent px-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md bg-white/40 backdrop-blur-md p-12 rounded-[3rem] shadow-xl border border-gray-100"
+        >
+          <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-8">
+            <UserIcon className="w-12 h-12 text-purple-600" />
+          </div>
+          <h1 className="text-3xl font-black text-gray-900 mb-4 tracking-tighter uppercase">Admin Access</h1>
+          <p className="text-gray-500 font-medium mb-10 leading-relaxed">Please sign in with an administrator account to access the management dashboard.</p>
+          <Link 
+            to="/login" 
+            state={{ from: { pathname: '/admin' } }}
+            className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-purple-600 text-white rounded-2xl font-black uppercase tracking-tighter hover:bg-purple-700 transition-all shadow-lg shadow-purple-600/20 active:scale-95"
+          >
+            <LogIn className="w-5 h-5" />
+            Sign In to Admin
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (user.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-transparent px-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md bg-white/40 backdrop-blur-md p-12 rounded-[3rem] shadow-xl border border-gray-100"
+        >
+          <div className="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-8">
+            <AlertCircle className="w-12 h-12 text-rose-600" />
+          </div>
+          <h1 className="text-3xl font-black text-gray-900 mb-4 tracking-tighter uppercase">Access Denied</h1>
+          <p className="text-gray-500 font-medium mb-10 leading-relaxed">You do not have the required permissions to view the administrator panel. If you believe this is an error, please contact support.</p>
+          <Link 
+            to="/" 
+            className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gray-900 text-white rounded-2xl font-black uppercase tracking-tighter hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/20 active:scale-95"
+          >
+            <Home className="w-5 h-5" />
+            Back to Home
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-transparent pt-20 sm:pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+      <Helmet>
+        <title>Admin Panel | MyCollegeGenie</title>
+        <meta name="description" content="Manage MyCollegeGenie resources, users, and settings." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 sm:mb-12 gap-6">
+          <div className="text-center lg:text-left">
+            <h1 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight flex items-center justify-center lg:justify-start gap-3">
+              <LayoutDashboard className="w-6 h-6 sm:w-10 sm:h-10 text-purple-600" />
+              Admin Panel
+            </h1>
+            <p className="text-[10px] sm:text-sm text-gray-500 font-black uppercase tracking-widest mt-1.5 px-4 sm:px-0">Manage website content and user contributions.</p>
+          </div>
+          
+          <div className="flex bg-white p-1 rounded-2xl border border-gray-200 shadow-sm overflow-x-auto no-scrollbar">
+            <button 
+              onClick={() => setActiveTab('pending')}
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'pending' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Pending
+              {resources.filter(r => !r.isApproved).length > 0 && (
+                <span className="bg-rose-500 text-white text-[8px] sm:text-[10px] px-1.5 py-0.5 rounded-full">
+                  {resources.filter(r => !r.isApproved).length}
+                </span>
+              )}
+            </button>
+            <button 
+              onClick={() => setActiveTab('approved')}
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'approved' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Approved
+            </button>
+            <button 
+              onClick={() => {
+                setActiveTab('upload');
+                setEditingResource(null);
+                setFormData({
+                  title: '',
+                  type: 'Note',
+                  course: '',
+                  semester: 1,
+                  subCategory: 'Lecture Notes',
+                  description: '',
+                  link: '',
+                  directDownloadLink: '',
+                  tags: '',
+                  file: null
+                });
+              }}
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'upload' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Upload
+            </button>
+            <button 
+              onClick={() => setActiveTab('news')}
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'news' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              News & Events
+            </button>
+            <button 
+              onClick={() => setActiveTab('forum')}
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'forum' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Forum
+            </button>
+            <button 
+              onClick={() => setActiveTab('pg')}
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'pg' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              PG Listings
+            </button>
+            <button 
+              onClick={() => {
+                setActiveTab('testimonials');
+                setEditingTestimonial(null);
+                setTestimonialFormData({ name: '', handle: '', image: '', text: '' });
+              }}
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'testimonials' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Testimonials
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'pending' || activeTab === 'approved' ? (
+          <div className="space-y-6">
+            {/* Filters */}
+            <div className="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                <input 
+                  type="text"
+                  placeholder="Search resources..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-sm sm:text-base font-medium"
+                />
+              </div>
+              <select 
+                value={selectedCourse}
+                onChange={(e) => setSelectedCourse(e.target.value)}
+                className="px-4 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-purple-500/20 text-sm sm:text-base font-black uppercase tracking-widest"
+              >
+                <option>All Courses</option>
+                {DU_COURSES.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+
+            {/* Resource List */}
+            <div className="grid gap-4 sm:gap-6">
+              {isLoading ? (
+                [1, 2, 3].map(i => <div key={i} className="h-32 bg-white rounded-[2rem] animate-pulse" />)
+              ) : filteredResources.length > 0 ? (
+                filteredResources.map(resource => (
+                    <div key={resource.id} className="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-start gap-4 sm:gap-6">
+                        <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${resource.type === 'Playlist' ? 'bg-rose-50 text-rose-600' : 'bg-purple-50 text-purple-600'}`}>
+                          {resource.type === 'Playlist' ? <Youtube className="w-5 h-5 sm:w-7 sm:h-7" /> : <FileText className="w-5 h-5 sm:w-7 sm:h-7" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm sm:text-xl font-black text-gray-900 truncate tracking-tight">{resource.title}</h3>
+                          <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-6 gap-y-1.5 mt-1.5 text-[10px] sm:text-xs text-gray-400 font-black uppercase tracking-widest">
+                            <span className="flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {resource.course}</span>
+                            <span className="bg-gray-50 px-2 py-0.5 rounded-lg">Sem {resource.semester}</span>
+                            <span className="flex items-center gap-1.5"><UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {resource.uploader}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 sm:gap-4">
+                        {resource.type !== 'Playlist' && (
+                          <button 
+                            onClick={() => navigate(`/flipbook/${resource.id}`)}
+                            className="p-2.5 sm:p-3.5 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white rounded-2xl transition-all shadow-sm"
+                            title="View on Website (Flipbook)"
+                          >
+                            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => window.open(resource.link, '_blank')}
+                          className="p-2.5 sm:p-3.5 bg-gray-50 text-gray-400 hover:text-purple-600 rounded-2xl transition-colors"
+                          title="View Resource"
+                        >
+                          <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </button>
+                        <button 
+                          onClick={() => startEditingResource(resource)}
+                          className="p-2.5 sm:p-3.5 bg-gray-50 text-gray-400 hover:text-indigo-600 rounded-2xl transition-colors"
+                          title="Edit Resource"
+                        >
+                          <Edit3 className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </button>
+                        {activeTab === 'pending' && (
+                          <button 
+                            onClick={() => handleApprove(resource.id)}
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 sm:px-8 py-2.5 sm:py-3.5 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all"
+                          >
+                            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                            Approve
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => handleDelete(resource.id)}
+                          className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 sm:px-8 py-2.5 sm:py-3.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all"
+                        >
+                          <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                ))
+              ) : (
+                <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-gray-200">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">No resources found</h3>
+                  <p className="text-gray-500">Try adjusting your filters or search query.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : activeTab === 'upload' ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white p-6 sm:p-12 rounded-[2.5rem] sm:rounded-[3rem] border border-gray-100 shadow-2xl shadow-purple-900/5 max-w-3xl mx-auto"
+          >
+            <div className="flex items-center justify-between mb-8 sm:mb-12">
+              <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-4 tracking-tight">
+                {editingResource ? <Edit3 className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" /> : <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />}
+                {editingResource ? 'Edit Resource' : 'Upload New Content'}
+              </h2>
+              {editingResource && (
+                <button 
+                  onClick={() => {
+                    setEditingResource(null);
+                    setFormData({
+                      title: '',
+                      type: 'Note',
+                      course: '',
+                      semester: 1,
+                      subCategory: 'Lecture Notes',
+                      description: '',
+                      link: '',
+                      directDownloadLink: '',
+                      tags: ''
+                    });
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-gray-400" />
+                </button>
+              )}
+            </div>
+            
+            <form onSubmit={handleUpload} className="space-y-6 sm:space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                <div className="space-y-2.5">
+                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Resource Title</label>
+                  <input 
+                    required
+                    type="text"
+                    placeholder="e.g. Microeconomics Unit 1 Notes"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
+                  />
+                </div>
+                <div className="space-y-2.5">
+                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Resource Type</label>
+                  <select 
+                    value={formData.type}
+                    onChange={(e) => setFormData({...formData, type: e.target.value as any})}
+                    className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
+                  >
+                    <option value="Note">Note</option>
+                    <option value="PYQ">PYQ</option>
+                    <option value="Playlist">Playlist</option>
+                    <option value="Book">Book</option>
+                  </select>
+                </div>
+                <div className="space-y-2.5">
+                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Course</label>
+                  <select 
+                    value={formData.course}
+                    onChange={(e) => setFormData({...formData, course: e.target.value})}
+                    className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
+                  >
+                    <option value="" disabled>Select Course</option>
+                    {DU_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2.5">
+                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Semester</label>
+                  <select 
+                    value={formData.semester}
+                    onChange={(e) => setFormData({...formData, semester: parseInt(e.target.value)})}
+                    className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
+                  >
+                    {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2.5">
+                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Sub-Category</label>
+                  <select 
+                    value={formData.subCategory}
+                    onChange={(e) => setFormData({...formData, subCategory: e.target.value})}
+                    className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
+                  >
+                    {(COURSE_METADATA[formData.course]?.subCategories || SUB_CATEGORIES).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Resource Link (Google Drive/YouTube)</label>
+                <input 
+                  required={!formData.file}
+                  type="url"
+                  placeholder="https://..."
+                  value={formData.link}
+                  onChange={(e) => setFormData({...formData, link: e.target.value})}
+                  className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
+                />
+              </div>
+
+              <div className="space-y-2.5">
+                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Or Upload PDF/File</label>
+                <div 
+                  {...getRootProps()} 
+                  className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all cursor-pointer ${
+                    isDragActive ? 'border-purple-500 bg-purple-50' : 'border-gray-100 hover:border-purple-400 hover:bg-gray-50'
+                  }`}
+                >
+                  <input {...getInputProps()} />
+                  <div className="flex flex-col items-center gap-2">
+                    {formData.file ? (
+                      <>
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                          <CheckCircle2 className="w-6 h-6 text-green-600" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-900">{formData.file.name}</p>
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFormData(prev => ({ ...prev, file: null }));
+                          }}
+                          className="text-xs text-red-500 hover:text-red-600 font-bold uppercase tracking-wider"
+                        >
+                          Remove File
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                          <Upload className="w-6 h-6 text-purple-600" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-900">Drag & drop a file here, or click to select</p>
+                        <p className="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Direct Download Link (Optional)</label>
+                <input 
+                  type="url"
+                  placeholder="Direct PDF link"
+                  value={formData.directDownloadLink}
+                  onChange={(e) => setFormData({...formData, directDownloadLink: e.target.value})}
+                  className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
+                />
+              </div>
+
+              <div className="space-y-2.5">
+                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
+                <textarea 
+                  rows={3}
+                  placeholder="Briefly describe the resource..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none resize-none text-sm sm:text-base font-medium"
+                />
+              </div>
+
+              <div className="space-y-2.5">
+                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Tags (Comma separated)</label>
+                <input 
+                  type="text"
+                  placeholder="economics, notes, sem1"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({...formData, tags: e.target.value})}
+                  className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
+                />
+              </div>
+
+              <button 
+                type="submit"
+                disabled={isUploading}
+                className="w-full py-4 sm:py-5 bg-purple-600 text-white rounded-2xl font-black text-sm sm:text-lg uppercase tracking-widest shadow-2xl shadow-purple-600/20 hover:bg-purple-700 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
+                ) : editingResource ? (
+                  <Save className="w-5 h-5 sm:w-6 sm:h-6" />
+                ) : (
+                  <Upload className="w-5 h-5 sm:w-6 sm:h-6" />
+                )}
+                {isUploading ? 'Processing...' : editingResource ? 'Update Resource' : 'Publish Resource'}
+              </button>
+            </form>
+          </motion.div>
+        ) : activeTab === 'news' ? (
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* News Form */}
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm h-fit"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
+                  {editingNews ? <Edit3 className="w-6 h-6 text-purple-600" /> : <Plus className="w-6 h-6 text-purple-600" />}
+                  {editingNews ? 'Edit News/Event' : 'Add News/Event'}
+                </h2>
+                {editingNews && (
+                  <button 
+                    onClick={() => {
+                      setEditingNews(null);
+                      setNewsFormData({
+                        title: '',
+                        date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+                        summary: '',
+                        url: '',
+                        category: 'News',
+                        college: 'Delhi University'
+                      });
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-400" />
+                  </button>
+                )}
+              </div>
+
+              <form onSubmit={handleNewsSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Title</label>
+                  <input 
+                    required
+                    type="text"
+                    value={newsFormData.title}
+                    onChange={(e) => setNewsFormData({...newsFormData, title: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Category</label>
+                    <select 
+                      value={newsFormData.category}
+                      onChange={(e) => setNewsFormData({...newsFormData, category: e.target.value as any})}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-black uppercase tracking-widest"
+                    >
+                      <option value="News">News</option>
+                      <option value="Event">Event</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date</label>
+                    <input 
+                      required
+                      type="text"
+                      value={newsFormData.date}
+                      onChange={(e) => setNewsFormData({...newsFormData, date: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">College/Source</label>
+                  <input 
+                    required
+                    type="text"
+                    value={newsFormData.college}
+                    onChange={(e) => setNewsFormData({...newsFormData, college: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Summary</label>
+                  <textarea 
+                    required
+                    rows={3}
+                    value={newsFormData.summary}
+                    onChange={(e) => setNewsFormData({...newsFormData, summary: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none resize-none text-sm font-medium"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Source URL</label>
+                  <input 
+                    type="url"
+                    value={newsFormData.url}
+                    onChange={(e) => setNewsFormData({...newsFormData, url: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full py-4 bg-purple-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
+                >
+                  {editingNews ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {editingNews ? 'Update Update' : 'Add Update'}
+                </button>
+              </form>
+            </motion.div>
+
+            {/* News List */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-4"
+            >
+              <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3 tracking-tight">
+                <Clock className="w-6 h-6 text-purple-600" />
+                Recent Updates
+              </h2>
+              
+              {news.length > 0 ? (
+                news.map(n => (
+                  <div key={n.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${n.category === 'Event' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'}`}>
+                            {n.category}
+                          </span>
+                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{n.date}</span>
+                        </div>
+                        <h3 className="text-sm font-bold text-gray-900 mb-1 leading-tight">{n.title}</h3>
+                        <p className="text-[10px] text-gray-500 line-clamp-2 mb-3">{n.summary}</p>
+                        <div className="flex items-center gap-4">
+                          <button 
+                            onClick={() => startEditingNews(n)}
+                            className="text-[10px] font-black text-purple-600 uppercase tracking-widest hover:underline flex items-center gap-1"
+                          >
+                            <Edit3 className="w-3 h-3" /> Edit
+                          </button>
+                          <button 
+                            onClick={() => handleNewsDelete(n.id)}
+                            className="text-[10px] font-black text-rose-600 uppercase tracking-widest hover:underline flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3 h-3" /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                  <p className="text-gray-400 text-sm font-medium">No updates found.</p>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        ) : activeTab === 'forum' ? (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-4 tracking-tight">
+                <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
+                Manage Forum Posts
+              </h2>
+            </div>
+            
+            <div className="grid gap-4">
+              {posts.length > 0 ? (
+                posts.map(post => (
+                  <div key={post.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between gap-4 group hover:shadow-md transition-all">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-lg text-[8px] font-black uppercase tracking-widest">
+                          {post.course}
+                        </span>
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{new Date(post.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <h3 className="font-bold text-gray-900 truncate">{post.title}</h3>
+                      <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                        <UserIcon className="w-3 h-3" /> {post.authorName}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => handlePostDelete(post.id)}
+                      className="p-3 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-2xl transition-all shadow-sm"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <p className="text-gray-400 font-medium">No forum posts found.</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : activeTab === 'pg' ? (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-4 tracking-tight">
+                <Home className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
+                Manage PG Listings
+              </h2>
+            </div>
+            
+            <div className="grid gap-4">
+              {listings.length > 0 ? (
+                listings.map(listing => (
+                  <div key={listing.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between gap-4 group hover:shadow-md transition-all">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-lg text-[8px] font-black uppercase tracking-widest">
+                          {listing.budget}
+                        </span>
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{new Date(listing.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <h3 className="font-bold text-gray-900 truncate">{listing.college}</h3>
+                      <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                        <UserIcon className="w-3 h-3" /> {listing.authorName} • {listing.location}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => handlePGDelete(listing.id)}
+                      className="p-3 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-2xl transition-all shadow-sm"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Home className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <p className="text-gray-400 font-medium">No PG listings found.</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : activeTab === 'testimonials' ? (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-4 tracking-tight">
+                <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
+                Manage Testimonials
+              </h2>
+            </div>
+            
+            <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-gray-100 shadow-sm mb-6">
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold mb-4">{editingTestimonial ? 'Edit Testimonial' : 'Add Testimonial'}</h3>
+                  <form onSubmit={handleTestimonialSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        required
+                        placeholder="Name (e.g. Aarav Sharma)"
+                        value={testimonialFormData.name}
+                        onChange={e => setTestimonialFormData({...testimonialFormData, name: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+                      />
+                      <input
+                        type="text"
+                        required
+                        placeholder="Handle (e.g. @aarav_du)"
+                        value={testimonialFormData.handle}
+                        onChange={e => setTestimonialFormData({...testimonialFormData, handle: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Image URL (Unsplash or direct image link)"
+                      value={testimonialFormData.image}
+                      onChange={e => setTestimonialFormData({...testimonialFormData, image: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+                    />
+                    <textarea
+                      required
+                      rows={3}
+                      placeholder="Testimonial text..."
+                      value={testimonialFormData.text}
+                      onChange={e => setTestimonialFormData({...testimonialFormData, text: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium resize-none"
+                    />
+                    <div className="flex gap-4">
+                      <button type="submit" className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors">
+                        {editingTestimonial ? 'Update Testimonial' : 'Add Testimonial'}
+                      </button>
+                      {editingTestimonial && (
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setEditingTestimonial(null);
+                            setTestimonialFormData({ name: '', handle: '', image: '', text: '' });
+                          }}
+                          className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+                
+                <div className="bg-gray-50 rounded-2xl p-6 border border-dashed border-gray-200 flex flex-col items-center justify-center lg:w-[350px] shrink-0">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">Live Preview</h4>
+                  <div className="pointer-events-none transform scale-90 sm:scale-100 origin-top">
+                    <TestimonialPreviewCard card={{...testimonialFormData, id: 'preview', createdAt: ''}} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:gap-6">
+              {testimonials.length > 0 ? testimonials.map(t => (
+                <div key={t.id} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-4">
+                    <img src={t.image} alt={t.name} className="w-14 h-14 rounded-full object-cover" />
+                    <div>
+                      <h4 className="font-bold text-gray-900">{t.name} <span className="text-gray-500 font-normal text-sm">{t.handle}</span></h4>
+                      <p className="text-sm text-gray-600 line-clamp-2 mt-1">{t.text}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => startEditingTestimonial(t)}
+                      className="p-3 bg-gray-50 text-gray-400 hover:text-purple-600 rounded-xl transition-colors"
+                    >
+                      <Edit3 className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => handleTestimonialDelete(t.id)}
+                      className="p-3 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-colors"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              )) : (
+                <div className="text-center py-12 bg-white rounded-[2rem] border border-dashed border-gray-200">
+                  <p className="text-gray-400 font-medium">No testimonials found.</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : null}
+      </div>
+      
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setResourceToDelete(null);
+          setNewsToDelete(null);
+          setPostToDelete(null);
+          setPgToDelete(null);
+          setTestimonialToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title={
+          resourceToDelete ? "Delete Resource" : 
+          newsToDelete ? "Delete Update" : 
+          postToDelete ? "Delete Forum Post" : 
+          testimonialToDelete ? "Delete Testimonial" :
+          "Delete PG Listing"
+        }
+        message={`Are you sure you want to delete this ${
+          resourceToDelete ? 'resource' : 
+          newsToDelete ? 'update' : 
+          postToDelete ? 'forum post' : 
+          testimonialToDelete ? 'testimonial' :
+          'PG listing'
+        }? This action cannot be undone.`}
+        confirmText="Delete"
+        type="danger"
+      />
+    </div>
+  );
+};
