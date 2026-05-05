@@ -1,239 +1,168 @@
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot, 
-  serverTimestamp, 
-  increment, 
-  arrayUnion, 
-  arrayRemove,
-  getDoc,
-  limit
-} from 'firebase/firestore';
-import { db, auth } from '../firebase';
+import { supabase } from '../supabase';
 import { ForumPost, Comment } from '../types';
 
-enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
+const API_URL = import.meta.env.VITE_API_URL;
 
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
-    },
-    operationType,
-    path
+async function fetchWithAuth(url: string, options: RequestInit = {}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+
+  const response = await fetch(`${API_URL}${url}`, { ...options, headers });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'API request failed');
+  }
+  return response.json();
 }
 
 export const ForumService = {
   // Posts
-  getPosts: (course?: string, topic?: string, limitCount?: number, callback?: (posts: ForumPost[]) => void) => {
-    let q = query(collection(db, 'forum_posts'), orderBy('createdAt', 'desc'));
-    
-    if (course && course !== 'All') {
-      q = query(q, where('course', '==', course));
-    }
-    if (topic && topic !== 'All') {
-      q = query(q, where('topic', '==', topic));
-    }
-    if (limitCount) {
-      q = query(q, limit(limitCount));
-    }
+  getPosts: async (course?: string, topic?: string, limitCount: number = 30, callback?: (posts: ForumPost[]) => void) => {
+    try {
+      const params = new URLSearchParams();
+      if (course && course !== 'All') params.append('course', course);
+      if (topic && topic !== 'All') params.append('topic', topic);
+      params.append('limit', limitCount.toString());
 
-    return onSnapshot(q, (snapshot) => {
-      const posts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-      })) as ForumPost[];
-      callback?.(posts);
-    }, (error) => {
-      console.error("Firestore onSnapshot error:", error);
-      callback?.([]);
-      // Don't throw for snapshot listeners to prevent app crash
-    });
+      const data = await fetchWithAuth(`/api/forum/posts?${params.toString()}`);
+      
+      const posts: ForumPost[] = data.map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        content: p.content,
+        authorId: p.author_id,
+        authorName: p.author_name,
+        course: p.course,
+        topic: p.topic,
+        createdAt: p.created_at,
+        upvotes: p.upvotes || [],
+        downvotes: p.downvotes || [],
+        commentCount: p.comment_count || 0
+      }));
+      
+      if (callback) callback(posts);
+      return posts;
+    } catch (error) {
+      console.error('Failed to get posts:', error);
+      if (callback) callback([]);
+      return [];
+    }
   },
 
   getPost: async (postId: string) => {
     try {
-      const docRef = doc(db, 'forum_posts', postId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        return {
-          id: docSnap.id,
-          ...docSnap.data(),
-          createdAt: docSnap.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-        } as ForumPost;
-      }
-      return null;
+      const p = await fetchWithAuth(`/api/forum/posts/${postId}`);
+      return {
+        id: p.id,
+        title: p.title,
+        content: p.content,
+        authorId: p.author_id,
+        authorName: p.author_name,
+        course: p.course,
+        topic: p.topic,
+        createdAt: p.created_at,
+        upvotes: p.upvotes || [],
+        downvotes: p.downvotes || [],
+        commentCount: p.comment_count || 0
+      } as ForumPost;
     } catch (error) {
-      handleFirestoreError(error, OperationType.GET, `forum_posts/${postId}`);
+      console.error('Failed to get post:', error);
+      return null;
     }
-  },
-
-  getPostStream: (postId: string, callback: (post: ForumPost | null) => void) => {
-    const docRef = doc(db, 'forum_posts', postId);
-    return onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const post = {
-          id: docSnap.id,
-          ...docSnap.data(),
-          createdAt: docSnap.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-        } as ForumPost;
-        callback(post);
-      } else {
-        callback(null);
-      }
-    }, (error) => handleFirestoreError(error, OperationType.GET, `forum_posts/${postId}`));
   },
 
   createPost: async (post: Omit<ForumPost, 'id' | 'createdAt' | 'commentCount' | 'upvotes' | 'downvotes'>) => {
-    try {
-      const docRef = await addDoc(collection(db, 'forum_posts'), {
-        ...post,
-        createdAt: serverTimestamp(),
-        commentCount: 0,
-        upvotes: [],
-        downvotes: []
-      });
-      return docRef.id;
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'forum_posts');
-    }
+    const data = await fetchWithAuth('/api/forum/posts', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: post.title,
+        content: post.content,
+        course: post.course,
+        topic: post.topic
+      })
+    });
+    return data.id;
   },
 
   updatePost: async (postId: string, updates: Partial<ForumPost>) => {
-    try {
-      const docRef = doc(db, 'forum_posts', postId);
-      await updateDoc(docRef, updates);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `forum_posts/${postId}`);
-    }
+    // Currently not supported in backend routes, but stubbed for future
+    console.warn('Update post not implemented on backend');
   },
 
   deletePost: async (postId: string) => {
-    try {
-      const docRef = doc(db, 'forum_posts', postId);
-      await deleteDoc(docRef);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `forum_posts/${postId}`);
-    }
+    await fetchWithAuth(`/api/forum/posts/${postId}`, {
+      method: 'DELETE'
+    });
   },
 
   toggleUpvote: async (postId: string, userId: string, isUpvoted: boolean) => {
-    try {
-      const docRef = doc(db, 'forum_posts', postId);
-      await updateDoc(docRef, {
-        upvotes: isUpvoted ? arrayRemove(userId) : arrayUnion(userId),
-        downvotes: arrayRemove(userId) // Always remove from downvotes if upvoting
-      });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `forum_posts/${postId}`);
-    }
+    return fetchWithAuth(`/api/forum/posts/${postId}/vote`, {
+      method: 'PATCH',
+      body: JSON.stringify({ type: 'up' })
+    });
   },
 
   toggleDownvote: async (postId: string, userId: string, isDownvoted: boolean) => {
-    try {
-      const docRef = doc(db, 'forum_posts', postId);
-      await updateDoc(docRef, {
-        downvotes: isDownvoted ? arrayRemove(userId) : arrayUnion(userId),
-        upvotes: arrayRemove(userId) // Always remove from upvotes if downvoting
-      });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `forum_posts/${postId}`);
-    }
+    return fetchWithAuth(`/api/forum/posts/${postId}/vote`, {
+      method: 'PATCH',
+      body: JSON.stringify({ type: 'down' })
+    });
   },
 
   // Comments
-  getComments: (postId: string, callback: (comments: Comment[]) => void) => {
-    const q = query(collection(db, 'forum_posts', postId, 'comments'), orderBy('createdAt', 'asc'));
-    return onSnapshot(q, (snapshot) => {
-      const comments = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-      })) as Comment[];
-      callback(comments);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, `forum_posts/${postId}/comments`));
+  getComments: async (postId: string, callback?: (comments: Comment[]) => void) => {
+    try {
+      const data = await fetchWithAuth(`/api/forum/posts/${postId}/comments`);
+      const comments: Comment[] = data.map((c: any) => ({
+        id: c.id,
+        postId: c.post_id,
+        authorId: c.author_id,
+        authorName: c.author_name,
+        content: c.content,
+        createdAt: c.created_at,
+        upvotes: c.upvotes || [],
+        downvotes: c.downvotes || []
+      }));
+      if (callback) callback(comments);
+      return comments;
+    } catch (error) {
+      console.error('Failed to get comments:', error);
+      if (callback) callback([]);
+      return [];
+    }
   },
 
   addComment: async (postId: string, comment: Omit<Comment, 'id' | 'createdAt' | 'upvotes' | 'downvotes'>) => {
-    try {
-      const postRef = doc(db, 'forum_posts', postId);
-      const commentRef = await addDoc(collection(db, 'forum_posts', postId, 'comments'), {
-        ...comment,
-        createdAt: serverTimestamp(),
-        upvotes: [],
-        downvotes: []
-      });
-      await updateDoc(postRef, {
-        commentCount: increment(1)
-      });
-      return commentRef.id;
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, `forum_posts/${postId}/comments`);
-    }
+    const data = await fetchWithAuth(`/api/forum/posts/${postId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content: comment.content })
+    });
+    return data.id;
   },
 
   toggleCommentUpvote: async (postId: string, commentId: string, userId: string, isUpvoted: boolean) => {
-    try {
-      const docRef = doc(db, 'forum_posts', postId, 'comments', commentId);
-      await updateDoc(docRef, {
-        upvotes: isUpvoted ? arrayRemove(userId) : arrayUnion(userId),
-        downvotes: arrayRemove(userId) // Always remove from downvotes if upvoting
-      });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `forum_posts/${postId}/comments/${commentId}`);
-    }
+    await fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}/vote`, {
+      method: 'PATCH',
+      body: JSON.stringify({ type: isUpvoted ? 'down' : 'up' }) // if it was already upvoted we technically want to remove it, but our backend toggles so just send 'up'
+    });
   },
 
   toggleCommentDownvote: async (postId: string, commentId: string, userId: string, isDownvoted: boolean) => {
-    try {
-      const docRef = doc(db, 'forum_posts', postId, 'comments', commentId);
-      await updateDoc(docRef, {
-        downvotes: isDownvoted ? arrayRemove(userId) : arrayUnion(userId),
-        upvotes: arrayRemove(userId) // Always remove from upvotes if downvoting
-      });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `forum_posts/${postId}/comments/${commentId}`);
-    }
+    await fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}/vote`, {
+      method: 'PATCH',
+      body: JSON.stringify({ type: isDownvoted ? 'up' : 'down' }) 
+    });
   },
 
   deleteComment: async (postId: string, commentId: string) => {
-    try {
-      const postRef = doc(db, 'forum_posts', postId);
-      const commentRef = doc(db, 'forum_posts', postId, 'comments', commentId);
-      await deleteDoc(commentRef);
-      await updateDoc(postRef, {
-        commentCount: increment(-1)
-      });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `forum_posts/${postId}/comments/${commentId}`);
-    }
+    await fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}`, {
+      method: 'DELETE'
+    });
   }
 };

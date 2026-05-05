@@ -20,13 +20,14 @@ import {
 import { Link } from 'react-router-dom';
 import { ForumPost } from '../types';
 import { ForumService } from '../services/forumService';
-import { auth } from '../firebase';
+import { supabase, getCurrentUser } from '../supabase';
 import { DU_COURSES, SUB_CATEGORIES } from '../constants';
 
 import { toast } from 'sonner';
 
 export const ForumPage: React.FC = () => {
   const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('All');
   const [selectedTopic, setSelectedTopic] = useState('All');
@@ -44,22 +45,28 @@ export const ForumPage: React.FC = () => {
   });
 
   useEffect(() => {
+    getCurrentUser().then(user => setCurrentUser(user));
+  }, []);
+
+  useEffect(() => {
     setLimitCount(10);
   }, [selectedCourse, selectedTopic]);
 
-  useEffect(() => {
+  const fetchPosts = async () => {
     setIsLoading(true);
-    const unsubscribe = ForumService.getPosts(selectedCourse, selectedTopic, limitCount + 1, (fetchedPosts) => {
-      if (fetchedPosts.length > limitCount) {
-        setPosts(fetchedPosts.slice(0, limitCount));
-        setHasMore(true);
-      } else {
-        setPosts(fetchedPosts);
-        setHasMore(false);
-      }
-      setIsLoading(false);
-    });
-    return () => unsubscribe();
+    const fetchedPosts = await ForumService.getPosts(selectedCourse, selectedTopic, limitCount + 1);
+    if (fetchedPosts.length > limitCount) {
+      setPosts(fetchedPosts.slice(0, limitCount));
+      setHasMore(true);
+    } else {
+      setPosts(fetchedPosts);
+      setHasMore(false);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPosts();
   }, [selectedCourse, selectedTopic, limitCount]);
 
   const filteredPosts = posts.filter(post => 
@@ -69,7 +76,8 @@ export const ForumPage: React.FC = () => {
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
+    const user = await getCurrentUser();
+    if (!user) return;
     if (!newPost.course) {
       toast.error('Please select a course.');
       return;
@@ -78,33 +86,38 @@ export const ForumPage: React.FC = () => {
     try {
       await ForumService.createPost({
         ...newPost,
-        authorId: auth.currentUser.uid,
-        authorName: auth.currentUser.displayName || 'Anonymous'
+        authorId: user.id,
+        authorName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous'
       });
       setIsCreateModalOpen(false);
       setNewPost({ title: '', content: '', course: '', topic: SUB_CATEGORIES[0] });
+      fetchPosts(); // Refresh posts after creating
     } catch (error) {
       console.error("Failed to create post:", error);
       toast.error(error instanceof Error ? error.message : 'Failed to create post. Please try again.');
     }
   };
 
-  const handleUpvote = (postId: string, upvotes: string[]) => {
-    if (!auth.currentUser) {
+  const handleUpvote = async (postId: string, upvotes: string[]) => {
+    const user = await getCurrentUser();
+    if (!user) {
       toast.error('Please sign in to upvote.');
       return;
     }
-    const isUpvoted = upvotes.includes(auth.currentUser.uid);
-    ForumService.toggleUpvote(postId, auth.currentUser.uid, isUpvoted);
+    const isUpvoted = upvotes.includes(user.id);
+    await ForumService.toggleUpvote(postId, user.id, isUpvoted);
+    fetchPosts();
   };
 
-  const handleDownvote = (postId: string, downvotes: string[]) => {
-    if (!auth.currentUser) {
+  const handleDownvote = async (postId: string, downvotes: string[]) => {
+    const user = await getCurrentUser();
+    if (!user) {
       toast.error('Please sign in to downvote.');
       return;
     }
-    const isDownvoted = downvotes.includes(auth.currentUser.uid);
-    ForumService.toggleDownvote(postId, auth.currentUser.uid, isDownvoted);
+    const isDownvoted = downvotes.includes(user.id);
+    await ForumService.toggleDownvote(postId, user.id, isDownvoted);
+    fetchPosts();
   };
 
   return (
@@ -230,7 +243,7 @@ export const ForumPage: React.FC = () => {
                     <button 
                       onClick={() => handleUpvote(post.id, post.upvotes)}
                       className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl font-black transition-all ${
-                        auth.currentUser && post.upvotes.includes(auth.currentUser.uid)
+                        currentUser && post.upvotes.includes(currentUser.id)
                           ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
                           : 'bg-gray-50 hover:bg-gray-100 text-gray-600'
                       }`}
@@ -241,7 +254,7 @@ export const ForumPage: React.FC = () => {
                     <button 
                       onClick={() => handleDownvote(post.id, post.downvotes)}
                       className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl font-black transition-all ${
-                        auth.currentUser && post.downvotes.includes(auth.currentUser.uid)
+                        currentUser && post.downvotes.includes(currentUser.id)
                           ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/20'
                           : 'bg-gray-50 hover:bg-gray-100 text-gray-600'
                       }`}
@@ -329,7 +342,7 @@ export const ForumPage: React.FC = () => {
               </div>
 
               <form onSubmit={handleCreatePost} className="p-6 space-y-6">
-                {!auth.currentUser ? (
+                {!currentUser ? (
                   <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-6">
                     <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
                       <AlertCircle className="w-8 h-8 text-amber-600" />

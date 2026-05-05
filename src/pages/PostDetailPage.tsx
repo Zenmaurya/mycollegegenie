@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { ForumPost, Comment } from '../types';
 import { ForumService } from '../services/forumService';
-import { auth } from '../firebase';
+import { supabase, getCurrentUser } from '../supabase';
 import { toast } from 'sonner';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 
@@ -26,6 +26,7 @@ export const PostDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [post, setPost] = useState<ForumPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,60 +35,70 @@ export const PostDetailPage: React.FC = () => {
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!postId) return;
+    getCurrentUser().then(user => setCurrentUser(user));
+  }, []);
 
+  const fetchData = useCallback(async () => {
+    if (!postId) return;
     setIsLoading(true);
-    const unsubscribePost = ForumService.getPostStream(postId, (fetchedPost) => {
+    
+    try {
+      const fetchedPost = await ForumService.getPost(postId);
       if (fetchedPost) {
         setPost(fetchedPost);
       } else {
         navigate('/forum');
+        return;
       }
-      setIsLoading(false);
-    });
 
-    const unsubscribeComments = ForumService.getComments(postId, (fetchedComments) => {
+      const fetchedComments = await ForumService.getComments(postId);
       setComments(fetchedComments);
-    });
-
-    return () => {
-      unsubscribePost();
-      unsubscribeComments();
-    };
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   }, [postId, navigate]);
 
-  const handleUpvote = () => {
-    if (!post || !auth.currentUser) {
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleUpvote = async () => {
+    if (!post || !currentUser) {
       toast.error('Please sign in to upvote.');
       return;
     }
-    const isUpvoted = post.upvotes.includes(auth.currentUser.uid);
-    ForumService.toggleUpvote(post.id, auth.currentUser.uid, isUpvoted);
+    const isUpvoted = post.upvotes.includes(currentUser.id);
+    await ForumService.toggleUpvote(post.id, currentUser.id, isUpvoted);
+    fetchData();
   };
 
-  const handleDownvote = () => {
-    if (!post || !auth.currentUser) {
+  const handleDownvote = async () => {
+    if (!post || !currentUser) {
       toast.error('Please sign in to downvote.');
       return;
     }
-    const isDownvoted = post.downvotes.includes(auth.currentUser.uid);
-    ForumService.toggleDownvote(post.id, auth.currentUser.uid, isDownvoted);
+    const isDownvoted = post.downvotes.includes(currentUser.id);
+    await ForumService.toggleDownvote(post.id, currentUser.id, isDownvoted);
+    fetchData();
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!postId || !newComment.trim() || !auth.currentUser) return;
+    if (!postId || !newComment.trim() || !currentUser) return;
 
     setIsSubmitting(true);
     try {
       await ForumService.addComment(postId, {
         postId,
-        authorId: auth.currentUser.uid,
-        authorName: auth.currentUser.displayName || 'Anonymous',
+        authorId: currentUser.id,
+        authorName: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Anonymous',
         content: newComment.trim()
       });
       setNewComment('');
       toast.success('Comment added successfully!');
+      fetchData();
     } catch (error) {
       console.error("Failed to add comment:", error);
       toast.error(error instanceof Error ? error.message : 'Failed to add comment. Please try again.');
@@ -106,9 +117,12 @@ export const PostDetailPage: React.FC = () => {
     try {
       await ForumService.deleteComment(postId, commentToDelete);
       toast.success('Comment deleted successfully!');
+      fetchData();
     } catch (error) {
       console.error("Failed to delete comment:", error);
       toast.error(error instanceof Error ? error.message : 'Failed to delete comment.');
+    } finally {
+      setIsDeleteCommentModalOpen(false);
     }
   };
 
@@ -125,25 +139,29 @@ export const PostDetailPage: React.FC = () => {
     } catch (error) {
       console.error("Failed to delete post:", error);
       toast.error(error instanceof Error ? error.message : 'Failed to delete post.');
+    } finally {
+      setIsDeletePostModalOpen(false);
     }
   };
 
-  const handleCommentUpvote = (commentId: string, upvotes: string[]) => {
-    if (!postId || !auth.currentUser) {
+  const handleCommentUpvote = async (commentId: string, upvotes: string[]) => {
+    if (!postId || !currentUser) {
       toast.error('Please sign in to upvote.');
       return;
     }
-    const isUpvoted = upvotes?.includes(auth.currentUser.uid);
-    ForumService.toggleCommentUpvote(postId, commentId, auth.currentUser.uid, isUpvoted);
+    const isUpvoted = upvotes?.includes(currentUser.id);
+    await ForumService.toggleCommentUpvote(postId, commentId, currentUser.id, isUpvoted);
+    fetchData();
   };
 
-  const handleCommentDownvote = (commentId: string, downvotes: string[]) => {
-    if (!postId || !auth.currentUser) {
+  const handleCommentDownvote = async (commentId: string, downvotes: string[]) => {
+    if (!postId || !currentUser) {
       toast.error('Please sign in to downvote.');
       return;
     }
-    const isDownvoted = downvotes?.includes(auth.currentUser.uid);
-    ForumService.toggleCommentDownvote(postId, commentId, auth.currentUser.uid, isDownvoted);
+    const isDownvoted = downvotes?.includes(currentUser.id);
+    await ForumService.toggleCommentDownvote(postId, commentId, currentUser.id, isDownvoted);
+    fetchData();
   };
 
   if (isLoading) {
@@ -189,7 +207,7 @@ export const PostDetailPage: React.FC = () => {
           <h1 className="text-xl sm:text-4xl md:text-5xl font-black text-gray-900 leading-tight tracking-tight">
             {post.title}
           </h1>
-          {auth.currentUser?.uid === post.authorId && (
+          {currentUser?.id === post.authorId && (
             <button 
               onClick={handleDeletePost}
               className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all flex-shrink-0"
@@ -222,23 +240,23 @@ export const PostDetailPage: React.FC = () => {
             <button 
               onClick={handleUpvote}
               className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-8 py-2 sm:py-4 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-[9px] sm:text-xs transition-all ${
-                auth.currentUser && post.upvotes.includes(auth.currentUser.uid)
+                currentUser && post.upvotes.includes(currentUser.id)
                   ? 'bg-purple-600 text-white shadow-xl shadow-purple-600/20'
                   : 'bg-gray-50 hover:bg-gray-100 text-gray-500'
               }`}
             >
-              <ThumbsUp className={`w-3 h-3 sm:w-4 sm:h-4 ${auth.currentUser && post.upvotes.includes(auth.currentUser.uid) ? 'fill-current' : ''}`} />
+              <ThumbsUp className={`w-3 h-3 sm:w-4 sm:h-4 ${currentUser && post.upvotes.includes(currentUser.id) ? 'fill-current' : ''}`} />
               {post.upvotes.length} <span className="hidden xs:inline">Upvotes</span>
             </button>
             <button 
               onClick={handleDownvote}
               className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-8 py-2 sm:py-4 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-[9px] sm:text-xs transition-all ${
-                auth.currentUser && post.downvotes.includes(auth.currentUser.uid)
+                currentUser && post.downvotes.includes(currentUser.id)
                   ? 'bg-rose-600 text-white shadow-xl shadow-rose-600/20'
                   : 'bg-gray-50 hover:bg-gray-100 text-gray-500'
               }`}
             >
-              <ThumbsDown className={`w-3 h-3 sm:w-4 sm:h-4 ${auth.currentUser && post.downvotes.includes(auth.currentUser.uid) ? 'fill-current' : ''}`} />
+              <ThumbsDown className={`w-3 h-3 sm:w-4 sm:h-4 ${currentUser && post.downvotes.includes(currentUser.id) ? 'fill-current' : ''}`} />
               {post.downvotes.length} <span className="hidden xs:inline">Downvotes</span>
             </button>
           </div>
@@ -255,7 +273,7 @@ export const PostDetailPage: React.FC = () => {
         </h2>
 
         <form onSubmit={handleAddComment} className="relative">
-          {!auth.currentUser ? (
+          {!currentUser ? (
             <div className="bg-white border border-gray-100 rounded-3xl p-8 shadow-xl shadow-purple-900/5 flex flex-col items-center justify-center text-center space-y-6">
               <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
                 <AlertCircle className="w-8 h-8 text-amber-600" />
@@ -284,7 +302,7 @@ export const PostDetailPage: React.FC = () => {
               />
               <div className="flex justify-end pt-4">
                 <button 
-                  disabled={!newComment.trim() || isSubmitting || !auth.currentUser}
+                  disabled={!newComment.trim() || isSubmitting || !currentUser}
                   type="submit"
                   className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-xs flex items-center gap-2 transition-all shadow-xl shadow-purple-600/20"
                 >
@@ -322,7 +340,7 @@ export const PostDetailPage: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  {auth.currentUser?.uid === comment.authorId && (
+                  {currentUser?.id === comment.authorId && (
                     <button 
                       onClick={() => handleDeleteComment(comment.id)}
                       className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
@@ -339,23 +357,23 @@ export const PostDetailPage: React.FC = () => {
                   <button 
                     onClick={() => handleCommentUpvote(comment.id, comment.upvotes)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                      auth.currentUser && comment.upvotes?.includes(auth.currentUser.uid)
+                      currentUser && comment.upvotes?.includes(currentUser.id)
                         ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
                         : 'bg-gray-50 hover:bg-gray-100 text-gray-500'
                     }`}
                   >
-                    <ThumbsUp className={`w-3 h-3 ${auth.currentUser && comment.upvotes?.includes(auth.currentUser.uid) ? 'fill-current' : ''}`} />
+                    <ThumbsUp className={`w-3 h-3 ${currentUser && comment.upvotes?.includes(currentUser.id) ? 'fill-current' : ''}`} />
                     {comment.upvotes?.length || 0}
                   </button>
                   <button 
                     onClick={() => handleCommentDownvote(comment.id, comment.downvotes)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                      auth.currentUser && comment.downvotes?.includes(auth.currentUser.uid)
+                      currentUser && comment.downvotes?.includes(currentUser.id)
                         ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/20'
                         : 'bg-gray-50 hover:bg-gray-100 text-gray-500'
                     }`}
                   >
-                    <ThumbsDown className={`w-3 h-3 ${auth.currentUser && comment.downvotes?.includes(auth.currentUser.uid) ? 'fill-current' : ''}`} />
+                    <ThumbsDown className={`w-3 h-3 ${currentUser && comment.downvotes?.includes(currentUser.id) ? 'fill-current' : ''}`} />
                     {comment.downvotes?.length || 0}
                   </button>
                 </div>
