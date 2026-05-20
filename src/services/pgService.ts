@@ -1,9 +1,13 @@
-import { collection, addDoc, getDocs, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db, auth } from '../firebase';
+/**
+ * pgService.ts — Backend API version (MySQL/Express)
+ * Replaces Firebase Firestore + Firebase Auth with Express REST API + Supabase Auth.
+ */
+import { supabase } from '../supabase';
 import { PGListing } from '../types';
 
-const COLLECTION_NAME = 'pg_listings';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
+// ── Keep OperationType for backward compat ──────────────────
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -13,97 +17,136 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId: string | undefined;
-    email: string | null | undefined;
-    emailVerified: boolean | undefined;
-    isAnonymous: boolean | undefined;
-    tenantId: string | null | undefined;
-    providerInfo: {
-      providerId: string;
-      displayName: string | null;
-      email: string | null;
-      photoUrl: string | null;
-    }[];
+// ── Shared auth-aware fetch helper ─────────────────────────
+async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<any> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> || {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_URL}${url}`, { ...options, headers });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.error || `Request failed with status ${response.status}`);
   }
+  return response.json();
 }
 
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
-    },
-    operationType,
-    path
+// ── Normalise backend row → PGListing shape ─────────────────
+function normaliseListing(item: any): PGListing {
+  let parsedImages: string[] = [];
+  if (typeof item.images === 'string') {
+    try { parsedImages = JSON.parse(item.images); } catch(e){}
+  } else if (Array.isArray(item.images)) {
+    parsedImages = item.images;
   }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+
+  return {
+    id: item.id,
+    college: item.college || '',
+    location: item.location || '',
+    budget: item.budget || '',
+    gender: (item.gender as 'Male' | 'Female' | 'Any') || 'Any',
+    description: item.description || '',
+    images: parsedImages,
+    socialLink: item.social_link || item.socialLink || '',
+    authorId: item.author_id || item.authorId || '',
+    authorName: item.author_name || item.authorName || 'Anonymous',
+    authorPhoto: item.author_photo || item.authorPhoto || '',
+    createdAt: item.created_at || item.createdAt || new Date().toISOString(),
+  };
 }
 
-export const createPGListing = async (listingData: Omit<PGListing, 'id' | 'authorId' | 'authorName' | 'authorPhoto' | 'createdAt'>) => {
-  if (!auth.currentUser) throw new Error('User must be authenticated to post a listing.');
-  
-  try {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-      ...listingData,
-      authorId: auth.currentUser.uid,
-      authorName: auth.currentUser.displayName || 'Anonymous',
-      authorPhoto: auth.currentUser.photoURL || '',
-      createdAt: serverTimestamp()
+// ── GET /api/pg ─────────────────────────────────────────────
+/**
+ * getPGListings — mimics the old Firebase onSnapshot signature.
+ * Calls the REST API once, invokes callback, returns a no-op unsubscribe.
+ * For real-time updates, call this inside a polling interval or manually refetch.
+ */
+export const getPGListings = (
+  callback: (listings: PGListing[]) => void,
+  college?: string,
+  gender?: string,
+  onError?: (err: Error) => void
+): (() => void) => {
+  const params = new URLSearchParams({ limit: '100' });
+  if (college) params.set('college', college);
+  if (gender && gender !== 'Any') params.set('gender', gender);
+
+  fetchWithAuth(`/api/pg?${params}`)
+    .then((data: any[]) => {
+      callback((Array.isArray(data) ? data : []).map(normaliseListing));
+    })
+    .catch((err) => {
+      console.error('[pgService] getPGListings error:', err);
+      if (onError) {
+        onError(err instanceof Error ? err : new Error(String(err)));
+      }
+      // Do NOT call callback([]) — that would show "No listings found" on error
     });
-    return docRef.id;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, COLLECTION_NAME);
-  }
+
+  // Return no-op unsubscribe (compatible with old onSnapshot return value)
+  return () => {};
 };
 
-export const getPGListings = (callback: (listings: PGListing[]) => void) => {
-  const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'));
-  
-  return onSnapshot(q, (snapshot) => {
-    const listings = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: (doc.data().createdAt as any)?.toDate()?.toISOString() || new Date().toISOString()
-    })) as PGListing[];
-    callback(listings);
-  }, (error) => {
-    console.error("Firestore onSnapshot error:", error);
-    callback([]);
-    // Don't throw for snapshot listeners
-  });
-};
+// ── POST /api/pg ────────────────────────────────────────────
+export const createPGListing = async (
+  listingData: Omit<PGListing, 'id' | 'authorId' | 'authorName' | 'authorPhoto' | 'createdAt'>
+): Promise<string | undefined> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User must be authenticated to post a listing.');
 
-export const deletePGListing = async (listingId: string) => {
   try {
-    const docRef = doc(db, COLLECTION_NAME, listingId);
-    await deleteDoc(docRef);
+    const result = await fetchWithAuth('/api/pg', {
+      method: 'POST',
+      body: JSON.stringify({
+        college: listingData.college,
+        location: listingData.location,
+        budget: listingData.budget,
+        gender: listingData.gender,
+        description: listingData.description,
+        socialLink: listingData.socialLink,
+        images: listingData.images || [],
+      }),
+    });
+    return result.id;
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `${COLLECTION_NAME}/${listingId}`);
+    console.error('[pgService] createPGListing error:', error);
+    throw error;
   }
 };
 
-export const updatePGListing = async (listingId: string, listingData: Partial<PGListing>) => {
+// ── DELETE /api/pg/:id ──────────────────────────────────────
+export const deletePGListing = async (listingId: string): Promise<void> => {
   try {
-    const docRef = doc(db, COLLECTION_NAME, listingId);
-    const { id: _, ...data } = listingData as any;
-    await updateDoc(docRef, data);
+    await fetchWithAuth(`/api/pg/${listingId}`, { method: 'DELETE' });
   } catch (error) {
-    handleFirestoreError(error, OperationType.UPDATE, `${COLLECTION_NAME}/${listingId}`);
+    console.error('[pgService] deletePGListing error:', error);
+    throw error;
   }
+};
+
+// ── PATCH /api/pg/:id ───────────────────────────────────────
+export const updatePGListing = async (listingId: string, listingData: Partial<PGListing>): Promise<void> => {
+  try {
+    const { id: _id, authorId, authorName, authorPhoto, createdAt, ...data } = listingData as any;
+    await fetchWithAuth(`/api/pg/${listingId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  } catch (error) {
+    console.error('[pgService] updatePGListing error:', error);
+    throw error;
+  }
+};
+
+// ── Helper: get current Supabase user (replaces auth.currentUser) ──
+export const getCurrentUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
 };

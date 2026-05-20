@@ -1,10 +1,13 @@
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, orderBy, serverTimestamp, Timestamp, arrayUnion } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, auth, storage } from '../firebase';
+/**
+ * resourceService.ts — Backend API version (MySQL/Express + Cloudinary)
+ * Replaces Firebase Firestore and Firebase Storage.
+ */
+import { supabase } from '../supabase';
 import { Resource, ResourceType } from '../types';
 
-const COLLECTION_NAME = 'resources';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
+// ── Keep OperationType enum for backward compatibility ──────
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -14,150 +17,226 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId: string | undefined;
-    email: string | null | undefined;
-    emailVerified: boolean | undefined;
-    isAnonymous: boolean | undefined;
-    tenantId: string | null | undefined;
-    providerInfo: {
-      providerId: string;
-      displayName: string | null;
-      email: string | null;
-      photoUrl: string | null;
-    }[];
+// ── Shared auth-aware fetch helper ─────────────────────────
+async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<any> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> || {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_URL}${url}`, { ...options, headers });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    const errorMessage = errData.error || `Request failed with status ${response.status}`;
+    // Keep compatible error shape with old handleFirestoreError
+    const err = new Error(JSON.stringify({ error: errorMessage, operationType: 'api', path: url, authInfo: {} }));
+    throw err;
   }
+  return response.json();
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
-    },
-    operationType,
-    path
-  }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+// Legacy error handler shim (for callers that still use this from newsService import)
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {
+  const msg = error instanceof Error ? error.message : String(error);
+  console.error('[resourceService] API Error:', { operationType, path, error: msg });
+  throw error instanceof Error ? error : new Error(msg);
 }
 
-export const uploadFile = async (file: File) => {
+// ── Upload file via backend (Cloudinary or R2 depending on file type) ────────────
+export const uploadFile = async (
+  file: File,
+  folder: 'pyqs' | 'notes' | 'books' | 'resources' | 'exchange' | 'events' | 'avatars' | 'pg' = 'resources',
+  meta: { subject?: string; course?: string; subjectCode?: string } = {}
+): Promise<string> => {
   try {
-    const storageRef = ref(storage, `resources/${Date.now()}_${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) throw new Error('Not authenticated');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Build query string — backend uses these to name the R2 file
+    const params = new URLSearchParams({ folder });
+    if (meta.course)      params.set('course',      meta.course);
+    if (meta.subject)     params.set('subject',     meta.subject);
+    if (meta.subjectCode) params.set('subjectCode', meta.subjectCode);
+
+    const response = await fetch(`${API_URL}/api/resources/upload?${params.toString()}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'File upload failed');
+    }
+    const data = await response.json();
+    return data.url;
   } catch (error) {
-    console.error("Error uploading file:", error);
+    console.error('[resourceService] uploadFile error:', error);
     throw error;
   }
 };
 
-export const uploadResource = async (resourceData: Omit<Resource, 'id' | 'ratings' | 'reports' | 'uploadDate'>) => {
+// ── Normalise backend row → Resource shape ──────────────────
+function normaliseResource(item: any): Resource {
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description || '',
+    type: item.type as ResourceType,
+    course: item.course || '',
+    semester: Number(item.semester) || 0,
+    subCategory: item.sub_category || item.subCategory || '',
+    subjectCode: item.subject_code || item.subjectCode || '',
+    tags: Array.isArray(item.tags) ? item.tags : (typeof item.tags === 'string' ? JSON.parse(item.tags || '[]') : []),
+    link: item.link || item.file_url || item.fileUrl || '',
+    directDownloadLink: item.direct_download_link || item.directDownloadLink || '',
+    uploadDate: item.upload_date || item.uploadDate || new Date(item.created_at || Date.now()).toISOString().split('T')[0],
+    uploader: item.uploader || item.uploader_name || item.uploaderName || '',
+    uploaderId: item.uploader_id || item.uploaderId || '',
+    uploaderRole: item.uploader_role || item.uploaderRole || 'user',
+    isApproved: Boolean(item.is_approved),
+    ratings: Array.isArray(item.ratings) ? item.ratings : (typeof item.ratings === 'string' ? JSON.parse(item.ratings || '[]') : []),
+    reports: Array.isArray(item.reports) ? item.reports : (typeof item.reports === 'string' ? JSON.parse(item.reports || '[]') : []),
+  };
+}
+
+// ── GET /api/resources ──────────────────────────────────────
+export const getResources = async (
+  includeUnapproved = false,
+  course?: string,
+  semester?: number,
+  type?: ResourceType
+): Promise<Resource[]> => {
   try {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-      isApproved: false, // Default to false, admin needs to approve
-      ...resourceData,
-      ratings: [],
-      reports: [],
-      uploadDate: new Date().toISOString().split('T')[0],
-      uploaderId: auth.currentUser?.uid
+    const params = new URLSearchParams({ limit: '200' });
+    if (course && course !== 'All Courses') params.set('course', course);
+    if (semester) params.set('semester', String(semester));
+    if (type && type !== ('All' as any)) params.set('type', type);
+
+    const endpoint = includeUnapproved
+      ? `/api/resources?${params}&includeUnapproved=true`
+      : `/api/resources?${params}`;
+
+    const data = await fetchWithAuth(endpoint);
+    return (Array.isArray(data) ? data : []).map(normaliseResource);
+  } catch (error) {
+    const isConnRefused = error instanceof TypeError && error.message.includes('fetch');
+    if (isConnRefused) {
+      console.warn('[resourceService] Backend unavailable — using local data. Start the backend with `npm run dev` in the backend folder.');
+    } else {
+      console.error('[resourceService] getResources error:', error);
+    }
+    return [];
+  }
+};
+
+// ── GET /api/resources/me ────────────────────────────────────
+export const fetchUserResources = async (): Promise<Resource[]> => {
+  try {
+    const data = await fetchWithAuth('/api/resources/me');
+    return (Array.isArray(data) ? data : []).map(normaliseResource);
+  } catch (error) {
+    console.error('[resourceService] fetchUserResources error:', error);
+    return [];
+  }
+};
+
+// ── POST /api/resources ───────────────────────────────────────────
+export const uploadResource = async (
+  resourceData: Omit<Resource, 'id' | 'ratings' | 'reports' | 'uploadDate'>
+): Promise<string | undefined> => {
+  try {
+    const payload = {
+      title: resourceData.title,
+      description: resourceData.description,
+      type: resourceData.type,
+      course: resourceData.course,
+      semester: resourceData.semester,
+      subCategory: resourceData.subCategory,
+      subjectCode: (resourceData as any).subjectCode || '',
+      tags: Array.isArray(resourceData.tags) ? resourceData.tags : [],
+      link: resourceData.link,
+      directDownloadLink: resourceData.directDownloadLink || '',
+      uploader: resourceData.uploader,
+      uploaderId: resourceData.uploaderId || '',
+    };
+    const result = await fetchWithAuth('/api/resources', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
-    return docRef.id;
+    return result.id;
   } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, COLLECTION_NAME);
+    handleFirestoreError(error, OperationType.CREATE, 'resources');
   }
 };
 
-export const getResources = async (includeUnapproved = false, course?: string, semester?: number, type?: ResourceType) => {
+// ── PATCH /api/resources/:id/approve ───────────────────────
+export const approveResource = async (resourceId: string): Promise<void> => {
   try {
-    let q = query(collection(db, COLLECTION_NAME));
-    
-    if (!includeUnapproved) {
-      q = query(q, where('isApproved', '==', true));
-    }
-
-    if (course && course !== 'All Courses') {
-      q = query(q, where('course', '==', course));
-    }
-    if (semester) {
-      q = query(q, where('semester', '==', semester));
-    }
-    if (type && type !== 'All' as any) {
-      q = query(q, where('type', '==', type));
-    }
-
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as Resource[];
+    await fetchWithAuth(`/api/resources/${resourceId}/approve`, { method: 'PATCH' });
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, COLLECTION_NAME);
+    handleFirestoreError(error, OperationType.UPDATE, `resources/${resourceId}`);
   }
 };
 
-export const approveResource = async (resourceId: string) => {
+// ── DELETE /api/resources/:id ───────────────────────────────
+export const deleteResource = async (resourceId: string): Promise<void> => {
   try {
-    const resourceRef = doc(db, COLLECTION_NAME, resourceId);
-    await updateDoc(resourceRef, { isApproved: true });
+    await fetchWithAuth(`/api/resources/${resourceId}`, { method: 'DELETE' });
   } catch (error) {
-    handleFirestoreError(error, OperationType.UPDATE, `${COLLECTION_NAME}/${resourceId}`);
+    handleFirestoreError(error, OperationType.DELETE, `resources/${resourceId}`);
   }
 };
 
-export const deleteResource = async (resourceId: string) => {
+// ── PATCH /api/resources/:id ────────────────────────────────
+export const updateResource = async (resourceId: string, resourceData: Partial<Resource>): Promise<void> => {
   try {
-    const resourceRef = doc(db, COLLECTION_NAME, resourceId);
-    await deleteDoc(resourceRef);
-  } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `${COLLECTION_NAME}/${resourceId}`);
-  }
-};
+    const { id: _id, ratings, reports, ...rest } = resourceData as any;
+    const payload: any = { ...rest };
+    // Convert camelCase to snake_case for backend
+    if (payload.fileUrl !== undefined) { payload.file_url = payload.fileUrl; delete payload.fileUrl; }
+    if (payload.thumbnailUrl !== undefined) { payload.thumbnail_url = payload.thumbnailUrl; delete payload.thumbnailUrl; }
+    if (payload.subCategory !== undefined) { payload.sub_category = payload.subCategory; delete payload.subCategory; }
+    if (payload.uploadDate !== undefined) { delete payload.uploadDate; }
 
-export const updateResource = async (resourceId: string, resourceData: Partial<Resource>) => {
-  try {
-    const resourceRef = doc(db, COLLECTION_NAME, resourceId);
-    const { id: _, ...data } = resourceData as any;
-    await updateDoc(resourceRef, data);
-  } catch (error) {
-    handleFirestoreError(error, OperationType.UPDATE, `${COLLECTION_NAME}/${resourceId}`);
-  }
-};
-
-export const rateResource = async (resourceId: string, rating: number) => {
-  try {
-    const resourceRef = doc(db, COLLECTION_NAME, resourceId);
-    await updateDoc(resourceRef, {
-      ratings: arrayUnion(rating)
+    await fetchWithAuth(`/api/resources/${resourceId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
     });
   } catch (error) {
-    handleFirestoreError(error, OperationType.UPDATE, `${COLLECTION_NAME}/${resourceId}`);
+    handleFirestoreError(error, OperationType.UPDATE, `resources/${resourceId}`);
   }
 };
 
-export const reportResource = async (resourceId: string, reason: string) => {
+// ── PATCH /api/resources/:id/rate ──────────────────────────
+export const rateResource = async (resourceId: string, rating: number): Promise<void> => {
   try {
-    const resourceRef = doc(db, COLLECTION_NAME, resourceId);
-    await updateDoc(resourceRef, {
-      reports: arrayUnion({ reason, date: new Date().toISOString() })
+    await fetchWithAuth(`/api/resources/${resourceId}/rate`, {
+      method: 'PATCH',
+      body: JSON.stringify({ rating }),
     });
   } catch (error) {
-    handleFirestoreError(error, OperationType.UPDATE, `${COLLECTION_NAME}/${resourceId}`);
+    handleFirestoreError(error, OperationType.UPDATE, `resources/${resourceId}`);
+  }
+};
+
+// ── PATCH /api/resources/:id/report ────────────────────────
+export const reportResource = async (resourceId: string, reason: string): Promise<void> => {
+  try {
+    await fetchWithAuth(`/api/resources/${resourceId}/report`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason }),
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `resources/${resourceId}`);
   }
 };

@@ -23,6 +23,7 @@ export interface Resource {
   directDownloadLink?: string;
   uploader: string;
   uploaderId?: string;
+  uploaderRole?: string;
   uploadDate: string;
   ratings: number[];
   reports: { reason: string; date: string }[];
@@ -34,7 +35,8 @@ export interface User {
   email: string;
   displayName: string;
   photoURL: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'faculty';
+  is_verified?: boolean | number;
   createdAt: string;
   college?: string;
   course?: string;
@@ -49,7 +51,11 @@ export interface News {
   category: 'News' | 'Event';
   college: string;
   eligibility?: 'All' | 'DU Only' | 'College Specific' | 'NCWEB' | 'Girls Only' | 'DU + SOL' | 'DU + SOL + NCWEB';
+  venue?: string;
+  imageUrl?: string;
+  description?: string;
   createdAt: any;
+  isApproved?: boolean;
 }
 
 export interface NewsItem {
@@ -109,6 +115,22 @@ export interface PGListing {
   budget: string;
   gender: 'Male' | 'Female' | 'Any';
   description: string;
+  images?: string[];
   socialLink: string;
   createdAt: string;
 }
+
+export interface Ad {
+  id: string;
+  title: string;
+  image_url: string;
+  link_url: string;
+  position: 'homepage_top' | 'browse_sidebar' | 'forum_top';
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface SiteSettings {
+  [key: string]: string;
+}
+

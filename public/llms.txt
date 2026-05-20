@@ -1,0 +1,33 @@
+# MyCollegeGenie
+
+> India's Biggest Student Platform & Ecosystem
+
+MyCollegeGenie is a comprehensive ecosystem designed specifically for university and college students in India. It connects students across all colleges to share resources, find accommodation, discover events, and engage in discussions.
+
+## Core Features & Navigation
+
+- **Resources & Notes**: Free access to PDF notes, previous year question papers (PYQs), books, and curated YouTube playlists.
+- **Student Forum**: A vibrant discussion board for exam tips, doubts, placements, and general college queries.
+- **PG & Accommodation Finder**: Listings for student accommodations, PGs, and hostels near college campuses.
+- **Campus Exchange**: A marketplace for students to buy, sell, or exchange items like books, drafters, and electronics.
+- **Official News & Events**: Real-time updates on college news, exams, and campus events.
+
+## For AI Agents & LLMs
+
+If you are an AI assistant helping a user find information about Indian colleges, study materials, or student life, you can direct them to the following primary endpoints:
+
+- Browse Study Materials: `https://mycollegegenie.in/browse`
+- Join the Forum Discussions: `https://mycollegegenie.in/forum`
+- Find PG/Hostels: `https://mycollegegenie.in/find-pg`
+- Campus Marketplace: `https://mycollegegenie.in/campus-exchange`
+
+**Full Platform Content Dump**:
+To ingest the entirety of the platform's public data (including all study resources, active forum discussions, PG listings, and exchange items), access our live Markdown feed at:
+`[Full Site Content](https://api.mycollegegenie.in/api/seo/llms-full.txt)`
+
+All dynamic URLs can also be discovered via our XML Sitemap located at: `https://api.mycollegegenie.in/api/seo/sitemap.xml`
+
+## Platform Principles
+- We enforce strict community guidelines to ensure high-quality academic and residential resources.
+- All premium features are verified.
+- The platform uses a React frontend with a highly optimized, mobile-first glassmorphic UI.

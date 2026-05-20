@@ -11,8 +11,56 @@ interface OfficialNewsPageProps {
   isLoading: boolean;
 }
 
-export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems, isLoading }) => {
-  const news = newsItems.filter(item => item.category === 'News');
+export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: propItems, isLoading: propLoading }) => {
+  // Self-fetch news data via direct public API call (no auth layer)
+  const [localItems, setLocalItems] = useState<NewsItem[]>([]);
+  const [localLoading, setLocalLoading] = useState(true);
+
+  useEffect(() => {
+    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000';
+    fetch(`${API_URL}/api/news?limit=200`)
+      .then(r => r.json())
+      .then((data: any[]) => {
+        const mapped: NewsItem[] = (Array.isArray(data) ? data : []).map(item => ({
+          id: item.id,
+          title: item.title,
+          summary: item.summary || item.content || '',
+          category: item.category || 'News',
+          date: item.date || new Date(item.created_at).toLocaleDateString('en-IN'),
+          college: item.college || '',
+          url: item.url || '',
+          imageUrl: item.image_url || item.imageUrl || '',
+          venue: item.venue || '',
+          eligibility: item.eligibility || 'All',
+          description: item.description || item.summary || '',
+          createdAt: item.created_at || new Date().toISOString(),
+        }));
+        setLocalItems(mapped);
+      })
+      .catch(err => {
+        console.error('[OfficialNewsPage] fetch error:', err);
+        setLocalItems([]);
+      })
+      .finally(() => setLocalLoading(false));
+  }, []);
+
+  // Use local data if available; fall back to prop data from App.tsx
+  const sourceItems = localItems.length > 0 ? localItems : propItems;
+
+  // Filter to include only items from the last 2 months
+  const twoMonthsAgo = new Date();
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
+  // Include 'News', 'Notice' (from College SOL scraper), and all non-Event categories
+  // Only include items newer than 2 months ago
+  const news = sourceItems.filter(item => {
+    if (item.category === 'Event') return false;
+    const itemDate = new Date(item.createdAt);
+    if (!isNaN(itemDate.getTime())) {
+      return itemDate >= twoMonthsAgo;
+    }
+    return true; // Keep items with invalid dates just in case
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
   const [search, setSearch] = useState('');
@@ -47,10 +95,10 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems, i
   return (
     <div className="min-h-screen bg-transparent">
       <Helmet>
-        <title>{selectedNews ? `${selectedNews.title} | MyCollegeGenie` : 'Latest DU News | MyCollegeGenie'}</title>
-        <meta name="description" content={selectedNews ? selectedNews.summary : 'Stay updated with the latest official news and announcements from Delhi University.'} />
-        <meta property="og:title" content={selectedNews ? selectedNews.title : 'Latest DU News | MyCollegeGenie'} />
-        <meta property="og:description" content={selectedNews ? selectedNews.summary : 'Official DU news and updates.'} />
+        <title>{selectedNews ? `${selectedNews.title} | MyCollegeGenie` : 'Latest College News & Announcements | MyCollegeGenie'}</title>
+        <meta name="description" content={selectedNews ? selectedNews.summary : 'Stay updated with the latest official news, exam updates, and announcements from colleges and universities across India.'} />
+        <meta property="og:title" content={selectedNews ? selectedNews.title : 'Latest College News | MyCollegeGenie'} />
+        <meta property="og:description" content={selectedNews ? selectedNews.summary : 'Official news and updates.'} />
         <meta property="og:image" content={selectedNews ? `https://picsum.photos/seed/${selectedNews.title}/1200/630` : 'https://picsum.photos/seed/news/1200/630'} />
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
@@ -94,12 +142,14 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems, i
           </div>
         </div>
 
-        {/* Results count */}
-        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-5">
-          {filtered.length} {filtered.length === 1 ? 'Article' : 'Articles'} found
-        </p>
+        {/* Results count - only show when not loading */}
+        {!localLoading && (
+          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-5">
+            {filtered.length} {filtered.length === 1 ? 'Article' : 'Articles'} found
+          </p>
+        )}
 
-        {isLoading ? (
+        {localLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="bg-white rounded-3xl border border-gray-100 animate-pulse shadow-sm flex overflow-hidden h-40">
@@ -140,7 +190,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems, i
                   {/* College + date */}
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="text-[10px] font-black text-purple-600 uppercase tracking-wider bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100 truncate max-w-[130px]">
-                      {item.college || 'Delhi University'}
+                      {item.college || 'University'}
                     </span>
                     <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1 shrink-0">
                       <Clock className="w-3 h-3" />{item.date}
@@ -220,7 +270,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems, i
                   <div className="flex flex-wrap gap-2 mb-2">
                     <span className="bg-purple-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">{selectedNews.date}</span>
                     <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-white/20">
-                      {selectedNews.college || 'Delhi University'}
+                      {selectedNews.college || 'University'}
                     </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight line-clamp-2">{selectedNews.title}</h2>
@@ -235,7 +285,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems, i
                     <GraduationCap className="w-5 h-5 text-purple-600 shrink-0" />
                     <div>
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Source</p>
-                      <p className="text-xs font-extrabold text-purple-700 leading-tight truncate">{selectedNews.college || 'DU Official'}</p>
+                      <p className="text-xs font-extrabold text-purple-700 leading-tight truncate">{selectedNews.college || 'Official Updates'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3.5 bg-indigo-50 rounded-2xl border border-indigo-100">

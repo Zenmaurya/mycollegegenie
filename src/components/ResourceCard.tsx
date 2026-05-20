@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { FileText, Clock, BookOpen, Youtube, Star, Share2, ChevronRight, Download, Bookmark, User, Eye, MessageCircle, Lightbulb } from 'lucide-react';
+import { FileText, Clock, BookOpen, Youtube, Star, Share2, ChevronRight, Download, Bookmark, User, Eye, MessageCircle, Lightbulb, GraduationCap, BadgeCheck } from 'lucide-react';
 import { Resource } from '../types';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,6 +13,25 @@ interface ResourceCardProps {
   isSaved: boolean;
   getAverageRating: (ratings?: number[]) => number;
 }
+
+const getYouTubeThumbnail = (url?: string) => {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    const videoId = u.searchParams.get('v');
+    if (videoId) return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+    if (u.hostname === 'youtu.be') {
+      const vid = u.pathname.replace(/^\//, '');
+      if (vid) return `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+    }
+    const embedMatch = u.pathname.match(/\/embed\/([^/?#]+)/);
+    if (embedMatch) return `https://i.ytimg.com/vi/${embedMatch[1]}/hqdefault.jpg`;
+  } catch {
+    const m = url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/)([A-Za-z0-9_-]{11})/);
+    if (m) return `https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg`;
+  }
+  return null;
+};
 
 export const ResourceCard: React.FC<ResourceCardProps> = ({
   resource,
@@ -39,12 +58,12 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
     PYQ: Clock,
     Book: BookOpen,
     Playlist: Youtube,
-  }[resource.type];
+  }[resource.type] ?? FileText;
 
   const isSyllabus = resource.subCategory === 'Syllabus';
   const rating = getAverageRating(resource.ratings);
   const canDownload = !(resource.type === 'Note' || resource.type === 'PYQ') && (isSyllabus || resource.directDownloadLink);
-  const canFlipbook = !(resource.type === 'Note' || resource.type === 'PYQ') && resource.type !== 'Playlist';
+
 
   const handleTabClick = (e: React.MouseEvent, tab: 'comments' | 'tips') => {
     e.stopPropagation();
@@ -53,6 +72,8 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       window.dispatchEvent(new CustomEvent('openResourceTab', { detail: tab }));
     }, 20);
   };
+
+  const youtubeThumbnail = resource.type === 'Playlist' ? getYouTubeThumbnail(resource.link) : null;
 
   /* ─────────────── LIST VIEW ─────────────── */
   if (viewMode === 'list') {
@@ -66,10 +87,19 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         className="bg-white border border-gray-100 rounded-2xl px-4 py-3.5 flex items-center gap-4 cursor-pointer group hover:border-purple-100 transition-all"
         onClick={() => onClick(resource)}
       >
-        {/* Icon */}
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${cfg.iconBg} ${cfg.border} border group-hover:scale-105 transition-transform`}>
-          <TypeIcon className={`w-5 h-5 ${cfg.text}`} />
-        </div>
+        {/* Icon or Thumbnail */}
+        {youtubeThumbnail ? (
+          <div className="w-16 h-11 rounded-xl overflow-hidden shrink-0 relative border border-gray-100 group-hover:border-purple-200 transition-colors shadow-sm">
+            <img src={youtubeThumbnail} alt="Thumbnail" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/10 transition-colors">
+              <Youtube className="w-4 h-4 text-white" />
+            </div>
+          </div>
+        ) : (
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${cfg.iconBg} ${cfg.border} border group-hover:scale-105 transition-transform`}>
+            <TypeIcon className={`w-5 h-5 ${cfg.text}`} />
+          </div>
+        )}
 
         {/* Main Info */}
         <div className="flex-1 min-w-0">
@@ -96,12 +126,10 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         {/* Badges */}
         <div className="hidden md:flex items-center gap-2 shrink-0">
           <button onClick={(e) => handleTabClick(e, 'comments')}
-            className="flex items-center gap-1 px-2.5 py-1 bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-[11px] font-bold border border-gray-100 transition-colors">
-            <MessageCircle className="w-3.5 h-3.5" />Comments
+            className="flex items-center gap-1 px-2.5 py-1 bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-[11px] font-bold border border-gray-100 transition-colors"><MessageCircle className="w-3.5 h-3.5" />Comments
           </button>
           <button onClick={(e) => handleTabClick(e, 'tips')}
-            className="flex items-center gap-1 px-2.5 py-1 bg-gray-50 text-gray-500 hover:bg-amber-50 hover:text-amber-600 rounded-lg text-[11px] font-bold border border-gray-100 transition-colors">
-            <Lightbulb className="w-3.5 h-3.5" />Tips
+            className="flex items-center gap-1 px-2.5 py-1 bg-gray-50 text-gray-500 hover:bg-amber-50 hover:text-amber-600 rounded-lg text-[11px] font-bold border border-gray-100 transition-colors"><Lightbulb className="w-3.5 h-3.5" />Tips
           </button>
         </div>
 
@@ -119,12 +147,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
               <Download className="w-4 h-4" />
             </button>
           )}
-          {canFlipbook && (
-            <button onClick={(e) => { e.stopPropagation(); navigate(`/flipbook/${resource.id}`); }}
-              className="p-2 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all hover:scale-105 hidden sm:flex" title="Flipbook">
-              <Eye className="w-4 h-4" />
-            </button>
-          )}
+
           <button onClick={(e) => { e.stopPropagation(); onSave(resource.id); }}
             className={`p-2 rounded-xl transition-all hover:scale-105 ${isSaved ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:bg-gray-50'}`}>
             <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
@@ -145,11 +168,27 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -6, boxShadow: '0 24px 48px -12px rgba(139,92,246,0.18)' }}
       transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-      className="bg-white border border-gray-100 rounded-3xl flex flex-col cursor-pointer group hover:border-purple-100 transition-all overflow-hidden"
+      className="bg-white border border-gray-100 rounded-3xl flex flex-col cursor-pointer group hover:border-purple-100 transition-all overflow-hidden h-full"
       onClick={() => onClick(resource)}
     >
-      {/* ── Zone 1: Header (type badge + rating + save) ── always same height */}
-      <div className="flex items-center justify-between px-5 pt-5 pb-0">
+      {/* ── Thumbnail (only for Playlist with valid YouTube link) ── */}
+      {youtubeThumbnail && (
+        <div className="w-full aspect-video bg-gray-100 overflow-hidden relative shrink-0">
+          <img
+            src={youtubeThumbnail}
+            alt={resource.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+          <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
+          <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold text-white flex items-center gap-1.5 shadow-xl">
+            <Youtube className="w-3.5 h-3.5 text-red-500" /> Playlist
+          </div>
+        </div>
+      )}
+
+      {/* ── Zone 1: Header (type badge + rating + save) ── */}
+      <div className={`flex items-center justify-between px-5 ${youtubeThumbnail ? 'pt-4' : 'pt-5'} pb-0 shrink-0`}>
         <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
           <TypeIcon className="w-3 h-3" />
           {resource.type}
@@ -166,26 +205,25 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         </div>
       </div>
 
-      {/* ── Zone 2: Title — fixed 2-line height so all cards have same title area ── */}
-      <div className="px-5 pt-4 pb-0">
-        <h3 className="font-extrabold text-base text-gray-900 group-hover:text-purple-700 transition-colors duration-300 leading-snug"
-          style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '2.75rem' }}>
+      {/* ── Zone 2: Title — clamps to 2 lines, min-height ensures uniform card height ── */}
+      <div className="px-5 pt-4 pb-0 shrink-0">
+        <h3
+          className="font-extrabold text-base text-gray-900 group-hover:text-purple-700 transition-colors duration-300 leading-snug"
+          style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '2.75rem' }}
+        >
           {resource.title}
         </h3>
       </div>
 
-      {/* ── Zone 3: Metadata — Semester pill + Course — ALWAYS on same line, no wrap ── */}
-      <div className="px-5 pt-3 pb-0 flex items-center gap-2 min-w-0">
-        {/* Sem badge — fixed width prevents shift */}
+      {/* ── Zone 3: Metadata — Sem pill + Course truncated — always one line ── */}
+      <div className="px-5 pt-3 pb-0 flex items-center gap-2 min-w-0 shrink-0">
         <span className={`shrink-0 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${cfg.bg} ${cfg.text} border ${cfg.border}`}>
           Sem {resource.semester}
         </span>
         <span className="w-1 h-1 bg-gray-300 rounded-full shrink-0" />
-        {/* Course — truncates, never wraps */}
         <span className="text-[11px] font-semibold text-gray-500 truncate min-w-0">
           {resource.course}{resource.subjectCode && ` (${resource.subjectCode})`}
         </span>
-        {/* Download if applicable — pushed to right */}
         {canDownload && (
           <button onClick={(e) => { e.stopPropagation(); window.open(resource.directDownloadLink || resource.link, '_blank'); }}
             className="ml-auto shrink-0 p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg border border-green-100 transition-all hover:scale-105" title="Download">
@@ -194,37 +232,36 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         )}
       </div>
 
-      {/* ── Zone 4: Action buttons — Comments / Tips / View — flex-grow fills space ── */}
-      <div className="flex items-center gap-2 px-5 pt-4 pb-0 flex-wrap">
+      {/* ── Spacer: fills remaining space so footer always lands at bottom ── */}
+      <div className="flex-grow" />
+
+      {/* ── Zone 4: Action buttons ── */}
+      <div className="flex items-center gap-2 px-5 pt-4 pb-0 flex-wrap shrink-0">
         <button onClick={(e) => handleTabClick(e, 'comments')}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl text-xs font-bold border border-gray-100 hover:border-blue-200 transition-colors">
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl text-xs font-bold border border-gray-100 hover:border-blue-200 transition-colors shrink-0">
           <MessageCircle className="w-3.5 h-3.5" />
           Comments
         </button>
         <button onClick={(e) => handleTabClick(e, 'tips')}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-amber-50 hover:text-amber-600 rounded-xl text-xs font-bold border border-gray-100 hover:border-amber-200 transition-colors">
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-amber-50 hover:text-amber-600 rounded-xl text-xs font-bold border border-gray-100 hover:border-amber-200 transition-colors shrink-0">
           <Lightbulb className="w-3.5 h-3.5" />
           Tips
         </button>
-        {canFlipbook && (
-          <button onClick={(e) => { e.stopPropagation(); navigate(`/flipbook/${resource.id}`); }}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700 transition-all shadow-sm shadow-purple-600/30">
-            <Eye className="w-3.5 h-3.5" />
-            View
-          </button>
-        )}
+
       </div>
 
       {/* ── Zone 5: Footer — uploader + share + arrow — always at bottom ── */}
-      <div className="flex items-center justify-between mt-auto mx-5 pt-4 pb-4 border-t border-gray-100 mt-4">
+      <div className="flex items-center justify-between mx-5 mt-4 pb-4 pt-4 border-t border-gray-100 shrink-0">
         {/* Uploader */}
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center shrink-0 border border-purple-100">
-            <User className="w-3.5 h-3.5 text-purple-600" />
+          <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${resource.uploaderRole === 'faculty' ? 'bg-gradient-to-br from-amber-100 to-yellow-100 border-amber-200' : 'bg-gradient-to-br from-purple-100 to-pink-100 border-purple-100'}`}>
+            {resource.uploaderRole === 'faculty' ? <GraduationCap className="w-3.5 h-3.5 text-amber-600" /> : <User className="w-3.5 h-3.5 text-purple-600" />}
           </div>
           <div className="min-w-0">
-            <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none mb-0.5">Shared by</p>
-            <p className="text-xs font-bold text-gray-800 truncate max-w-[100px] leading-none">{resource.uploader}</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none mb-0.5">{resource.uploaderRole === 'faculty' ? 'Faculty Member' : 'Shared by'}</p>
+            <p className={`text-xs font-bold truncate max-w-[110px] leading-none flex items-center gap-1 ${resource.uploaderRole === 'faculty' ? 'text-amber-600' : 'text-gray-800'}`}>
+              {resource.uploader} {resource.uploaderRole === 'faculty' && <BadgeCheck className="w-3 h-3 text-amber-500 shrink-0" />}
+            </p>
           </div>
         </div>
 

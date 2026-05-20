@@ -17,6 +17,8 @@ import {
   AlertCircle,
   Clock,
   User as UserIcon,
+  Users,
+  ShoppingCart,
   ExternalLink,
   Plus,
   GraduationCap,
@@ -28,34 +30,60 @@ import {
   MessageSquare,
   Home,
   RefreshCw,
+  ShieldCheck,
   LogIn,
-  Eye
+  Eye,
+  MonitorPlay,
+  ToggleLeft,
+  ToggleRight,
+  Image as ImageIcon,
+  MapPin,
+  GripVertical,
+  Megaphone,
+  BarChart3,
+  Bell,
+  Star,
+  Settings,
+  Globe
 } from 'lucide-react';
-import { Resource, User, News, ForumPost, PGListing, Testimonial } from '../types';
+import { Resource, User, News, ForumPost, PGListing, Testimonial, User as AppUser, Ad, SiteSettings } from '../types';
 import { getResources, approveResource, deleteResource, uploadResource, updateResource, uploadFile } from '../services/resourceService';
-import { getNews, addNews, updateNews, deleteNews } from '../services/newsService';
+import { getNews, addNews, updateNews, deleteNews, approveNews } from '../services/newsService';
 import { ForumService } from '../services/forumService';
 import { getPGListings, deletePGListing } from '../services/pgService';
 import { getTestimonials, addTestimonial, updateTestimonial, deleteTestimonial } from '../services/testimonialService';
-import { auth } from '../firebase';
+import { getUsers, updateUserRole } from '../services/userService';
+import { supabase } from '../supabase';
 import { Card as TestimonialPreviewCard } from '../components/ui/demo';
-import { DU_COURSES, COURSE_METADATA, SUB_CATEGORIES } from '../constants';
+import { College_COURSES, COURSE_METADATA, SUB_CATEGORIES } from '../constants';
 import { toast } from 'sonner';
 import { ConfirmationModal } from '../components/ConfirmationModal';
+import { AdminSidebar, AdminTab } from './admin/AdminSidebar';
+import { AdminContributors } from './admin/AdminContributors';
+import { CollegeMMY_EVENTS } from '../components/UpcomingEventsCarousel';
+
 
 interface AdminPanelProps {
-  user: User | null;
+  user: any | null;
+  appUser: AppUser | null;
+  isAuthLoading: boolean;
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoading }) => {
   const navigate = useNavigate();
   const [resources, setResources] = useState<Resource[]>([]);
   const [news, setNews] = useState<News[]>([]);
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [listings, setListings] = useState<PGListing[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [allUsers, setAllUsers] = useState<AppUser[]>([]);
+  const [exchangeItems, setExchangeItems] = useState<any[]>([]);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'upload' | 'news' | 'forum' | 'pg' | 'testimonials'>('pending');
+  const [activeTab, setActiveTab] = useState<AdminTab | 'pending' | 'approved' | 'upload'>('overview');
+  const [verifications, setVerifications] = useState<any[]>([]);
+  const [emailModal, setEmailModal] = useState<{ id: number; email: string; name: string } | null>(null);
+  const [emailForm, setEmailForm] = useState({ subject: '', message: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('All Courses');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -67,6 +95,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [editingNews, setEditingNews] = useState<News | null>(null);
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
+  const [carouselEditingItem, setCarouselEditingItem] = useState<any | null>(null);
+  const [carouselImageInput, setCarouselImageInput] = useState('');
+  // ── New CMS State ──
+  const [ads, setAds] = useState<Ad[]>([]);
+  const [adToDelete, setAdToDelete] = useState<string | null>(null);
+  const [editingAd, setEditingAd] = useState<Ad | null>(null);
+  const [adFormData, setAdFormData] = useState({ title: '', image_url: '', link_url: '', position: 'homepage_top' as Ad['position'], is_active: true });
+  const [isUploadingAdImage, setIsUploadingAdImage] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>({});
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [settingsForm, setSettingsForm] = useState<SiteSettings>({});
+  // PG Edit
+  const [editingPG, setEditingPG] = useState<PGListing | null>(null);
+  const [pgEditForm, setPgEditForm] = useState({ college: '', location: '', budget: '', gender: 'Any' as string, description: '', socialLink: '' });
+  const [isUploadingPGImage, setIsUploadingPGImage] = useState(false);
+  const [pgEditImages, setPgEditImages] = useState<string[]>([]);
+  // News image
+  const [isUploadingNewsImage, setIsUploadingNewsImage] = useState(false);
+  // Carousel file upload
+  const [isUploadingCarouselImage, setIsUploadingCarouselImage] = useState(false);
 
   const [testimonialFormData, setTestimonialFormData] = useState({
     name: '',
@@ -115,14 +163,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
     summary: '',
     url: '',
     category: 'News' as 'News' | 'Event',
-    college: 'Delhi University'
+    college: 'University',
+    venue: '',
+    time: '',
+    eligibility: 'All' as string,
+    imageUrl: '',
   });
 
+  // Auth guard is handled at the route level in App.tsx.
+  // This effect only fetches data once admin access is confirmed.
   useEffect(() => {
-    fetchResources();
-    fetchNewsData();
-    fetchTestimonials();
-  }, []);
+    if (!isAuthLoading && appUser?.role === 'admin') {
+      fetchResources();
+      fetchNewsData();
+      fetchTestimonials();
+      fetchVerifications();
+      getUsers(1, 0).then(res => setTotalUsers(res.total)).catch(console.error);
+      const unsubscribePG = getPGListings((data) => setListings(data));
+      ForumService.getPosts(undefined, undefined, 100).then((data) => setPosts(data));
+      fetchAdminExchangeItems();
+      fetchAds();
+      fetchSettings();
+      return () => {
+        if (unsubscribePG) unsubscribePG();
+      };
+    }
+  }, [appUser, isAuthLoading]);
 
   const fetchTestimonials = async () => {
     try {
@@ -134,11 +200,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
   };
 
   useEffect(() => {
+    if (activeTab === 'carousel') {
+      // Load all events for carousel management
+      fetchNewsData();
+      return undefined;
+    }
     if (activeTab === 'forum') {
-      const unsubscribe = ForumService.getPosts(undefined, undefined, undefined, (data) => {
+
+      ForumService.getPosts(undefined, undefined, 100).then((data) => {
         setPosts(data);
       });
-      return () => unsubscribe();
+      return undefined;
     }
     if (activeTab === 'pg') {
       const unsubscribe = getPGListings((data) => {
@@ -146,15 +218,235 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
       });
       return () => unsubscribe();
     }
+    if (activeTab === 'verification') {
+      fetchVerifications();
+      return undefined;
+    }
+    if (activeTab === 'users') {
+      getUsers(500, 0).then(res => {
+        setAllUsers(res.users);
+      }).catch(console.error);
+      return undefined;
+    }
+    if (activeTab === 'exchange') {
+      fetchAdminExchangeItems();
+      return undefined;
+    }
+    if (activeTab === 'ads') {
+      fetchAds();
+      return undefined;
+    }
+    if (activeTab === 'homepage-settings') {
+      fetchSettings();
+      return undefined;
+    }
   }, [activeTab]);
+
+  // ── Fetch Ads ──
+  const fetchAds = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/ads/all`, {
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      });
+      if (res.ok) setAds(await res.json());
+    } catch (err) { console.error(err); }
+  };
+
+  // ── Fetch Site Settings ──
+  const fetchSettings = async () => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/settings`);
+      if (res.ok) {
+        const data = await res.json();
+        setSiteSettings(data);
+        setSettingsForm(data);
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  // ── Upload image to any Cloudinary endpoint ──
+  const uploadImageToEndpoint = async (file: File, endpoint: string): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const formData = new FormData();
+    formData.append('image', file);
+    const API_URL = import.meta.env.VITE_API_URL || '';
+    const res = await fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session?.access_token}` },
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Image upload failed');
+    const data = await res.json();
+    return data.url;
+  };
+
+  // ── Save Site Settings ──
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify(settingsForm),
+      });
+      if (res.ok) {
+        setSiteSettings({ ...settingsForm });
+        toast.success('Homepage settings saved!');
+      } else toast.error('Failed to save settings');
+    } catch (err) { toast.error('Network error'); }
+    finally { setIsSavingSettings(false); }
+  };
+
+  // ── Ad Submit ──
+  const handleAdSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adFormData.image_url) { toast.error('Please upload or enter an image URL'); return; }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const url = editingAd ? `${API_URL}/api/ads/${editingAd.id}` : `${API_URL}/api/ads`;
+      const method = editingAd ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify(adFormData),
+      });
+      if (res.ok) {
+        toast.success(editingAd ? 'Ad updated!' : 'Ad created!');
+        setEditingAd(null);
+        setAdFormData({ title: '', image_url: '', link_url: '', position: 'homepage_top', is_active: true });
+        fetchAds();
+      } else toast.error('Failed to save ad');
+    } catch (err) { toast.error('Network error'); }
+  };
+
+  // ── Delete Ad ──
+  const handleAdDelete = async (id: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/ads/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.ok) { toast.success('Ad deleted'); fetchAds(); }
+      else toast.error('Failed to delete ad');
+    } catch (err) { toast.error('Network error'); }
+  };
+
+  // ── PG Edit Submit ──
+  const handlePGEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPG) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/pg/${editingPG.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ ...pgEditForm, images: pgEditImages }),
+      });
+      if (res.ok) {
+        toast.success('PG listing updated!');
+        setEditingPG(null);
+        const unsub = getPGListings((data) => setListings(data));
+        setTimeout(() => unsub && unsub(), 2000);
+      } else toast.error('Failed to update listing');
+    } catch (err) { toast.error('Network error'); }
+  };
+
+  const fetchVerifications = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/verification/requests`, {
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      });
+      if (res.ok) {
+        setVerifications(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchAdminExchangeItems = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/admin/exchange`, {
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      });
+      if (res.ok) {
+        setExchangeItems(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleVerificationAction = async (id: number, action: 'approve' | 'reject', note: string = '') => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/verification/${id}/${action}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}` 
+        },
+        body: JSON.stringify({ admin_note: note })
+      });
+      if (res.ok) {
+        toast.success(`Request ${action}d successfully`);
+        fetchVerifications();
+      } else {
+        toast.error(`Failed to ${action} request`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Network error');
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailModal) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/verification/${emailModal.id}/email`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}` 
+        },
+        body: JSON.stringify(emailForm)
+      });
+      if (res.ok) {
+        toast.success('Email sent successfully!');
+        setEmailModal(null);
+        setEmailForm({ subject: '', message: '' });
+      } else {
+        toast.error('Failed to send email');
+      }
+    } catch (err) {
+      toast.error('Network error');
+    }
+  };
 
   const fetchResources = async () => {
     setIsLoading(true);
     try {
-      const data = await getResources(true);
+      const data = await getResources(true); // includeUnapproved = true
       if (data) setResources(data);
     } catch (error) {
       console.error('Error fetching resources:', error);
+      toast.error('Failed to load resources');
     } finally {
       setIsLoading(false);
     }
@@ -162,10 +454,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
 
   const fetchNewsData = async () => {
     try {
-      const data = await getNews();
+      // includeUnapproved=true so admin sees pending events
+      const data = await getNews(undefined, undefined, true);
       setNews(data);
     } catch (error) {
       console.error('Error fetching news:', error);
+      toast.error('Failed to load news');
+    }
+  };
+
+  const handleApproveNews = async (id: string) => {
+    try {
+      await approveNews(id);
+      setNews(prev => prev.map(n => n.id === id ? { ...n, isApproved: true } : n));
+      toast.success('News/Event approved successfully!');
+    } catch (error) {
+      console.error('Failed to approve news:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to approve news.');
     }
   };
 
@@ -274,7 +579,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
 
       if (formData.file) {
         toast.loading('Uploading file...', { id: 'upload-toast' });
-        const fileUrl = await uploadFile(formData.file);
+        let folder: 'pyqs' | 'books' | 'notes' | 'resources' = 'resources';
+        if (formData.type === 'PYQ') folder = 'pyqs';
+        if (formData.type === 'Book') folder = 'books';
+        if (formData.type === 'Note') folder = 'notes';
+        const fileUrl = await uploadFile(formData.file, folder, {
+          course:  formData.course,
+          subject: formData.title,
+        });
         finalLink = fileUrl;
         finalDirectDownloadLink = fileUrl;
         toast.dismiss('upload-toast');
@@ -349,14 +661,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
     e.preventDefault();
     try {
       if (editingNews) {
-        await updateNews(editingNews.id, newsFormData);
+        await updateNews(editingNews.id, { ...newsFormData, image_url: newsFormData.imageUrl } as any);
         toast.success('News item updated successfully!');
         setEditingNews(null);
       } else {
-        await addNews(newsFormData);
+        await addNews({ ...newsFormData, image_url: newsFormData.imageUrl } as any);
         toast.success('News item added successfully!');
       }
-      
       fetchNewsData();
       setNewsFormData({
         title: '',
@@ -364,10 +675,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
         summary: '',
         url: '',
         category: 'News',
-        college: 'Delhi University'
+        college: 'University',
+        venue: '',
+        time: '',
+        eligibility: 'All',
+        imageUrl: '',
       });
     } catch (error) {
       console.error('Failed to process news:', error);
+      toast.error('Failed to save news/event');
     }
   };
 
@@ -415,7 +731,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
       summary: n.summary,
       url: n.url,
       category: n.category,
-      college: n.college
+      college: n.college,
+      venue: n.venue || '',
+      time: (n as any).time || '',
+      eligibility: n.eligibility || 'All',
+      imageUrl: n.imageUrl || '',
     });
   };
 
@@ -463,7 +783,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
     );
   }
 
-  if (user.role !== 'admin') {
+  if (appUser?.role !== 'admin') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-transparent px-4">
         <motion.div 
@@ -489,101 +809,107 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
   }
 
   return (
-    <div className="min-h-screen bg-transparent pt-20 sm:pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-gray-50 to-purple-50/30 flex flex-col md:flex-row">
       <Helmet>
         <title>Admin Panel | MyCollegeGenie</title>
         <meta name="description" content="Manage MyCollegeGenie resources, users, and settings." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 sm:mb-12 gap-6">
-          <div className="text-center lg:text-left">
-            <h1 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight flex items-center justify-center lg:justify-start gap-3">
-              <LayoutDashboard className="w-6 h-6 sm:w-10 sm:h-10 text-purple-600" />
-              Admin Panel
+
+      <AdminSidebar 
+        activeTab={activeTab as AdminTab} 
+        setActiveTab={setActiveTab} 
+        pendingCounts={{ 
+          resources: resources.filter(r => !r.isApproved).length, 
+          verifications: verifications.filter(v => v.status === 'pending').length 
+        }} 
+      />
+
+      <div className="flex-1 p-4 sm:p-8 md:h-[calc(100vh-5rem)] overflow-y-auto custom-scrollbar">
+        <div className="max-w-7xl mx-auto">
+        
+        {activeTab === 'overview' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+              <LayoutDashboard className="w-8 h-8 text-purple-600" />
+              Platform Overview
             </h1>
-            <p className="text-[10px] sm:text-sm text-gray-500 font-black uppercase tracking-widest mt-1.5 px-4 sm:px-0">Manage website content and user contributions.</p>
-          </div>
-          
-          <div className="flex bg-white p-1 rounded-2xl border border-gray-200 shadow-sm overflow-x-auto no-scrollbar">
-            <button 
-              onClick={() => setActiveTab('pending')}
-              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'pending' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
-            >
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Pending
-              {resources.filter(r => !r.isApproved).length > 0 && (
-                <span className="bg-rose-500 text-white text-[8px] sm:text-[10px] px-1.5 py-0.5 rounded-full">
-                  {resources.filter(r => !r.isApproved).length}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { label: 'Total Users', value: totalUsers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+                { label: 'Pending Resources', value: resources.filter(r => !r.isApproved).length, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
+                { label: 'Active PG Listings', value: listings.length, icon: Home, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-100' },
+                { label: 'Pending Verifications', value: verifications.filter(v => v.status === 'pending').length, icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
+              ].map((stat, i) => (
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  className={`bg-white/90 backdrop-blur-xl p-6 rounded-[2rem] border ${stat.border} shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center gap-5 transition-all cursor-default`}
+                >
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${stat.bg} ${stat.color} shadow-inner`}>
+                    <stat.icon className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-1">{stat.label}</p>
+                    <p className="text-3xl font-black text-gray-900 leading-none">{stat.value}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                <LayoutDashboard className="w-5 h-5 text-purple-500" />
+                Quick Actions
+              </h2>
+              <div className="flex flex-wrap gap-4">
+                <button onClick={() => setActiveTab('resources')} className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all">Moderate Resources</button>
+                <button onClick={() => setActiveTab('verification')} className="px-6 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all">Verify Users</button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+
+
+        {activeTab === 'playlists' && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-32 bg-white/60 backdrop-blur-3xl rounded-[3rem] border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5" />
+            <div className="relative z-10">
+              <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-3xl mx-auto flex items-center justify-center mb-6 shadow-inner rotate-3 hover:rotate-0 transition-transform duration-500 cursor-default">
+                <Youtube className="w-12 h-12 text-purple-600" />
+              </div>
+              <h3 className="text-3xl font-black text-gray-900 tracking-tight">Playlists Curation</h3>
+              <p className="text-gray-500 mt-3 font-medium max-w-sm mx-auto">This feature is in development. You will soon be able to build and manage custom academic collections.</p>
+              <div className="mt-8 inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-full text-xs font-bold uppercase tracking-widest">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
                 </span>
-              )}
-            </button>
-            <button 
-              onClick={() => setActiveTab('approved')}
-              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'approved' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Approved
-            </button>
-            <button 
-              onClick={() => {
-                setActiveTab('upload');
-                setEditingResource(null);
-                setFormData({
-                  title: '',
-                  type: 'Note',
-                  course: '',
-                  semester: 1,
-                  subCategory: 'Lecture Notes',
-                  description: '',
-                  link: '',
-                  directDownloadLink: '',
-                  tags: '',
-                  file: null
-                });
-              }}
-              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'upload' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
-            >
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Upload
-            </button>
-            <button 
-              onClick={() => setActiveTab('news')}
-              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'news' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
-            >
-              <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              News & Events
-            </button>
-            <button 
-              onClick={() => setActiveTab('forum')}
-              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'forum' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
-            >
-              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Forum
-            </button>
-            <button 
-              onClick={() => setActiveTab('pg')}
-              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'pg' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
-            >
-              <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              PG Listings
-            </button>
-            <button 
-              onClick={() => {
-                setActiveTab('testimonials');
-                setEditingTestimonial(null);
-                setTestimonialFormData({ name: '', handle: '', image: '', text: '' });
-              }}
-              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'testimonials' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
-            >
-              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Testimonials
-            </button>
+                Coming Soon
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'resources' && (
+          <div className="mb-8 flex bg-white p-1 rounded-2xl border border-gray-200 shadow-sm w-fit">
+            <button onClick={() => setActiveTab('pending')} className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50">View Pending</button>
+            <button onClick={() => setActiveTab('approved')} className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50">View Approved</button>
+            <button onClick={() => setActiveTab('upload')} className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50">Upload New</button>
           </div>
-        </div>
+        )}
 
         {activeTab === 'pending' || activeTab === 'approved' ? (
           <div className="space-y-6">
+            {/* Back to Resources Nav */}
+            <div className="flex items-center gap-4 mb-4">
+              <button onClick={() => setActiveTab('resources')} className="text-purple-600 font-bold hover:underline">← Back to Resources</button>
+              <h2 className="text-2xl font-black text-gray-900 capitalize">{activeTab} Resources</h2>
+            </div>
             {/* Filters */}
             <div className="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
@@ -602,7 +928,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
                 className="px-4 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-purple-500/20 text-sm sm:text-base font-black uppercase tracking-widest"
               >
                 <option>All Courses</option>
-                {DU_COURSES.map(c => <option key={c}>{c}</option>)}
+                {College_COURSES.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
 
@@ -749,7 +1075,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
                     className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
                   >
                     <option value="" disabled>Select Course</option>
-                    {DU_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                    {College_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2.5">
@@ -900,7 +1226,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
                         summary: '',
                         url: '',
                         category: 'News',
-                        college: 'Delhi University'
+                        college: 'University',
+                        venue: '',
+                        time: '',
+                        eligibility: 'All',
+                        imageUrl: '',
                       });
                     }}
                     className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -968,8 +1298,96 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
                   />
                 </div>
 
+                {/* Event-only fields */}
+                {newsFormData.category === 'Event' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Venue</label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. Auditorium, Block-A"
+                        value={newsFormData.venue}
+                        onChange={(e) => setNewsFormData({...newsFormData, venue: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Time</label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. 10:00 AM – 4:00 PM"
+                        value={newsFormData.time}
+                        onChange={(e) => setNewsFormData({...newsFormData, time: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+                      />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Eligibility</label>
+                      <select
+                        value={newsFormData.eligibility}
+                        onChange={(e) => setNewsFormData({...newsFormData, eligibility: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-black uppercase tracking-widest"
+                      >
+                        <option value="All">All</option>
+                        <option value="DU Only">DU Only</option>
+                        <option value="College Specific">College Specific</option>
+                        <option value="Girls Only">Girls Only</option>
+                        <option value="DU + SOL">DU + SOL</option>
+                        <option value="DU + SOL + NCWEB">DU + SOL + NCWEB</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Poster / Banner Image */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Source URL</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Poster / Banner Image</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="url"
+                      placeholder="Paste image URL or upload..."
+                      value={newsFormData.imageUrl}
+                      onChange={(e) => setNewsFormData({...newsFormData, imageUrl: e.target.value})}
+                      className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+                    />
+                    <label className={`cursor-pointer flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all shrink-0 ${isUploadingNewsImage ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100'}`}>
+                      {isUploadingNewsImage ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      {isUploadingNewsImage ? '...' : 'Upload'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={isUploadingNewsImage}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setIsUploadingNewsImage(true);
+                          try {
+                            const url = await uploadImageToEndpoint(file, '/api/news/upload-image');
+                            setNewsFormData(prev => ({...prev, imageUrl: url}));
+                            toast.success('Image uploaded!');
+                          } catch { toast.error('Upload failed'); }
+                          finally { setIsUploadingNewsImage(false); }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {newsFormData.imageUrl && (
+                    <div className="relative mt-2 rounded-xl overflow-hidden h-32 bg-gray-100">
+                      <img src={newsFormData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setNewsFormData(prev => ({...prev, imageUrl: ''}))}
+                        className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Source URL (Optional)</label>
                   <input 
                     type="url"
                     value={newsFormData.url}
@@ -980,10 +1398,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
 
                 <button 
                   type="submit"
-                  className="w-full py-4 bg-purple-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
+                  disabled={isUploadingNewsImage}
+                  className="w-full py-4 bg-purple-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {editingNews ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                  {editingNews ? 'Update Update' : 'Add Update'}
+                  {editingNews ? 'Update' : 'Publish'}
                 </button>
               </form>
             </motion.div>
@@ -1002,17 +1421,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
               {news.length > 0 ? (
                 news.map(n => (
                   <div key={n.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-start gap-4">
+                      {/* Thumbnail */}
+                      {n.imageUrl ? (
+                        <img src={n.imageUrl} alt={n.title} className="w-16 h-16 rounded-2xl object-cover flex-shrink-0 border border-gray-100" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center flex-shrink-0">
+                          <ImageIcon className="w-6 h-6 text-purple-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${n.category === 'Event' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'}`}>
                             {n.category}
                           </span>
                           <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{n.date}</span>
+                          {(n as any).isApproved === false || (n as any).isApproved === undefined
+                            ? <span className="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest bg-amber-50 text-amber-600">Pending</span>
+                            : <span className="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-600">Approved</span>
+                          }
                         </div>
                         <h3 className="text-sm font-bold text-gray-900 mb-1 leading-tight">{n.title}</h3>
                         <p className="text-[10px] text-gray-500 line-clamp-2 mb-3">{n.summary}</p>
                         <div className="flex items-center gap-4">
+                          {!(n as any).isApproved && (
+                            <button 
+                              onClick={() => handleApproveNews(n.id)}
+                              className="text-[10px] font-black text-green-600 uppercase tracking-widest hover:underline flex items-center gap-1"
+                            >
+                              <CheckCircle2 className="w-3 h-3" /> Approve
+                            </button>
+                          )}
                           <button 
                             onClick={() => startEditingNews(n)}
                             className="text-[10px] font-black text-purple-600 uppercase tracking-widest hover:underline flex items-center gap-1"
@@ -1096,29 +1535,128 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
                 Manage PG Listings
               </h2>
             </div>
-            
+
+            {/* PG Edit Modal */}
+            {editingPG && (
+              <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEditingPG(null)} />
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }} 
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-black text-gray-900 flex items-center gap-3"><Edit3 className="w-5 h-5 text-purple-600" /> Edit PG Listing</h3>
+                    <button onClick={() => setEditingPG(null)} className="p-2 hover:bg-gray-100 rounded-full"><X className="w-5 h-5 text-gray-400" /></button>
+                  </div>
+                  <form onSubmit={handlePGEditSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">College</label>
+                        <input type="text" required value={pgEditForm.college} onChange={e => setPgEditForm({...pgEditForm, college: e.target.value})} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Location</label>
+                        <input type="text" required value={pgEditForm.location} onChange={e => setPgEditForm({...pgEditForm, location: e.target.value})} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Budget / Rent</label>
+                        <input type="text" value={pgEditForm.budget} onChange={e => setPgEditForm({...pgEditForm, budget: e.target.value})} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm" placeholder="e.g. ₹5,000/month" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gender</label>
+                        <select value={pgEditForm.gender} onChange={e => setPgEditForm({...pgEditForm, gender: e.target.value})} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-black uppercase">
+                          <option value="Any">Any</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Description</label>
+                      <textarea rows={3} value={pgEditForm.description} onChange={e => setPgEditForm({...pgEditForm, description: e.target.value})} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm resize-none" />
+                    </div>
+                    {/* Image upload */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Photos</label>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {pgEditImages.map((img, i) => (
+                          <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden bg-gray-100">
+                            <img src={img} alt="" className="w-full h-full object-cover" />
+                            <button type="button" onClick={() => setPgEditImages(prev => prev.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                        <label className={`w-20 h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${isUploadingPGImage ? 'border-gray-200 bg-gray-50 opacity-60' : 'border-purple-200 hover:bg-purple-50'}`}>
+                          {isUploadingPGImage ? <RefreshCw className="w-5 h-5 text-gray-400 animate-spin" /> : <Plus className="w-5 h-5 text-purple-400" />}
+                          <span className="text-[9px] font-bold text-gray-400 mt-1">{isUploadingPGImage ? 'Uploading' : 'Add'}</span>
+                          <input type="file" accept="image/*" className="hidden" disabled={isUploadingPGImage} onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setIsUploadingPGImage(true);
+                            try {
+                              const url = await uploadImageToEndpoint(file, '/api/pg/upload-image');
+                              setPgEditImages(prev => [...prev, url]);
+                              toast.success('Photo added!');
+                            } catch { toast.error('Upload failed'); }
+                            finally { setIsUploadingPGImage(false); }
+                          }} />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                      <button type="button" onClick={() => setEditingPG(null)} className="flex-1 py-3 bg-gray-100 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 transition-colors">Cancel</button>
+                      <button type="submit" className="flex-1 py-3 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"><Save className="w-4 h-4" /> Save Changes</button>
+                    </div>
+                  </form>
+                </motion.div>
+              </div>
+            )}
+
             <div className="grid gap-4">
               {listings.length > 0 ? (
                 listings.map(listing => (
                   <div key={listing.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between gap-4 group hover:shadow-md transition-all">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-lg text-[8px] font-black uppercase tracking-widest">
-                          {listing.budget}
-                        </span>
-                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{new Date(listing.createdAt).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      {/* Thumbnail */}
+                      {listing.images?.[0] ? (
+                        <img src={listing.images[0]} alt="" className="w-16 h-16 rounded-2xl object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center flex-shrink-0">
+                          <Home className="w-7 h-7 text-purple-400" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-lg text-[8px] font-black uppercase tracking-widest">{listing.budget}</span>
+                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{listing.gender}</span>
+                        </div>
+                        <h3 className="font-bold text-gray-900 truncate">{listing.college}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> {listing.location} · <UserIcon className="w-3 h-3" /> {listing.authorName}
+                        </p>
                       </div>
-                      <h3 className="font-bold text-gray-900 truncate">{listing.college}</h3>
-                      <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                        <UserIcon className="w-3 h-3" /> {listing.authorName} • {listing.location}
-                      </p>
                     </div>
-                    <button 
-                      onClick={() => handlePGDelete(listing.id)}
-                      className="p-3 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-2xl transition-all shadow-sm"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button 
+                        onClick={() => {
+                          setEditingPG(listing);
+                          setPgEditForm({ college: listing.college, location: listing.location, budget: listing.budget, gender: listing.gender, description: listing.description, socialLink: listing.socialLink || '' });
+                          setPgEditImages(listing.images || []);
+                        }}
+                        className="p-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-2xl transition-all shadow-sm"
+                        title="Edit listing"
+                      >
+                        <Edit3 className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => handlePGDelete(listing.id)}
+                        className="p-3 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-2xl transition-all shadow-sm"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 ))
               ) : (
@@ -1153,7 +1691,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
                       <input
                         type="text"
                         required
-                        placeholder="Name (e.g. Aarav Sharma)"
+                        placeholder="Name (e.g. Aarav Saini)"
                         value={testimonialFormData.name}
                         onChange={e => setTestimonialFormData({...testimonialFormData, name: e.target.value})}
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
@@ -1244,7 +1782,583 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
               )}
             </div>
           </motion.div>
+        ) : activeTab === 'verification' ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {verifications.map((req, i) => (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  key={req.id} 
+                  className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] relative overflow-hidden group transition-all"
+                >
+                  <div className="absolute top-0 right-0 bg-white/60 backdrop-blur-sm border-b border-l border-white/50 px-3 py-1.5 rounded-bl-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 shadow-sm">
+                    {new Date(req.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-12 h-12 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl flex items-center justify-center shadow-inner border border-amber-100/50">
+                      <ShieldCheck className="w-6 h-6 text-amber-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-sm">{req.listing_title || req.listing_id}</h3>
+                      <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">{req.listing_type}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2 mb-6">
+                    <p className="text-xs text-gray-600"><span className="font-bold">User:</span> {req.user_name} ({req.user_email})</p>
+                    <p className="text-xs text-gray-600"><span className="font-bold">Phone:</span> {req.user_phone}</p>
+                    <p className="text-xs text-gray-600"><span className="font-bold">UTR/Ref:</span> <span className="font-mono text-purple-600">{req.payment_ref}</span></p>
+                    {req.notes && <p className="text-xs text-gray-600"><span className="font-bold">Notes:</span> {req.notes}</p>}
+                    <p className="text-xs text-gray-600">
+                      <span className="font-bold">Status:</span> 
+                      <span className={`ml-1 px-2 py-0.5 rounded-md uppercase font-bold text-[10px] ${
+                        req.status === 'approved' ? 'bg-green-100 text-green-700' :
+                        req.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                        'bg-amber-100 text-amber-700'
+                      }`}>{req.status}</span>
+                    </p>
+                  </div>
+
+                  {req.status === 'pending' && (
+                    <div className="flex gap-2">
+                      <button onClick={() => handleVerificationAction(req.id, 'approve')} className="flex-1 py-2 bg-green-500 text-white rounded-xl text-xs font-bold hover:bg-green-600 transition-all">
+                        Approve
+                      </button>
+                      <button onClick={() => handleVerificationAction(req.id, 'reject')} className="flex-1 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-all">
+                        Reject
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="mt-3">
+                    <button 
+                      onClick={() => setEmailModal({ id: req.id, email: req.user_email, name: req.user_name })}
+                      className="w-full py-2 border border-gray-200 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-50 transition-all"
+                    >
+                      ✉️ Send Email
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+              {verifications.length === 0 && (
+                <div className="col-span-full text-center py-12 bg-white rounded-[2rem] border border-dashed border-gray-200">
+                  <p className="text-gray-400 font-medium">No verification requests found.</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : activeTab === 'users' ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] border border-white/50 p-6 overflow-x-auto shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2 px-2">
+                <Users className="w-5 h-5 text-purple-500" />
+                User Directory
+              </h2>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="text-[11px] uppercase tracking-widest text-gray-400 border-b border-gray-100/50">
+                    <th className="pb-4 font-black px-4">User</th>
+                    <th className="pb-4 font-black px-4">Email</th>
+                    <th className="pb-4 font-black px-4">College</th>
+                    <th className="pb-4 font-black px-4">Role</th>
+                    <th className="pb-4 font-black text-right px-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {allUsers.map((u) => (
+                    <tr key={u.id} className="border-b border-gray-50 last:border-0 hover:bg-white/50 transition-colors">
+                      <td className="py-4 px-4 font-bold text-gray-900 flex items-center gap-3">
+                        {u.avatarUrl ? (
+                          <img src={u.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover shadow-sm" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center text-purple-700 font-bold text-xs shadow-sm">
+                            {u.displayName?.charAt(0).toUpperCase() || '?'}
+                          </div>
+                        )}
+                        {u.displayName || 'Unknown'}
+                      </td>
+                      <td className="py-4 px-4 text-gray-600 font-medium">{u.email}</td>
+                      <td className="py-4 px-4 text-gray-500 text-xs">{u.college || '-'}</td>
+                      <td className="py-4 px-4">
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                          u.role === 'admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 
+                          u.role === 'moderator' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 
+                          'bg-gray-100 text-gray-600 border border-gray-200'
+                        }`}>
+                          {u.role || 'user'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <select
+                          className="bg-white border border-gray-200 text-xs font-bold rounded-xl px-3 py-1.5 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all cursor-pointer shadow-sm"
+                          value={u.role || 'user'}
+                          onChange={(e) => {
+                            const newRole = e.target.value as 'user' | 'moderator' | 'admin';
+                            updateUserRole(u.id, newRole)
+                              .then(() => {
+                                toast.success('Role updated successfully');
+                                setAllUsers(prev => prev.map(user => user.id === u.id ? { ...user, role: newRole } : user));
+                              })
+                              .catch(err => toast.error(err.message || 'Failed to update role'));
+                          }}
+                        >
+                          <option value="user">User</option>
+                          <option value="moderator">Moderator</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                  {allUsers.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-gray-400 font-medium">No users found</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        ) : activeTab === 'exchange' ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-6 overflow-x-auto shadow-sm">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-xs uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                    <th className="pb-4 font-bold">Item</th>
+                    <th className="pb-4 font-bold">Seller</th>
+                    <th className="pb-4 font-bold">Type</th>
+                    <th className="pb-4 font-bold">Status</th>
+                    <th className="pb-4 font-bold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {exchangeItems.map((item) => (
+                    <tr key={item.id} className="border-b border-gray-50 last:border-0">
+                      <td className="py-4 font-bold text-gray-900">
+                        {item.title}
+                        <div className="text-[10px] text-gray-400 font-normal truncate max-w-[200px]">{item.description}</div>
+                      </td>
+                      <td className="py-4 text-gray-600">
+                        {item.seller_name}
+                        <div className="text-[10px] text-gray-400">{item.seller_email}</div>
+                      </td>
+                      <td className="py-4 text-gray-500">
+                        <span className="px-2 py-1 bg-gray-100 rounded-md text-[10px] font-bold uppercase">{item.type}</span>
+                      </td>
+                      <td className="py-4">
+                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${
+                          item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {item.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="py-4 text-right">
+                        {item.is_active ? (
+                          <button
+                            onClick={() => {
+                              const API_URL = import.meta.env.VITE_API_URL || '';
+                              supabase.auth.getSession().then(({ data: { session } }) => {
+                                fetch(`${API_URL}/api/exchange/${item.id}`, {
+                                  method: 'DELETE',
+                                  headers: { Authorization: `Bearer ${session?.access_token}` }
+                                }).then(res => {
+                                  if (res.ok) {
+                                    toast.success('Listing deactivated');
+                                    fetchAdminExchangeItems();
+                                  } else toast.error('Failed to deactivate');
+                                });
+                              });
+                            }}
+                            className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors"
+                          >
+                            Deactivate
+                          </button>
+                        ) : (
+                           <span className="text-xs text-gray-400 italic">Deleted</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {exchangeItems.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-gray-400 font-medium">No exchange listings found</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        ) : activeTab === 'carousel' ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
+                  <MonitorPlay className="w-7 h-7 text-purple-600" />
+                  Homepage Carousel
+                </h2>
+                <p className="text-sm text-gray-400 font-medium mt-1">Control which events appear in the auto-scrolling carousel on the homepage.</p>
+              </div>
+            </div>
+
+            {/* Info banner */}
+            <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex gap-3">
+              <MonitorPlay className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-purple-700">Auto-scrolling Carousel</p>
+                <p className="text-xs text-purple-500 mt-0.5">The carousel loops infinitely and pauses on hover. When no real events exist, sample events are shown automatically. Toggle visibility and update poster images below.</p>
+              </div>
+            </div>
+
+            {/* Real Events from DB */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6">
+              <h3 className="text-base font-black text-gray-800 mb-1 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-pink-500" />
+                Real Events (from News &amp; Events)
+              </h3>
+              <p className="text-xs text-gray-400 font-medium mb-5">Toggle which events show in the carousel. Edit their poster image URL.</p>
+              {news.filter(n => n.category === 'Event').length === 0 ? (
+                <div className="flex flex-col items-center py-10 text-center">
+                  <Calendar className="w-10 h-10 text-gray-200 mb-3" />
+                  <p className="text-gray-400 text-sm font-medium">No events in the database yet.</p>
+                  <p className="text-gray-300 text-xs mt-1">Add events from the News &amp; Events tab.</p>
+                  <button
+                    onClick={() => setActiveTab('news')}
+                    className="mt-4 text-xs bg-purple-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-purple-700 transition-colors"
+                  >Go to News &amp; Events →</button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {news.filter(n => n.category === 'Event').map((ev, idx) => {
+                    const stored = JSON.parse(localStorage.getItem('carouselConfig') || '{}');
+                    const isEnabled = stored[ev.id]?.show ?? true;
+                    const customImg = stored[ev.id]?.imageUrl ?? ev.imageUrl;
+                    const isEditing = carouselEditingItem?.id === ev.id && carouselEditingItem?.type === 'real';
+                    return (
+                      <div key={ev.id} className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${isEnabled ? 'border-purple-100 bg-purple-50/40' : 'border-gray-100 bg-gray-50 opacity-60'}`}>
+                        {/* Poster thumb */}
+                        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200">
+                          {customImg ? (
+                            <img src={customImg} alt={ev.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center">
+                              <ImageIcon className="w-5 h-5 text-white/60" />
+                            </div>
+                          )}
+                        </div>
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black text-gray-800 line-clamp-1">{ev.title}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{ev.college} · {ev.date}</p>
+                          {isEditing ? (
+                            <div className="flex gap-2 mt-2">
+                              <input
+                                type="text"
+                                value={carouselImageInput}
+                                onChange={e => setCarouselImageInput(e.target.value)}
+                                placeholder="Paste poster image URL..."
+                                className="flex-1 text-xs px-2 py-1.5 border border-gray-200 rounded-lg"
+                              />
+                              <button
+                                onClick={() => {
+                                  const config = JSON.parse(localStorage.getItem('carouselConfig') || '{}');
+                                  config[ev.id] = { ...config[ev.id], imageUrl: carouselImageInput };
+                                  localStorage.setItem('carouselConfig', JSON.stringify(config));
+                                  updateNews(String(ev.id), { imageUrl: carouselImageInput } as any);
+                                  setCarouselEditingItem(null);
+                                  toast.success('Poster image saved!');
+                                }}
+                                className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-lg font-bold"
+                              >Save</button>
+                              <button onClick={() => setCarouselEditingItem(null)} className="text-xs bg-gray-100 text-gray-600 px-2 py-1.5 rounded-lg font-bold">✕</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => { setCarouselEditingItem({ id: ev.id, type: 'real' }); setCarouselImageInput(customImg || ''); }}
+                              className="mt-1 text-[10px] text-purple-500 hover:text-purple-700 font-bold flex items-center gap-1"
+                            >
+                              <Edit3 className="w-3 h-3" /> Edit poster image
+                            </button>
+                          )}
+                        </div>
+                        {/* Toggle */}
+                        <button
+                          onClick={() => {
+                            const config = JSON.parse(localStorage.getItem('carouselConfig') || '{}');
+                            config[ev.id] = { ...config[ev.id], show: !isEnabled };
+                            localStorage.setItem('carouselConfig', JSON.stringify(config));
+                            toast.success(isEnabled ? 'Hidden from carousel' : 'Shown in carousel');
+                            // force re-render
+                            setCarouselEditingItem(prev => ({ ...prev, _t: Date.now() }));
+                            setCarouselEditingItem(null);
+                          }}
+                          className={`flex-shrink-0 transition-all ${isEnabled ? 'text-purple-600' : 'text-gray-300'}`}
+                          title={isEnabled ? 'Hide from carousel' : 'Show in carousel'}
+                        >
+                          {isEnabled
+                            ? <ToggleRight className="w-8 h-8" />
+                            : <ToggleLeft className="w-8 h-8" />}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : activeTab === 'ads' ? (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
+                  <Megaphone className="w-7 h-7 text-purple-600" />
+                  Ads & Banners
+                </h2>
+                <p className="text-sm text-gray-400 font-medium mt-1">Manage promotional banners shown across the platform.</p>
+              </div>
+            </div>
+
+            {/* Ad Form */}
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+              <h3 className="text-lg font-black text-gray-900 mb-5 flex items-center gap-3">
+                {editingAd ? <Edit3 className="w-5 h-5 text-purple-600" /> : <Plus className="w-5 h-5 text-purple-600" />}
+                {editingAd ? 'Edit Ad' : 'Create New Ad'}
+              </h3>
+              <form onSubmit={handleAdSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ad Title</label>
+                    <input type="text" required placeholder="e.g. Summer Sale Banner" value={adFormData.title} onChange={e => setAdFormData({...adFormData, title: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Position</label>
+                    <select value={adFormData.position} onChange={e => setAdFormData({...adFormData, position: e.target.value as Ad['position']})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-black uppercase tracking-widest">
+                      <option value="homepage_top">Homepage Top</option>
+                      <option value="browse_sidebar">Browse Sidebar</option>
+                      <option value="forum_top">Forum Top</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Click URL (Optional)</label>
+                    <input type="url" placeholder="https://..." value={adFormData.link_url} onChange={e => setAdFormData({...adFormData, link_url: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active</label>
+                    <div className="flex items-center gap-3 py-3">
+                      <button type="button" onClick={() => setAdFormData(p => ({...p, is_active: !p.is_active}))} className={`relative w-12 h-6 rounded-full transition-colors ${adFormData.is_active ? 'bg-purple-600' : 'bg-gray-300'}`}>
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${adFormData.is_active ? 'left-7' : 'left-1'}`} />
+                      </button>
+                      <span className="text-sm font-medium text-gray-600">{adFormData.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Image Upload */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Banner Image</label>
+                  <div className="flex gap-2">
+                    <input type="url" placeholder="Paste image URL or upload..." value={adFormData.image_url} onChange={e => setAdFormData({...adFormData, image_url: e.target.value})} className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium" />
+                    <label className={`cursor-pointer shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${isUploadingAdImage ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100'}`}>
+                      {isUploadingAdImage ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      {isUploadingAdImage ? '...' : 'Upload'}
+                      <input type="file" accept="image/*" className="hidden" disabled={isUploadingAdImage}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setIsUploadingAdImage(true);
+                          try {
+                            const url = await uploadImageToEndpoint(file, '/api/ads/upload-image');
+                            setAdFormData(prev => ({...prev, image_url: url}));
+                            toast.success('Banner image uploaded!');
+                          } catch { toast.error('Upload failed'); }
+                          finally { setIsUploadingAdImage(false); }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {adFormData.image_url && (
+                    <div className="relative mt-2 rounded-xl overflow-hidden h-28 bg-gray-100 border border-gray-200">
+                      <img src={adFormData.image_url} alt="Banner preview" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => setAdFormData(p => ({...p, image_url: ''}))} className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  {editingAd && (
+                    <button type="button" onClick={() => { setEditingAd(null); setAdFormData({ title: '', image_url: '', link_url: '', position: 'homepage_top', is_active: true }); }}
+                      className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors">
+                      Cancel
+                    </button>
+                  )}
+                  <button type="submit" disabled={isUploadingAdImage || !adFormData.image_url}
+                    className="flex-1 py-3 bg-purple-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                    {editingAd ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                    {editingAd ? 'Update Ad' : 'Create Ad'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Ads List */}
+            <div className="space-y-4">
+              <h3 className="text-base font-black text-gray-800">All Ads ({ads.length})</h3>
+              {ads.length > 0 ? ads.map(ad => (
+                <div key={ad.id} className={`bg-white rounded-[2rem] border p-4 flex items-center gap-4 shadow-sm transition-all ${ad.is_active ? 'border-green-100' : 'border-gray-100 opacity-60'}`}>
+                  <img src={ad.image_url} alt={ad.title} className="w-24 h-16 rounded-xl object-cover flex-shrink-0 border border-gray-100" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-bold text-gray-900 text-sm truncate">{ad.title}</h4>
+                      <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${ad.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
+                        {ad.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">{ad.position.replace(/_/g, ' ')}</p>
+                    {ad.link_url && <p className="text-xs text-purple-500 truncate mt-0.5">{ad.link_url}</p>}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => { setEditingAd(ad); setAdFormData({ title: ad.title, image_url: ad.image_url, link_url: ad.link_url, position: ad.position, is_active: Boolean(ad.is_active) }); }}
+                      className="p-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-xl transition-all">
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleAdDelete(ad.id)} className="p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-all">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )) : (
+                <div className="text-center py-12 bg-white rounded-[2rem] border border-dashed border-gray-200">
+                  <Megaphone className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-400 font-medium">No ads yet. Create your first banner above.</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : activeTab === 'homepage-settings' ? (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
+                  <Settings className="w-7 h-7 text-purple-600" />
+                  Homepage Settings
+                </h2>
+                <p className="text-sm text-gray-400 font-medium mt-1">Control the hero section, stats, and announcement banner without touching code.</p>
+              </div>
+              <button
+                onClick={handleSaveSettings}
+                disabled={isSavingSettings}
+                className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-purple-700 transition-all disabled:opacity-50 shadow-lg shadow-purple-600/20"
+              >
+                {isSavingSettings ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isSavingSettings ? 'Saving...' : 'Save All'}
+              </button>
+            </div>
+
+            {/* Hero Section */}
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+              <h3 className="text-base font-black text-gray-800 mb-5 flex items-center gap-2">
+                <Star className="w-4 h-4 text-amber-500" /> Hero Section
+              </h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Headline</label>
+                  <input type="text" value={settingsForm.hero_headline || ''} onChange={e => setSettingsForm(p => ({...p, hero_headline: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium" placeholder="Your Ultimate College Companion" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Subtext</label>
+                  <textarea rows={2} value={settingsForm.hero_subtext || ''} onChange={e => setSettingsForm(p => ({...p, hero_subtext: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium resize-none" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">CTA Button Text</label>
+                    <input type="text" value={settingsForm.hero_cta_text || ''} onChange={e => setSettingsForm(p => ({...p, hero_cta_text: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">CTA Link</label>
+                    <input type="text" value={settingsForm.hero_cta_link || ''} onChange={e => setSettingsForm(p => ({...p, hero_cta_link: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Section */}
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+              <h3 className="text-base font-black text-gray-800 mb-5 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-blue-500" /> Platform Statistics
+              </h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Notes Count</label>
+                  <input type="text" value={settingsForm.stats_notes || ''} onChange={e => setSettingsForm(p => ({...p, stats_notes: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-black" placeholder="5000+" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Colleges</label>
+                  <input type="text" value={settingsForm.stats_colleges || ''} onChange={e => setSettingsForm(p => ({...p, stats_colleges: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-black" placeholder="50+" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Students</label>
+                  <input type="text" value={settingsForm.stats_students || ''} onChange={e => setSettingsForm(p => ({...p, stats_students: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-black" placeholder="10,000+" />
+                </div>
+              </div>
+            </div>
+
+            {/* Announcement Banner */}
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+              <h3 className="text-base font-black text-gray-800 mb-5 flex items-center gap-2">
+                <Bell className="w-4 h-4 text-rose-500" /> Announcement Banner
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">(Shows at top of homepage)</span>
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <button type="button" onClick={() => setSettingsForm(p => ({...p, announcement_active: p.announcement_active === 'true' ? 'false' : 'true'}))}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${settingsForm.announcement_active === 'true' ? 'bg-rose-500' : 'bg-gray-300'}`}>
+                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${settingsForm.announcement_active === 'true' ? 'left-7' : 'left-1'}`} />
+                  </button>
+                  <span className="text-sm font-medium text-gray-600">{settingsForm.announcement_active === 'true' ? 'Banner is visible' : 'Banner is hidden'}</span>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Banner Text</label>
+                  <input type="text" value={settingsForm.announcement_text || ''} onChange={e => setSettingsForm(p => ({...p, announcement_text: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm" placeholder="e.g. 🎉 Semester exams are coming — check out PYQs!" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Banner Color (hex)</label>
+                  <div className="flex items-center gap-3">
+                    <input type="color" value={settingsForm.announcement_color || '#7c3aed'} onChange={e => setSettingsForm(p => ({...p, announcement_color: e.target.value}))} className="w-10 h-10 rounded-xl cursor-pointer border border-gray-200" />
+                    <input type="text" value={settingsForm.announcement_color || '#7c3aed'} onChange={e => setSettingsForm(p => ({...p, announcement_color: e.target.value}))} className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-mono" />
+                  </div>
+                </div>
+                {/* Live Preview */}
+                {settingsForm.announcement_active === 'true' && settingsForm.announcement_text && (
+                  <div className="rounded-xl px-4 py-3 text-sm font-bold text-white text-center" style={{ backgroundColor: settingsForm.announcement_color || '#7c3aed' }}>
+                    {settingsForm.announcement_text}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Save button at bottom too */}
+            <button
+              onClick={handleSaveSettings}
+              disabled={isSavingSettings}
+              className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+            >
+              {isSavingSettings ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+              {isSavingSettings ? 'Saving Settings...' : 'Save All Homepage Settings'}
+            </button>
+          </motion.div>
+        ) : activeTab === 'contributors' ? (
+          <AdminContributors />
         ) : null}
+
       </div>
       
       <ConfirmationModal
@@ -1275,6 +2389,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
         confirmText="Delete"
         type="danger"
       />
+
+      {/* Email Modal */}
+      {emailModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setEmailModal(null)} />
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl">
+            <h3 className="text-xl font-black mb-4">Send Email to {emailModal.name}</h3>
+            <div className="space-y-4">
+              <input 
+                type="text" 
+                placeholder="Subject" 
+                value={emailForm.subject}
+                onChange={e => setEmailForm(f => ({...f, subject: e.target.value}))}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+              />
+              <textarea 
+                rows={4} 
+                placeholder="Message (HTML allowed)"
+                value={emailForm.message}
+                onChange={e => setEmailForm(f => ({...f, message: e.target.value}))}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm resize-none"
+              />
+              <div className="flex gap-3">
+                <button onClick={() => setEmailModal(null)} className="flex-1 py-3 bg-gray-100 rounded-xl text-sm font-bold text-gray-600">Cancel</button>
+                <button onClick={handleSendEmail} className="flex-1 py-3 bg-purple-600 text-white rounded-xl text-sm font-bold">Send Email</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
     </div>
   );
 };

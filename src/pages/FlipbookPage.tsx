@@ -3,14 +3,15 @@ import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import HTMLFlipBook from 'react-pageflip';
 import * as pdfjs from 'pdfjs-dist';
-import { Loader2, ChevronLeft, ChevronRight, X, Download, Maximize2, Minimize2, AlertCircle, ZoomIn, ZoomOut, RotateCcw, BookOpen, FileText } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { Loader2, ChevronLeft, ChevronRight, Download, Maximize2, Minimize2, AlertCircle, ZoomIn, ZoomOut, RotateCcw, BookOpen, FileText } from 'lucide-react';
+import { motion } from 'motion/react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { Resource } from '../types';
 import { getResources } from '../services/resourceService';
 
 // Set worker source
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 const Page = React.forwardRef<HTMLDivElement, { pageNumber: number; image: string; isHardcover?: boolean }>(
   (props, ref) => {
@@ -202,14 +203,14 @@ export const FlipbookPage: React.FC = () => {
       <div className="absolute top-0 left-0 right-0 p-4 sm:p-6 flex items-start justify-between z-50 pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-3 sm:gap-4">
           <button 
-            onClick={() => navigate(-1)}
-            className="p-2 sm:p-3 bg-[#1a1a1a]/80 hover:bg-white/10 backdrop-blur-xl rounded-xl transition-all text-white shadow-xl flex items-center gap-2 border border-white/10"
-            title="Go Back"
+            onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/')}
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-red-600 hover:bg-red-700 backdrop-blur-xl rounded-xl transition-all text-white shadow-xl flex items-center gap-2 border border-red-500/50"
+            title="Close Flipbook"
           >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="hidden sm:inline font-bold text-sm">Back</span>
+            <ChevronLeft className="w-5 h-5" />
+            <span className="font-bold text-sm">Close Flipbook</span>
           </button>
-          <div className="bg-[#1a1a1a]/80 backdrop-blur-xl px-4 py-2 sm:px-6 sm:py-3 rounded-2xl border border-white/10 shadow-2xl">
+          <div className="bg-[#1a1a1a]/80 backdrop-blur-xl px-4 py-2 sm:px-6 sm:py-3 rounded-2xl border border-white/10 shadow-2xl hidden md:block">
             <h1 className="text-white font-bold text-sm sm:text-base line-clamp-1">{resource.title}</h1>
             <p className="text-gray-400 text-[10px] uppercase tracking-[0.2em] font-black">{resource.type} • {resource.course}</p>
           </div>
@@ -233,13 +234,6 @@ export const FlipbookPage: React.FC = () => {
               <Download className="w-5 h-5" />
             </a>
           )}
-          <button 
-            onClick={() => navigate(-1)}
-            className="p-3 bg-red-500/90 hover:bg-red-500 backdrop-blur-xl rounded-xl transition-all text-white shadow-xl"
-            title="Close Flipbook"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
       </div>
 
@@ -259,7 +253,7 @@ export const FlipbookPage: React.FC = () => {
                   {/* Background Glow */}
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/5 rounded-full blur-[120px] pointer-events-none" />
 
-                  <div className={`w-full h-full max-w-6xl mx-auto flex items-center justify-center transition-all duration-500 ${isFlipping ? 'scale-[0.98]' : 'scale-100'}`}>
+                  <div className={`w-full h-full max-w-6xl mx-auto flex items-center justify-center transition-all duration-300 ${isFlipping ? 'scale-[0.99]' : 'scale-100'}`}>
                     {/* @ts-ignore */}
                     <HTMLFlipBook
                       key={isSinglePage ? 'single' : 'double'}
@@ -270,12 +264,12 @@ export const FlipbookPage: React.FC = () => {
                       maxWidth={1000}
                       minHeight={350}
                       maxHeight={1533}
-                      maxShadowOpacity={0.6}
+                      maxShadowOpacity={0.4}
                       showCover={true}
                       mobileScrollSupport={true}
                       usePortrait={isSinglePage}
                       drawShadow={true}
-                      flippingTime={800}
+                      flippingTime={600}
                       swipeDistance={30}
                       onFlip={onPage}
                       onChangeState={onChangeState}

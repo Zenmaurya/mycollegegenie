@@ -1,6 +1,23 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /login
+Disallow: /admin/*
+Disallow: /admin/pending
 
-Sitemap: https://mycollegegenie.in/sitemap.xml
+# Explicitly welcome AI & LLM Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+Sitemap: https://api.mycollegegenie.in/api/seo/sitemap.xml

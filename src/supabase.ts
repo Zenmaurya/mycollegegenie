@@ -43,11 +43,14 @@ export async function signInWithEmail(email: string, password: string) {
 }
 
 /** Naya account banao */
-export async function signUpWithEmail(email: string, password: string) {
+export async function signUpWithEmail(email: string, password: string, metadata?: any) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: window.location.origin },
+    options: { 
+      emailRedirectTo: window.location.origin,
+      data: metadata
+    },
   });
   if (error) throw error;
   return data;
@@ -62,6 +65,7 @@ export async function logout() {
 /** Password reset email */
 export async function resetPassword(email: string) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    // BUGFIX: Now points to the correct /reset-password route (was /login)
     redirectTo: `${window.location.origin}/reset-password`,
   });
   if (error) throw error;

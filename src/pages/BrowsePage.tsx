@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Filter, ArrowUpDown, LayoutGrid, List, ChevronRight, BookOpen, FileText, PlayCircle, Star, Share2, Download, Clock, MapPin, RefreshCw, ChevronDown, ChevronUp, Plus, X, AlertCircle } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, LayoutGrid, List, ChevronRight, BookOpen, FileText, PlayCircle, Star, Share2, Download, Clock, MapPin, RefreshCw, ChevronDown, ChevronUp, Plus, X, AlertCircle, Check } from 'lucide-react';
 import { Resource } from '../types';
 import { ResourceCard } from '../components/ResourceCard';
 import AnimatedGlowingSearchBar from '../components/ui/animated-glowing-search-bar';
 import { Link, useSearchParams } from 'react-router-dom';
-import { auth } from '../firebase';
+import { supabase } from '../supabase';
 
 interface BrowsePageProps {
   resources: Resource[];
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  activeFilter: 'All' | 'Note' | 'PYQ' | 'Playlist' | 'Book';
-  setActiveFilter: (filter: 'All' | 'Note' | 'PYQ' | 'Playlist' | 'Book') => void;
+  activeFilter: 'All' | 'Note' | 'PYQ' | 'Book';
+  setActiveFilter: (filter: 'All' | 'Note' | 'PYQ' | 'Book') => void;
   selectedCourse: string;
   setSelectedCourse: (course: string) => void;
   selectedSemester: string;
@@ -79,6 +80,8 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
   });
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
+  const [courseSearch, setCourseSearch] = useState('');
 
   useEffect(() => {
     const resourceId = searchParams.get('resourceId');
@@ -112,63 +115,63 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
   const hasActiveFilters = searchQuery || activeFilter !== 'All' || selectedCourse !== 'All Courses' || selectedSemester !== 'All Semesters' || selectedSubCategory !== 'All';
 
   return (
-    <div className="min-h-screen bg-transparent pt-8 sm:pt-12 pb-24">
+    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24">
       <Helmet>
-        <title>{selectedResource ? `${selectedResource.title} | MyCollegeGenie` : 'Browse DU Study Resources - Notes, PYQs, Books | MyCollegeGenie'}</title>
-        <meta name="description" content={selectedResource ? (selectedResource.description?.replace(/<[^>]*>?/gm, '').substring(0, 150) || `Download ${selectedResource.title} for ${selectedResource.course}`) : "Browse and download free study material for Delhi University. Filter by course, semester and resource type. Notes, PYQs, books and more."} />
-        <meta name="keywords" content="DU study material download, Delhi University notes, DU PYQ download, Delhi University books" />
+        <title>{selectedResource ? `${selectedResource.title} | MyCollegeGenie` : 'Browse Free College Notes & PYQs | MyCollegeGenie'}</title>
+        <meta name="description" content={selectedResource ? (selectedResource.description?.replace(/<[^>]*>?/gm, '').substring(0, 150) || `Download ${selectedResource.title} for ${selectedResource.course}`) : "Browse and download free study material for your college. Filter by course, semester, and resource type. Get notes, PYQs, books, and more."} />
+        <meta name="keywords" content="college study material download, University notes, college PYQ download, University books" />
         <link rel="canonical" href="https://mycollegegenie.in/browse" />
         
         {/* Open Graph / Social Meta Tags */}
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="MyCollegeGenie" />
-        <meta property="og:title" content={selectedResource ? selectedResource.title : 'Browse DU Study Resources - Notes, PYQs, Books | MyCollegeGenie'} />
-        <meta property="og:description" content={selectedResource ? (selectedResource.description?.replace(/<[^>]*>?/gm, '').substring(0, 150) || `Download ${selectedResource.title} for ${selectedResource.course}`) : "Browse and download free study material for Delhi University. Filter by course, semester and resource type. Notes, PYQs, books and more."} />
+        <meta property="og:title" content={selectedResource ? selectedResource.title : 'Browse College Study Resources - Notes, PYQs, Books | MyCollegeGenie'} />
+        <meta property="og:description" content={selectedResource ? (selectedResource.description?.replace(/<[^>]*>?/gm, '').substring(0, 150) || `Download ${selectedResource.title} for ${selectedResource.course}`) : "Browse and download free study material for University. Filter by course, semester and resource type. Notes, PYQs, books and more."} />
         <meta property="og:image" content={selectedResource ? `https://picsum.photos/seed/${selectedResource.title}/1200/630` : 'https://picsum.photos/seed/browse/1200/630'} />
         
         {/* Twitter Meta Tags */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={selectedResource ? selectedResource.title : 'Browse DU Study Resources - Notes, PYQs, Books | MyCollegeGenie'} />
-        <meta name="twitter:description" content={selectedResource ? (selectedResource.description?.replace(/<[^>]*>?/gm, '').substring(0, 150) || `Download ${selectedResource.title} for ${selectedResource.course}`) : "Browse and download free study material for Delhi University. Filter by course, semester and resource type. Notes, PYQs, books and more."} />
+        <meta name="twitter:title" content={selectedResource ? selectedResource.title : 'Browse College Study Resources - Notes, PYQs, Books | MyCollegeGenie'} />
+        <meta name="twitter:description" content={selectedResource ? (selectedResource.description?.replace(/<[^>]*>?/gm, '').substring(0, 150) || `Download ${selectedResource.title} for ${selectedResource.course}`) : "Browse and download free study material for University. Filter by course, semester and resource type. Notes, PYQs, books and more."} />
         <meta name="twitter:image" content={selectedResource ? `https://picsum.photos/seed/${selectedResource.title}/1200/630` : 'https://picsum.photos/seed/browse/1200/630'} />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 sm:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="mb-6 sm:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div className="text-center md:text-left">
-            <h1 className="text-3xl sm:text-5xl font-black text-gray-900 mb-2 sm:mb-4 tracking-tight">Browse Resources</h1>
-            <p className="text-gray-500 font-bold text-[10px] sm:text-sm uppercase tracking-widest px-4 sm:px-0">Explore thousands of study materials curated for DU students.</p>
+            <h1 className="text-2xl sm:text-5xl font-black text-gray-900 mb-1 sm:mb-4 tracking-tight">Browse Resources</h1>
+            <p className="text-gray-500 font-bold text-[9px] sm:text-sm uppercase tracking-widest px-2 sm:px-0">Explore thousands of study materials curated for college students.</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 md:w-auto mt-4 md:mt-0">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:w-auto mt-2 sm:mt-4 md:mt-0">
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsRequestModalOpen(true)}
-              className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-white text-purple-600 border-2 border-purple-100 rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-xs hover:border-purple-600 hover:bg-purple-50 transition-all w-full sm:w-auto"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-5 sm:px-8 py-2.5 sm:py-4 bg-white text-purple-600 border-2 border-purple-100 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-[9px] sm:text-xs hover:border-purple-600 hover:bg-purple-50 transition-all w-full sm:w-auto"
             >
-              <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
+              <FileText className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               Request Material
             </motion.button>
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsUploadModalOpen(true)}
-              className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-purple-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-xs shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all w-full sm:w-auto"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-5 sm:px-8 py-2.5 sm:py-4 bg-purple-600 text-white rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-[9px] sm:text-xs shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all w-full sm:w-auto"
             >
-              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Plus className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               Upload Resource
             </motion.button>
           </div>
         </div>
 
         {/* Search and Filters Bar */}
-        <div className="bg-white/40 backdrop-blur-md border border-gray-100 rounded-3xl p-3 sm:p-6 shadow-xl shadow-purple-900/5 mb-8 sm:mb-12">
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
+        <div className="bg-white/40 backdrop-blur-md border border-gray-100 rounded-2xl sm:rounded-3xl p-2.5 sm:p-6 shadow-xl shadow-purple-900/5 mb-6 sm:mb-12">
+          <div className="flex flex-col lg:flex-row gap-2.5 sm:gap-6">
             {/* Search Input Group */}
             <div className="flex-1">
               <AnimatedGlowingSearchBar 
                 ref={searchInputRef}
-                placeholder="Search resources..."
+                placeholder="Search by title, subject code (e.g. 11017502), course..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 showClear={searchQuery.length > 0}
@@ -182,15 +185,15 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className={`flex-1 lg:flex-none px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold text-[10px] sm:text-xs uppercase tracking-wider border ${
+                className={`flex-1 lg:flex-none px-3 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 font-bold text-[9px] sm:text-xs uppercase tracking-wider border ${
                   showAdvancedFilters 
                     ? 'bg-purple-600 border-purple-600 text-white shadow-lg shadow-purple-600/20' 
                     : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
                 }`}
               >
-                <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>Filters</span>
-                <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
               </motion.button>
               
               <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 shadow-inner w-full sm:w-auto justify-center sm:justify-start">
@@ -363,22 +366,25 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
       </div>
 
       {/* Request Material Modal */}
-      <AnimatePresence>
-        {isRequestModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsRequestModalOpen(false)}
+      {createPortal(
+        <AnimatePresence>
+          {isRequestModalOpen && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', inset: 0 }}>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              onClick={() => { setIsRequestModalOpen(false); setCourseDropdownOpen(false); setCourseSearch(''); }}
               className="absolute inset-0 bg-black/60 backdrop-blur-md"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-xl bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
             >
+              <div className="flex-1 overflow-y-auto flex flex-col custom-scrollbar">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
@@ -399,15 +405,33 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
               </div>
 
               <form 
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  alert('Request submitted successfully! We will try to add it soon.');
-                  setIsRequestModalOpen(false);
-                  setRequestData({ course: '', semester: '', materialType: 'Notes', details: '' });
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) return;
+                  try {
+                    const API_URL = import.meta.env.VITE_API_URL || '';
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const res = await fetch(`${API_URL}/api/requests`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${session?.access_token}`,
+                      },
+                      body: JSON.stringify(requestData),
+                    });
+                    if (res.ok) {
+                      setIsRequestModalOpen(false);
+                      setRequestData({ course: '', semester: '', materialType: 'Notes', details: '' });
+                    }
+                  } catch (err) {
+                    console.error('Request submission error:', err);
+                  }
                 }}
-                className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar"
+                className="flex-1 overflow-visible p-6 space-y-4 min-h-0"
+                id="request-material-form"
               >
-                {!auth.currentUser ? (
+                {!supabase ? (
                   <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-6">
                     <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
                       <AlertCircle className="w-8 h-8 text-amber-600" />
@@ -427,87 +451,156 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                   </div>
                 ) : (
                   <>
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-bold text-gray-700 ml-1">Course</label>
-                      <div className="relative">
-                        <select 
-                          required
-                          value={requestData.course}
-                          onChange={(e) => setRequestData({...requestData, course: e.target.value})}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 outline-none transition-all font-medium text-sm appearance-none cursor-pointer"
-                        >
-                          <option value="" disabled>Select Course</option>
-                          {courses.map(course => (
-                            <option key={course} value={course}>{course}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="w-5 h-5 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    {/* Row 1: Course + Semester side-by-side */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* ── Custom Course Picker ── */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-600 uppercase tracking-widest ml-0.5">Course</label>
+                        <div className="relative">
+                          {/* Trigger button */}
+                          <button
+                            type="button"
+                            onClick={() => { setCourseDropdownOpen(p => !p); setCourseSearch(''); }}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 border rounded-xl outline-none transition-all font-semibold text-sm cursor-pointer text-left ${
+                              courseDropdownOpen ? 'border-purple-500 ring-2 ring-purple-500/20 bg-white' : 'border-gray-200'
+                            } ${!requestData.course ? 'text-gray-400' : 'text-gray-800'}`}
+                          >
+                            <span className="truncate">
+                              {requestData.course || 'Select Course'}
+                            </span>
+                            <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${courseDropdownOpen ? 'rotate-180' : ''}`} />
+                          </button>
+
+                          {/* Hidden input for form validation */}
+                          <input
+                            type="text"
+                            required
+                            value={requestData.course}
+                            readOnly
+                            tabIndex={-1}
+                            className="absolute inset-0 opacity-0 pointer-events-none"
+                          />
+
+                          {/* Dropdown panel — rendered inline, contained inside modal */}
+                          <AnimatePresence>
+                            {courseDropdownOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -6 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
+                              >
+                                {/* Search */}
+                                <div className="p-2 border-b border-gray-100">
+                                  <div className="relative">
+                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
+                                    <input
+                                      autoFocus
+                                      type="text"
+                                      placeholder="Search course..."
+                                      value={courseSearch}
+                                      onChange={e => setCourseSearch(e.target.value)}
+                                      className="w-full pl-7 pr-3 py-1.5 text-xs font-medium bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400/20 text-gray-800 placeholder:text-gray-300"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Options list — max-height contained */}
+                                <div className="overflow-y-auto max-h-40">
+                                  {courses
+                                    .filter(c => c.toLowerCase().includes(courseSearch.toLowerCase()))
+                                    .map(course => (
+                                      <button
+                                        key={course}
+                                        type="button"
+                                        onClick={() => {
+                                          setRequestData(d => ({ ...d, course }));
+                                          setCourseDropdownOpen(false);
+                                          setCourseSearch('');
+                                        }}
+                                        className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center justify-between gap-2 transition-colors ${
+                                          requestData.course === course
+                                            ? 'bg-purple-50 text-purple-700 font-bold'
+                                            : 'text-gray-700 hover:bg-gray-50'
+                                        }`}
+                                      >
+                                        <span className="truncate">{course}</span>
+                                        {requestData.course === course && (
+                                          <Check className="w-3 h-3 text-purple-600 shrink-0" />
+                                        )}
+                                      </button>
+                                    ))}
+                                  {courses.filter(c => c.toLowerCase().includes(courseSearch.toLowerCase())).length === 0 && (
+                                    <div className="px-3 py-4 text-center text-xs text-gray-400 font-medium">No courses found</div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-600 uppercase tracking-widest ml-0.5">Semester</label>
+                        <div className="relative">
+                          <select 
+                            required
+                            value={requestData.semester}
+                            onChange={(e) => setRequestData({...requestData, semester: e.target.value})}
+                            className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all font-semibold text-sm appearance-none cursor-pointer text-gray-800"
+                          >
+                            <option value="" disabled>Select Sem</option>
+                            {availableSemesters.filter(s => s !== 'All Semesters').map(sem => (
+                              <option key={sem} value={sem}>Semester {sem}</option>
+                            ))}
+                          </select>
+                          <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
                       </div>
                     </div>
 
+                    {/* Row 2: Material Type */}
                     <div className="space-y-1.5">
-                      <label className="text-sm font-bold text-gray-700 ml-1">Semester</label>
-                      <div className="relative">
-                        <select 
-                          required
-                          value={requestData.semester}
-                          onChange={(e) => setRequestData({...requestData, semester: e.target.value})}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 outline-none transition-all font-medium text-sm appearance-none cursor-pointer"
-                        >
-                          <option value="" disabled>Select Semester</option>
-                          {availableSemesters.filter(s => s !== 'All Semesters').map(sem => (
-                            <option key={sem} value={sem}>Semester {sem}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="w-5 h-5 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <label className="text-xs font-bold text-gray-600 uppercase tracking-widest ml-0.5">Material Type</label>
+                      <div className="flex flex-wrap gap-2">
+                        {['Notes', 'PYQ', 'Book', 'Syllabus', 'Other'].map(type => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => setRequestData({...requestData, materialType: type})}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+                              requestData.materialType === type
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20'
+                                : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-purple-300 hover:bg-purple-50 hover:text-purple-700'
+                            }`}
+                          >
+                            {type}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
+                    {/* Row 3: Details */}
                     <div className="space-y-1.5">
-                      <label className="text-sm font-bold text-gray-700 ml-1">Material Type</label>
-                      <div className="relative">
-                        <select 
-                          required
-                          value={requestData.materialType}
-                          onChange={(e) => setRequestData({...requestData, materialType: e.target.value})}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 outline-none transition-all font-medium text-sm appearance-none cursor-pointer"
-                        >
-                          <option value="Notes">Notes</option>
-                          <option value="PYQ">PYQ</option>
-                          <option value="Book">Book</option>
-                          <option value="Syllabus">Syllabus</option>
-                          <option value="Other">Other</option>
-                        </select>
-                        <ChevronDown className="w-5 h-5 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-bold text-gray-700 ml-1">Details (Optional)</label>
+                      <label className="text-xs font-bold text-gray-600 uppercase tracking-widest ml-0.5">Details <span className="normal-case text-gray-400 font-medium">(optional)</span></label>
                       <textarea 
                         rows={3}
                         placeholder="Any specific subject, author, or topic you're looking for?"
                         value={requestData.details}
                         onChange={(e) => setRequestData({...requestData, details: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 outline-none transition-all font-medium text-sm resize-none"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all font-medium text-sm resize-none text-gray-800 placeholder-gray-400"
                       />
                     </div>
                   </>
                 )}
               </form>
+              </div>{/* end scrollable wrapper */}
               
               <div className="p-6 border-t border-gray-100 flex-shrink-0 bg-gray-50/50">
                 <button 
-                  type="button"
-                  disabled={!auth.currentUser}
-                  onClick={(e) => {
-                    const form = e.currentTarget.parentElement?.previousElementSibling as HTMLFormElement;
-                    if (form.checkValidity()) {
-                      form.requestSubmit();
-                    } else {
-                      form.reportValidity();
-                    }
-                  }}
+                  type="submit"
+                  form="request-material-form"
                   className="w-full bg-purple-600 text-white py-3.5 sm:py-4 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Submit Request
@@ -516,7 +609,9 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

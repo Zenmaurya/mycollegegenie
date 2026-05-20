@@ -1,14 +1,117 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { motion } from 'motion/react';
-import { GraduationCap, FileText, PlayCircle, Search, Youtube, Newspaper, ExternalLink, ChevronRight, BookOpen, Users, Globe, Award, Clock, MessageSquare, ArrowRight, Sparkles } from 'lucide-react';
+import { motion, useAnimation } from 'motion/react';
+import { GraduationCap, FileText, PlayCircle, Search, Newspaper, ChevronRight, Users, Globe, Award, MessageSquare, ArrowRight, Sparkles, Building, Calendar, Zap } from 'lucide-react';
 import { Resource, NewsItem } from '../types';
 import { useNavigate, Link } from 'react-router-dom';
 import { ResourceCard } from '../components/ResourceCard';
 import { WavePath } from '../components/WavePath';
-import Marquee from '../components/ui/demo';
-import { TestimonialModal } from '../components/TestimonialModal';
-import { useEffect, useState } from 'react';
+import { UpcomingEventsCarousel } from '../components/UpcomingEventsCarousel';
+
+// ── Animated count-up hook ──────────────────────────────────────────────────
+function useCountUp(target: number, duration = 2000, suffix = '') {
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setStarted(true); observer.disconnect(); } },
+      { threshold: 0.4 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!started) return;
+    let startTime: number | null = null;
+    const step = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) requestAnimationFrame(step);
+      else setCount(target);
+    };
+    requestAnimationFrame(step);
+  }, [started, target, duration]);
+
+  return { count, ref, suffix };
+}
+
+interface StatProps { end: number; suffix: string; label: string; sublabel: string; color: string; }
+function CountUpStat({ end, suffix, label, sublabel, color }: StatProps) {
+  const { count, ref } = useCountUp(end, 2200);
+  const gradient = color === 'text-purple-400' ? 'from-purple-500 to-indigo-500'
+    : color === 'text-blue-400' ? 'from-blue-500 to-cyan-500'
+    : color === 'text-emerald-400' ? 'from-emerald-500 to-teal-500'
+    : 'from-pink-500 to-rose-500';
+  return (
+    <div ref={ref} className="text-center relative z-10 flex flex-col items-center">
+      {/* Number */}
+      <div className="text-3xl sm:text-5xl font-black text-white tracking-tighter tabular-nums leading-none mb-1.5 sm:mb-2.5">
+        {count.toLocaleString()}{suffix}
+      </div>
+      {/* Label */}
+      <div className={`text-[9px] sm:text-xs uppercase tracking-[0.12em] font-black mb-1.5 sm:mb-2.5 ${color}`}>{label}</div>
+      {/* Divider */}
+      <div className={`w-6 sm:w-10 h-0.5 rounded-full bg-gradient-to-r ${gradient} mb-2 sm:mb-3`} />
+      {/* Sublabel */}
+      <div className="text-[10px] sm:text-sm text-gray-400 font-medium leading-snug max-w-[110px] sm:max-w-[150px]">{sublabel}</div>
+    </div>
+  );
+}
+
+// ── Elastic Draggable wrapper with float resume ───────────────────────────
+interface DraggableCardProps {
+  children: React.ReactNode;
+  className?: string;
+  floatY?: number;        // how many px to float up/down
+  floatDuration?: number; // seconds for one float cycle
+  floatDelay?: number;    // start delay
+}
+function DraggableCard({ children, className, floatY = 10, floatDuration = 4, floatDelay = 0 }: DraggableCardProps) {
+  const controls = useAnimation();
+  const [dragging, setDragging] = useState(false);
+
+  const startFloat = () => {
+    controls.start({
+      y: [0, floatY, 0],
+      transition: { duration: floatDuration, repeat: Infinity, ease: 'easeInOut', delay: floatDelay }
+    });
+  };
+
+  useEffect(() => { startFloat(); }, []);
+
+  return (
+    <div className={`absolute ${className ?? ''}`} style={{ width: 'fit-content' }}>
+      <motion.div
+        drag
+        dragConstraints={{ left: -40, right: 40, top: -40, bottom: 40 }}
+        dragElastic={0.15}
+        dragMomentum={false}
+        animate={controls}
+        whileDrag={{ scale: 1.07 }}
+        onDragStart={() => { controls.stop(); setDragging(true); }}
+        onDragEnd={() => {
+          setDragging(false);
+          controls.start({
+            x: 0, y: 0,
+            transition: { type: 'spring', stiffness: 280, damping: 18 }
+          }).then(() => startFloat());
+        }}
+        style={{ cursor: dragging ? 'grabbing' : 'grab' }}
+        className="will-change-transform select-none"
+      >
+        {children}
+      </motion.div>
+    </div>
+  );
+}
 
 interface HomePageProps {
   searchQuery: string;
@@ -17,7 +120,7 @@ interface HomePageProps {
   setActiveFilter: (filter: any) => void;
   sortBy: 'Title' | 'Date' | 'Rating' | 'Course';
   setSortBy: (sort: 'Title' | 'Date' | 'Rating' | 'Course') => void;
-  DU_COURSES: string[];
+  College_COURSES: string[];
   isNewsLoading: boolean;
   newsItems: NewsItem[];
   resources: Resource[];
@@ -26,16 +129,10 @@ interface HomePageProps {
   getAverageRating: (ratings?: number[]) => number;
   setSelectedResource: (resource: Resource) => void;
   handleShare: (resource: Resource) => void;
+  resultsRef?: React.RefObject<HTMLElement>;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
-  searchQuery,
-  setSearchQuery,
-  activeFilter,
-  setActiveFilter,
-  sortBy,
-  setSortBy,
-  DU_COURSES,
   isNewsLoading,
   newsItems,
   resources,
@@ -43,10 +140,10 @@ export const HomePage: React.FC<HomePageProps> = ({
   onSave,
   getAverageRating,
   setSelectedResource,
-  handleShare
+  handleShare,
+  resultsRef
 }) => {
   const navigate = useNavigate();
-  const [isTestimonialModalOpen, setIsTestimonialModalOpen] = useState(false);
   
   const getFeatureColors = (color: string) => {
     switch (color) {
@@ -60,13 +157,13 @@ export const HomePage: React.FC<HomePageProps> = ({
   return (
     <div className="overflow-x-hidden">
       <Helmet>
-        <title>MyCollegeGenie - DU Notes, PYQs & Study Resources | Delhi University</title>
-        <meta name="description" content="Access DU notes, previous year questions, YouTube playlists and college events for Delhi University students. Free study material for all DU courses." />
-        <meta name="keywords" content="DU notes, Delhi University study material, DU PYQ, Delhi University previous year questions" />
+        <title>MyCollegeGenie — India's Biggest Student Platform & Ecosystem</title>
+        <meta name="description" content="My College Genie is India's biggest student platform, building a complete ecosystem to connect every college and every student. Access free notes, PYQs, find PGs, discover events, and join the ultimate student portal for every college need." />
+        <meta name="keywords" content="India biggest student platform, college student ecosystem, university portal, free college notes, PYQs, find PG near college, campus events, student community, college resources, My College Genie" />
         <link rel="canonical" href="https://mycollegegenie.in/" />
       </Helmet>
       {/* Hero Section */}
-      <main className="relative min-h-[75vh] flex items-center pt-8 sm:pt-12 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
+      <main className="relative min-h-[80vh] lg:min-h-[92vh] flex items-center pt-8 sm:pt-16 pb-10 sm:pb-16 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none">
           <motion.div 
@@ -101,75 +198,77 @@ export const HomePage: React.FC<HomePageProps> = ({
           </motion.div>
         </div>
 
-        <div className="max-w-7xl mx-auto w-full relative z-10 grid lg:grid-cols-2 gap-12 items-center">
-          <div className="max-w-3xl text-center lg:text-left">
+        <div className="max-w-7xl mx-auto w-full relative z-10 grid lg:grid-cols-12 gap-8 xl:gap-4 items-center">
+          <div className="max-w-xl lg:max-w-none lg:col-span-5 text-center lg:text-left mx-auto lg:mx-0">
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-purple-100 px-4 py-2 rounded-2xl mb-6 sm:mb-8 shadow-sm mx-auto lg:mx-0"
+              className="inline-flex items-center gap-2 bg-[#EFEFFD] px-4 py-2 rounded-2xl mb-6 sm:mb-8 mx-auto lg:mx-0"
             >
-              <div className="w-2 h-2 rounded-full bg-purple-600 animate-pulse" />
-              <span className="text-[10px] sm:text-xs font-bold text-purple-700 uppercase tracking-widest">Student-Led Initiative</span>
+              <GraduationCap className="w-4 h-4 text-[#4400FF]" />
+              <span className="text-xs font-bold text-[#4400FF]">A platform students are building together</span>
             </motion.div>
 
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-6 sm:mb-8 leading-[1.1] sm:leading-[0.9] tracking-tighter text-gray-900"
-            >
-              Ace Your <br className="hidden sm:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">DU Exams</span> <br className="hidden sm:block" />
-              With Ease.
-            </motion.h1>
+            <div className="mb-4 sm:mb-5 font-black leading-[1] tracking-tighter text-gray-900">
+              <h1 className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block leading-[1]">
+                Every College
+              </h1>
+              <h1 className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block leading-[1]">
+                Student Deserves
+              </h1>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-4 mt-0.5">
+                <span className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600 leading-[1]">
+                  a Genie.
+                </span>
+                <motion.span 
+                  className="text-[#D8B4FE] font-normal text-4xl sm:text-5xl inline-block -rotate-12"
+                  animate={{ rotate: [-12, 12, -12], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  ♡
+                </motion.span>
+              </div>
+            </div>
 
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-base sm:text-lg md:text-xl text-gray-500 max-w-xl mb-8 sm:mb-12 leading-relaxed font-medium mx-auto lg:mx-0 px-2 sm:px-0"
+              transition={{ duration: 0.6, delay: 0.8 }}
+              className="text-base sm:text-lg lg:text-lg text-gray-600 w-full mb-5 leading-relaxed font-medium px-2 sm:px-0 text-center lg:text-left lg:pr-8 xl:pr-16"
             >
-              Access thousands of Previous Year Questions, comprehensive notes, and curated YouTube playlists. Everything you need in one place.
+              From PYQs and notes to PGs, communities, campus exchange, and career opportunities. My College Genie is your all-in-one companion for every chapter of college life. We started with DU. Now we're building India's biggest student ecosystem — connecting every student, every college, every city under one platform.
+              <span className="block whitespace-nowrap mt-1.5 font-semibold tracking-tight text-gray-900">
+                One platform. Million students. Endless possibilities.
+              </span>
             </motion.p>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1 }}
+              className="mb-5 sm:mb-6"
+            >
+              <span className="font-['Caveat',cursive] italic text-2xl sm:text-3xl text-gray-800 border-b-2 border-pink-500 pb-1 px-1">Notes Se Naukri Takk.</span>
+            </motion.div>
 
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
               <Link 
                 to="/browse"
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-10 py-5 rounded-3xl font-black text-lg shadow-2xl shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:scale-105 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                className="w-full sm:w-[240px] bg-[#4400FF] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-[#3300CC] hover:shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer"
               >
                 <Search className="w-5 h-5" />
-                Browse Resources
+                Explore Resources
               </Link>
-              <Link to="/playlists" className="bg-white text-gray-900 border border-gray-100 px-10 py-5 rounded-3xl font-black text-lg hover:bg-gray-50 hover:scale-105 transition-all shadow-xl shadow-gray-900/5 flex items-center justify-center gap-3">
-                <Youtube className="w-5 h-5 text-rose-600" />
-                Watch Playlists
-              </Link>
-            </motion.div>
-
-            {/* Quick Stats */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="mt-16 flex flex-col sm:flex-row items-center gap-8 border-t border-gray-100 pt-8 justify-center lg:justify-start"
-            >
-              <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-gray-100 overflow-hidden">
-                    <img src={`https://picsum.photos/seed/user${i}/100/100`} alt="DU Student Profile Photo" referrerPolicy="no-referrer" />
-                  </div>
-                ))}
-                <div className="w-10 h-10 rounded-full border-2 border-white bg-purple-600 flex items-center justify-center text-[10px] font-bold text-white">
-                  +10k
-                </div>
-              </div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Joined by 10,000+ Students</p>
+              <a href="https://www.linkedin.com/company/my-college-genie/" target="_blank" rel="noopener noreferrer" className="w-full sm:w-[240px] bg-white text-[#4400FF] border border-gray-200 px-8 py-4 rounded-xl font-bold text-base hover:bg-gray-50 transition-all flex items-center justify-center gap-3">
+                <Users className="w-5 h-5" />
+                Join Our Team
+              </a>
             </motion.div>
           </div>
 
@@ -178,63 +277,163 @@ export const HomePage: React.FC<HomePageProps> = ({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="hidden lg:block relative"
+            className="relative hidden lg:flex items-center justify-center h-[500px] xl:h-[650px] w-full mt-0 lg:col-span-7"
           >
-            <div className="relative z-10 bg-white border border-gray-100 p-8 rounded-[3rem] shadow-2xl shadow-purple-900/10">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <div className="bg-purple-50 p-6 rounded-[2rem] space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <h3 className="font-bold text-gray-900">Notes</h3>
-                    <p className="text-xs text-gray-500 font-medium">Handwritten & typed notes from toppers.</p>
-                  </div>
-                  <div className="bg-orange-50 p-6 rounded-[2rem] space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white">
-                      <BookOpen className="w-5 h-5" />
-                    </div>
-                    <h3 className="font-bold text-gray-900">Books</h3>
-                    <p className="text-xs text-gray-500 font-medium">Standard textbooks & reference guides.</p>
-                  </div>
-                </div>
-                <div className="space-y-4 pt-8">
-                  <div className="bg-pink-50 p-6 rounded-[2rem] space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-pink-600 flex items-center justify-center text-white">
-                      <Clock className="w-5 h-5" />
-                    </div>
-                    <h3 className="font-bold text-gray-900">PYQs</h3>
-                    <p className="text-xs text-gray-500 font-medium">Last 10 years solved question papers.</p>
-                  </div>
-                  <div className="bg-rose-50 p-6 rounded-[2rem] space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center text-white">
-                      <Youtube className="w-5 h-5" />
-                    </div>
-                    <h3 className="font-bold text-gray-900">Playlists</h3>
-                    <p className="text-xs text-gray-500 font-medium">Curated video lectures for every topic.</p>
-                  </div>
-                </div>
-              </div>
+            {/* Background Blob */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] xl:w-[600px] h-[450px] xl:h-[600px] bg-purple-100 rounded-full blur-[80px] -z-10" />
+            
+            {/* Central Image */}
+            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+              <img 
+                src="/hero-students.webp" 
+                alt="Students using My College Genie" 
+                className="w-full h-full object-contain mix-blend-multiply drop-shadow-sm scale-[1.05] xl:scale-[1.1] origin-center"
+              />
             </div>
-            {/* Decorative Blobs */}
-            <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-200 rounded-full blur-3xl opacity-30 animate-pulse" />
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-pink-200 rounded-full blur-3xl opacity-30 animate-pulse" />
+
+            {/* Floating Cards */}
+            {/* Notes & Study Material — floats up -10px, 4s */}
+            <DraggableCard className="top-[10%] left-[0%] hidden lg:block z-20" floatY={-10} floatDuration={4} floatDelay={0}>
+              <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-indigo-600" />
+                </div>
+                <span className="text-sm font-bold text-gray-800">Notes &<br/>Study Material</span>
+              </div>
+            </DraggableCard>
+
+            {/* PYQs — floats down 15px, 5s */}
+            <DraggableCard className="top-[5%] right-[20%] hidden lg:block z-20" floatY={15} floatDuration={5} floatDelay={1}>
+              <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-pink-600" />
+                </div>
+                <span className="text-sm font-bold text-gray-800">PYQs</span>
+              </div>
+            </DraggableCard>
+
+            {/* Curated Playlists — floats up -12px, 4.5s */}
+            <DraggableCard className="top-[20%] -right-[5%] hidden lg:block z-20" floatY={-12} floatDuration={4.5} floatDelay={2}>
+              <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center">
+                  <PlayCircle className="w-5 h-5 text-rose-600" />
+                </div>
+                <span className="text-sm font-bold text-gray-800">Curated<br/>Playlists</span>
+              </div>
+            </DraggableCard>
+
+            {/* Communities & Forums — floats down 10px, 4.2s */}
+            <DraggableCard className="top-[45%] -right-[15%] hidden lg:block z-20" floatY={10} floatDuration={4.2} floatDelay={1.5}>
+              <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-blue-600" />
+                </div>
+                <span className="text-sm font-bold text-gray-800">Communities<br/>& Forums</span>
+              </div>
+            </DraggableCard>
+
+            {/* Find PGs — floats up -8px, 3.8s */}
+            <DraggableCard className="top-[40%] -left-[10%] hidden lg:block z-20" floatY={-8} floatDuration={3.8} floatDelay={0.5}>
+              <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+                  <Building className="w-4 h-4 text-orange-600" />
+                </div>
+                <span className="text-sm font-bold text-gray-800">Find PGs</span>
+              </div>
+            </DraggableCard>
+
+            {/* Campus Exchange — floats down 12px, 5.5s */}
+            <DraggableCard className="bottom-[10%] -left-[15%] z-20 hidden lg:block" floatY={12} floatDuration={5.5} floatDelay={2.5}>
+              <div className="bg-white px-5 py-4 rounded-2xl shadow-lg border border-gray-100 max-w-[220px]">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                    <div className="w-4 h-4 text-green-600">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-gray-800">Campus Exchange</span>
+                  <span className="bg-[#FF0080] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full ml-auto">NEW</span>
+                </div>
+                <p className="text-xs text-gray-500 leading-tight">Buy, sell, exchange or donate anything related to college life.</p>
+              </div>
+            </DraggableCard>
+
+            {/* Jobs & Internships — floats up -15px, 4.8s */}
+            <DraggableCard className="bottom-[15%] -right-[15%] hidden lg:block z-20" floatY={-15} floatDuration={4.8} floatDelay={1.2}>
+              <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                  <Award className="w-4 h-4 text-purple-600" />
+                </div>
+                <span className="text-sm font-bold text-gray-800">Jobs & Internships<br/>Coming Soon</span>
+              </div>
+            </DraggableCard>
+
           </motion.div>
         </div>
       </main>
 
-      {/* Latest from DU Section */}
-      <div className="mb-4 sm:mb-6 w-full relative z-50 hidden sm:block">
+      {/* ── Upcoming Events Section ─────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+        {/* Section Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-5 sm:mb-10 gap-3">
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 bg-[#4400FF] text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full mb-4"
+            >
+              <Zap className="w-3 h-3" />
+              Upcoming Events
+            </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight leading-tight"
+            >
+              Don&apos;t Miss What&apos;s{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600 italic">
+                Happening
+              </span>
+            </motion.h2>
+          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Link
+              to="/events"
+              className="flex items-center gap-2 text-[11px] font-black text-purple-600 uppercase tracking-widest hover:text-purple-800 transition-colors whitespace-nowrap"
+            >
+              <Calendar className="w-4 h-4" />
+              View All Events
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </motion.div>
+        </div>
+
+        {/* Carousel */}
+        <UpcomingEventsCarousel newsItems={newsItems} isLoading={isNewsLoading} />
+
+      </section>
+
+      {/* Latest Updates Section */}
+      <div className="mb-2 sm:mb-4 w-full relative z-50 hidden sm:block">
         <WavePath className="text-black" />
       </div>
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-16 sm:pt-8 sm:pb-24">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 sm:mb-12 gap-6">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 sm:pt-8 sm:pb-16">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-10 gap-3">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-purple-100 flex items-center justify-center shrink-0">
               <Newspaper className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Latest from DU</h2>
+              <h2 className="text-xl sm:text-3xl font-black text-gray-900 tracking-tight">Latest Updates</h2>
               <p className="text-[10px] sm:text-sm text-gray-400 font-bold uppercase tracking-widest">Stay updated with campus life</p>
             </div>
           </div>
@@ -254,19 +453,37 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
           {/* News Column */}
           <div className="space-y-4">
             {isNewsLoading ? (
               [1, 2, 3].map(i => (
-                <div key={i} className="bg-gray-50 border border-gray-100 rounded-3xl p-6 animate-pulse h-32" />
+                <div key={i} className="bg-gray-50 border border-gray-100 rounded-2xl p-4 animate-pulse h-20" />
               ))
-            ) : newsItems.filter(n => n.category === 'News').length > 0 ? (
-              newsItems.filter(n => n.category === 'News').slice(0, 3).map((item, idx) => (
+            ) : newsItems.filter(n => {
+                if (n.category === 'Event') return false;
+                const itemDate = new Date(n.createdAt);
+                if (!isNaN(itemDate.getTime())) {
+                  const twoMonthsAgo = new Date();
+                  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+                  return itemDate >= twoMonthsAgo;
+                }
+                return true;
+              }).length > 0 ? (
+              newsItems.filter(n => {
+                if (n.category === 'Event') return false;
+                const itemDate = new Date(n.createdAt);
+                if (!isNaN(itemDate.getTime())) {
+                  const twoMonthsAgo = new Date();
+                  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+                  return itemDate >= twoMonthsAgo;
+                }
+                return true;
+              }).slice(0, 3).map((item, idx) => (
                 <motion.div 
                   key={idx}
                   whileHover={{ x: 10 }}
-                  className="bg-white border border-gray-100 rounded-[2rem] p-6 transition-all cursor-pointer flex items-start gap-6 shadow-sm hover:shadow-xl hover:shadow-purple-600/5 group"
+                  className="bg-white border border-gray-100 rounded-2xl p-4 transition-all cursor-pointer flex items-start gap-4 shadow-sm hover:shadow-xl hover:shadow-purple-600/5 group"
                   onClick={() => navigate(`/news?news=${encodeURIComponent(item.title)}`)}
                 >
                   <div className="flex-1">
@@ -274,10 +491,10 @@ export const HomePage: React.FC<HomePageProps> = ({
                       <span className="px-2 py-1 bg-purple-50 text-purple-600 text-[10px] font-bold uppercase tracking-wider rounded-lg">News</span>
                       <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{item.date}</span>
                     </div>
-                    <h4 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-purple-600 transition-colors">
+                    <h4 className="text-sm sm:text-base font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-purple-600 transition-colors">
                       {item.title}
                     </h4>
-                    <p className="text-sm text-gray-500 line-clamp-2 font-medium">
+                    <p className="text-xs text-gray-500 line-clamp-2 font-medium">
                       {item.summary}
                     </p>
                     {item.college && (
@@ -287,7 +504,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                       </div>
                     )}
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-purple-600 group-hover:text-white transition-all">
+                  <div className="w-8 h-8 shrink-0 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-purple-600 group-hover:text-white transition-all">
                     <ChevronRight className="w-5 h-5" />
                   </div>
                 </motion.div>
@@ -310,7 +527,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <motion.div 
                   key={idx}
                   whileHover={{ x: 10 }}
-                  className="bg-white border border-gray-100 rounded-[2rem] p-6 transition-all cursor-pointer flex items-start gap-6 shadow-sm hover:shadow-xl hover:shadow-pink-600/5 group"
+                  className="bg-white border border-gray-100 rounded-2xl p-4 transition-all cursor-pointer flex items-start gap-4 shadow-sm hover:shadow-xl hover:shadow-pink-600/5 group"
                   onClick={() => navigate(`/events?event=${encodeURIComponent(item.title)}`)}
                 >
                   <div className="flex-1">
@@ -318,10 +535,10 @@ export const HomePage: React.FC<HomePageProps> = ({
                       <span className="px-2 py-1 bg-pink-50 text-pink-600 text-[10px] font-bold uppercase tracking-wider rounded-lg">Event</span>
                       <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{item.date}</span>
                     </div>
-                    <h4 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-pink-600 transition-colors">
+                    <h4 className="text-sm sm:text-base font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-pink-600 transition-colors">
                       {item.title}
                     </h4>
-                    <p className="text-sm text-gray-500 line-clamp-2 font-medium">
+                    <p className="text-xs text-gray-500 line-clamp-2 font-medium">
                       {item.summary}
                     </p>
                     {item.college && (
@@ -331,7 +548,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                       </div>
                     )}
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-pink-600 group-hover:text-white transition-all">
+                  <div className="w-8 h-8 shrink-0 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-pink-600 group-hover:text-white transition-all">
                     <ChevronRight className="w-5 h-5" />
                   </div>
                 </motion.div>
@@ -346,14 +563,14 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* Featured Resources Section */}
-      <section id="resources" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 bg-white/40 backdrop-blur-md rounded-[2.5rem] sm:rounded-[4rem] mb-16 sm:mb-24">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 sm:mb-12 px-2 sm:px-8 gap-6">
+      <section ref={resultsRef} id="resources" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-10 bg-white/40 backdrop-blur-md rounded-2xl sm:rounded-[3rem] mb-8 sm:mb-16">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-10 px-2 sm:px-6 gap-3">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-[1.25rem] sm:rounded-[1.5rem] bg-orange-100 flex items-center justify-center shrink-0">
               <Award className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600" />
             </div>
             <div>
-              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Top Resources</h2>
+              <h2 className="text-xl sm:text-3xl font-black text-gray-900 tracking-tight">Top Resources</h2>
               <p className="text-[10px] sm:text-sm text-gray-400 font-bold uppercase tracking-widest">Handpicked for your success</p>
             </div>
           </div>
@@ -366,7 +583,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 px-2 sm:px-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 px-2 sm:px-6">
           {resources.filter(r => r.isApproved !== false).slice(0, 4).map((resource) => (
             <ResourceCard 
               key={resource.id}
@@ -383,32 +600,32 @@ export const HomePage: React.FC<HomePageProps> = ({
 
       {/* Discussion Forum Preview Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 sm:mb-16">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center bg-purple-900 rounded-[2.5rem] sm:rounded-[4rem] p-8 sm:p-12 lg:p-24 relative overflow-hidden">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-16 items-center bg-purple-900 rounded-2xl sm:rounded-[3rem] p-5 sm:p-10 lg:p-20 relative overflow-hidden">
           {/* Background Decorative Elements */}
           <div className="absolute top-0 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-fuchsia-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
           
           <div className="relative z-10 text-center lg:text-left">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-purple-500/30 flex items-center justify-center mb-6 sm:mb-8 backdrop-blur-xl border border-purple-400/30 mx-auto lg:mx-0">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-purple-500/30 flex items-center justify-center mb-4 sm:mb-6 backdrop-blur-xl border border-purple-400/30 mx-auto lg:mx-0">
               <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4 sm:mb-6 tracking-tight leading-tight">
-              Join the DU <br className="hidden sm:block" />
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white mb-3 sm:mb-5 tracking-tight leading-tight">
+              Join the <br className="hidden sm:block" />
               <span className="text-purple-300">Student Community</span>
             </h2>
-            <p className="text-base sm:text-lg text-purple-100/80 mb-8 sm:mb-10 font-medium leading-relaxed max-w-md mx-auto lg:mx-0 px-2 sm:px-0">
+            <p className="text-sm sm:text-base text-purple-100/80 mb-5 sm:mb-8 font-medium leading-relaxed max-w-md mx-auto lg:mx-0 px-1 sm:px-0">
               Connect with fellow students, ask questions about courses, discuss exam strategies, and share your academic journey.
             </p>
             <Link 
               to="/forum"
-              className="inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-white text-purple-900 rounded-2xl font-black text-base sm:text-lg hover:bg-purple-50 transition-all shadow-2xl shadow-black/20 group w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-3 px-6 sm:px-10 py-3 sm:py-5 bg-white text-purple-900 rounded-2xl font-black text-sm sm:text-lg hover:bg-purple-50 transition-all shadow-2xl shadow-black/20 group w-full sm:w-auto"
             >
               Go to Forum
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
-          <div className="relative z-10 grid gap-6">
+          <div className="relative z-10 grid gap-3 sm:gap-5">
             {[
               { title: 'How to prepare for Microeconomics?', author: 'Rahul S.', replies: 12, time: '2h ago' },
               { title: 'Best books for Corporate Accounting?', author: 'Priya M.', replies: 8, time: '5h ago' },
@@ -417,10 +634,10 @@ export const HomePage: React.FC<HomePageProps> = ({
               <motion.div 
                 key={i}
                 whileHover={{ x: 10 }}
-                className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl hover:bg-white/20 transition-all cursor-pointer group"
+                className="bg-white/10 backdrop-blur-md border border-white/10 p-4 sm:p-5 rounded-2xl hover:bg-white/20 transition-all cursor-pointer group"
               >
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-lg font-bold text-white group-hover:text-purple-200 transition-colors line-clamp-1">{post.title}</h3>
+                  <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-purple-200 transition-colors line-clamp-1">{post.title}</h3>
                 </div>
                 <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-purple-200/60">
                   <div className="flex items-center gap-4">
@@ -439,13 +656,13 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* Why Choose Us Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 mb-16 sm:mb-24">
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4 sm:mb-6 tracking-tight">Why Students Love Us</h2>
-          <p className="text-base sm:text-lg text-gray-500 font-medium px-2 sm:px-0">We're building the most comprehensive resource platform for Delhi University students.</p>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-10 mb-8 sm:mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-12">
+          <h2 className="text-2xl sm:text-4xl font-black text-gray-900 mb-2 sm:mb-4 tracking-tight">Why Students Love Us</h2>
+          <p className="text-sm sm:text-base text-gray-500 font-medium px-2 sm:px-0">We're building the most comprehensive resource platform for college students.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           {[
             { icon: Users, title: 'Community Driven', desc: 'Resources uploaded and verified by students from top colleges.', color: 'purple' },
             { icon: Globe, title: 'Always Accessible', desc: 'Access your notes and PYQs anytime, anywhere, on any device.', color: 'pink' },
@@ -453,53 +670,34 @@ export const HomePage: React.FC<HomePageProps> = ({
           ].map((feature, i) => {
             const colors = getFeatureColors(feature.color);
             return (
-              <div key={i} className="bg-white border border-gray-100 p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] shadow-xl shadow-gray-900/5 hover:shadow-2xl transition-all group">
-                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[1.5rem] ${colors.bg} flex items-center justify-center mb-6 sm:mb-8 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className={`w-6 h-6 sm:w-8 sm:h-8 ${colors.text}`} />
+              <div key={i} className="bg-white border border-gray-100 p-5 sm:p-8 rounded-2xl sm:rounded-[2rem] shadow-md shadow-gray-900/5 hover:shadow-xl transition-all group">
+                <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl ${colors.bg} flex items-center justify-center mb-3 sm:mb-5 group-hover:scale-110 transition-transform`}>
+                  <feature.icon className={`w-5 h-5 sm:w-7 sm:h-7 ${colors.text}`} />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-3 sm:mb-4 tracking-tight">{feature.title}</h3>
-                <p className="text-sm sm:text-base text-gray-500 font-medium leading-relaxed">{feature.desc}</p>
+                <h3 className="text-base sm:text-xl font-black text-gray-900 mb-2 sm:mb-3 tracking-tight">{feature.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-500 font-medium leading-relaxed">{feature.desc}</p>
               </div>
             );
           })}
         </div>
-
-        <div className="mt-20 sm:mt-24">
-          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
-            <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4 tracking-tight">What students are saying</h3>
-            <button 
-              onClick={() => setIsTestimonialModalOpen(true)}
-              className="mt-4 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors shadow-lg"
-            >
-              Share your experience
-            </button>
-          </div>
-          <Marquee />
-        </div>
       </section>
 
-      <TestimonialModal 
-        isOpen={isTestimonialModalOpen} 
-        onClose={() => setIsTestimonialModalOpen(false)} 
-      />
-
       {/* Quick Stats Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24 sm:mb-32">
-        <div className="bg-gray-900 rounded-[2.5rem] sm:rounded-[4rem] p-8 sm:p-16 grid grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12 relative overflow-hidden">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-12">
+        <div className="bg-gray-900 rounded-2xl sm:rounded-3xl px-5 py-7 sm:px-12 sm:py-10 grid grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-10 relative overflow-hidden">
           {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]" />
+          <div className="absolute inset-0 opacity-[0.07] pointer-events-none">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:22px_22px]" />
           </div>
           
           {[
-            { label: 'Resources', value: '10k+' },
-            { label: 'Active Users', value: '25k+' },
-            { label: 'Colleges', value: '70+' },
-            { label: 'PYQs', value: '5k+' },
+            { end: 10, suffix: 'k+', label: 'Resources', sublabel: 'Someone uploaded exactly what you need. Just now.', color: 'text-purple-400' },
+            { end: 25, suffix: 'k+', label: 'Active Users', sublabel: "You're not studying alone anymore.", color: 'text-blue-400' },
+            { end: 70, suffix: '+',  label: 'Colleges', sublabel: 'Your college is already here. Are you?', color: 'text-emerald-400' },
+            { end: 5,  suffix: 'k+', label: 'PYQs', sublabel: 'Stop searching. Start solving.', color: 'text-pink-400' },
           ].map((stat, i) => (
-            <div key={i} className="text-center relative z-10">
-              <div className="text-xl sm:text-4xl lg:text-5xl font-black text-white mb-1 sm:mb-3 tracking-tighter">{stat.value}</div>
-              <div className="text-[7px] sm:text-[10px] text-gray-400 uppercase tracking-[0.15em] sm:tracking-[0.3em] font-black">{stat.label}</div>
+            <div key={i}>
+              <CountUpStat end={stat.end} suffix={stat.suffix} label={stat.label} sublabel={stat.sublabel} color={stat.color} />
             </div>
           ))}
         </div>

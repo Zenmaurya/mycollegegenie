@@ -1,7 +1,7 @@
 import { supabase } from '../supabase';
 import { ForumPost, Comment } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -23,12 +23,13 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
 export const ForumService = {
   // Posts
-  getPosts: async (course?: string, topic?: string, limitCount: number = 30, callback?: (posts: ForumPost[]) => void) => {
+  getPosts: async (course?: string, topic?: string, limitCount: number = 30, callback?: (posts: ForumPost[]) => void, sort: 'hot' | 'new' | 'top' = 'new') => {
     try {
       const params = new URLSearchParams();
       if (course && course !== 'All') params.append('course', course);
       if (topic && topic !== 'All') params.append('topic', topic);
       params.append('limit', limitCount.toString());
+      params.append('sort', sort);
 
       const data = await fetchWithAuth(`/api/forum/posts?${params.toString()}`);
       
@@ -54,6 +55,7 @@ export const ForumService = {
       return [];
     }
   },
+
 
   getPost: async (postId: string) => {
     try {
@@ -90,7 +92,7 @@ export const ForumService = {
     return data.id;
   },
 
-  updatePost: async (postId: string, updates: Partial<ForumPost>) => {
+  updatePost: async (_postId: string, _updates: Partial<ForumPost>) => {
     // Currently not supported in backend routes, but stubbed for future
     console.warn('Update post not implemented on backend');
   },
@@ -101,14 +103,14 @@ export const ForumService = {
     });
   },
 
-  toggleUpvote: async (postId: string, userId: string, isUpvoted: boolean) => {
+  toggleUpvote: async (postId: string, _userId: string, _isUpvoted: boolean) => {
     return fetchWithAuth(`/api/forum/posts/${postId}/vote`, {
       method: 'PATCH',
       body: JSON.stringify({ type: 'up' })
     });
   },
 
-  toggleDownvote: async (postId: string, userId: string, isDownvoted: boolean) => {
+  toggleDownvote: async (postId: string, _userId: string, _isDownvoted: boolean) => {
     return fetchWithAuth(`/api/forum/posts/${postId}/vote`, {
       method: 'PATCH',
       body: JSON.stringify({ type: 'down' })
@@ -147,16 +149,16 @@ export const ForumService = {
   },
 
   toggleCommentUpvote: async (postId: string, commentId: string, userId: string, isUpvoted: boolean) => {
-    await fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}/vote`, {
+    return fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}/vote`, {
       method: 'PATCH',
-      body: JSON.stringify({ type: isUpvoted ? 'down' : 'up' }) // if it was already upvoted we technically want to remove it, but our backend toggles so just send 'up'
+      body: JSON.stringify({ type: 'up' }),
     });
   },
 
   toggleCommentDownvote: async (postId: string, commentId: string, userId: string, isDownvoted: boolean) => {
-    await fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}/vote`, {
+    return fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}/vote`, {
       method: 'PATCH',
-      body: JSON.stringify({ type: isDownvoted ? 'up' : 'down' }) 
+      body: JSON.stringify({ type: 'down' }),
     });
   },
 

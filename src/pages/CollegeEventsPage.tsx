@@ -1,37 +1,74 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, Calendar, ExternalLink, GraduationCap, Clock, 
   AlertCircle, Sparkles, MapPin, X, Upload, CheckCircle2, 
-  Plus, Info, Globe, Send, Filter, SortAsc, SortDesc, ChevronDown,
-  Search, SlidersHorizontal, ArrowRight, Mail, Phone, Instagram, Linkedin
+  Plus, Info, Send, Filter, ChevronDown,
+  Search, SlidersHorizontal, ArrowRight
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { auth } from '../firebase';
+import { supabase } from '../supabase';
+import { submitEvent, getNews } from '../services/newsService';
 import { NewsItem } from '../types';
 import { toast } from 'sonner';
+import { ImageSlider } from '../components/ImageSlider';
+import { uploadFile } from '../services/resourceService';
+import { CollegeMMY_EVENTS } from '../components/UpcomingEventsCarousel';
 
 interface CollegeEventsPageProps {
   newsItems: NewsItem[];
   isLoading: boolean;
 }
 
-export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems, isLoading }) => {
+export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems: propItems, isLoading: propLoading }) => {
+  // Self-fetch events — eliminates race condition with App.tsx timing
+  const [localItems, setLocalItems] = React.useState<NewsItem[]>([]);
+  const [localLoading, setLocalLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    setLocalLoading(true);
+    getNews('Event')
+      .then(data => setLocalItems(data))
+      .catch(() => setLocalItems([]))
+      .finally(() => setLocalLoading(false));
+  }, []);
+
+  // Merge: prefer local DB events; fall back to prop items (mock data)
+  let allItems = localItems.length > 0 ? localItems : propItems;
+  const isLoading = localLoading && propLoading;
+  
+  // Apply fallback if no events found to match HomePage carousel
+  if (!isLoading && allItems.filter(item => item.category === 'Event').length === 0) {
+    allItems = [...allItems, ...CollegeMMY_EVENTS];
+  }
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedEvent, setSelectedEvent] = useState<NewsItem | null>(null);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Track Supabase auth state
+  React.useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   const [submitForm, setSubmitForm] = useState({
     title: '',
     college: '',
     date: '',
     venue: '',
-    eligibility: 'All' as 'All' | 'DU Only' | 'College Specific' | 'NCWEB' | 'Girls Only' | 'DU + SOL' | 'DU + SOL + NCWEB',
+    eligibility: 'All' as 'All' | 'College Specific' | 'College Specific' | 'NCWEB' | 'Girls Only' | 'All Students' | 'All Students + NCWEB',
     description: '',
     image: null as File | null
   });
+  const [eventImages, setEventImages] = useState<string[]>([]);
 
   // Sorting and Filtering State
   const [sortBy, setSortBy] = useState<'date-asc' | 'date-desc'>('date-desc');
@@ -41,7 +78,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [eligibilityFilter, setEligibilityFilter] = useState<string>('all');
 
-  const rawEvents = newsItems.filter(item => item.category === 'Event');
+  const rawEvents = allItems.filter(item => item.category === 'Event');
 
   React.useEffect(() => {
     const eventTitle = searchParams.get('event');
@@ -104,39 +141,56 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
       return sortBy === 'date-asc' ? dateA - dateB : dateB - dateA;
     });
 
-  const handleSubmitEvent = (e: React.FormEvent) => {
+  const handleSubmitEvent = async (e: React.FormEvent) => {
     e.preventDefault();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('Please sign in to submit an event.');
+      return;
+    }
     setSubmitStatus('submitting');
-    
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await submitEvent({
+        title: submitForm.title,
+        college: submitForm.college,
+        date: submitForm.date,
+        venue: submitForm.venue,
+        eligibility: submitForm.eligibility,
+        description: submitForm.description,
+        image: submitForm.image,
+        imageUrl: eventImages[0]
+      });
       setSubmitStatus('success');
-      toast.success('Event submitted successfully! It will be reviewed soon.');
+      toast.success('Event submitted! It will be reviewed by our team.');
       setTimeout(() => {
         setIsSubmitModalOpen(false);
         setSubmitStatus('idle');
         setSubmitForm({ title: '', college: '', date: '', venue: '', eligibility: 'All', description: '', image: null });
       }, 2000);
-    }, 1500);
+    } catch (error) {
+      console.error('[CollegeEventsPage] submitEvent error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit event. Please try again.');
+      setSubmitStatus('idle');
+    }
   };
 
   return (
     <div className="min-h-screen bg-transparent">
       <Helmet>
-        <title>{selectedEvent ? `${selectedEvent.title} | MyCollegeGenie` : 'Upcoming College Events | MyCollegeGenie'}</title>
-        <meta name="description" content={selectedEvent ? selectedEvent.summary : "Stay updated with the latest college events, fests, and workshops happening across Delhi University."} />
+        <title>{selectedEvent ? `${selectedEvent.title} | MyCollegeGenie` : 'Upcoming College Events & Fests | MyCollegeGenie'}</title>
+        <meta name="description" content={selectedEvent ? selectedEvent.summary : "Discover and participate in the latest college events, fests, hackathons, and workshops happening at universities across India."} />
         
         {/* Open Graph / Social Meta Tags */}
         <meta property="og:type" content="article" />
         <meta property="og:site_name" content="MyCollegeGenie" />
         <meta property="og:title" content={selectedEvent ? selectedEvent.title : 'Upcoming College Events | MyCollegeGenie'} />
-        <meta property="og:description" content={selectedEvent ? selectedEvent.summary : "Stay updated with the latest college events, fests, and workshops happening across Delhi University."} />
+        <meta property="og:description" content={selectedEvent ? selectedEvent.summary : "Stay updated with the latest college events, fests, and workshops happening across University."} />
         <meta property="og:image" content={selectedEvent ? `https://picsum.photos/seed/${selectedEvent.title}/1200/630` : 'https://picsum.photos/seed/events/1200/630'} />
         
         {/* Twitter Meta Tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={selectedEvent ? selectedEvent.title : 'Upcoming College Events | MyCollegeGenie'} />
-        <meta name="twitter:description" content={selectedEvent ? selectedEvent.summary : "Stay updated with the latest college events, fests, and workshops happening across Delhi University."} />
+        <meta name="twitter:description" content={selectedEvent ? selectedEvent.summary : "Stay updated with the latest college events, fests, and workshops happening across University."} />
         <meta name="twitter:image" content={selectedEvent ? `https://picsum.photos/seed/${selectedEvent.title}/1200/630` : 'https://picsum.photos/seed/events/1200/630'} />
       </Helmet>
 
@@ -255,9 +309,9 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                       >
                         <option value="all">All Students</option>
                         <option value="All">All Colleges</option>
-                        <option value="DU Only">DU Only</option>
-                        <option value="DU + SOL">DU + SOL</option>
-                        <option value="DU + SOL + NCWEB">DU + SOL + NCWEB</option>
+                        <option value="College Specific">College Specific</option>
+                        <option value="All Students">All Students</option>
+                        <option value="All Students + NCWEB">All Students + NCWEB</option>
                         <option value="NCWEB">NCWEB Only</option>
                         <option value="Girls Only">Girls Only</option>
                         <option value="College Specific">Our College Only</option>
@@ -413,35 +467,39 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                 onClick={() => handleOpenEvent(item)}
                 className="group bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-pink-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col"
               >
-                {/* ── Poster: handles both 9:16 portrait & 16:9 landscape ── */}
-                <div className="relative w-full bg-gradient-to-br from-pink-50 to-rose-100 overflow-hidden" style={{ aspectRatio: '4/3' }}>
-                  <img
-                    src={item.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(item.title)}/600/800`}
-                    alt={item.title}
-                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
+                {/* ── Image Slider (card) ── */}
+                <div className="relative w-full bg-gradient-to-br from-pink-50 to-rose-100 overflow-hidden" style={{ aspectRatio: '4/3' }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <ImageSlider
+                    images={[
+                      item.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(item.title)}/600/450`
+                    ]}
+                    autoPlay={false}
+                    aspectRatio="4/3"
+                    accentColor="#db2777"
+                    className="rounded-none"
                   />
                   {/* Gradient overlay at bottom */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
                   {/* Date badge */}
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-3 left-3 z-10">
                     <div className="bg-pink-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">
                       {item.date || 'TBD'}
                     </div>
                   </div>
                   {/* Eligibility badge */}
                   {item.eligibility && item.eligibility !== 'All' && (
-                    <div className="absolute top-3 right-3">
+                    <div className="absolute top-3 right-3 z-10">
                       <div className="bg-white/90 backdrop-blur-sm text-pink-600 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border border-pink-100">
                         {item.eligibility}
                       </div>
                     </div>
                   )}
                   {/* College at bottom */}
-                  <div className="absolute bottom-3 left-3 right-3">
+                  <div className="absolute bottom-3 left-3 right-3 z-10">
                     <p className="text-white font-black text-[11px] uppercase tracking-widest truncate drop-shadow">
-                      {item.college || 'Delhi University'}
+                      {item.college || 'University'}
                     </p>
                   </div>
                 </div>
@@ -499,9 +557,10 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
       </div>
 
       {/* ── Event Detail Modal ── */}
-      <AnimatePresence>
-        {selectedEvent && (
-          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {createPortal(
+        <AnimatePresence>
+          {selectedEvent && (
+            <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={handleCloseEvent}
               className="absolute inset-0 bg-black/80 backdrop-blur-md"
@@ -511,29 +570,30 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 60 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="relative w-full max-w-lg sm:max-w-2xl bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
+              className="relative w-full max-w-lg sm:max-w-2xl bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden"
             >
-              {/* ── Poster Section (object-contain for any ratio) ── */}
-              <div className="relative w-full bg-gradient-to-br from-pink-900 via-rose-800 to-pink-700 shrink-0" style={{ maxHeight: '50vh' }}>
-                <img
-                  src={selectedEvent.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(selectedEvent.title)}/800/1000`}
-                  className="w-full object-contain"
-                  style={{ maxHeight: '50vh' }}
-                  alt={selectedEvent.title}
-                  referrerPolicy="no-referrer"
-                  loading="lazy"
+              {/* ── Image Slider (modal hero) ── */}
+              <div className="relative w-full bg-gradient-to-br from-pink-900 via-rose-800 to-pink-700 shrink-0 h-[35dvh] sm:h-[45vh]">
+                <ImageSlider
+                  images={[
+                    selectedEvent.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(selectedEvent.title)}/800/600`
+                  ]}
+                  autoPlay={false}
+                  aspectRatio="16/9"
+                  accentColor="#db2777"
+                  className="rounded-none"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/20 pointer-events-none" />
                 {/* Close */}
                 <button onClick={handleCloseEvent}
-                  className="absolute top-4 right-4 p-2.5 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20">
+                  className="absolute top-4 right-4 p-2.5 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-10">
                   <X className="w-5 h-5" />
                 </button>
                 {/* Title overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-5">
+                <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
                   <div className="flex flex-wrap gap-2 mb-2">
                     <span className="bg-pink-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">{selectedEvent.date || 'TBD'}</span>
-                    <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-white/20">{selectedEvent.college || 'Delhi University'}</span>
+                    <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-white/20">{selectedEvent.college || 'University'}</span>
                     {selectedEvent.eligibility && selectedEvent.eligibility !== 'All' && (
                       <span className="bg-amber-500 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">{selectedEvent.eligibility}</span>
                     )}
@@ -593,44 +653,47 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                     <ExternalLink className="w-4 h-4 text-blue-400 shrink-0" />
                   </a>
                 )}
+              </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-2">
-                  <a
-                    href={selectedEvent.url || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={e => { if (!selectedEvent.url) e.preventDefault(); }}
-                    className="flex-[2] bg-gradient-to-r from-pink-600 to-rose-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-xl shadow-pink-600/25 hover:shadow-pink-600/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Register Now
-                  </a>
-                  <button
-                    onClick={() => {
-                      const shareUrl = `${window.location.origin}/events?event=${encodeURIComponent(selectedEvent.title)}`;
-                      if (navigator.share) {
-                        navigator.share({ title: selectedEvent.title, text: selectedEvent.summary, url: shareUrl }).catch(() => {});
-                      } else {
-                        navigator.clipboard.writeText(shareUrl);
-                        toast.success('Link copied!');
-                      }
-                    }}
-                    className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Send className="w-4 h-4" />Share
-                  </button>
-                </div>
+              {/* Sticky Action Buttons */}
+              <div className="p-4 sm:p-6 bg-white border-t border-gray-100 flex gap-3 shrink-0 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
+                <a
+                  href={selectedEvent.url || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={e => { if (!selectedEvent.url) e.preventDefault(); }}
+                  className="flex-[2] bg-gradient-to-r from-pink-600 to-rose-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-xl shadow-pink-600/25 hover:shadow-pink-600/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Register Now
+                </a>
+                <button
+                  onClick={() => {
+                    const shareUrl = `${window.location.origin}/events?event=${encodeURIComponent(selectedEvent.title)}`;
+                    if (navigator.share) {
+                      navigator.share({ title: selectedEvent.title, text: selectedEvent.summary, url: shareUrl }).catch(() => {});
+                    } else {
+                      navigator.clipboard.writeText(shareUrl);
+                      toast.success('Link copied!');
+                    }
+                  }}
+                  className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                >
+                  <Send className="w-4 h-4" />Share
+                </button>
               </div>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Submit Event Modal */}
-      <AnimatePresence>
-        {isSubmitModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {isSubmitModalOpen && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">  
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -642,6 +705,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-2xl bg-white rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
             >
               <div className="p-6 sm:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -662,7 +726,8 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                 </button>
               </div>
 
-              <form onSubmit={handleSubmitEvent} className="p-6 sm:p-8 overflow-y-auto custom-scrollbar space-y-6">
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <form id="submit-event-form" onSubmit={handleSubmitEvent} className="p-6 sm:p-8 space-y-6">
                 {submitStatus === 'success' ? (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -675,7 +740,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                     <h3 className="text-3xl font-black text-gray-900 mb-3 tracking-tighter">Submission Received!</h3>
                     <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Your event will be reviewed by our team before going live.</p>
                   </motion.div>
-                ) : !auth.currentUser ? (
+                ) : !currentUser ? (
                   <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-6">
                     <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
                       <AlertCircle className="w-8 h-8 text-amber-600" />
@@ -700,6 +765,8 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Event Title</label>
                         <input 
                           required
+                          id="event-title"
+                          name="title"
                           type="text"
                           placeholder="e.g. Crossroads 2026"
                           className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
@@ -711,6 +778,8 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">College Name</label>
                         <input 
                           required
+                          id="event-college"
+                          name="college"
                           type="text"
                           placeholder="e.g. SRCC"
                           className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
@@ -725,6 +794,8 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Event Date</label>
                         <input 
                           required
+                          id="event-date"
+                          name="date"
                           type="text"
                           placeholder="e.g. March 25, 2026"
                           className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
@@ -736,6 +807,8 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Venue</label>
                         <input 
                           required
+                          id="event-venue"
+                          name="venue"
                           type="text"
                           placeholder="e.g. College Auditorium"
                           className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
@@ -754,10 +827,10 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                           value={submitForm.eligibility}
                           onChange={e => setSubmitForm({...submitForm, eligibility: e.target.value as any})}
                         >
-                          <option value="All">All Colleges (DU, SOL, Private, etc.)</option>
-                          <option value="DU Only">DU Students Only</option>
-                          <option value="DU + SOL">DU + SOL Students</option>
-                          <option value="DU + SOL + NCWEB">DU + SOL + NCWEB Students</option>
+                          <option value="All">All Colleges (College, SOL, Private, etc.)</option>
+                          <option value="College Specific">college students Only</option>
+                          <option value="All Students">All Students Students</option>
+                          <option value="All Students + NCWEB">All Students + NCWEB Students</option>
                           <option value="NCWEB">NCWEB Students Only</option>
                           <option value="Girls Only">Girls Only</option>
                           <option value="College Specific">Only for Our College Students</option>
@@ -779,32 +852,24 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Event Poster / Banner</label>
-                      <div className="relative group">
-                        <input 
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          id="event-poster"
-                          onChange={e => setSubmitForm({...submitForm, image: e.target.files?.[0] || null})}
-                        />
-                        <label 
-                          htmlFor="event-poster"
-                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-2xl hover:border-pink-400 hover:bg-pink-50 transition-all cursor-pointer"
-                        >
-                          {submitForm.image ? (
-                            <div className="flex items-center gap-3">
-                              <CheckCircle2 className="w-5 h-5 text-green-500" />
-                              <span className="text-sm font-bold text-gray-900">{submitForm.image.name}</span>
-                            </div>
-                          ) : (
-                            <>
-                              <Upload className="w-6 h-6 text-gray-300 mb-2 group-hover:text-pink-500 transition-colors" />
-                              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Click to upload poster</span>
-                            </>
-                          )}
-                        </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Event Photos / Poster</label>
+                        <span className="text-xs text-pink-600 font-bold bg-pink-50 px-2 py-0.5 rounded-full">Up to 3 images</span>
                       </div>
+                      <ImageSlider
+                        images={eventImages}
+                        editable
+                        onImagesChange={setEventImages}
+                        maxImages={3}
+                        aspectRatio="16/9"
+                        accentColor="#db2777"
+                        onUpload={(file) => uploadFile(file, 'events')}
+                      />
+                      {eventImages.length > 0 && (
+                        <p className="text-[10px] font-bold text-gray-400">
+                          {eventImages.length}/3 photos added · First photo will be the poster
+                        </p>
+                      )}
                     </div>
 
                     <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex gap-3">
@@ -813,31 +878,34 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems,
                         Note: Submissions will be reviewed before going live. Please ensure all details are accurate and the poster is high-quality.
                       </p>
                     </div>
-
-                    <button 
-                      type="submit"
-                      disabled={submitStatus === 'submitting'}
-                      className="w-full bg-pink-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl shadow-pink-600/20 hover:bg-pink-700 transition-all disabled:opacity-50"
-                    >
-                      {submitStatus === 'submitting' ? (
-                        <>
-                          <Clock className="w-5 h-5 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-5 h-5" />
-                          Submit for Review
-                        </>
-                      )}
-                    </button>
                   </>
                 )}
-              </form>
+                </form>
+              </div>
+
+              {/* ── Sticky Submit Footer ── */}
+              {currentUser && submitStatus !== 'success' && (
+                <div className="px-6 sm:px-8 py-4 border-t border-gray-100 bg-white flex-shrink-0">
+                  <button
+                    type="submit"
+                    form="submit-event-form"
+                    disabled={submitStatus === 'submitting'}
+                    className="w-full bg-pink-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl shadow-pink-600/20 hover:bg-pink-700 transition-all disabled:opacity-50"
+                  >
+                    {submitStatus === 'submitting' ? (
+                      <><Clock className="w-5 h-5 animate-spin" /> Processing...</>
+                    ) : (
+                      <><Send className="w-5 h-5" /> Submit for Review</>
+                    )}
+                  </button>
+                </div>
+              )}
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

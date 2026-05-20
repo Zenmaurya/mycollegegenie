@@ -3,64 +3,83 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { BookOpen, Search, Upload, Youtube, Newspaper, Home, Share2, ChevronRight, ChevronLeft, GraduationCap, FileText, PlayCircle, X, ExternalLink, Filter, Plus, CheckCircle2, AlertCircle, User, Calendar, Globe, Star, Flag, AlertTriangle, ArrowUpDown, File, Trash2, RefreshCw, Clock, MapPin, Menu, LayoutGrid, List, MessageSquare, MessageCircle, Lightbulb, ArrowUp, Download, Building, Instagram, Linkedin, LogIn, LogOut, Sparkles, Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useMemo, useCallback, useEffect, useRef, Suspense, lazy } from 'react';
+import { createPortal } from 'react-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useSearchParams, Navigate } from 'react-router-dom';
+import { BookOpen, Search, Upload, Youtube, Newspaper, Home, Share2, ChevronRight, ChevronLeft, ChevronDown, GraduationCap, FileText, PlayCircle, X, ExternalLink, Filter, Plus, CheckCircle2, AlertCircle, User, Calendar, Globe, Star, Flag, AlertTriangle, ArrowUpDown, File, Trash2, RefreshCw, Clock, MapPin, Menu, LayoutGrid, List, MessageSquare, MessageCircle, Lightbulb, ArrowUp, Download, Building, Instagram, Linkedin, LogIn, LogOut, Sparkles, Loader2, Mail, Lock, Eye, EyeOff, Store, LibraryBig, BedDouble, ShoppingBag, MessagesSquare, Rss, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useDropzone } from 'react-dropzone';
+import DOMPurify from 'dompurify';
 import { getNews } from './services/newsService';
-import { GoogleGenAI } from "@google/genai";
+// GenAI logic moved to backend
 
 import { Toaster, toast } from 'sonner';
 
 // Pages
-import { HomePage } from './pages/HomePage';
-import { BrowsePage } from './pages/BrowsePage';
-import { PlaylistPage } from './pages/PlaylistPage';
-import { ForumPage } from './pages/ForumPage';
-import { PostDetailPage } from './pages/PostDetailPage';
-import { AdminPanel } from './pages/AdminPanel';
-import { PrivacyPage } from './pages/PrivacyPage';
-import { TermsPage } from './pages/TermsPage';
-import { ContactPage } from './pages/ContactPage';
-import { FindPGPage } from './pages/FindPGPage';
-import { LoginPage } from './pages/LoginPage';
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
-import { FlipbookPage } from './pages/FlipbookPage';
-import { OfficialNewsPage } from './pages/OfficialNewsPage';
-import { CollegeEventsPage } from './pages/CollegeEventsPage';
+const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
+const BrowsePage = lazy(() => import('./pages/BrowsePage').then(m => ({ default: m.BrowsePage })));
+const PlaylistPage = lazy(() => import('./pages/PlaylistPage').then(m => ({ default: m.PlaylistPage })));
+const ForumPage = lazy(() => import('./pages/ForumPage').then(m => ({ default: m.ForumPage })));
+const PostDetailPage = lazy(() => import('./pages/PostDetailPage').then(m => ({ default: m.PostDetailPage })));
+const AdminPanel = lazy(() => import('./pages/AdminPanel').then(m => ({ default: m.AdminPanel })));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('./pages/TermsPage').then(m => ({ default: m.TermsPage })));
+const ContactPage = lazy(() => import('./pages/ContactPage').then(m => ({ default: m.ContactPage })));
+const FindPGPage = lazy(() => import('./pages/FindPGPage').then(m => ({ default: m.FindPGPage })));
+const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
+const FlipbookPage = lazy(() => import('./pages/FlipbookPage').then(m => ({ default: m.FlipbookPage })));
+const OfficialNewsPage = lazy(() => import('./pages/OfficialNewsPage').then(m => ({ default: m.OfficialNewsPage })));
+const CollegeEventsPage = lazy(() => import('./pages/CollegeEventsPage').then(m => ({ default: m.CollegeEventsPage })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const CampusExchangePage = lazy(() => import('./pages/CampusExchangePage').then(m => ({ default: m.CampusExchangePage })));
+const OTPVerificationPage = lazy(() => import('./pages/OTPVerificationPage').then(m => ({ default: m.OTPVerificationPage })));
+const ContributorsPage = lazy(() => import('./pages/ContributorsPage').then(m => ({ default: m.ContributorsPage })));
+const BlogPage = lazy(() => import('./pages/BlogPage').then(m => ({ default: m.BlogPage })));
 
 // Components
 import { UploaderProfilePopover } from './components/UploaderProfilePopover';
+import { PageTransition, ScrollProgressBar } from './components/PageTransition';
 
 // Constants & Types
-import { INITIAL_RESOURCES, DU_COURSES, SUB_CATEGORIES, EVENT_POSTERS, COURSE_METADATA } from './constants';
+import { College_COURSES, SUB_CATEGORIES, EVENT_POSTERS, COURSE_METADATA } from './constants';
 import { Resource, NewsItem, User as AppUser } from './types';
 
-// Firebase
-import { auth, logout } from './firebase';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+// Supabase
+import { supabase, logout } from './supabase';
 import { createUserProfile } from './services/userService';
 import { getResources, uploadResource, uploadFile, rateResource, reportResource } from './services/resourceService';
+import { submitEvent } from './services/newsService';
 
 import { AuthForm } from './components/AuthForm';
 
+const extractYouTubeId = (url: string) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|list=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2] ? match[2] : null;
+};
+
 function AppContent() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [resources, setResources] = useState<Resource[]>(INITIAL_RESOURCES as any);
+  const [resources, setResources] = useState<Resource[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'All' | 'Note' | 'PYQ' | 'Playlist' | 'Book'>('All');
+  const [activeFilter, setActiveFilter] = useState<'All' | 'Note' | 'PYQ' | 'Book'>('All');
   const [selectedCourse, setSelectedCourse] = useState<string>('All Courses');
   const [selectedSemester, setSelectedSemester] = useState<string>('All Semesters');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('All');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [duplicateWarningResource, setDuplicateWarningResource] = useState<Resource | null>(null);
+  const [duplicateWarningAcknowledged, setDuplicateWarningAcknowledged] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success'>('idle');
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+  // Helper: open upload modal & close resource detail to prevent overlap/form conflict
+  const openUploadModal = () => { setSelectedResource(null); setIsUploadModalOpen(true); };
   const [modalView, setModalView] = useState<'main' | 'comments' | 'tips'>('main');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -68,24 +87,77 @@ function AppContent() {
   const [isEventRequestModalOpen, setIsEventRequestModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [savedResourceIds, setSavedResourceIds] = useState<string[]>(() => {
-    const saved = localStorage.getItem('savedResources');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [showNewBadge, setShowNewBadge] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('savedResources', JSON.stringify(savedResourceIds));
-  }, [savedResourceIds]);
+    const timer = setTimeout(() => setShowNewBadge(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+  const [savedResourceIds, setSavedResourceIds] = useState<string[]>([]);
+  
+  // Fetch saved items on login
+  useEffect(() => {
+    if (!user) {
+      setSavedResourceIds([]);
+      return;
+    }
+    const fetchSaved = async () => {
+      try {
+        const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        if (!token) return;
+        const res = await fetch(`${API}/api/users/me/saved`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSavedResourceIds(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch saved items:', err);
+      }
+    };
+    fetchSaved();
+  }, [user]);
 
-  const toggleSave = (id: string) => {
+  const toggleSave = async (id: string) => {
+    if (!user) {
+      toast.error('Please sign in to save resources');
+      return;
+    }
+    const isCurrentlySaved = savedResourceIds.includes(id);
+    
+    // Optimistic UI update
     setSavedResourceIds(prev => 
-      prev.includes(id) ? prev.filter(rid => rid !== id) : [...prev, id]
+      isCurrentlySaved ? prev.filter(rid => rid !== id) : [...prev, id]
     );
-    const isSaving = !savedResourceIds.includes(id);
-    if (isSaving) {
-      toast.success('Resource saved to your collection!');
-    } else {
-      toast.info('Resource removed from collection.');
+
+    try {
+      const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      
+      const res = await fetch(`${API}/api/users/me/saved${isCurrentlySaved ? `/${id}` : ''}`, {
+        method: isCurrentlySaved ? 'DELETE' : 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: isCurrentlySaved ? undefined : JSON.stringify({ itemId: id })
+      });
+      
+      if (res.ok) {
+        toast[isCurrentlySaved ? 'info' : 'success'](
+          isCurrentlySaved ? 'Resource removed from collection.' : 'Resource saved to your collection!'
+        );
+      } else {
+        throw new Error('Failed to update');
+      }
+    } catch (err) {
+      // Revert optimistic update
+      setSavedResourceIds(prev => 
+        isCurrentlySaved ? [...prev, id] : prev.filter(rid => rid !== id)
+      );
+      toast.error('Failed to update saved item.');
     }
   };
 
@@ -113,9 +185,21 @@ function AppContent() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [visibleCount, setVisibleCount] = useState(12);
 
+  // ── Resource Comments & Exam Tips (real DB data) ──
+  const [resourceComments, setResourceComments] = useState<any[]>([]);
+  const [resourceTips, setResourceTips] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [newTip, setNewTip] = useState('');
+  const [isPostingComment, setIsPostingComment] = useState(false);
+  const [isPostingTip, setIsPostingTip] = useState(false);
+
   const handleCloseResourceModal = () => {
     setSelectedResource(null);
     setModalView('main');
+    setResourceComments([]);
+    setResourceTips([]);
+    setNewComment('');
+    setNewTip('');
     if (searchParams.has('resourceId')) {
       setTimeout(() => {
         const newParams = new URLSearchParams(searchParams);
@@ -123,6 +207,62 @@ function AppContent() {
         setSearchParams(newParams, { replace: true });
       }, 10);
     }
+  };
+
+  // Fetch comments & tips when a resource modal opens
+  useEffect(() => {
+    if (!selectedResource) return;
+    const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+    fetch(`${API}/api/resources/${selectedResource.id}/comments`)
+      .then(r => r.json()).then(setResourceComments).catch(() => {});
+    fetch(`${API}/api/resources/${selectedResource.id}/exam-tips`)
+      .then(r => r.json()).then(setResourceTips).catch(() => {});
+  }, [selectedResource?.id]);
+
+  const handlePostComment = async () => {
+    if (!user || !selectedResource || !newComment.trim()) return;
+    setIsPostingComment(true);
+    try {
+      const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const res = await fetch(`${API}/api/resources/${selectedResource.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content: newComment.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResourceComments(prev => [data, ...prev]);
+        setNewComment('');
+        toast.success('Comment posted!');
+      } else {
+        toast.error(data.error || 'Failed to post comment');
+      }
+    } catch { toast.error('Failed to post comment'); }
+    finally { setIsPostingComment(false); }
+  };
+
+  const handlePostTip = async () => {
+    if (!user || !selectedResource || !newTip.trim()) return;
+    setIsPostingTip(true);
+    try {
+      const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const res = await fetch(`${API}/api/resources/${selectedResource.id}/exam-tips`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tip: newTip.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResourceTips(prev => [data, ...prev]);
+        setNewTip('');
+        toast.success('Exam tip added!');
+      } else {
+        toast.error(data.error || 'Failed to post tip');
+      }
+    } catch { toast.error('Failed to post tip'); }
+    finally { setIsPostingTip(false); }
   };
 
   useEffect(() => {
@@ -171,38 +311,79 @@ function AppContent() {
   const resultsRef = React.useRef<HTMLElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const isPlaylistContext = location.pathname === '/playlists';
 
   // Auth State
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        const profile = await createUserProfile(firebaseUser);
-        setAppUser(profile as AppUser);
+    // Safety timeout — ensures loading spinner never hangs forever
+    const safetyTimer = setTimeout(() => setIsAuthLoading(false), 8000);
+
+    // Helper: fetch profile with retry for Supabase lock contention (AbortError)
+    const fetchProfileWithRetry = async (retries = 3, delayMs = 800): Promise<AppUser | null> => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const profile = await createUserProfile(null);
+          if (profile) return profile as AppUser;
+        } catch (err: any) {
+          const isLockError = err?.message?.includes('AbortError') || err?.name === 'AbortError' || String(err).includes('Lock broken');
+          if (isLockError && i < retries - 1) {
+            console.warn(`[Auth] Lock contention on profile fetch, retry ${i + 1}/${retries}...`);
+            await new Promise(r => setTimeout(r, delayMs * (i + 1)));
+            continue;
+          }
+          console.error('[Auth] Failed to load user profile:', err);
+        }
+      }
+      return null;
+    };
+
+    // 1. Get initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const sbUser = session?.user || null;
+      setUser(sbUser);
+      if (sbUser) {
+        const profile = await fetchProfileWithRetry();
+        if (profile) setAppUser(profile);
+      }
+      clearTimeout(safetyTimer);
+      setIsAuthLoading(false);
+    }).catch(() => {
+      clearTimeout(safetyTimer);
+      setIsAuthLoading(false);
+    });
+
+    // 2. Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const sbUser = session?.user || null;
+      setUser(sbUser);
+      if (sbUser) {
+        // Short delay to let lock settle after auth state change
+        await new Promise(r => setTimeout(r, 300));
+        const profile = await fetchProfileWithRetry();
+        if (profile) setAppUser(profile);
       } else {
         setAppUser(null);
       }
       setIsAuthLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Fetch Resources from Firestore
+  // Fetch Resources from DB (MySQL via Express API)
   useEffect(() => {
     const fetchResources = async () => {
       try {
         const includeUnapproved = appUser?.role === 'admin';
         const dbResources = await getResources(includeUnapproved);
         if (dbResources) {
-          setResources(prev => {
-            const existingIds = new Set(dbResources.map(r => r.id));
-            // Keep initial resources that are NOT in DB, and add all DB resources
-            const initialOnly = prev.filter(r => !existingIds.has(r.id));
-            return [...dbResources, ...initialOnly];
-          });
+          setResources(dbResources);
         }
       } catch (error) {
-        console.error('Error fetching resources from DB:', error);
+        console.error('[App] Error fetching resources from DB:', error);
       }
     };
     fetchResources();
@@ -244,10 +425,21 @@ function AppContent() {
     link: '',
     file: null as File | null
   });
+  const [uploadCourseOpen, setUploadCourseOpen] = useState(false);
+  const [uploadCourseSearch, setUploadCourseSearch] = useState('');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
-      setFormData(prev => ({ ...prev, file: acceptedFiles[0] }));
+      const file = acceptedFiles[0];
+      const MAX_SIZE = 15 * 1024 * 1024; // 15MB
+      if (file.size > MAX_SIZE) {
+        toast.error('📦 File too large! Please compress your file before uploading. Maximum allowed size is 15 MB.', {
+          duration: 6000,
+          description: 'Try tools like ilovepdf.com or smallpdf.com to compress your PDF.'
+        });
+        return;
+      }
+      setFormData(prev => ({ ...prev, file }));
     }
   }, []);
 
@@ -255,7 +447,18 @@ function AppContent() {
     onDrop,
     maxFiles: 1,
     multiple: false,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 15 * 1024 * 1024, // 15MB
+    onDropRejected: (fileRejections) => {
+      const err = fileRejections[0]?.errors[0];
+      if (err?.code === 'file-too-large') {
+        toast.error('📦 File too large! Maximum allowed size is 15 MB.', {
+          duration: 6000,
+          description: 'Please compress your file first. Try ilovepdf.com or smallpdf.com.'
+        });
+      } else {
+        toast.error('Invalid file type. Please upload a PDF, DOC, DOCX, or image file.');
+      }
+    },
     accept: {
       'application/pdf': ['.pdf'],
       'application/msword': ['.doc'],
@@ -265,7 +468,7 @@ function AppContent() {
   } as any);
 
   const courses = useMemo(() => {
-    const uniqueCourses = Array.from(new Set([...resources.map(r => r.course), ...DU_COURSES]));
+    const uniqueCourses = Array.from(new Set([...resources.map(r => r.course), ...College_COURSES]));
     return ['All Courses', ...uniqueCourses.sort()];
   }, [resources]);
 
@@ -274,7 +477,7 @@ function AppContent() {
       return ['All Semesters', '1', '2', '3', '4', '5', '6', '7', '8'];
     }
     const metadata = COURSE_METADATA[selectedCourse];
-    const maxSem = metadata?.semesters || 6;
+    const maxSem = metadata?.semesters || 8;
     const sems = ['All Semesters'];
     for (let i = 1; i <= maxSem; i++) {
       sems.push(i.toString());
@@ -315,13 +518,19 @@ function AppContent() {
     let baseResources = resources;
 
     const filtered = baseResources.filter(resource => {
+      // Playlists are ONLY shown on the Playlist page, never on Browse
+      if (resource.type === 'Playlist') return false;
+
       // Regular users only see approved resources, unless they are the uploader
-      const isVisible = resource.isApproved || (auth.currentUser && resource.uploaderId === auth.currentUser.uid);
+      const isVisible = resource.isApproved || (user && resource.uploaderId === user.id);
       if (!isVisible) return false;
 
-      const matchesQuery = resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          resource.course.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          resource.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      const q = searchQuery.toLowerCase();
+      const matchesQuery = !q ||
+        resource.title.toLowerCase().includes(q) ||
+        resource.course.toLowerCase().includes(q) ||
+        ((resource as any).subjectCode || '').toLowerCase().includes(q) ||
+        resource.tags.some(tag => tag.toLowerCase().includes(q));
       const matchesType = activeFilter === 'All' || resource.type === activeFilter;
       const matchesSubCategory = selectedSubCategory === 'All' || (resource as any).subCategory === selectedSubCategory;
       const matchesCourse = selectedCourse === 'All Courses' || resource.course === selectedCourse;
@@ -415,6 +624,24 @@ function AppContent() {
       toast.error('Please sign in to upload resources.');
       return;
     }
+
+    let currentType = formData.type;
+    
+    if (isPlaylistContext) {
+      currentType = 'Playlist';
+      
+      if (!duplicateWarningAcknowledged) {
+        const ytId = extractYouTubeId(formData.link);
+        if (ytId) {
+          const existing = resources.find(r => r.type === 'Playlist' && r.link && extractYouTubeId(r.link) === ytId);
+          if (existing) {
+            setDuplicateWarningResource(existing);
+            return; // Stop upload and wait for user acknowledgment
+          }
+        }
+      }
+    }
+
     setUploadStatus('uploading');
 
     try {
@@ -422,12 +649,22 @@ function AppContent() {
       
       // If a file is provided, upload it first
       if (formData.file) {
-        finalLink = await uploadFile(formData.file);
+        let folder: 'pyqs' | 'books' | 'notes' | 'resources' = 'resources';
+        if (currentType === 'PYQ')  folder = 'pyqs';
+        if (currentType === 'Book') folder = 'books';
+        if (currentType === 'Note') folder = 'notes';
+        // Pass course + subject + code so R2 key is descriptive:
+        // e.g. notes/20260512_a1b2_bcom-hons_microeconomics_11017502_my-notes.pdf
+        finalLink = await uploadFile(formData.file, folder, {
+          course:      formData.course,
+          subject:     formData.title,        // use resource title as subject hint
+          subjectCode: formData.subjectCode,
+        });
       }
 
       let autoSubCategory = 'Lecture Notes';
-      if (formData.type === 'PYQ') autoSubCategory = 'PYQs';
-      if (formData.type === 'Book') autoSubCategory = 'Reference Books';
+      if (currentType === 'PYQ') autoSubCategory = 'PYQs';
+      if (currentType === 'Book') autoSubCategory = 'Reference Books';
 
       const resourceData: any = {
         title: formData.title,
@@ -435,14 +672,19 @@ function AppContent() {
         subjectCode: formData.subjectCode,
         subCategory: autoSubCategory,
         semester: parseInt(formData.semester),
-        type: formData.type,
+        type: currentType,
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
         description: formData.description,
         link: finalLink || 'https://example.com',
-        uploader: user.displayName || 'Anonymous',
-        uploaderId: user.uid,
+        uploader: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous',
+        uploaderId: user.id,
         isApproved: false // User uploads are pending by default
       };
+
+      if (isPlaylistContext && duplicateWarningAcknowledged) {
+        resourceData.tags.push('Duplicate Flagged');
+        resourceData.description = `⚠️ System Flag: A playlist with this URL already exists in the database.\n\n${resourceData.description}`;
+      }
 
       // Set directDownloadLink if file is uploaded or if link is a direct link
       const directExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif'];
@@ -472,11 +714,16 @@ function AppContent() {
       setTimeout(() => {
         setIsUploadModalOpen(false);
         setUploadStatus('idle');
+        setDuplicateWarningResource(null);
+        setDuplicateWarningAcknowledged(false);
+        // BUGFIX: Reset ALL form fields including subjectCode and subCategory
         setFormData({ 
           title: '', 
           course: '', 
+          subjectCode: '',
           semester: '1', 
-          type: 'Note', 
+          type: '' as any, 
+          subCategory: '',
           tags: '', 
           description: '', 
           link: '',
@@ -498,120 +745,48 @@ function AppContent() {
       if (data && data.length > 0) {
         setNewsItems(data);
       } else {
-        const ai = new GoogleGenAI({ apiKey: (import.meta as any).env.VITE_GEMINI_API_KEY || '' });
-        const response = await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
-          contents: "List the latest 10 updates (5 news and 5 events) from Delhi University (DU) and its major colleges (like St. Stephens, SRCC, Hindu, Miranda House, LSR, Hansraj, etc.) for March 2026. Include titles, dates, a brief summary, the college name (if specific to a college, otherwise 'Delhi University'), and the source URL for each. Ensure a good mix of official news updates and upcoming college events.",
-          config: {
-            tools: [{ googleSearch: {} }],
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  title: { type: "STRING" },
-                  date: { type: "STRING" },
-                  summary: { type: "STRING" },
-                  url: { type: "STRING" },
-                  category: { type: "STRING", enum: ["News", "Event"] },
-                  college: { type: "STRING" }
-                },
-                required: ["title", "date", "summary", "url", "category", "college"]
-              }
-            }
-          },
-        });
+        // Fallback: Fetch AI-generated updates from the secure backend endpoint
+        const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const aiResponse = await fetch(`${API}/api/news/ai-updates`);
+        
+        if (!aiResponse.ok) {
+          throw new Error('AI features are currently unavailable or rate-limited.');
+        }
 
-        if (response.text) {
-          const parsedNews = JSON.parse(response.text);
+        const parsedNews = await aiResponse.json();
+        if (parsedNews && parsedNews.length > 0) {
           setNewsItems(parsedNews);
         } else {
-          throw new Error("No news found");
+          throw new Error("No news found from AI fallback");
         }
       }
     } catch (err) {
-      console.error("Error fetching news:", err);
-      setNewsError("Failed to fetch latest news: " + (err instanceof Error ? err.message : "Please check your network and try again."));
+      const errMsg = err instanceof Error ? err.message : '';
+      if (errMsg.includes('AI features are currently unavailable')) {
+        console.warn('[News] AI updates disabled or unavailable on backend — using mock news data.');
+      } else {
+        console.error("Error fetching news:", err);
+      }
+      setNewsError(null); // Don't show error to users — mock data handles it
+
       // Fallback mock data if API fails or for demo
-      setNewsItems([
-        {
-          title: "DU Centenary Celebration Finale",
-          date: "March 25, 2026",
-          summary: "The grand finale of Delhi University's centenary celebrations featuring cultural events and alumni meets.",
-          url: "https://du.ac.in",
-          category: "Event",
-          college: "Delhi University"
-        },
-        {
-          title: "Admission Policy for 2026-27 Session",
-          date: "March 18, 2026",
-          summary: "Delhi University releases updated CUET-based admission guidelines for undergraduate courses.",
-          url: "https://admission.uod.ac.in",
-          category: "News",
-          college: "Delhi University"
-        },
-        {
-          title: "SRCC Business Conclave 2026",
-          date: "April 5, 2026",
-          summary: "Asia's largest undergraduate management festival featuring top corporate leaders and case competitions.",
-          url: "https://srcc.edu",
-          category: "Event",
-          college: "SRCC"
-        },
-        {
-          title: "Hindu College Research Grant Announced",
-          date: "March 22, 2026",
-          summary: "Hindu College announces a new undergraduate research grant program for science and humanities students.",
-          url: "https://hinducollege.ac.in",
-          category: "News",
-          college: "Hindu College"
-        },
-        {
-          title: "Miranda House Annual Fest: Tempest 2026",
-          date: "April 12, 2026",
-          summary: "Join the vibrant cultural extravaganza with multiple competitions and celebrity performances.",
-          url: "https://mirandahouse.ac.in",
-          category: "Event",
-          college: "Miranda House"
-        },
-        {
-          title: "Revised Examination Schedule Semester II",
-          date: "March 28, 2026",
-          summary: "The university examination branch has released the revised schedule for all second-semester UG programs.",
-          url: "https://exam.du.ac.in",
-          category: "News",
-          college: "Delhi University"
-        },
-        {
-          title: "LSR Model United Nations",
-          date: "April 18, 2026",
-          summary: "A premier platform for students to discuss global issues and develop diplomatic skills.",
-          url: "https://lsr.edu.in",
-          category: "Event",
-          college: "LSR"
-        },
-        {
-          title: "New Digital Library Access for DU Students",
-          date: "March 30, 2026",
-          summary: "Delhi University Central Library provides free access to premium academic journals for all enrolled students.",
-          url: "https://crl.du.ac.in",
-          category: "News",
-          college: "Delhi University"
-        }
-      ]);
+      setNewsItems([]);
     } finally {
       setIsNewsLoading(false);
     }
   };
 
+  // Track whether we've fetched news at least once
+  const hasFetchedNews = useRef(false);
+
   useEffect(() => {
-    if (newsItems.length === 0) {
+    if (!hasFetchedNews.current) {
+      hasFetchedNews.current = true;
       fetchNews();
     }
-  }, [newsItems.length]);
+  }, []);
 
-  const handleShare = async (resource: typeof INITIAL_RESOURCES[0]) => {
+  const handleShare = async (resource: Resource) => {
     const shareUrl = `${window.location.origin}/browse?resourceId=${resource.id}`;
     const shareData = {
       title: resource.title,
@@ -639,162 +814,194 @@ function AppContent() {
   };
 
   const isFlipbookView = location.pathname.startsWith('/flipbook');
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
+  // Only forgot-password/reset-password use full-screen auth layout (hide nav)
+  // Login/signup use right-side overlay panel → navbar stays visible
+  const isAuthPage = location.pathname === '/forgot-password' || location.pathname === '/reset-password';
+  const isLoginSignupPage = location.pathname === '/login' || location.pathname === '/signup';
 
   return (
     <div className={`min-h-screen bg-ethereal-mesh text-gray-900 font-sans selection:bg-purple-100 selection:text-purple-900 flex flex-col`}>
       <Toaster position="top-center" expand={false} richColors />
       {/* Navigation Bar */}
-      {!isFlipbookView && (
+      {!isFlipbookView && !isAuthPage && (
       <nav className={`sticky top-0 z-[100] transition-all duration-500 ${
         isScrolled 
-          ? 'bg-white/90 backdrop-blur-2xl border-b border-gray-200 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.1)] py-2' 
-          : 'bg-white/60 backdrop-blur-xl border-b border-transparent py-4'
+          ? 'bg-white/80 backdrop-blur-2xl border-b border-gray-100/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] py-2' 
+          : 'bg-transparent py-2.5'
       }`}>
         {/* Scroll Progress Bar */}
-        <motion.div
-          className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-purple-400 via-purple-600 to-purple-800 origin-left z-[110]"
-          style={{ scaleX }}
-        />
+        <ScrollProgressBar />
 
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
-          <Link 
-            to="/"
-            className="flex items-center gap-2 cursor-pointer shrink-0 group"
-          >
-          <div className="relative">
-            <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-1.5 sm:p-2 rounded-xl shadow-lg shadow-purple-500/30 lg:group-hover:rotate-6 transition-transform duration-300 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 border-2 border-white rounded-full shadow-sm"></div>
-          </div>
-          <div className="flex flex-col leading-[1.1] sm:leading-none">
-            <span className="text-[13px] sm:text-lg font-black text-gray-900 tracking-tighter uppercase lg:group-hover:text-indigo-600 transition-colors">My College</span>
-            <span className="text-[13px] sm:text-lg font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent tracking-tighter uppercase transition-all">Genie</span>
-          </div>
-        </Link>
-
-        {/* Desktop Menu */}
-        <div className="hidden xl:flex items-center gap-1">
-          {[
-            { to: '/', icon: Home, label: 'Home', active: location.pathname === '/' },
-            { to: '/browse', icon: Search, label: 'Browse', active: location.pathname === '/browse' },
-            { to: '/playlists', icon: Youtube, label: 'Playlists', active: location.pathname === '/playlists' },
-            { to: '/find-pg', icon: Building, label: 'Find PG', active: location.pathname === '/find-pg' },
-            { to: '/forum', icon: MessageSquare, label: 'Forums', active: location.pathname.startsWith('/forum') },
-          ].map(({ to, icon: Icon, label, active }) => (
-            <Link key={to} to={to}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-all duration-300 group ${
-                active ? 'bg-purple-100/60 text-purple-700' : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50/60'
-              }`}
-            >
-              <Icon className={`w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${active ? 'text-purple-600' : ''}`} />
-              {label}
-            </Link>
-          ))}
-
-          {/* Campus Updates Dropdown */}
-          <div className="relative group">
-            <button className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-all duration-300 group ${
-              location.pathname === '/news' || location.pathname === '/events'
-                ? 'bg-purple-100/60 text-purple-700'
-                : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50/60'
-            }`}>
-              <Newspaper className={`w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${location.pathname === '/news' || location.pathname === '/events' ? 'text-purple-600' : ''}`} />
-              Campus Updates
-            </button>
-            <div className="absolute top-full left-0 pt-3 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top scale-95 group-hover:scale-100 z-50 before:absolute before:-top-4 before:left-0 before:w-full before:h-8 before:-z-10">
-              <div className="bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 p-2 flex flex-col gap-1 relative z-10">
-                <Link 
-                  to="/news"
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-colors ${
-                    location.pathname === '/news' ? 'text-purple-600 bg-purple-50' : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
-                  }`}
-                >
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${ location.pathname === '/news' ? 'bg-purple-100' : 'bg-gray-50 group-hover:bg-purple-50' }`}>
-                    <Newspaper className="w-3.5 h-3.5" />
-                  </div>
-                  News
-                </Link>
-                <Link 
-                  to="/events"
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-colors ${
-                    location.pathname === '/events' ? 'text-purple-600 bg-purple-50' : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
-                  }`}
-                >
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${ location.pathname === '/events' ? 'bg-purple-100' : 'bg-gray-50 group-hover:bg-purple-50' }`}>
-                    <Calendar className="w-3.5 h-3.5" />
-                  </div>
-                  Events
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {appUser?.role === 'admin' && (
-            <Link 
-              to="/admin"
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-all duration-300 group ${
-                location.pathname === '/admin' 
-                  ? 'bg-purple-100/60 text-purple-700' 
-                  : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50/60'
-              }`}
-            >
-              <LayoutGrid className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
-              Admin
-            </Link>
-          )}
+        <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between relative">
           
-          {/* Auth Button */}
-          {user ? (
-            <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
-              <div className="flex flex-col items-end">
-                <span className="text-xs font-black text-gray-900 tracking-tight truncate max-w-[120px]">{user.displayName}</span>
-                <button onClick={() => logout()} className="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors">Sign Out</button>
-              </div>
-              <motion.div
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                className="w-10 h-10 rounded-xl overflow-hidden border-2 border-purple-100 shadow-lg"
-              >
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="DU Student Profile Photo" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
-                ) : (
-                  <div className="w-full h-full bg-purple-100 flex items-center justify-center text-purple-600">
-                    <User className="w-5 h-5" />
-                  </div>
-                )}
-              </motion.div>
+          {/* Left: Logo */}
+          <Link to="/" className="flex items-center gap-2 cursor-pointer shrink-0 group z-10">
+            <div className="relative flex items-center">
+              <img src="/logo.webp" alt="My College Genie Logo" className="h-10 sm:h-12 w-auto object-contain scale-[1.3] transform-gpu transition-transform duration-300 lg:group-hover:scale-[1.4]" />
             </div>
-          ) : (
-            <Link
-              to="/login"
-              className="ml-2 bg-gray-900 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0 group"
-            >
-              <LogIn className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              Sign In
-            </Link>
-          )}
-        </div>
+          </Link>
 
-        {/* Mobile Menu Toggle */}
-        <div className="xl:hidden flex items-center gap-3">
-          <motion.button 
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`p-2.5 rounded-2xl transition-all duration-500 relative overflow-hidden group ${
-              isMobileMenuOpen 
-                ? 'bg-purple-600 text-white shadow-xl shadow-purple-600/40' 
-                : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
-            }`}
-          >
-            <motion.div
-              animate={{ rotate: isMobileMenuOpen ? 90 : 0, scale: isMobileMenuOpen ? 1.1 : 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </motion.div>
-          </motion.button>
-        </div>
+          {/* Center: Desktop Navigation */}
+          <div className="hidden xl:flex items-center justify-center gap-0.5 absolute left-1/2 -translate-x-1/2 z-10 bg-white/40 hover:bg-white/60 backdrop-blur-md px-1.5 py-1.5 rounded-full border border-gray-100/50 shadow-sm transition-colors duration-500">
+            {[
+              { to: '/', icon: Home, label: 'Home', active: location.pathname === '/' },
+              { to: '/browse', icon: LibraryBig, label: 'Browse', active: location.pathname === '/browse' },
+              { to: '/playlists', icon: Youtube, label: 'Playlists', active: location.pathname === '/playlists' },
+              { to: '/find-pg', icon: BedDouble, label: 'Find PG', active: location.pathname === '/find-pg' },
+              { to: '/campus-exchange', icon: ShoppingBag, label: 'Exchange', active: location.pathname === '/campus-exchange', badge: showNewBadge ? 'NEW' : undefined },
+              { to: '/forum', icon: MessagesSquare, label: 'Forum', active: location.pathname.startsWith('/forum') },
+            ].map(({ to, icon: Icon, label, active, badge }) => (
+              <Link key={to} to={to}
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 group relative whitespace-nowrap ${
+                  active 
+                    ? 'text-purple-700' 
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-white/70 border border-transparent'
+                }`}
+              >
+                {active && (
+                  <motion.div layoutId="desktopNavActiveIndicator" className="absolute inset-0 bg-white rounded-full shadow-[0_2px_12px_-2px_rgba(147,51,234,0.18)] border border-purple-100/60 z-0" />
+                )}
+                <span className={`relative z-10 flex items-center justify-center w-6 h-6 rounded-full shrink-0 transition-all duration-300 ${
+                  active 
+                    ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-[0_2px_8px_rgba(147,51,234,0.35)] scale-110' 
+                    : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600 group-hover:scale-105'
+                }`}>
+                  <Icon className="w-3.5 h-3.5" strokeWidth={active ? 2.5 : 2} />
+                </span>
+                <span className="leading-none relative z-10">{label}</span>
+                {badge && (
+                  <span className="absolute -top-1.5 -right-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-20 shadow-sm shadow-pink-500/20">
+                    {badge}
+                  </span>
+                )}
+              </Link>
+            ))}
+
+            {/* Divider */}
+            <span className="w-px h-5 bg-gray-200/80 mx-1 shrink-0" />
+
+            {/* Campus Updates Dropdown */}
+            <div className="relative group">
+              <button className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 whitespace-nowrap ${
+                location.pathname === '/news' || location.pathname === '/events'
+                  ? 'bg-white text-purple-700 shadow-[0_2px_12px_-2px_rgba(147,51,234,0.18)] border border-purple-100/60'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-white/70 border border-transparent'
+              }`}>
+                <span className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 transition-all duration-300 ${
+                  location.pathname === '/news' || location.pathname === '/events'
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 scale-105'
+                    : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600'
+                }`}>
+                  <Rss className="w-3.5 h-3.5" />
+                </span>
+                <span className="leading-none">Updates</span>
+              </button>
+              <div className="absolute top-full left-0 pt-3 w-44 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top scale-95 group-hover:scale-100 z-50 before:absolute before:-top-4 before:left-0 before:w-full before:h-8 before:-z-10">
+                <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.15)] border border-gray-100/80 p-2 flex flex-col gap-1 relative z-10">
+                  <Link 
+                    to="/news"
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-bold transition-all ${
+                      location.pathname === '/news' ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:text-purple-700 hover:bg-purple-50'
+                    }`}
+                  >
+                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${ location.pathname === '/news' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600' }`}>
+                      <Newspaper className="w-3.5 h-3.5" />
+                    </span>
+                    News
+                  </Link>
+                  <Link 
+                    to="/events"
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-bold transition-all ${
+                      location.pathname === '/events' ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:text-purple-700 hover:bg-purple-50'
+                    }`}
+                  >
+                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${ location.pathname === '/events' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600' }`}>
+                      <Calendar className="w-3.5 h-3.5" />
+                    </span>
+                    Events
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {appUser?.role === 'admin' && (
+              <Link 
+                to="/admin"
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 group whitespace-nowrap ${
+                  location.pathname === '/admin' 
+                    ? 'bg-white text-purple-700 shadow-[0_2px_12px_-2px_rgba(147,51,234,0.18)] border border-purple-100/60' 
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-white/70 border border-transparent'
+                }`}
+              >
+                <span className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 transition-all duration-300 ${
+                  location.pathname === '/admin'
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 scale-105'
+                    : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600'
+                }`}>
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                </span>
+                <span className="leading-none">Admin</span>
+              </Link>
+            )}
+          </div>
+
+          {/* Right: Auth & Mobile Menu */}
+          <div className="flex items-center gap-3 sm:gap-4 z-10">
+            {user ? (
+              <div className="hidden xl:block">
+                <Link to="/profile" className="flex items-center gap-3 group p-1.5 pl-4 bg-white/60 hover:bg-white border border-gray-100/80 hover:border-purple-200 rounded-full transition-all duration-300 shadow-sm hover:shadow-[0_8px_20px_-6px_rgba(147,51,234,0.2)] cursor-pointer">
+                  <div className="flex flex-col items-end">
+                    <span className="text-[13px] font-bold text-gray-900 leading-none group-hover:text-purple-700 transition-colors max-w-[120px] truncate">
+                      {user.user_metadata?.full_name || user.displayName || 'Student'}
+                    </span>
+                    <span className="text-[9px] font-black text-gray-400 mt-1.5 group-hover:text-purple-500 transition-colors uppercase tracking-widest">
+                      {appUser?.role === 'admin' ? 'Admin Profile' : 'View Profile'}
+                    </span>
+                  </div>
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-purple-100 bg-purple-50 shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-inner">
+                    {user.user_metadata?.avatar_url || appUser?.photo_url ? (
+                      <img src={user.user_metadata?.avatar_url || appUser?.photo_url} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-purple-600">
+                        <User className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              </div>
+            ) : (
+              <div className="hidden xl:block">
+                <Link
+                  to="/login"
+                  className="bg-purple-600 text-white px-6 py-2.5 rounded-full font-bold flex items-center gap-2 hover:bg-purple-700 hover:shadow-lg hover:shadow-purple-600/30 transition-all hover:-translate-y-0.5 active:translate-y-0 group"
+                >
+                  <User className="w-4 h-4 group-hover:scale-110 transition-transform fill-white" />
+                  SIGN IN
+                </Link>
+              </div>
+            )}
+
+            {/* Mobile Menu Toggle */}
+            <div className="xl:hidden flex items-center gap-3">
+              <motion.button 
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className={`p-2.5 rounded-2xl transition-all duration-500 relative overflow-hidden group ${
+                  isMobileMenuOpen 
+                    ? 'bg-purple-600 text-white shadow-xl shadow-purple-600/40' 
+                    : 'bg-white/80 text-purple-600 hover:bg-purple-50 shadow-sm border border-gray-100'
+                }`}
+              >
+                <motion.div
+                  animate={{ rotate: isMobileMenuOpen ? 90 : 0, scale: isMobileMenuOpen ? 1.1 : 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </motion.div>
+              </motion.button>
+            </div>
+          </div>
+
         </div>
       </nav>
       )}
@@ -815,73 +1022,142 @@ function AppContent() {
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed top-0 right-0 bottom-0 w-full max-w-[320px] bg-white z-[260] xl:hidden flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.1)] overflow-hidden"
+                transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+                className="fixed top-0 right-0 bottom-0 w-full max-w-[300px] bg-white z-[260] xl:hidden flex flex-col overflow-hidden shadow-[-24px_0_60px_rgba(0,0,0,0.14)]"
               >
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#6b21a8 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-
-                {/* Menu Header */}
-                <div className="relative p-5 border-b border-gray-100 bg-white shrink-0">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-1.5 rounded-xl shadow-lg shadow-purple-500/20">
-                        <Sparkles className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex flex-col leading-tight">
-                        <span className="text-[13px] font-black text-gray-900 tracking-tighter uppercase">My College</span>
-                        <span className="text-[13px] font-black bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent tracking-tighter uppercase">Genie</span>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all border border-transparent hover:border-gray-200"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Auth Form Content */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 bg-white pb-[max(24px,env(safe-area-inset-bottom))]">
+                {/* Gradient Header */}
+                <div className="relative shrink-0 bg-gradient-to-br from-[#5636A7] via-[#6d42c7] to-[#8b5cf6] px-5 pt-12 pb-6 overflow-hidden">
+                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 transition-all"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                   {user ? (
-                    <div className="flex flex-col items-center justify-center h-full space-y-6 pb-12">
-                      <div className="relative">
-                        {user.photoURL ? (
-                          <img src={user.photoURL} alt="Profile" className="w-24 h-24 rounded-full border-4 border-purple-100 shadow-lg object-cover" loading="lazy" />
+                    <div className="flex items-center gap-3">
+                      <div className="relative shrink-0">
+                        {user.user_metadata?.avatar_url || appUser?.photo_url ? (
+                          <img src={user.user_metadata?.avatar_url || appUser?.photo_url} alt="Profile" className="w-14 h-14 rounded-2xl border-2 border-white/30 object-cover shadow-lg" loading="lazy" referrerPolicy="no-referrer" />
                         ) : (
-                          <div className="w-24 h-24 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 border-4 border-white shadow-lg">
-                            <User className="w-10 h-10" />
+                          <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center border-2 border-white/30">
+                            <User className="w-7 h-7 text-white" />
                           </div>
                         )}
-                        <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-400 border-2 border-white rounded-full" />
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-400 border-2 border-white rounded-full" />
                       </div>
-                      
-                      <div className="text-center w-full px-4">
-                        <h3 className="text-xl font-black text-gray-900 tracking-tight truncate w-full">{user.displayName}</h3>
-                        <p className="text-sm text-gray-500 mt-1 truncate w-full">{user.email}</p>
-                        <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 bg-purple-50 rounded-full">
-                          <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
-                          <span className="text-[10px] text-purple-600 font-black uppercase tracking-widest">
-                            {appUser?.role === 'admin' ? 'Administrator' : 'Active Member'}
+                      <div className="min-w-0">
+                        <p className="text-white font-black text-[15px] leading-tight truncate">{user.user_metadata?.full_name || appUser?.display_name || 'Student'}</p>
+                        <p className="text-white/60 text-[11px] font-medium mt-0.5 truncate">{user.email}</p>
+                        {appUser?.role === 'admin' && (
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-amber-400/20 text-amber-200 text-[9px] font-black uppercase tracking-wider rounded-full border border-amber-300/20">
+                            Admin
                           </span>
-                        </div>
+                        )}
                       </div>
-                      
-                      <button 
-                        onClick={() => {
-                          setIsMobileMenuOpen(false);
-                          logout();
-                        }}
-                        className="w-full mt-8 flex items-center justify-center gap-2 p-4 bg-red-50 text-red-600 rounded-xl font-black shadow-sm hover:bg-red-100 transition-colors"
-                      >
-                        <LogOut className="w-5 h-5" />
-                        <span>Sign Out</span>
-                      </button>
                     </div>
                   ) : (
-                    <AuthForm onSuccess={() => setIsMobileMenuOpen(false)} />
+                    <div>
+                      <img src="/logo.webp" alt="My College Genie" className="h-9 w-auto object-contain" />
+                      <p className="text-white/70 text-xs font-medium mt-2">India's Student Platform</p>
+                    </div>
                   )}
+                </div>
+
+                {/* Navigation Links */}
+                <div className="flex-1 overflow-y-auto">
+                  <div className="px-3 py-4 space-y-1">
+                    {[
+                      { to: '/', icon: Home, label: 'Home' },
+                      { to: '/browse', icon: LibraryBig, label: 'Browse Resources' },
+                      { to: '/playlists', icon: Youtube, label: 'Playlists' },
+                      { to: '/find-pg', icon: BedDouble, label: 'Find PG' },
+                      { to: '/campus-exchange', icon: ShoppingBag, label: 'Campus Exchange', badge: showNewBadge ? 'NEW' : undefined },
+                      { to: '/forum', icon: MessagesSquare, label: 'Forum' },
+                      { to: '/news', icon: Newspaper, label: 'News & Updates' },
+                      { to: '/events', icon: Calendar, label: 'College Events' },
+                    ].map(({ to, icon: Icon, label, badge }) => {
+                      const isActive = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
+                      return (
+                        <Link
+                          key={to}
+                          to={to}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-[13px] ${
+                            isActive
+                              ? 'bg-purple-50 text-purple-700'
+                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                          }`}
+                        >
+                          <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                            isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            <Icon className="w-4 h-4" />
+                          </span>
+                          <span className="flex-1 leading-none">{label}</span>
+                          {badge && <span className="text-[8px] font-black bg-gradient-to-r from-pink-500 to-rose-500 text-white px-1.5 py-0.5 rounded-full">{badge}</span>}
+                          {isActive && <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />}
+                        </Link>
+                      );
+                    })}
+
+                    {appUser?.role === 'admin' && (
+                      <>
+                        <div className="my-3 border-t border-gray-100" />
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-[13px] ${
+                            location.pathname === '/admin' ? 'bg-purple-50 text-purple-700' : 'text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                            location.pathname === '/admin' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'bg-gray-800 text-white'
+                          }`}>
+                            <LayoutDashboard className="w-4 h-4" />
+                          </span>
+                          <span className="flex-1">Admin Panel</span>
+                        </Link>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Auth Actions */}
+                  <div className="px-3 pb-6 space-y-2">
+                    <div className="border-t border-gray-100 mb-3" />
+                    {user ? (
+                      <>
+                        <Link
+                          to="/profile"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 font-semibold text-[13px] transition-all"
+                        >
+                          <span className="w-8 h-8 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center shrink-0">
+                            <User className="w-4 h-4" />
+                          </span>
+                          View Profile
+                        </Link>
+                        <button
+                          onClick={() => { setIsMobileMenuOpen(false); logout(); }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 font-semibold text-[13px] transition-all"
+                        >
+                          <span className="w-8 h-8 rounded-xl bg-red-50 text-red-400 flex items-center justify-center shrink-0">
+                            <LogOut className="w-4 h-4" />
+                          </span>
+                          Sign Out
+                        </button>
+                      </>
+                    ) : (
+                      <Link
+                        to="/signup"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-[#5636A7] to-[#7c3aed] text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-600/20 hover:opacity-90 transition-all"
+                      >
+                        <User className="w-4 h-4" />
+                        Sign In / Sign Up
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             </>
@@ -890,7 +1166,7 @@ function AppContent() {
       )}
       
       <AnimatePresence>
-        {showBackToTop && !isFlipbookView && (
+        {showBackToTop && !isFlipbookView && !isAuthPage && !isLoginSignupPage && (
           <motion.button
             initial={{ opacity: 0, scale: 0.5, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -906,300 +1182,282 @@ function AppContent() {
       </AnimatePresence>
 
       {/* Mobile Bottom Navigation */}
-      {!isFlipbookView && (
-      <div className="xl:hidden fixed bottom-0 left-0 right-0 z-[110] bg-white/98 backdrop-blur-2xl border-t border-gray-100/80 px-2 sm:px-6 py-2 pb-[env(safe-area-inset-bottom,10px)] flex items-center justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.08)]">
+      {!isFlipbookView && !isAuthPage && !isLoginSignupPage && (
+      <div className="xl:hidden fixed bottom-0 left-0 right-0 z-[110] bg-white/95 backdrop-blur-2xl border-t border-gray-100 pb-[env(safe-area-inset-bottom,8px)] shadow-[0_-12px_40px_rgba(0,0,0,0.06)]">
+        <div className="flex items-center justify-around px-1 pt-2 pb-1.5 relative">
         {[{ to: '/', icon: Home, label: 'Home', active: location.pathname === '/' },
-          { to: '/browse', icon: Search, label: 'Browse', active: location.pathname === '/browse' },
-          { to: '/playlists', icon: Youtube, label: 'Videos', active: location.pathname === '/playlists' },
-          { to: '/find-pg', icon: Building, label: 'Find PG', active: location.pathname === '/find-pg' },
-          { to: '/forum', icon: MessageSquare, label: 'Forum', active: location.pathname.startsWith('/forum') },
-        ].map(({ to, icon: Icon, label, active }) => (
-          <Link key={to} to={to} className="flex flex-col items-center gap-0.5 flex-1 py-1 group">
-            <div className={`relative flex items-center justify-center w-10 h-8 rounded-xl transition-all duration-300 ${
-              active ? 'bg-purple-100 shadow-sm shadow-purple-200' : 'group-hover:bg-gray-50'
+          { to: '/browse', icon: LibraryBig, label: 'Browse', active: location.pathname === '/browse' },
+          { to: '/playlists', icon: Youtube, label: 'Playlists', active: location.pathname === '/playlists' },
+          { to: '/find-pg', icon: BedDouble, label: 'Find PG', active: location.pathname === '/find-pg' },
+          { to: '/campus-exchange', icon: ShoppingBag, label: 'Exchange', active: location.pathname === '/campus-exchange', badge: showNewBadge ? 'NEW' : undefined },
+          { to: '/forum', icon: MessagesSquare, label: 'Forum', active: location.pathname.startsWith('/forum') },
+        ].map(({ to, icon: Icon, label, active, badge }) => (
+          <Link key={to} to={to} className="flex flex-col items-center gap-1 flex-1 min-w-0 px-0.5 py-1 group relative">
+            {active && (
+               <motion.div layoutId="mobileNavActiveIndicator" className="absolute -top-2 left-1/2 -translate-x-1/2 w-10 h-1 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-b-full shadow-[0_2px_8px_rgba(147,51,234,0.4)]" />
+            )}
+            <motion.div 
+              whileTap={{ scale: 0.85 }}
+              className={`relative flex items-center justify-center w-11 h-9 rounded-2xl transition-all duration-300 ${
+              active
+                ? 'bg-gradient-to-br from-purple-100 to-indigo-50 shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_2px_6px_rgba(147,51,234,0.12)] border border-purple-200/50'
+                : 'group-active:bg-gray-50'
             }`}>
-              <Icon className={`w-5 h-5 transition-all duration-300 ${
-                active ? 'text-purple-600 scale-110' : 'text-gray-400 group-hover:text-gray-600'
+              <Icon 
+                 strokeWidth={active ? 2.5 : 2}
+                 className={`w-[20px] h-[20px] transition-all duration-300 ${
+                active ? 'text-purple-700 drop-shadow-[0_2px_4px_rgba(147,51,234,0.2)] scale-110' : 'text-slate-400 group-hover:text-slate-600'
               }`} />
-              {active && <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-purple-500 rounded-full" />}
-            </div>
-            <span className={`text-[9px] font-black uppercase tracking-tight transition-colors ${
-              active ? 'text-purple-600' : 'text-gray-400'
+              {badge && (
+                <span className="absolute -top-1 -right-1.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-20 shadow-sm shadow-pink-500/20 scale-90">
+                  {badge}
+                </span>
+              )}
+            </motion.div>
+            <span className={`text-[9px] font-bold tracking-tight transition-all duration-300 truncate w-full text-center ${
+              active ? 'text-purple-700 drop-shadow-sm scale-105' : 'text-slate-400 group-hover:text-slate-600'
             }`}>{label}</span>
           </Link>
         ))}
+        </div>
       </div>
       )}
 
       <main className="flex-grow flex flex-col">
-        <Routes>
-          <Route path="/" element={
-          <HomePage 
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            activeFilter={activeFilter}
-            setActiveFilter={setActiveFilter}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            DU_COURSES={DU_COURSES}
-            isNewsLoading={isNewsLoading}
-            newsItems={newsItems}
-            resources={resources}
-            savedResourceIds={savedResourceIds}
-            onSave={toggleSave}
-            getAverageRating={getAverageRating}
-            setSelectedResource={setSelectedResource}
-            handleShare={handleShare}
-          />
-        } />
-        <Route path="/browse" element={
-          <BrowsePage 
-            resources={resources}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            activeFilter={activeFilter}
-            setActiveFilter={setActiveFilter}
-            selectedCourse={selectedCourse}
-            setSelectedCourse={setSelectedCourse}
-            selectedSemester={selectedSemester}
-            setSelectedSemester={setSelectedSemester}
-            selectedSubCategory={selectedSubCategory}
-            setSelectedSubCategory={setSelectedSubCategory}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            courses={courses}
-            availableSemesters={availableSemesters}
-            availableSubCategories={availableSubCategories}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            visibleCount={visibleCount}
-            setVisibleCount={setVisibleCount}
-            filteredResources={filteredResources}
-            savedResourceIds={savedResourceIds}
-            onSave={toggleSave}
-            getAverageRating={getAverageRating}
-            selectedResource={selectedResource}
-            setSelectedResource={setSelectedResource}
-            handleShare={handleShare}
-            setIsUploadModalOpen={setIsUploadModalOpen}
-          />
-        } />
-        <Route path="/playlists" element={
-          <PlaylistPage 
-            resources={resources}
-            savedResourceIds={savedResourceIds}
-            onSave={toggleSave}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedCourse={selectedCourse}
-            setSelectedCourse={setSelectedCourse}
-            selectedSemester={selectedSemester}
-            setSelectedSemester={setSelectedSemester}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            visibleCount={visibleCount}
-            setVisibleCount={setVisibleCount}
-            setSelectedResource={setSelectedResource}
-            setIsUploadModalOpen={setIsUploadModalOpen}
-            handleShare={handleShare}
-            courses={courses}
-            semesters={availableSemesters}
-            getAverageRating={getAverageRating}
-          />
-        } />
-        <Route path="/forum" element={<ForumPage />} />
-        <Route path="/find-pg" element={<FindPGPage />} />
-        <Route path="/forum/:postId" element={<PostDetailPage />} />
-        <Route path="/admin" element={<AdminPanel user={appUser} />} />
-        <Route path="/login" element={<LoginPage user={appUser} />} />
-        <Route path="/signup" element={<LoginPage user={appUser} />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/flipbook/:id" element={<FlipbookPage />} />
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/news" element={<OfficialNewsPage newsItems={newsItems} isLoading={isNewsLoading} />} />
-        <Route path="/events" element={<CollegeEventsPage newsItems={newsItems} isLoading={isNewsLoading} />} />
-      </Routes>
+        {(() => {
+          const HomePageElement = (
+            <HomePage 
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              activeFilter={activeFilter}
+              setActiveFilter={setActiveFilter}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              College_COURSES={College_COURSES}
+              isNewsLoading={isNewsLoading}
+              newsItems={newsItems}
+              resources={resources}
+              savedResourceIds={savedResourceIds}
+              onSave={toggleSave}
+              getAverageRating={getAverageRating}
+              setSelectedResource={setSelectedResource}
+              handleShare={handleShare}
+            />
+          );
+          return (
+            <PageTransition>
+              <Suspense fallback={
+                <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center shadow-inner relative overflow-hidden">
+                    <Loader2 className="w-8 h-8 text-purple-600 animate-spin relative z-10" />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="font-bold text-gray-900 text-lg">Loading Experience...</h3>
+                    <p className="text-sm text-gray-500 font-medium">Preparing the platform</p>
+                  </div>
+                </div>
+              }>
+                <Routes location={location}>
+                  <Route path="/" element={HomePageElement} />
+                <Route path="/browse" element={
+                  <BrowsePage 
+                    resources={resources}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    activeFilter={activeFilter}
+                    setActiveFilter={setActiveFilter}
+                    selectedCourse={selectedCourse}
+                    setSelectedCourse={setSelectedCourse}
+                    selectedSemester={selectedSemester}
+                    setSelectedSemester={setSelectedSemester}
+                    selectedSubCategory={selectedSubCategory}
+                    setSelectedSubCategory={setSelectedSubCategory}
+                    sortBy={sortBy}
+                    setSortBy={setSortBy}
+                    courses={courses}
+                    availableSemesters={availableSemesters}
+                    availableSubCategories={availableSubCategories}
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                    visibleCount={visibleCount}
+                    setVisibleCount={setVisibleCount}
+                    filteredResources={filteredResources}
+                    savedResourceIds={savedResourceIds}
+                    onSave={toggleSave}
+                    getAverageRating={getAverageRating}
+                    selectedResource={selectedResource}
+                    setSelectedResource={setSelectedResource}
+                    handleShare={handleShare}
+                    setIsUploadModalOpen={openUploadModal}
+                  />
+                } />
+                <Route path="/playlists" element={
+                  <PlaylistPage 
+                    resources={resources}
+                    savedResourceIds={savedResourceIds}
+                    onSave={toggleSave}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    selectedCourse={selectedCourse}
+                    setSelectedCourse={setSelectedCourse}
+                    selectedSemester={selectedSemester}
+                    setSelectedSemester={setSelectedSemester}
+                    sortBy={sortBy}
+                    setSortBy={setSortBy}
+                    visibleCount={visibleCount}
+                    setVisibleCount={setVisibleCount}
+                    setSelectedResource={setSelectedResource}
+                    setIsUploadModalOpen={openUploadModal}
+                    handleShare={handleShare}
+                    courses={courses}
+                    semesters={availableSemesters}
+                    getAverageRating={getAverageRating}
+                    resultsRef={resultsRef}
+                  />
+                } />
+                <Route path="/forum" element={<ForumPage />} />
+                <Route path="/find-pg" element={<FindPGPage />} />
+                <Route path="/campus-exchange" element={<CampusExchangePage />} />
+                <Route path="/forum/:postId" element={<PostDetailPage />} />
+                <Route path="/admin" element={
+                  isAuthLoading ? (
+                    <div className="min-h-screen flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                    </div>
+                  ) : appUser?.role === 'admin' ? (
+                    <AdminPanel user={user} appUser={appUser} isAuthLoading={isAuthLoading} />
+                  ) : user ? (
+                    <Navigate to="/" replace />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                } />
+                <Route path="/login" element={HomePageElement} />
+                <Route path="/signup" element={HomePageElement} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ForgotPasswordPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/flipbook/:id" element={<FlipbookPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/news" element={<OfficialNewsPage newsItems={newsItems} isLoading={isNewsLoading} />} />
+                <Route path="/events" element={<CollegeEventsPage newsItems={newsItems} isLoading={isNewsLoading} />} />
+                <Route path="/otp-verify" element={<OTPVerificationPage />} />
+                <Route path="/contributors" element={<ContributorsPage />} />
+                <Route path="/blog" element={<BlogPage />} />
+                <Route path="*" element={
+                  <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 px-4 text-center">
+                    <div className="text-8xl font-black bg-gradient-to-br from-purple-500 to-pink-500 bg-clip-text text-transparent">404</div>
+                    <div>
+                      <h1 className="text-2xl font-black text-gray-900 mb-2">Page Not Found</h1>
+                      <p className="text-gray-500 font-medium">The page you're looking for doesn't exist or has been moved.</p>
+                    </div>
+                    <Link to="/" className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-purple-600/20">
+                      Go Home
+                    </Link>
+                  </div>
+                } />
+                </Routes>
+              </Suspense>
+            </PageTransition>
+          );
+        })()}
       </main>
 
+      {/* ── Auth overlay panel (login / signup) ── */}
+      {isLoginSignupPage && <LoginPage user={appUser} />}
+
       {/* Footer */}
-      {location.pathname !== '/login' && !isFlipbookView && (
-        <footer className="pt-20 pb-32 xl:pb-16 px-4 bg-[#0A071B] border-t border-purple-900/30 shrink-0 relative overflow-hidden">
-        {/* Subtle background glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/10 blur-[120px] pointer-events-none rounded-full" />
-        
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 mb-16">
-            <div className="col-span-1 md:col-span-1">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-2 rounded-xl shadow-lg shadow-purple-500/20">
-                  <Sparkles className="w-5 h-5 text-white" />
+      {!isAuthPage && !isLoginSignupPage && !isFlipbookView && (
+        <footer className="pt-8 lg:pt-16 pb-24 lg:pb-8 px-4 bg-[#0B0914] border-t border-white/5 shrink-0 relative text-gray-400">
+          {/* Subtle background glow */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/10 blur-[120px] rounded-full" />
+          </div>
+          
+          <div className="max-w-7xl mx-auto relative z-10">
+            <div className="grid grid-cols-2 md:grid-cols-12 gap-x-4 gap-y-8 lg:gap-12 mb-8 lg:mb-12">
+              <div className="col-span-2 md:col-span-5 lg:col-span-4 pr-0 lg:pr-8 flex flex-col items-start text-left">
+                <Link to="/" onClick={() => window.scrollTo(0,0)} className="inline-block mb-4 lg:mb-6 relative h-10 md:h-12 w-full flex items-end">
+                  <img src="/logo.webp" alt="My College Genie" className="absolute left-0 -bottom-10 h-28 md:h-36 lg:h-40 w-auto object-contain object-left filter drop-shadow-[0_0_8px_rgba(255,255,255,0.1)] hover:scale-110 origin-bottom-left transition-all" />
+                </Link>
+                <p className="text-[12px] lg:text-[13px] text-gray-400 leading-relaxed mb-4 lg:mb-6 w-full">
+                  Ek student ki asli zaroorat kya hoti hai? Sahi resources, sahi log, aur sahi direction. <strong className="text-gray-200 font-semibold">My College Genie</strong> ye teeno deta hai — <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-bold animate-typing">Notes se Naukri Tak.</span>
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <a href="https://www.linkedin.com/company/my-college-genie/" target="_blank" rel="noopener noreferrer" className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group hover:-translate-y-1" title="LinkedIn">
+                    <Linkedin className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors" />
+                  </a>
+                  <a href="https://www.instagram.com/mycollegegenie.in" target="_blank" rel="noopener noreferrer" className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:border-pink-500/50 hover:bg-pink-500/10 transition-all group hover:-translate-y-1" title="Instagram">
+                    <Instagram className="w-5 h-5 text-gray-400 group-hover:text-pink-400 transition-colors" />
+                  </a>
+                  <a href="https://www.reddit.com/r/AskMyCollegeGenie" target="_blank" rel="noopener noreferrer" className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:border-orange-500/50 hover:bg-orange-500/10 transition-all group hover:-translate-y-1" title="Reddit">
+                    <svg className="w-5 h-5 fill-current text-gray-400 group-hover:text-orange-400 transition-colors" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.057 1.597.047.253.075.512.075.77 0 2.461-2.851 4.46-6.358 4.46-3.506 0-6.358-1.999-6.358-4.46 0-.258.028-.517.075-.77a1.756 1.756 0 0 1-1.057-1.597c0-.968.786-1.754 1.754-1.754.463 0 .875.18 1.183.479 1.174-.87 2.81-1.44 4.617-1.523l.71-3.326 2.456.519c-.098.192-.16.409-.16.639 0 .688.562 1.25 1.25 1.25zM9.03 13.003c-.629 0-1.139.51-1.139 1.139s.51 1.139 1.139 1.139c.629 0 1.139-.51 1.139-1.139s-.51-1.139-1.139-1.139zm5.94 0c-.629 0-1.139.51-1.139 1.139s.51 1.139 1.139 1.139c.629 0 1.139-.51 1.139-1.139s-.51-1.139-1.139-1.139zm-5.956 3.387c-.114 0-.227.044-.312.128a.438.438 0 0 0 0 .62c.712.712 2.03.712 2.74 0a.438.438 0 0 0 0-.62.438.438 0 0 0-.312-.128zm3.96 0c-.114 0-.227.044-.312.128a.438.438 0 0 0 0 .62c.712.712 2.03.712 2.74 0a.438.438 0 0 0 0-.62.438.438 0 0 0-.312-.128z"/></svg>
+                  </a>
+                  <a href="https://discord.gg/JAjYHHUVg3" target="_blank" rel="noopener noreferrer" className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all group hover:-translate-y-1" title="Discord">
+                    <svg className="w-5 h-5 fill-current text-gray-400 group-hover:text-indigo-400 transition-colors" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.419-2.157 2.419z"/></svg>
+                  </a>
                 </div>
-                <span className="text-xl font-black tracking-tighter text-white">My College <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-400">Genie</span></span>
               </div>
-              <p className="text-gray-400 text-[15px] max-w-sm leading-relaxed">
-                Your ultimate academic companion for Delhi University. Access notes, PYQs, and curated playlists to absolutely crush your semester.
+
+              <div className="col-span-1 md:col-span-2 lg:col-span-2">
+                <h4 className="text-white font-bold mb-4 lg:mb-6 text-sm">Academic Hub</h4>
+                <ul className="space-y-4 font-medium text-[13px]">
+                  <li><Link to="/" onClick={() => window.scrollTo(0,0)} className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Home</Link></li>
+                  <li><button onClick={() => {navigate('/'); setTimeout(() => resultsRef.current?.scrollIntoView({behavior:'smooth'}), 100);}} className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Browse</button></li>
+                  <li><Link to="/playlists" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Playlists</Link></li>
+                  <li><button onClick={() => openUploadModal()} className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Upload</button></li>
+                </ul>
+              </div>
+
+              <div className="col-span-1 md:col-span-3 lg:col-span-3">
+                <h4 className="text-white font-bold mb-4 lg:mb-6 text-sm">Campus Life</h4>
+                <ul className="space-y-4 font-medium text-[13px]">
+                  <li><Link to="/find-pg" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Find PG</Link></li>
+                  <li><Link to="/campus-exchange" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Campus Exchange {showNewBadge && <span className="bg-[#FF0080] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1">NEW</span>}</Link></li>
+                  <li><Link to="/forum" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Student Forums</Link></li>
+                  <li><Link to="/news" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Official News</Link></li>
+                  <li><Link to="/events" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> College Events</Link></li>
+                </ul>
+              </div>
+
+              <div className="col-span-2 md:col-span-3 lg:col-span-3">
+                <h4 className="text-white font-bold mb-4 lg:mb-6 text-sm">Support & Legal</h4>
+                <ul className="space-y-4 font-medium text-[13px]">
+                  <li><Link to="/contact" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Contact Us</Link></li>
+                  <li><Link to="/blog" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Blog</Link></li>
+                  <li><Link to="/contributors" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Our Team & Contributors</Link></li>
+                  <li><Link to="/privacy" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Privacy Policy</Link></li>
+                  <li><Link to="/terms" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Terms of Service</Link></li>
+                  {appUser?.role === 'admin' && (
+                    <li className="pt-2">
+                      <Link to="/admin" className="flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors font-bold bg-purple-500/10 px-3 py-2 rounded-lg inline-flex border border-purple-500/20">
+                        <LayoutGrid className="w-4 h-4" /> Admin Panel
+                      </Link>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-sm font-medium">
+                © {new Date().getFullYear()} My College Genie. All rights reserved.
               </p>
-            </div>
-            
-            <div className="col-span-1">
-              <h4 className="text-white font-black mb-6 uppercase tracking-[0.2em] text-xs">Explore</h4>
-              <ul className="space-y-4 text-[15px] text-gray-400 font-medium">
-                <li>
-                  <Link 
-                    to="/"
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                    className="hover:text-purple-400 transition-colors block"
-                  >
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => {
-                      if (location.pathname !== '/') {
-                        navigate('/');
-                        setTimeout(() => {
-                          resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-                        }, 100);
-                      } else {
-                        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
-                    className="hover:text-purple-400 transition-colors text-left w-full"
-                  >
-                    Browse Resources
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => setIsUploadModalOpen(true)}
-                    className="hover:text-purple-400 transition-colors text-left w-full"
-                  >
-                    Upload Resource
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => {
-                      if (location.pathname !== '/') {
-                        navigate('/');
-                        setTimeout(() => {
-                          setActiveFilter('Playlist');
-                          resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-                        }, 100);
-                      } else {
-                        setActiveFilter('Playlist');
-                        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
-                    className="hover:text-purple-400 transition-colors text-left w-full"
-                  >
-                    YouTube Playlists
-                  </button>
-                </li>
-                <li>
-                  <Link to="/news" className="hover:text-purple-400 transition-colors">
-                    Official News
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/events" className="hover:text-purple-400 transition-colors">
-                    College Events
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div className="col-span-1">
-              <h4 className="text-white font-black mb-6 uppercase tracking-[0.2em] text-xs">Legal & Support</h4>
-              <ul className="space-y-4 text-[15px] text-gray-400 font-medium">
-                <li><Link to="/privacy" className="hover:text-purple-400 transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="hover:text-purple-400 transition-colors">Terms of Service</Link></li>
-                <li><Link to="/contact" className="hover:text-purple-400 transition-colors">Contact Us</Link></li>
-                {appUser?.role === 'admin' && (
-                  <li>
-                    <Link 
-                      to="/admin"
-                      className="flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors font-bold"
-                    >
-                      <LayoutGrid className="w-4 h-4" />
-                      Admin Panel
-                    </Link>
-                  </li>
-                )}
-              </ul>
-            </div>
-
-            <div className="col-span-1">
-              <h4 className="text-white font-black mb-6 uppercase tracking-[0.2em] text-xs">Join Community</h4>
-              <p className="text-[15px] text-gray-400 mb-6 font-medium">Connect with fellow students and stay updated.</p>
-              <div className="flex flex-wrap gap-3">
-                <a 
-                  href="https://www.linkedin.com/company/my-college-genie/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="p-3 bg-white/5 border border-white/10 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/10"
-                  title="LinkedIn"
-                  aria-label="Follow us on LinkedIn"
-                >
-                  <Linkedin className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors" />
-                </a>
-                <a 
-                  href="https://www.instagram.com/mycollegegenie.in?igsh=eDIzcnY5b2N6aGI5" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="p-3 bg-white/5 border border-white/10 rounded-xl hover:border-pink-500/50 hover:bg-pink-500/10 transition-all group hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/10"
-                  title="Instagram"
-                  aria-label="Follow us on Instagram"
-                >
-                  <Instagram className="w-5 h-5 text-gray-400 group-hover:text-pink-400 transition-colors" />
-                </a>
-                <a 
-                  href="https://www.reddit.com/r/AskMyCollegeGenie/s/CjjNrZWmAz" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="p-3 bg-white/5 border border-white/10 rounded-xl hover:border-orange-500/50 hover:bg-orange-500/10 transition-all group hover:-translate-y-1 hover:shadow-lg hover:shadow-orange-500/10"
-                  title="Reddit"
-                  aria-label="Join our Reddit community"
-                >
-                  <svg className="w-5 h-5 fill-current text-gray-400 group-hover:text-orange-400 transition-colors" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.057 1.597.047.253.075.512.075.77 0 2.461-2.851 4.46-6.358 4.46-3.506 0-6.358-1.999-6.358-4.46 0-.258.028-.517.075-.77a1.756 1.756 0 0 1-1.057-1.597c0-.968.786-1.754 1.754-1.754.463 0 .875.18 1.183.479 1.174-.87 2.81-1.44 4.617-1.523l.71-3.326 2.456.519c-.098.192-.16.409-.16.639 0 .688.562 1.25 1.25 1.25zM9.03 13.003c-.629 0-1.139.51-1.139 1.139s.51 1.139 1.139 1.139c.629 0 1.139-.51 1.139-1.139s-.51-1.139-1.139-1.139zm5.94 0c-.629 0-1.139.51-1.139 1.139s.51 1.139 1.139 1.139c.629 0 1.139-.51 1.139-1.139s-.51-1.139-1.139-1.139zm-5.956 3.387c-.114 0-.227.044-.312.128a.438.438 0 0 0 0 .62c.712.712 2.03.712 2.74 0a.438.438 0 0 0 0-.62.438.438 0 0 0-.312-.128zm3.96 0c-.114 0-.227.044-.312.128a.438.438 0 0 0 0 .62c.712.712 2.03.712 2.74 0a.438.438 0 0 0 0-.62.438.438 0 0 0-.312-.128z"/>
-                  </svg>
-                </a>
-                <a 
-                  href="https://discord.gg/JAjYHHUVg3" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="p-3 bg-white/5 border border-white/10 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all group hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/10"
-                  title="Discord"
-                  aria-label="Join our Discord server"
-                >
-                  <svg className="w-5 h-5 fill-current text-gray-400 group-hover:text-indigo-400 transition-colors" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.419-2.157 2.419z"/>
-                  </svg>
-                </a>
+              <div className="flex items-center gap-2 text-sm font-bold bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                Built with <span className="text-purple-400 animate-pulse">💜</span> for college students
               </div>
             </div>
           </div>
-
-          <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm font-medium text-gray-500">
-              © {new Date().getFullYear()} My College Genie. All rights reserved.
-            </p>
-            <div className="flex items-center gap-2 text-sm font-bold text-gray-400 bg-white/5 px-4 py-2 rounded-full border border-white/5">
-              Built with <span className="text-purple-400">💜</span> for DU Students
-            </div>
-          </div>
-        </div>
-      </footer>
+        </footer>
       )}
 
       {/* News & Events Modal */}
-      <AnimatePresence>
-        {isUploadModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {isUploadModalOpen && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', inset: 0 }} onClick={(e) => { if (e.target === e.currentTarget) setIsUploadModalOpen(false); }}>
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1211,6 +1469,7 @@ function AppContent() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-2xl mx-4 bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
             >
               <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
@@ -1265,197 +1524,234 @@ function AppContent() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Title</label>
-                        <input 
+                    {/* ── Row 1: Title + Custom Course Dropdown ── */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Title <span className="text-red-400">*</span></label>
+                        <input
                           required
-                          type="text" 
+                          type="text"
                           placeholder="e.g. Microeconomics Unit 1 Notes"
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
                           value={formData.title}
                           onChange={(e) => setFormData({...formData, title: e.target.value})}
                         />
                       </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Course</label>
-                        <select 
-                          required
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
-                          value={formData.course}
-                          onChange={(e) => setFormData({...formData, course: e.target.value})}
-                        >
-                          <option value="">Select Course</option>
-                          {DU_COURSES.map(course => (
-                            <option key={course} value={course}>{course}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Subject Code (Optional)</label>
-                        <input 
-                          type="text" 
-                          placeholder="e.g. 11017502"
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                          value={formData.subjectCode}
-                          onChange={(e) => setFormData({...formData, subjectCode: e.target.value})}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Type</label>
-                        <select 
-                          required
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
-                          value={formData.type}
-                          onChange={(e) => setFormData({...formData, type: e.target.value as any})}
-                        >
-                          <option value="">Select Type</option>
-                          <option value="Note">Note</option>
-                          <option value="PYQ">PYQ</option>
-                          <option value="Book">Book</option>
-                          <option value="Playlist">Playlist</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Semester</label>
-                        <select 
-                          required
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
-                          value={formData.semester}
-                          onChange={(e) => setFormData({...formData, semester: e.target.value})}
-                        >
-                          {(() => {
-                            const maxSem = COURSE_METADATA[formData.course]?.semesters || 6;
-                            const sems = [];
-                            for (let i = 1; i <= maxSem; i++) {
-                              sems.push(i);
-                            }
-                            return sems.map(sem => (
-                              <option key={sem} value={sem}>Semester {sem}</option>
-                            ));
-                          })()}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Resource Link</label>
-                      <div className="relative">
-                        <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input 
-                          required={!formData.file}
-                          type="url" 
-                          placeholder="https://drive.google.com/..."
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                          value={formData.link}
-                          onChange={(e) => setFormData({...formData, link: e.target.value})}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Upload File (PDF, etc.)</label>
-                      <div 
-                        {...getRootProps()} 
-                        className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${
-                          isDragActive ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-400 hover:bg-gray-50'
-                        }`}
-                      >
-                        <input {...getInputProps()} />
-                        <div className="flex flex-col items-center gap-2">
-                          {formData.file ? (
-                            <>
-                              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                <CheckCircle2 className="w-6 h-6 text-green-600" />
-                              </div>
-                              <p className="text-sm font-medium text-gray-900">{formData.file.name}</p>
-                              <button 
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setFormData(prev => ({ ...prev, file: null }));
-                                }}
-                                className="text-xs text-red-500 hover:text-red-600 font-bold uppercase tracking-wider"
-                              >
-                                Remove File
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                                <Upload className="w-6 h-6 text-purple-600" />
-                              </div>
-                              <p className="text-sm font-medium text-gray-900">Drag & drop a file here, or click to select</p>
-                              <p className="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
-                            </>
-                          )}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Course <span className="text-red-400">*</span></label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => { setUploadCourseOpen(p => !p); setUploadCourseSearch(''); }}
+                            className={`w-full flex items-center justify-between px-3.5 py-2.5 bg-gray-50 border rounded-xl text-sm font-medium transition-all text-left ${uploadCourseOpen ? 'border-purple-500 ring-2 ring-purple-500/20 bg-white' : 'border-gray-200'} ${!formData.course ? 'text-gray-300' : 'text-gray-800'}`}
+                          >
+                            <span className="truncate">{formData.course || 'Select Course'}</span>
+                            <ChevronDown className={`w-4 h-4 text-gray-300 shrink-0 transition-transform ${uploadCourseOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                          <input type="text" required readOnly value={formData.course} tabIndex={-1} className="absolute inset-0 opacity-0 pointer-events-none" />
+                          <AnimatePresence>
+                            {uploadCourseOpen && (
+                              <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }} className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
+                                <div className="p-2 border-b border-gray-100">
+                                  <div className="relative">
+                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
+                                    <input autoFocus type="text" placeholder="Search course..." value={uploadCourseSearch} onChange={e => setUploadCourseSearch(e.target.value)} className="w-full pl-7 pr-3 py-1.5 text-xs font-medium bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-purple-400 text-gray-800 placeholder:text-gray-300" />
+                                  </div>
+                                </div>
+                                <div className="overflow-y-auto max-h-40">
+                                  {College_COURSES.filter(c => c.toLowerCase().includes(uploadCourseSearch.toLowerCase())).map(course => (
+                                    <button key={course} type="button" onClick={() => { setFormData(d => ({...d, course})); setUploadCourseOpen(false); setUploadCourseSearch(''); }} className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center justify-between gap-2 transition-colors ${formData.course === course ? 'bg-purple-50 text-purple-700 font-bold' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                      <span className="truncate">{course}</span>
+                                      {formData.course === course && <CheckCircle2 className="w-3 h-3 text-purple-600 shrink-0" />}
+                                    </button>
+                                  ))}
+                                  {College_COURSES.filter(c => c.toLowerCase().includes(uploadCourseSearch.toLowerCase())).length === 0 && <div className="px-3 py-4 text-center text-xs text-gray-400">No courses found</div>}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tags (Comma separated)</label>
-                      <input 
-                        type="text" 
+                    {/* ── Row 2: Type pills + Subject Code ── */}
+                    {!isPlaylistContext && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Type <span className="text-red-400">*</span></label>
+                          <div className="flex flex-wrap gap-2">
+                            {(['Note','PYQ','Book','Playlist'] as const).map(t => (
+                              <button key={t} type="button" onClick={() => setFormData(d => ({...d, type: t}))} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${formData.type === t ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-purple-300 hover:text-purple-700'}`}>
+                                {t}
+                              </button>
+                            ))}
+                          </div>
+                          <input type="text" required readOnly value={formData.type} tabIndex={-1} className="sr-only" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Subject Code <span className="text-gray-300">(optional)</span></label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 11017502"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
+                            value={formData.subjectCode}
+                            onChange={(e) => setFormData({...formData, subjectCode: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── Semester pills ── */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Semester <span className="text-red-400">*</span></label>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.from({ length: COURSE_METADATA[formData.course]?.semesters || 8 }, (_, i) => i + 1).map(sem => (
+                          <button key={sem} type="button" onClick={() => setFormData(d => ({...d, semester: String(sem)}))} className={`w-10 h-9 rounded-xl text-xs font-black border transition-all ${formData.semester === String(sem) ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-purple-300 hover:text-purple-700'}`}>
+                            {sem}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* ── Link OR File ── */}
+                    {isPlaylistContext ? (
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">YouTube Playlist Link <span className="text-red-400">*</span></label>
+                        <div className="relative">
+                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                          <input
+                            required
+                            type="url"
+                            placeholder="https://youtube.com/playlist?list=..."
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
+                            value={formData.link}
+                            onChange={(e) => setFormData({...formData, link: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Resource Link</label>
+                          <div className="relative">
+                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                            <input
+                              required={!formData.file}
+                              type="url"
+                              placeholder="https://drive.google.com/..."
+                              className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
+                              value={formData.link}
+                              onChange={(e) => setFormData({...formData, link: e.target.value})}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Upload File</label>
+                          <div {...getRootProps()} className={`relative border-2 border-dashed rounded-xl p-3 text-center transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2 ${isDragActive ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-400 hover:bg-gray-50'}`}>
+                            <input {...getInputProps()} />
+                            {formData.file ? (
+                              <div className="flex items-center gap-2 w-full">
+                                <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                                <span className="text-xs font-bold text-gray-700 truncate flex-1">{formData.file.name}</span>
+                                <button type="button" onClick={(e) => { e.stopPropagation(); setFormData(p => ({...p, file: null})); }} className="text-red-400 hover:text-red-600 font-black text-[10px] uppercase tracking-wider shrink-0">✕</button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 text-gray-400">
+                                <Upload className="w-4 h-4 text-purple-400" />
+                                <span className="text-xs font-medium">PDF, DOC, JPG · Max 15MB</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── Tags + Description ── */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tags <span className="text-gray-300">(comma separated)</span></label>
+                      <input
+                        type="text"
                         placeholder="e.g. economics, micro, unit1"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
                         value={formData.tags}
                         onChange={(e) => setFormData({...formData, tags: e.target.value})}
                       />
                     </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Description <span className="text-gray-300">(optional)</span></label>
+                      <textarea
+                        rows={3}
+                        placeholder="Tell students what this resource covers..."
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium resize-none"
+                        value={formData.description}
+                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      />
+                    </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
-                      <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
-                        <ReactQuill 
-                          theme="snow"
-                          value={formData.description}
-                          onChange={(content) => setFormData({...formData, description: content})}
-                          placeholder="Tell us more about this resource..."
-                          className="bg-white"
-                        />
+                    {/* ── Duplicate Warning Banner ── */}
+                    {duplicateWarningResource && !duplicateWarningAcknowledged && (
+                      <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex flex-col gap-3">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="text-sm font-bold text-orange-800">Possible Duplicate Playlist</h4>
+                            <p className="text-xs text-orange-700 mt-1 font-medium leading-relaxed">
+                              We found an existing playlist that matches this YouTube link: <br/>
+                              <span className="font-bold text-orange-900 mt-1 inline-block">"{duplicateWarningResource.title}"</span>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 justify-end mt-1">
+                          <button
+                            type="button"
+                            onClick={() => setDuplicateWarningResource(null)}
+                            className="px-4 py-2 text-xs font-bold text-orange-600 hover:bg-orange-100 rounded-lg transition-colors"
+                          >
+                            Cancel Upload
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDuplicateWarningAcknowledged(true);
+                              // User can click submit again to proceed
+                            }}
+                            className="px-4 py-2 text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-lg shadow-md transition-colors"
+                          >
+                            Upload Anyway
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="pt-4">
-                      <motion.button 
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        type="submit"
-                        disabled={uploadStatus === 'uploading'}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-purple-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
-                      >
-                        {uploadStatus === 'uploading' ? (
-                          <>
-                            <RefreshCw className="w-5 h-5 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="w-5 h-5" />
-                            Publish Resource
-                          </>
-                        )}
-                      </motion.button>
-                    </div>
+                    {/* ── Submit ── */}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={uploadStatus === 'uploading'}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-purple-600/20 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
+                    >
+                      {uploadStatus === 'uploading' ? (
+                        <><RefreshCw className="w-4 h-4 animate-spin" /> Uploading...</>
+                      ) : (
+                        <><CheckCircle2 className="w-4 h-4" /> Publish Resource</>
+                      )}
+                    </motion.button>
                   </>
                 )}
               </form>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Resource Detail Modal */}
-      <AnimatePresence>
-        {selectedResource && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {selectedResource && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', inset: 0 }}>
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1467,6 +1763,7 @@ function AppContent() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-2xl bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
             >
               <div className="py-3 px-4 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
@@ -1529,8 +1826,41 @@ function AppContent() {
               </div>
 
               <div className="flex-1 overflow-y-auto px-4 py-3 sm:p-6 custom-scrollbar text-left">
-                <h2 className="text-lg sm:text-2xl font-bold mb-0.5 sm:mb-1 text-gray-900 leading-tight">{selectedResource.title}</h2>
-                <p className="text-xs sm:text-sm text-purple-600 font-medium mb-2.5 sm:mb-5">
+                {/* ── Playlist YouTube thumbnail in modal ── */}
+                {selectedResource.type === 'Playlist' && selectedResource.link && (() => {
+                  try {
+                    const u = new URL(selectedResource.link);
+                    const videoId = u.searchParams.get('v') || (u.hostname === 'youtu.be' ? u.pathname.replace(/^\//, '') : null);
+                    if (videoId) {
+                      return (
+                        <div className="w-full aspect-video rounded-2xl overflow-hidden mb-4 sm:mb-5 bg-gray-100 relative">
+                          <img
+                            src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
+                            alt={selectedResource.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                          />
+                          <div className="absolute inset-0 bg-black/10" />
+                          <a
+                            href={selectedResource.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="absolute inset-0 flex items-center justify-center"
+                          >
+                            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform">
+                              <PlayCircle className="w-7 h-7 sm:w-8 sm:h-8 text-rose-600" />
+                            </div>
+                          </a>
+                        </div>
+                      );
+                    }
+                  } catch { /* invalid URL */ }
+                  return null;
+                })()}
+
+                <h2 className="text-lg sm:text-2xl font-bold mb-0.5 sm:mb-1 text-gray-900 leading-tight break-words">{selectedResource.title}</h2>
+                <p className="text-xs sm:text-sm text-purple-600 font-medium mb-2.5 sm:mb-5 break-words">
                   {selectedResource.course}
                   {selectedResource.subjectCode && <span className="ml-1 sm:ml-2 text-gray-400">({selectedResource.subjectCode})</span>}
                 </p>
@@ -1571,7 +1901,8 @@ function AppContent() {
                         <h4 className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Description</h4>
                         <div 
                           className="text-slate-600/70 leading-relaxed prose prose-sm max-w-none text-sm sm:text-base font-medium"
-                          dangerouslySetInnerHTML={{ __html: selectedResource.description || "No description provided for this resource." }}
+                          // SECURITY FIX: Sanitize HTML to prevent XSS attacks from malicious uploaders
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedResource.description || 'No description provided for this resource.') }}
                         />
                       </div>
 
@@ -1614,30 +1945,49 @@ function AppContent() {
                         <button onClick={() => setModalView('main')} className="p-1 hover:bg-purple-100 rounded-lg text-purple-600 transition-colors">
                           <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <h4 className="text-[10px] sm:text-xs font-bold text-purple-600 uppercase tracking-wider flex items-center gap-2"><MessageCircle className="w-4 h-4" /> Student Comments</h4>
+                        <h4 className="text-[10px] sm:text-xs font-bold text-purple-600 uppercase tracking-wider flex items-center gap-2"><MessageCircle className="w-4 h-4" /> Student Comments ({resourceComments.length})</h4>
                       </div>
+
+                      {/* Post Comment */}
+                      {user ? (
+                        <div className="flex gap-2">
+                          <input
+                            value={newComment}
+                            onChange={e => setNewComment(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handlePostComment()}
+                            placeholder="Write a comment..."
+                            maxLength={1000}
+                            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                          />
+                          <button
+                            onClick={handlePostComment}
+                            disabled={isPostingComment || !newComment.trim()}
+                            className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                          >
+                            {isPostingComment ? '...' : 'Post'}
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 font-medium">Sign in to leave a comment</p>
+                      )}
+
                       <div className="flex flex-col gap-3 min-h-[150px] max-h-[300px] overflow-y-auto pr-2">
-                        <div className="bg-gray-50/80 rounded-xl p-3 sm:p-4 border border-gray-100">
-                          <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-1 sm:gap-0 mb-1.5 sm:mb-2">
-                            <span className="font-black text-gray-900 text-xs sm:text-sm">Rahul Kumar</span> 
-                            <span className="text-[9px] sm:text-[10px] text-gray-500 font-bold bg-white px-2 py-0.5 rounded-full border border-gray-100 shadow-sm whitespace-nowrap">Hindu College • B.Com (Hons)</span>
+                        {resourceComments.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center h-[150px] text-gray-400">
+                            <MessageCircle className="w-8 h-8 mb-2 opacity-40" />
+                            <p className="text-sm font-medium">No comments yet — be the first!</p>
                           </div>
-                          <span className="text-gray-600 text-xs sm:text-sm font-medium">Very helpful notes! The diagrams make it much easier to understand.</span>
-                        </div>
-                        <div className="bg-gray-50/80 rounded-xl p-3 sm:p-4 border border-gray-100">
-                          <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-1 sm:gap-0 mb-1.5 sm:mb-2">
-                            <span className="font-black text-gray-900 text-xs sm:text-sm">Sneha Desai</span> 
-                            <span className="text-[9px] sm:text-[10px] text-gray-500 font-bold bg-white px-2 py-0.5 rounded-full border border-gray-100 shadow-sm whitespace-nowrap">SRCC • BA (Prog)</span>
+                        ) : resourceComments.map(c => (
+                          <div key={c.id} className="bg-gray-50/80 rounded-xl p-3 sm:p-4 border border-gray-100">
+                            <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-1 sm:gap-0 mb-1.5 sm:mb-2">
+                              <span className="font-black text-gray-900 text-xs sm:text-sm">{c.user_name}</span>
+                              <span className="text-[9px] sm:text-[10px] text-gray-500 font-bold bg-white px-2 py-0.5 rounded-full border border-gray-100 shadow-sm whitespace-nowrap">
+                                {new Date(c.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                              </span>
+                            </div>
+                            <span className="text-gray-600 text-xs sm:text-sm font-medium">{c.content}</span>
                           </div>
-                          <span className="text-gray-600 text-xs sm:text-sm font-medium">Saved me before exams! Exactly what I was looking for.</span>
-                        </div>
-                        <div className="bg-gray-50/80 rounded-xl p-3 sm:p-4 border border-gray-100">
-                          <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-1 sm:gap-0 mb-1.5 sm:mb-2">
-                            <span className="font-black text-gray-900 text-xs sm:text-sm">Amit Sharma</span> 
-                            <span className="text-[9px] sm:text-[10px] text-gray-500 font-bold bg-white px-2 py-0.5 rounded-full border border-gray-100 shadow-sm whitespace-nowrap">Hansraj College • B.Tech</span>
-                          </div>
-                          <span className="text-gray-600 text-xs sm:text-sm font-medium">Clear and concise. Highly recommend scanning the last two pages.</span>
-                        </div>
+                        ))}
                       </div>
                     </div>
                   ) : (
@@ -1646,14 +1996,48 @@ function AppContent() {
                         <button onClick={() => setModalView('main')} className="p-1 hover:bg-yellow-100 rounded-lg text-yellow-600 transition-colors">
                           <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <h4 className="text-[10px] sm:text-xs font-bold text-yellow-600 uppercase tracking-wider flex items-center gap-2"><Lightbulb className="w-4 h-4" /> Exam Tips</h4>
+                        <h4 className="text-[10px] sm:text-xs font-bold text-yellow-600 uppercase tracking-wider flex items-center gap-2"><Lightbulb className="w-4 h-4" /> Exam Tips ({resourceTips.length})</h4>
                       </div>
-                      <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4 sm:p-5 shadow-sm min-h-[150px]">
-                        <ul className="list-disc pl-5 text-yellow-800 space-y-2 text-xs sm:text-sm font-medium">
-                          <li>Focus heavily on the topics covered in chapter 3 and 4.</li>
-                          <li>Practice the numericals at least twice before the final.</li>
-                          <li>Drawing neat diagrams will easily fetch you full marks.</li>
-                        </ul>
+
+                      {/* Post Tip */}
+                      {user ? (
+                        <div className="flex gap-2">
+                          <input
+                            value={newTip}
+                            onChange={e => setNewTip(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handlePostTip()}
+                            placeholder="Share an exam tip..."
+                            maxLength={500}
+                            className="flex-1 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                          />
+                          <button
+                            onClick={handlePostTip}
+                            disabled={isPostingTip || !newTip.trim()}
+                            className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                          >
+                            {isPostingTip ? '...' : 'Add'}
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 font-medium">Sign in to share exam tips</p>
+                      )}
+
+                      <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4 sm:p-5 shadow-sm min-h-[150px] max-h-[280px] overflow-y-auto">
+                        {resourceTips.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center h-[120px] text-yellow-600/50">
+                            <Lightbulb className="w-8 h-8 mb-2" />
+                            <p className="text-sm font-medium">No exam tips yet — share yours!</p>
+                          </div>
+                        ) : (
+                          <ul className="list-disc pl-5 text-yellow-800 space-y-2 text-xs sm:text-sm font-medium">
+                            {resourceTips.map(t => (
+                              <li key={t.id}>
+                                {t.tip}
+                                <span className="ml-2 text-[10px] text-yellow-600/60">— {t.user_name}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1682,7 +2066,7 @@ function AppContent() {
                       className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 h-11 rounded-xl text-sm font-bold transition-all shadow-lg shadow-purple-600/20"
                     >
                       {selectedResource.type === 'Playlist' ? <Youtube className="w-4 h-4 shrink-0" /> : <Globe className="w-4 h-4 shrink-0" />}
-                      <span className="truncate">{selectedResource.type === 'Playlist' ? 'Watch Playlist' : 'View Website'}</span>
+                      <span className="truncate">{selectedResource.type === 'Playlist' ? 'Watch Playlist' : 'View Source'}</span>
                       <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                     </motion.a>
                     {selectedResource.directDownloadLink && (
@@ -1730,13 +2114,16 @@ function AppContent() {
               </div>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Report Modal */}
-      <AnimatePresence>
-        {isReportModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {isReportModalOpen && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', inset: 0 }}>
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1748,6 +2135,7 @@ function AppContent() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-md bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-2xl"
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
@@ -1827,13 +2215,16 @@ function AppContent() {
               </form>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Event Request Modal */}
-      <AnimatePresence>
-        {isEventRequestModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {isEventRequestModalOpen && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', inset: 0 }}>
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1845,6 +2236,7 @@ function AppContent() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-xl bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
@@ -1854,7 +2246,7 @@ function AppContent() {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">Publish Your Event</h2>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Reach the entire DU community</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Reach the entire Student Community</p>
                   </div>
                 </div>
                 <button 
@@ -1866,107 +2258,131 @@ function AppContent() {
                 </button>
               </div>
 
-              <form 
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  toast.success('Event request submitted successfully! Our team will review it shortly.');
-                  setIsEventRequestModalOpen(false);
-                  setEventRequestData({ college: '', title: '', date: '', description: '', contact: '' });
-                }}
-                className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar"
-              >
-                {!user ? (
-                  <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-6">
-                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
-                      <AlertCircle className="w-8 h-8 text-amber-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">Sign in Required</h3>
-                      <p className="text-gray-500 font-medium">
-                        You need to be signed in to publish an event. Join the community to get started.
-                      </p>
-                    </div>
-                    <Link
-                      to="/login"
-                      className="w-full sm:w-auto px-8 bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-fuchsia-600/20 block text-center"
-                    >
-                      Sign In to Continue
-                    </Link>
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">College Name</label>
-                      <input 
-                        required
-                        type="text" 
-                        placeholder="e.g. Hansraj College"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all"
-                        value={eventRequestData.college}
-                        onChange={(e) => setEventRequestData({...eventRequestData, college: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Event Title</label>
-                      <input 
-                        required
-                        type="text" 
-                        placeholder="e.g. Annual Cultural Fest 2026"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all"
-                        value={eventRequestData.title}
-                        onChange={(e) => setEventRequestData({...eventRequestData, title: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Event Date</label>
-                      <input 
-                        required
-                        type="date" 
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all"
-                        value={eventRequestData.date}
-                        onChange={(e) => setEventRequestData({...eventRequestData, date: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Description</label>
-                      <textarea 
-                        required
-                        rows={4}
-                        placeholder="Briefly describe your event..."
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all resize-none"
-                        value={eventRequestData.description}
-                        onChange={(e) => setEventRequestData({...eventRequestData, description: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Contact Email/Phone</label>
-                      <input 
-                        required
-                        type="text" 
-                        placeholder="Where can we reach you?"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all"
-                        value={eventRequestData.contact}
-                        onChange={(e) => setEventRequestData({...eventRequestData, contact: e.target.value})}
-                      />
-                    </div>
-
-                    <div className="pt-4">
-                      <motion.button 
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        type="submit"
-                        className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-xl shadow-fuchsia-600/20 flex items-center justify-center gap-2"
+              <div className="flex-1 overflow-y-auto">
+                <form
+                  id="event-request-form"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!user) return;
+                    try {
+                      await submitEvent({
+                        title: eventRequestData.title,
+                        college: eventRequestData.college,
+                        date: eventRequestData.date,
+                        venue: '',
+                        eligibility: 'All',
+                        description: `${eventRequestData.description}\n\nContact: ${eventRequestData.contact}`,
+                      });
+                      toast.success('Event request submitted! Our team will review it shortly.');
+                    } catch (err) {
+                      console.error('[event request] submit error:', err);
+                      toast.error('Failed to submit event. Please try again.');
+                      return;
+                    }
+                    setIsEventRequestModalOpen(false);
+                    setEventRequestData({ college: '', title: '', date: '', description: '', contact: '' });
+                  }}
+                  className="p-6 space-y-4"
+                >
+                  {!user ? (
+                    <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-6">
+                      <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
+                        <AlertCircle className="w-8 h-8 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Sign in Required</h3>
+                        <p className="text-gray-500 font-medium">
+                          You need to be signed in to publish an event. Join the community to get started.
+                        </p>
+                      </div>
+                      <Link
+                        to="/login"
+                        className="w-full sm:w-auto px-8 bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-fuchsia-600/20 block text-center"
                       >
-                        Submit Request
-                      </motion.button>
+                        Sign In to Continue
+                      </Link>
                     </div>
-                  </>
-                )}
-              </form>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">College Name</label>
+                        <input
+                          required
+                          type="text"
+                          placeholder="e.g. Hansraj College"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all"
+                          value={eventRequestData.college}
+                          onChange={(e) => setEventRequestData({...eventRequestData, college: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Event Title</label>
+                        <input
+                          required
+                          type="text"
+                          placeholder="e.g. Annual Cultural Fest 2026"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all"
+                          value={eventRequestData.title}
+                          onChange={(e) => setEventRequestData({...eventRequestData, title: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Event Date</label>
+                        <input
+                          required
+                          type="date"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all"
+                          value={eventRequestData.date}
+                          onChange={(e) => setEventRequestData({...eventRequestData, date: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Description</label>
+                        <textarea
+                          required
+                          rows={3}
+                          placeholder="Briefly describe your event..."
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all resize-none"
+                          value={eventRequestData.description}
+                          onChange={(e) => setEventRequestData({...eventRequestData, description: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Contact Email/Phone</label>
+                        <input
+                          required
+                          type="text"
+                          placeholder="Where can we reach you?"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all"
+                          value={eventRequestData.contact}
+                          onChange={(e) => setEventRequestData({...eventRequestData, contact: e.target.value})}
+                        />
+                      </div>
+                    </>
+                  )}
+                </form>
+              </div>
+
+              {/* ── Sticky Submit Footer ── */}
+              {user && (
+                <div className="px-6 py-4 border-t border-gray-100 bg-white flex-shrink-0">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    form="event-request-form"
+                    className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-fuchsia-600/20 flex items-center justify-center gap-2"
+                  >
+                    Submit Request
+                  </motion.button>
+                </div>
+              )}
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

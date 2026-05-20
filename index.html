@@ -1,49 +1,162 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <title>MyCollegeGenie - DU Notes, PYQs & Study Resources | Delhi University</title>
-    <meta name="description" content="Access thousands of DU notes, previous year questions, YouTube playlists, PG listings and college events. The ultimate student platform for Delhi University." />
-    <meta name="keywords" content="DU notes, Delhi University PYQ, DU study material, Delhi University resources, DU exam preparation, college notes Delhi" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- ── Primary SEO ─────────────────────────────────────────── -->
+    <title>MyCollegeGenie — India's Biggest Student Platform & Ecosystem</title>
+    <meta name="description" content="My College Genie is India's biggest student platform, building a complete ecosystem to connect every college and every student. Access free notes, PYQs, find PGs, discover events, and join the ultimate student portal for every college need." />
+    <meta name="keywords" content="India biggest student platform, college student ecosystem, university portal, free college notes, PYQs, find PG near college, campus events, student community, college resources, My College Genie" />
     <meta name="author" content="MyCollegeGenie" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow" />
+    <meta name="theme-color" content="#4400FF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#7C3AED" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="MCGenie" />
+    <meta name="application-name" content="MyCollegeGenie" />
+    <meta name="generator" content="Vite + React" />
+
+    <!-- ── Performance & Network Optimization ──────────────────── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://vjylgntbixjchpxomjko.supabase.co" />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+    <link rel="dns-prefetch" href="https://api.mycollegegenie.in" />
+
+    <!-- ── Canonical ─────────────────────────────────────────────── -->
     <link rel="canonical" href="https://mycollegegenie.in/" />
 
+    <!-- ── Open Graph ─────────────────────────────────────────────── -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://mycollegegenie.in/" />
-    <meta property="og:title" content="MyCollegeGenie - DU Notes, PYQs & Study Resources" />
-    <meta property="og:description" content="Access thousands of DU notes, previous year questions, YouTube playlists and college events. The ultimate student platform for Delhi University." />
-    <meta property="og:image" content="https://mycollegegenie.in/og-image.png" />
     <meta property="og:site_name" content="MyCollegeGenie" />
+    <meta property="og:title" content="MyCollegeGenie — India's Biggest Student Platform" />
+    <meta property="og:description" content="A complete ecosystem connecting every college and every student. Access notes, PYQs, PGs, events, and a massive community for all your college needs." />
+    <meta property="og:image" content="https://mycollegegenie.in/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="MyCollegeGenie — India's Biggest Student Ecosystem" />
+    <meta property="og:locale" content="en_IN" />
 
+    <!-- ── Twitter Card ───────────────────────────────────────────── -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="MyCollegeGenie - DU Notes & PYQs" />
-    <meta name="twitter:description" content="The ultimate student platform for Delhi University." />
+    <meta name="twitter:site" content="@mycollegegenie" />
+    <meta name="twitter:creator" content="@mycollegegenie" />
+    <meta name="twitter:title" content="MyCollegeGenie — The Ultimate College Ecosystem" />
+    <meta name="twitter:description" content="India's biggest student platform. Connecting every college and student. Notes, PGs, events, & community." />
     <meta name="twitter:image" content="https://mycollegegenie.in/og-image.png" />
+    <meta name="twitter:image:alt" content="MyCollegeGenie platform preview" />
 
+    <!-- ── Fonts — optimized with display=swap & preconnect ─────────── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&family=Caveat:wght@400;600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&family=Caveat:wght@400;600&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&family=Caveat:wght@400;600&display=swap" />
+    </noscript>
+
+    <!-- ── DNS Prefetch for API ───────────────────────────────────── -->
+    <link rel="dns-prefetch" href="//mycollegegenie.in" />
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+
+    <!-- ── Icons ─────────────────────────────────────────────────── -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- ── Structured Data: WebSite ───────────────────────────────── -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
+      "@id": "https://mycollegegenie.in/#website",
       "name": "MyCollegeGenie",
+      "alternateName": ["MCGenie", "My College Genie"],
       "url": "https://mycollegegenie.in",
-      "description": "Study resources platform for Delhi University students",
+      "description": "India's biggest student platform and complete ecosystem connecting every college and every student.",
+      "inLanguage": "en-IN",
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://mycollegegenie.in/browse?q={search_term_string}",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://mycollegegenie.in/browse?q={search_term_string}"
+        },
         "query-input": "required name=search_term_string"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "MyCollegeGenie",
+        "url": "https://mycollegegenie.in",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://mycollegegenie.in/favicon.png",
+          "width": 512,
+          "height": 512
+        },
+        "sameAs": [
+          "https://www.instagram.com/mycollegegenie",
+          "https://www.linkedin.com/company/mycollegegenie"
+        ]
       }
     }
     </script>
 
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <!-- ── Structured Data: EducationalOrganization ───────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "MyCollegeGenie",
+      "url": "https://mycollegegenie.in",
+      "description": "India's largest study resources platform and student ecosystem connecting all colleges.",
+      "audience": {
+        "@type": "EducationalAudience",
+        "educationalRole": "student",
+        "geographicArea": "India"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Study Resources",
+        "itemListElement": [
+          { "@type": "Offer", "itemOffered": { "@type": "Course", "name": "DU Notes and Study Material" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Course", "name": "Previous Year Question Papers" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Course", "name": "Curated YouTube Playlists" } }
+        ]
+      }
+    }
+    </script>
+
+    <!-- ── Performance: Critical CSS inline hint ──────────────────── -->
+    <style>
+      /* Critical above-the-fold CSS to prevent FOUC */
+      html { background: #EBF5FB; }
+      body { margin: 0; font-family: 'Inter', system-ui, sans-serif; }
+      #root { min-height: 100vh; }
+      /* Prevent layout shift from fonts */
+      @font-face {
+        font-family: 'Inter';
+        font-display: swap;
+      }
+    </style>
   </head>
   <body>
+    <!-- No-JS fallback for SEO -->
+    <noscript>
+      <div style="padding:20px;text-align:center;font-family:sans-serif">
+        <h1>MyCollegeGenie</h1>
+        <p>Please enable JavaScript to use MyCollegeGenie — India's #1 student platform for Delhi University.</p>
+        <p>Access free DU notes, PYQs, PG listings, campus events, and join 25,000+ students.</p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
