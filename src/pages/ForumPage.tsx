@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { ForumPost } from '../types';
 import { ForumService } from '../services/forumService';
-import { getCurrentUser } from '../supabase';
+import { getCurrentUser, supabase } from '../supabase';
 import { College_COURSES, SUB_CATEGORIES } from '../constants';
 import { toast } from 'sonner';
 
@@ -47,7 +47,13 @@ export const ForumPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'hot' | 'new' | 'top'>('new');
   const [newPost, setNewPost] = useState({ title: '', content: '', course: '', topic: SUB_CATEGORIES[0] });
 
-  useEffect(() => { getCurrentUser().then(u => setCurrentUser(u)); }, []);
+  useEffect(() => { 
+    getCurrentUser().then(u => setCurrentUser(u)); 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setCurrentUser(session?.user || null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   useEffect(() => { setLimitCount(10); }, [selectedCourse, selectedTopic, activeTab]);
 
   const fetchPosts = async () => {
