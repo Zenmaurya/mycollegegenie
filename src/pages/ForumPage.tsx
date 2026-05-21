@@ -157,18 +157,18 @@ export const ForumPage: React.FC = () => {
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-[11px] sm:text-sm font-medium transition-all" />
           </div>
-          <div className="relative">
+          <div className="w-full sm:w-auto relative">
             <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)}
-              className="pl-8 sm:pl-9 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-[9px] sm:text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
+              className="w-full text-ellipsis overflow-hidden pl-8 sm:pl-9 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-[9px] sm:text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
               <option value="All">All Courses</option>
               {College_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <div className="relative">
+          <div className="w-full sm:w-auto relative">
             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select value={selectedTopic} onChange={e => setSelectedTopic(e.target.value)}
-              className="pl-8 sm:pl-9 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-[9px] sm:text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
+              className="w-full text-ellipsis overflow-hidden pl-8 sm:pl-9 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-[9px] sm:text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
               <option value="All">All Topics</option>
               {SUB_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>

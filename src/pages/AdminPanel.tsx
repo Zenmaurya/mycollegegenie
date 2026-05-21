@@ -925,7 +925,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               <select 
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value)}
-                className="px-4 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-purple-500/20 text-sm sm:text-base font-black uppercase tracking-widest"
+                className="w-full text-ellipsis overflow-hidden px-4 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-purple-500/20 text-sm sm:text-base font-black uppercase tracking-widest"
               >
                 <option>All Courses</option>
                 {College_COURSES.map(c => <option key={c}>{c}</option>)}
