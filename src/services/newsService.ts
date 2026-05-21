@@ -1,3 +1,4 @@
+import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
 /**
  * newsService.ts — Backend API version (MySQL/Express)
  * Replaces Firebase Firestore with the Express REST API.
@@ -5,27 +6,7 @@
 import { supabase } from '../supabase';
 import { News } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
 
-// ── Shared auth-aware fetch helper ─────────────────────────
-async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<any> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
-  };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  const response = await fetch(`${API_URL}${url}`, { ...options, headers });
-
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.error || `Request failed with status ${response.status}`);
-  }
-  return response.json();
-}
 
 // ── GET /api/news ───────────────────────────────────────────
 export const getNews = async (
@@ -143,7 +124,7 @@ export const submitEvent = async (
   if (formData.image && !imageUrl) {
     const uploadForm = new FormData();
     uploadForm.append('image', formData.image);
-    const uploadRes = await fetch(`${API_URL}/api/news/upload-image`, {
+    const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in'}/api/news/upload-image`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: uploadForm,

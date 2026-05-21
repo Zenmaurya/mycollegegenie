@@ -1,38 +1,32 @@
 import { createClient } from '@supabase/supabase-js';
+import { config } from './lib/config';
 
-const env = (import.meta as any).env;
-const supabaseUrl = env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY as string;
-
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Supabase URL ya Key nahi mili! .env file check karo.');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
 
 // ── Auth Helper Functions ──
 
 /** Google se login */
 export async function signInWithGoogle() {
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: `${window.location.origin}${window.location.pathname}`,
     },
   });
   if (error) throw error;
+  return data;
 }
 
 /** GitHub se login */
 export async function signInWithGithub() {
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: `${window.location.origin}${window.location.pathname}`,
     },
   });
   if (error) throw error;
+  return data;
 }
 
 /** Email + Password se login */
@@ -73,6 +67,10 @@ export async function resetPassword(email: string) {
 
 /** Current logged-in user */
 export async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    console.error('getCurrentUser error:', error);
+    return null;
+  }
+  return data?.user ?? null;
 }

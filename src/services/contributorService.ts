@@ -1,24 +1,7 @@
+import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
 import { supabase } from '../supabase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
 
-async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<any> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
-  };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  const response = await fetch(`${API_URL}${url}`, { ...options, headers });
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.error || `Request failed with status ${response.status}`);
-  }
-  return response.json();
-}
 
 export interface Contributor {
   id: string;

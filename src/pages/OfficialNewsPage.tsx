@@ -17,50 +17,53 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
   const [localLoading, setLocalLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = (import.meta as any).env?.VITE_API_URL || 'https://api.mycollegegenie.in';
-    fetch(`${API_URL}/api/news?limit=200`)
-      .then(r => r.json())
-      .then((data: any[]) => {
-        const mapped: NewsItem[] = (Array.isArray(data) ? data : []).map(item => ({
-          id: item.id,
-          title: item.title,
-          summary: item.summary || item.content || '',
-          category: item.category || 'News',
-          date: item.date || new Date(item.created_at).toLocaleDateString('en-IN'),
-          college: item.college || '',
-          url: item.url || '',
-          imageUrl: item.image_url || item.imageUrl || '',
-          venue: item.venue || '',
-          eligibility: item.eligibility || 'All',
-          description: item.description || item.summary || '',
-          createdAt: item.created_at || new Date().toISOString(),
-        }));
-        setLocalItems(mapped);
-      })
-      .catch(err => {
-        console.error('[OfficialNewsPage] fetch error:', err);
-        setLocalItems([]);
-      })
-      .finally(() => setLocalLoading(false));
+    import('../lib/apiClient').then(({ fetchWithAuth }) => {
+      fetchWithAuth('/api/news?limit=200')
+        .then((data: any[]) => {
+          const mapped: NewsItem[] = (Array.isArray(data) ? data : []).map(item => ({
+            id: item.id,
+            title: item.title,
+            summary: item.summary || item.content || '',
+            category: item.category || 'News',
+            date: item.date || new Date(item.created_at).toLocaleDateString('en-IN'),
+            college: item.college || '',
+            url: item.url || '',
+            imageUrl: item.image_url || item.imageUrl || '',
+            venue: item.venue || '',
+            eligibility: item.eligibility || 'All',
+            description: item.description || item.summary || '',
+            createdAt: item.created_at || new Date().toISOString(),
+          }));
+          setLocalItems(mapped);
+        })
+        .catch(err => {
+          console.error('[OfficialNewsPage] fetch error:', err);
+          toast.error('Failed to load news.');
+          setLocalItems([]);
+        })
+        .finally(() => setLocalLoading(false));
+    });
   }, []);
 
   // Use local data if available; fall back to prop data from App.tsx
   const sourceItems = localItems.length > 0 ? localItems : propItems;
 
   // Filter to include only items from the last 2 months
-  const twoMonthsAgo = new Date();
-  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+  const news = React.useMemo(() => {
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
 
-  // Include 'News', 'Notice' (from College SOL scraper), and all non-Event categories
-  // Only include items newer than 2 months ago
-  const news = sourceItems.filter(item => {
-    if (item.category === 'Event') return false;
-    const itemDate = new Date(item.createdAt);
-    if (!isNaN(itemDate.getTime())) {
-      return itemDate >= twoMonthsAgo;
-    }
-    return true; // Keep items with invalid dates just in case
-  });
+    // Include 'News', 'Notice' (from College SOL scraper), and all non-Event categories
+    // Only include items newer than 2 months ago
+    return sourceItems.filter(item => {
+      if (item.category === 'Event') return false;
+      const itemDate = new Date(item.createdAt || Date.now());
+      if (!isNaN(itemDate.getTime())) {
+        return itemDate >= twoMonthsAgo;
+      }
+      return true; // Keep items with invalid dates just in case
+    });
+  }, [sourceItems]);
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
   const [search, setSearch] = useState('');

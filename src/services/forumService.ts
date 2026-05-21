@@ -1,25 +1,8 @@
+import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
 import { supabase } from '../supabase';
 import { ForumPost, Comment } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
 
-async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-  
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
-  };
-
-  const response = await fetch(`${API_URL}${url}`, { ...options, headers });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'API request failed');
-  }
-  return response.json();
-}
 
 export const ForumService = {
   // Posts

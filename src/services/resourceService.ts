@@ -1,3 +1,4 @@
+import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
 /**
  * resourceService.ts — Backend API version (MySQL/Express + Cloudinary)
  * Replaces Firebase Firestore and Firebase Storage.
@@ -5,40 +6,7 @@
 import { supabase } from '../supabase';
 import { Resource, ResourceType } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
 
-// ── Keep OperationType enum for backward compatibility ──────
-export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
-// ── Shared auth-aware fetch helper ─────────────────────────
-async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<any> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
-  };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  const response = await fetch(`${API_URL}${url}`, { ...options, headers });
-
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    const errorMessage = errData.error || `Request failed with status ${response.status}`;
-    // Keep compatible error shape with old handleFirestoreError
-    const err = new Error(JSON.stringify({ error: errorMessage, operationType: 'api', path: url, authInfo: {} }));
-    throw err;
-  }
-  return response.json();
-}
 
 // Legacy error handler shim (for callers that still use this from newsService import)
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {
@@ -67,7 +35,7 @@ export const uploadFile = async (
     if (meta.subject)     params.set('subject',     meta.subject);
     if (meta.subjectCode) params.set('subjectCode', meta.subjectCode);
 
-    const response = await fetch(`${API_URL}/api/resources/upload?${params.toString()}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in'}/api/resources/upload?${params.toString()}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: formData,

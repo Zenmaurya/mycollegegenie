@@ -98,6 +98,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   const [carouselEditingItem, setCarouselEditingItem] = useState<any | null>(null);
   const [carouselImageInput, setCarouselImageInput] = useState('');
   // ── New CMS State ──
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [ads, setAds] = useState<Ad[]>([]);
   const [adToDelete, setAdToDelete] = useState<string | null>(null);
   const [editingAd, setEditingAd] = useState<Ad | null>(null);
@@ -536,6 +537,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     } else if (postToDelete) {
       try {
         await ForumService.deletePost(postToDelete);
+        setPosts(prev => prev.filter(p => p.id !== postToDelete));
         toast.success('Forum post deleted successfully!');
       } catch (error) {
         console.error('Failed to delete post:', error);
@@ -546,10 +548,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     } else if (pgToDelete) {
       try {
         await deletePGListing(pgToDelete);
+        setListings(prev => prev.filter(p => p.id !== pgToDelete));
         toast.success('PG listing deleted successfully!');
       } catch (error) {
-        console.error('Failed to delete listing:', error);
-        toast.error(error instanceof Error ? error.message : 'Failed to delete listing.');
+        console.error('Failed to delete PG listing:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to delete PG listing.');
       } finally {
         setPgToDelete(null);
       }
@@ -607,7 +610,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
         if (finalDirectDownloadLink) {
           updatedData.directDownloadLink = finalDirectDownloadLink;
         } else {
-          // If it's empty, we might want to remove it or set to null
           updatedData.directDownloadLink = null;
         }
 

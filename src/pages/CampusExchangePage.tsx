@@ -44,6 +44,7 @@ export function CampusExchangePage() {
   
   const [items, setItems] = useState<any[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const loadItems = async () => {
@@ -75,7 +76,7 @@ export function CampusExchangePage() {
       }
     };
     loadItems();
-  }, []);
+  }, [refreshTrigger]);
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
@@ -138,8 +139,8 @@ export function CampusExchangePage() {
       setPostAdStep(1);
       setPostAdImages([]);
       setPostAdForm({ title: '', category: '', adType: 'Sell', price: '', location: 'North Zone', description: '', phone: '', instagram: '' });
-      // Refetch items (page reload or local state update)
-      window.location.reload();
+      // Refetch items (local state update)
+      setRefreshTrigger(prev => prev + 1);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to publish ad. Please try again.');
     } finally {
@@ -753,7 +754,7 @@ export function CampusExchangePage() {
                 {currentUser ? (
                   <div className="flex flex-col sm:flex-row gap-3">
                     {selectedItem.phone && (
-                      <a href={`tel:${selectedItem.phone.replace(/\\s/g, '')}`} className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-colors shadow-lg shadow-emerald-500/20">
+                      <a href={`tel:${selectedItem.phone.replace(/\s/g, '')}`} className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-colors shadow-lg shadow-emerald-500/20">
                         <MessageCircle className="w-4 h-4" />
                         Call / WhatsApp
                       </a>

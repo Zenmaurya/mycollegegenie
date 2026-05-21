@@ -37,7 +37,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
 
   // Merge: prefer local DB events; fall back to prop items (mock data)
   let allItems = localItems.length > 0 ? localItems : propItems;
-  const isLoading = localLoading && propLoading;
+  const isLoading = localLoading || propLoading;
   
   // Apply fallback if no events found to match HomePage carousel
   if (!isLoading && allItems.filter(item => item.category === 'Event').length === 0) {

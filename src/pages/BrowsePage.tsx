@@ -8,6 +8,8 @@ import { ResourceCard } from '../components/ResourceCard';
 import AnimatedGlowingSearchBar from '../components/ui/animated-glowing-search-bar';
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabase';
+import { fetchWithAuth } from '../lib/apiClient';
+import toast from 'react-hot-toast';
 
 interface BrowsePageProps {
   resources: Resource[];
@@ -82,6 +84,15 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
   const [courseSearch, setCourseSearch] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user || null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const resourceId = searchParams.get('resourceId');
@@ -407,31 +418,27 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
               <form 
                 onSubmit={async (e) => {
                   e.preventDefault();
-                  const { data: { user } } = await supabase.auth.getUser();
-                  if (!user) return;
+                  if (!currentUser) {
+                    toast.error('You must be signed in to request material.');
+                    return;
+                  }
                   try {
-                    const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
-                    const { data: { session } } = await supabase.auth.getSession();
-                    const res = await fetch(`${API_URL}/api/requests`, {
+                    await fetchWithAuth('/api/requests', {
                       method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${session?.access_token}`,
-                      },
                       body: JSON.stringify(requestData),
                     });
-                    if (res.ok) {
-                      setIsRequestModalOpen(false);
-                      setRequestData({ course: '', semester: '', materialType: 'Notes', details: '' });
-                    }
+                    toast.success('Material requested successfully!');
+                    setIsRequestModalOpen(false);
+                    setRequestData({ course: '', semester: '', materialType: 'Notes', details: '' });
                   } catch (err) {
                     console.error('Request submission error:', err);
+                    toast.error(err instanceof Error ? err.message : 'Failed to submit request');
                   }
                 }}
                 className="flex-1 overflow-visible p-6 space-y-4 min-h-0"
                 id="request-material-form"
               >
-                {!supabase ? (
+                {!currentUser ? (
                   <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-6">
                     <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
                       <AlertCircle className="w-8 h-8 text-amber-600" />

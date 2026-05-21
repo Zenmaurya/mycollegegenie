@@ -657,8 +657,19 @@ export const FindPGPage: React.FC = () => {
                     </p>
                  </div>
 
-                 <button 
-                    onClick={() => window.open(selectedListing.socialLink, '_blank')}
+                  <button 
+                    onClick={() => {
+                      try {
+                        const url = new URL(selectedListing.socialLink);
+                        if (url.protocol === 'http:' || url.protocol === 'https:') {
+                          window.open(url.href, '_blank');
+                        } else {
+                          toast.error('Invalid link format.');
+                        }
+                      } catch {
+                        toast.error('Invalid link format.');
+                      }
+                    }}
                     className="w-full py-4 rounded-2xl bg-purple-600 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
                   >
                     <MessageCircle className="w-5 h-5" />

@@ -62,6 +62,10 @@ export const ForumPage: React.FC = () => {
       const fetched = await ForumService.getPosts(selectedCourse, selectedTopic, limitCount + 1, undefined, activeTab);
       if (fetched.length > limitCount) { setPosts(fetched.slice(0, limitCount)); setHasMore(true); }
       else { setPosts(fetched); setHasMore(false); }
+    } catch (err) {
+      console.error('Failed to fetch forum posts:', err);
+      toast.error('Could not load discussions. Please try again.');
+      setPosts([]);
     } finally {
       setIsLoading(false);
     }

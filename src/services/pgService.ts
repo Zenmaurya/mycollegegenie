@@ -1,3 +1,4 @@
+import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
 /**
  * pgService.ts — Backend API version (MySQL/Express)
  * Replaces Firebase Firestore + Firebase Auth with Express REST API + Supabase Auth.
@@ -5,37 +6,7 @@
 import { supabase } from '../supabase';
 import { PGListing } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
 
-// ── Keep OperationType for backward compat ──────────────────
-export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
-// ── Shared auth-aware fetch helper ─────────────────────────
-async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<any> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
-  };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  const response = await fetch(`${API_URL}${url}`, { ...options, headers });
-
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.error || `Request failed with status ${response.status}`);
-  }
-  return response.json();
-}
 
 // ── Normalise backend row → PGListing shape ─────────────────
 function normaliseListing(item: any): PGListing {
