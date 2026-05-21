@@ -5,7 +5,7 @@
 import { supabase } from '../supabase';
 import { Resource, ResourceType } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
 
 // ── Keep OperationType enum for backward compatibility ──────
 export enum OperationType {

@@ -5,7 +5,7 @@
 import { supabase } from '../supabase';
 import { News } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
 
 // ── Shared auth-aware fetch helper ─────────────────────────
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<any> {

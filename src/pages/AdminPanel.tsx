@@ -246,7 +246,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   const fetchAds = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const API_URL = import.meta.env.VITE_API_URL || '';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const res = await fetch(`${API_URL}/api/ads/all`, {
         headers: { Authorization: `Bearer ${session?.access_token}` }
       });
@@ -257,7 +257,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   // ── Fetch Site Settings ──
   const fetchSettings = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || '';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const res = await fetch(`${API_URL}/api/settings`);
       if (res.ok) {
         const data = await res.json();
@@ -272,7 +272,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     const { data: { session } } = await supabase.auth.getSession();
     const formData = new FormData();
     formData.append('image', file);
-    const API_URL = import.meta.env.VITE_API_URL || '';
+    const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
     const res = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${session?.access_token}` },
@@ -288,7 +288,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     setIsSavingSettings(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const API_URL = import.meta.env.VITE_API_URL || '';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const res = await fetch(`${API_URL}/api/settings`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
@@ -308,7 +308,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     if (!adFormData.image_url) { toast.error('Please upload or enter an image URL'); return; }
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const API_URL = import.meta.env.VITE_API_URL || '';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const url = editingAd ? `${API_URL}/api/ads/${editingAd.id}` : `${API_URL}/api/ads`;
       const method = editingAd ? 'PATCH' : 'POST';
       const res = await fetch(url, {
@@ -329,7 +329,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   const handleAdDelete = async (id: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const API_URL = import.meta.env.VITE_API_URL || '';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const res = await fetch(`${API_URL}/api/ads/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${session?.access_token}` },
@@ -345,7 +345,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     if (!editingPG) return;
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const API_URL = import.meta.env.VITE_API_URL || '';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const res = await fetch(`${API_URL}/api/pg/${editingPG.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
@@ -363,7 +363,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   const fetchVerifications = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const API_URL = import.meta.env.VITE_API_URL || '';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const res = await fetch(`${API_URL}/api/verification/requests`, {
         headers: { Authorization: `Bearer ${session?.access_token}` }
       });
@@ -378,7 +378,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   const fetchAdminExchangeItems = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const API_URL = import.meta.env.VITE_API_URL || '';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const res = await fetch(`${API_URL}/api/admin/exchange`, {
         headers: { Authorization: `Bearer ${session?.access_token}` }
       });
@@ -393,7 +393,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   const handleVerificationAction = async (id: number, action: 'approve' | 'reject', note: string = '') => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const API_URL = import.meta.env.VITE_API_URL || '';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const res = await fetch(`${API_URL}/api/verification/${id}/${action}`, {
         method: 'PATCH',
         headers: { 
@@ -418,7 +418,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     if (!emailModal) return;
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const API_URL = import.meta.env.VITE_API_URL || '';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const res = await fetch(`${API_URL}/api/verification/${emailModal.id}/email`, {
         method: 'PATCH',
         headers: { 
@@ -1958,7 +1958,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         {item.is_active ? (
                           <button
                             onClick={() => {
-                              const API_URL = import.meta.env.VITE_API_URL || '';
+                              const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
                               supabase.auth.getSession().then(({ data: { session } }) => {
                                 fetch(`${API_URL}/api/exchange/${item.id}`, {
                                   method: 'DELETE',

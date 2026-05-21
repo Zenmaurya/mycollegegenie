@@ -410,7 +410,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                   const { data: { user } } = await supabase.auth.getUser();
                   if (!user) return;
                   try {
-                    const API_URL = import.meta.env.VITE_API_URL || '';
+                    const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
                     const { data: { session } } = await supabase.auth.getSession();
                     const res = await fetch(`${API_URL}/api/requests`, {
                       method: 'POST',

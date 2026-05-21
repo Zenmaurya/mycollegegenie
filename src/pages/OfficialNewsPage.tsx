@@ -17,7 +17,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
   const [localLoading, setLocalLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000';
+    const API_URL = (import.meta as any).env?.VITE_API_URL || 'https://api.mycollegegenie.in';
     fetch(`${API_URL}/api/news?limit=200`)
       .then(r => r.json())
       .then((data: any[]) => {

@@ -1,7 +1,7 @@
 import { supabase } from '../supabase';
 import { ForumPost, Comment } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();

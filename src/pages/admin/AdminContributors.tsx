@@ -55,7 +55,7 @@ export const AdminContributors: React.FC = () => {
     const { data: { session } } = await supabase.auth.getSession();
     const uploadFormData = new FormData();
     uploadFormData.append('image', file);
-    const API_URL = import.meta.env.VITE_API_URL || '';
+    const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
     // Reusing the news image upload endpoint as it uploads to Cloudinary generically
     const res = await fetch(`${API_URL}/api/news/upload-image`, {
       method: 'POST',

@@ -34,7 +34,7 @@ export const VerificationApplyModal: React.FC<VerificationApplyModalProps> = ({
     notes: '',
   });
 
-  const API_URL = import.meta.env.VITE_API_URL || '';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
 
   const handleSubmit = async () => {
     if (!form.payment_ref.trim()) {

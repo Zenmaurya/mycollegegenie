@@ -103,7 +103,7 @@ function AppContent() {
     }
     const fetchSaved = async () => {
       try {
-        const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
         const token = (await supabase.auth.getSession()).data.session?.access_token;
         if (!token) return;
         const res = await fetch(`${API}/api/users/me/saved`, {
@@ -133,7 +133,7 @@ function AppContent() {
     );
 
     try {
-      const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       
       const res = await fetch(`${API}/api/users/me/saved${isCurrentlySaved ? `/${id}` : ''}`, {
@@ -212,7 +212,7 @@ function AppContent() {
   // Fetch comments & tips when a resource modal opens
   useEffect(() => {
     if (!selectedResource) return;
-    const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+    const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
     fetch(`${API}/api/resources/${selectedResource.id}/comments`)
       .then(r => r.json()).then(setResourceComments).catch(() => {});
     fetch(`${API}/api/resources/${selectedResource.id}/exam-tips`)
@@ -223,7 +223,7 @@ function AppContent() {
     if (!user || !selectedResource || !newComment.trim()) return;
     setIsPostingComment(true);
     try {
-      const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       const res = await fetch(`${API}/api/resources/${selectedResource.id}/comments`, {
         method: 'POST',
@@ -246,7 +246,7 @@ function AppContent() {
     if (!user || !selectedResource || !newTip.trim()) return;
     setIsPostingTip(true);
     try {
-      const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       const res = await fetch(`${API}/api/resources/${selectedResource.id}/exam-tips`, {
         method: 'POST',
@@ -746,7 +746,7 @@ function AppContent() {
         setNewsItems(data);
       } else {
         // Fallback: Fetch AI-generated updates from the secure backend endpoint
-        const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
         const aiResponse = await fetch(`${API}/api/news/ai-updates`);
         
         if (!aiResponse.ok) {

@@ -6,7 +6,7 @@ import { supabase } from '../supabase';
 import { Testimonial } from '../types';
 import { toast } from 'sonner';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
 
 // ── Static fallback data (shown if API not yet set up) ─────
 const DEFAULT_DATA: Omit<Testimonial, 'id' | 'createdAt'>[] = [
