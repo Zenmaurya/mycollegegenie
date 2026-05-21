@@ -75,7 +75,7 @@ export const updateUserProfile = async (data: {
  * This function just updates the profile with extra data (college, course).
  */
 export const createUserProfile = async (
-  _firebaseUser: any,
+  _authProviderUser: any,
   additionalData?: { college?: string; course?: string }
 ) => {
   try {

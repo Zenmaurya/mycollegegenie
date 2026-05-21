@@ -20,4 +20,4 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
-Sitemap: https://api.mycollegegenie.in/api/seo/sitemap.xml
+Sitemap: https://mycollegegenie.in/sitemap.xml
