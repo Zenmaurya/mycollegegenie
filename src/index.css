@@ -30,12 +30,14 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  overflow-x: hidden;
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overscroll-behavior-y: none;
   will-change: scroll-position;
+  overflow-x: hidden;
 }
 
 /* ── Page Transition System ─────────────────────────────────────── */

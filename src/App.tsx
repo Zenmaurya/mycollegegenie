@@ -820,7 +820,7 @@ function AppContent() {
   const isLoginSignupPage = location.pathname === '/login' || location.pathname === '/signup';
 
   return (
-    <div className={`min-h-screen bg-ethereal-mesh text-gray-900 font-sans selection:bg-purple-100 selection:text-purple-900 flex flex-col`}>
+    <div className={`min-h-screen bg-ethereal-mesh text-gray-900 font-sans overflow-x-hidden selection:bg-purple-100 selection:text-purple-900 flex flex-col`}>
       <Toaster position="top-center" expand={false} richColors />
       {/* Navigation Bar */}
       {!isFlipbookView && !isAuthPage && (
