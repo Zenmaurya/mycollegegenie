@@ -65,6 +65,7 @@ export default defineConfig(({ mode }) => {
       drop: isProd ? ['console', 'debugger'] : [],
     },
     build: {
+      target: 'es2015',
       // Disable source maps in production (reduces bundle size, hides source)
       sourcemap: false,
       // Increase chunk warning limit

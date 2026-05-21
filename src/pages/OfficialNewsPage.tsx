@@ -240,17 +240,23 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
       {/* ── News Detail Modal ── */}
       <AnimatePresence>
         {selectedNews && (
-          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          <motion.div 
+            key="news-modal"
+            className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4"
+          >
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
               onClick={handleCloseNews}
-              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+              className="absolute inset-0 bg-black/80 backdrop-blur-md z-0"
             />
             <motion.div
               initial={{ opacity: 0, y: 60 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 60 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="relative w-full max-w-lg sm:max-w-2xl bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
+              className="relative z-10 w-full max-w-lg sm:max-w-2xl bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
             >
               {/* Hero image */}
               <div className="relative h-52 sm:h-64 bg-gradient-to-br from-purple-900 to-indigo-800 shrink-0 overflow-hidden">
@@ -263,7 +269,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                 <button onClick={handleCloseNews}
-                  className="absolute top-4 right-4 p-2.5 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20">
+                  className="absolute top-4 right-4 p-2.5 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-20">
                   <X className="w-5 h-5" />
                 </button>
                 <div className="absolute bottom-0 left-0 right-0 p-5">
@@ -278,7 +284,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
               </div>
 
               {/* Scrollable body */}
-              <div className="overflow-y-auto flex-1 p-5 sm:p-7 space-y-5">
+              <div className="overflow-y-auto flex-1 p-5 sm:p-7 space-y-5 bg-white">
                 {/* Info tiles */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex items-center gap-3 p-3.5 bg-purple-50 rounded-2xl border border-purple-100">
@@ -308,7 +314,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                 {/* Actions */}
                 <div className="flex gap-3 pt-1">
                   <a
-                    href={selectedNews.url}
+                    href={selectedNews.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-[2] bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2.5 shadow-xl shadow-purple-600/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
@@ -333,7 +339,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                 </div>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
