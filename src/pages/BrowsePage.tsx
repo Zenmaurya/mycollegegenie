@@ -9,7 +9,7 @@ import AnimatedGlowingSearchBar from '../components/ui/animated-glowing-search-b
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { fetchWithAuth } from '../lib/apiClient';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface BrowsePageProps {
   resources: Resource[];
