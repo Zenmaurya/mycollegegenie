@@ -1380,10 +1380,10 @@ function AppContent() {
             <div className="grid grid-cols-2 md:grid-cols-12 gap-x-4 gap-y-8 lg:gap-12 mb-8 lg:mb-12">
               <div className="col-span-2 md:col-span-5 lg:col-span-4 pr-0 lg:pr-8 flex flex-col items-start text-left">
                 <Link to="/" onClick={() => window.scrollTo(0,0)} className="inline-block mb-4 lg:mb-6 relative h-10 md:h-12 w-full flex items-end">
-                  <img src="/logo.webp" alt="My College Genie" className="absolute left-0 -bottom-10 h-28 md:h-36 lg:h-40 w-auto object-contain object-left filter drop-shadow-[0_0_8px_rgba(255,255,255,0.1)] hover:scale-110 origin-bottom-left transition-all" />
+                  <img src="/logo.webp" alt="My College Genie" className="absolute left-0 -bottom-6 md:-bottom-10 h-28 md:h-36 lg:h-40 w-auto object-contain object-left filter drop-shadow-[0_0_8px_rgba(255,255,255,0.1)] hover:scale-110 origin-bottom-left transition-all" />
                 </Link>
                 <p className="text-[12px] lg:text-[13px] text-gray-400 leading-relaxed mb-4 lg:mb-6 w-full">
-                  Ek student ki asli zaroorat kya hoti hai? Sahi resources, sahi log, aur sahi direction. <strong className="text-gray-200 font-semibold">My College Genie</strong> ye teeno deta hai — <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-bold animate-typing">Notes se Naukri Tak.</span>
+                  Ek student ki asli zaroorat kya hoti hai? Sahi resources, sahi log, aur sahi direction. <strong className="text-gray-200 font-semibold">My College Genie</strong> ye teeno deta hai — <motion.span initial={{ clipPath: 'inset(0 100% 0 0)' }} whileInView={{ clipPath: 'inset(0 0 0 0)' }} transition={{ duration: 2, ease: 'linear' }} viewport={{ once: true }} className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-bold inline-block">Notes se Naukri Tak.</motion.span>
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <a href="https://www.linkedin.com/company/my-college-genie/" target="_blank" rel="noopener noreferrer" className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group hover:-translate-y-1" title="LinkedIn">
