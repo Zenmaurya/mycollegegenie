@@ -1138,7 +1138,10 @@ function AppContent() {
                           View Profile
                         </Link>
                         <button
-                          onClick={() => { setIsMobileMenuOpen(false); logout(); }}
+                          onClick={async () => { 
+                            setIsMobileMenuOpen(false); 
+                            try { await logout(); } catch (e) { console.error(e); } finally { window.location.href = '/login'; }
+                          }}
                           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 font-semibold text-[13px] transition-all"
                         >
                           <span className="w-8 h-8 rounded-xl bg-red-50 text-red-400 flex items-center justify-center shrink-0">

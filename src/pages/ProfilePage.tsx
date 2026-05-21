@@ -84,8 +84,13 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/login';
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      window.location.href = '/login';
+    }
   };
 
   if (isLoading) {
