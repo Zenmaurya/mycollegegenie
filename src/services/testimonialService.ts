@@ -1,13 +1,14 @@
-import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
 /**
  * testimonialService.ts — Backend API version (MySQL/Express)
  * Replaces Firebase Firestore. Falls back to static defaults if API unavailable.
  */
-import { supabase } from '../supabase';
+import { fetchWithAuth } from '../lib/apiClient';
 import { Testimonial } from '../types';
 import { toast } from 'sonner';
 
-
+// FIX: DEFAULT_DATA was referenced but never declared (Firebase refactor leftover).
+// Empty array fallback — testimonials load from DB; this only shows if the DB is empty.
+const DEFAULT_DATA: Array<Omit<Testimonial, 'id' | 'createdAt'>> = [];
 
 // ── GET /api/testimonials ───────────────────────────────────
 export const getTestimonials = async (): Promise<Testimonial[]> => {

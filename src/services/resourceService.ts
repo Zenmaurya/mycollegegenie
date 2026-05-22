@@ -1,12 +1,20 @@
-import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
 /**
- * resourceService.ts — Backend API version (MySQL/Express + Cloudinary)
+ * resourceService.ts — Backend API version (MySQL/Express + Cloudinary/R2)
  * Replaces Firebase Firestore and Firebase Storage.
  */
+import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
 import { supabase } from '../supabase';
 import { Resource, ResourceType } from '../types';
 
-
+// FIX Bug #5: OperationType was referenced throughout this file but never declared.
+// This is a leftover from the Firebase → Express refactor. Without it, every catch
+// block that calls handleFirestoreError() throws ReferenceError, masking the real error.
+enum OperationType {
+  CREATE = 'create',
+  READ   = 'read',
+  UPDATE = 'update',
+  DELETE = 'delete',
+}
 
 // Legacy error handler shim (for callers that still use this from newsService import)
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// FIX Perf #5: Replaced 'framer-motion' with 'motion' — same library, avoids duplicate bundle code.
+import { motion, AnimatePresence } from 'motion/react';
 import { FileText, PlayCircle, Activity, Folder, ExternalLink, Loader2, Calendar } from 'lucide-react';
 import { fetchUserResources } from '../../services/resourceService';
 import type { Resource } from '../../types';

@@ -45,7 +45,9 @@ export default defineConfig(({ mode }) => {
                 cacheName: 'api-cache',
                 expiration: {
                   maxEntries: 50,
-                  maxAgeSeconds: 60 * 60 * 24 // 1 day
+                  // FIX Perf #4: Reduced from 24h to 10min.
+                  // 24h meant new uploads were invisible to PWA users for a full day.
+                  maxAgeSeconds: 60 * 10 // 10 minutes
                 },
                 cacheableResponse: {
                   statuses: [0, 200]

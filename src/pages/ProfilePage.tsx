@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { motion, AnimatePresence } from 'framer-motion';
+// FIX Perf #5: Replaced 'framer-motion' with 'motion' — same library, avoids duplicate bundle code.
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   User, Mail, GraduationCap, BookOpen, Save, Loader2, LogOut, 
   ShieldCheck, Check, Package, HelpCircle, 

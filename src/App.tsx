@@ -456,14 +456,18 @@ function AppContent() {
           description: 'Please compress your file first. Try ilovepdf.com or smallpdf.com.'
         });
       } else {
-        toast.error('Invalid file type. Please upload a PDF, DOC, DOCX, or image file.');
+        // FIX Bug #2: Updated error message — backend only accepts PDF and images
+        toast.error('Invalid file type. Please upload a PDF or image file (PNG, JPG, WebP, GIF).');
       }
     },
+    // FIX Bug #2: Removed DOC/DOCX — backend multer fileFilter rejects them, causing
+    // a silent failure. Only accept types the backend actually supports.
     accept: {
       'application/pdf': ['.pdf'],
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'image/*': ['.png', '.jpg', '.jpeg']
+      'image/jpeg':  ['.jpg', '.jpeg'],
+      'image/png':   ['.png'],
+      'image/webp':  ['.webp'],
+      'image/gif':   ['.gif'],
     }
   } as any);
 
@@ -642,6 +646,34 @@ function AppContent() {
       }
     }
 
+    // FIX Bug #13: Validate ALL required fields BEFORE starting the file upload.
+    // Without this, the file could be uploaded to R2/Cloudinary and the storage
+    // cost incurred, even if the metadata POST subsequently fails validation.
+    if (!isPlaylistContext) {
+      if (!formData.title.trim()) {
+        toast.error('Please enter a resource title.');
+        return;
+      }
+      if (!formData.type) {
+        toast.error('Please select a resource type (Note, PYQ, or Book).');
+        return;
+      }
+      if (!formData.course.trim()) {
+        toast.error('Please select a course.');
+        return;
+      }
+      if (!formData.file && !formData.link.trim()) {
+        toast.error('Please upload a file or provide a direct link.');
+        return;
+      }
+    } else {
+      // Playlist context: only link is required
+      if (!formData.link.trim()) {
+        toast.error('Please provide a YouTube playlist link.');
+        return;
+      }
+    }
+
     setUploadStatus('uploading');
 
     try {
@@ -675,7 +707,9 @@ function AppContent() {
         type: currentType,
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
         description: formData.description,
-        link: finalLink || 'https://example.com',
+        // FIX Bug #14: Removed the 'https://example.com' ghost-record fallback.
+        // Validation above guarantees finalLink is non-empty at this point.
+        link: finalLink || '',
         uploader: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous',
         uploaderId: user.id,
         isApproved: false // User uploads are pending by default

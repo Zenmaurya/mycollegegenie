@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// FIX Perf #5: Replaced 'framer-motion' with 'motion' — both are the same library.
+// framer-motion v12+ is just a re-export of motion. Using one avoids duplicate bundle code.
+import { motion, AnimatePresence } from 'motion/react';
 import { Package, Edit3, Trash2, Loader2, Link as LinkIcon, ExternalLink, Calendar } from 'lucide-react';
 import { fetchUserListings, deleteExchangeItem, type ExchangeItem } from '../../services/exchangeService';
 import { toast } from 'sonner';
