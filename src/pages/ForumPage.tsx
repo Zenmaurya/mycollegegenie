@@ -10,6 +10,7 @@ import {
 import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { ForumPost } from '../types';
+import type { SupabaseAuthUser } from '../types';
 import { ForumService } from '../services/forumService';
 import { getCurrentUser, supabase } from '../supabase';
 import { College_COURSES, SUB_CATEGORIES } from '../constants';
@@ -36,7 +37,7 @@ function timeAgo(dateStr: string) {
 
 export const ForumPage: React.FC = () => {
   const [posts, setPosts] = useState<ForumPost[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('All');
   const [selectedTopic, setSelectedTopic] = useState('All');

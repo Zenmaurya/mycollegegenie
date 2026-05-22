@@ -1017,12 +1017,15 @@ function AppContent() {
 
             {/* Mobile Menu Toggle */}
             <div className="xl:hidden flex items-center gap-3">
-              <motion.button 
+              <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="mobile-menu"
                 className={`p-2.5 rounded-2xl transition-all duration-500 relative overflow-hidden group ${
-                  isMobileMenuOpen 
-                    ? 'bg-purple-600 text-white shadow-xl shadow-purple-600/40' 
+                  isMobileMenuOpen
+                    ? 'bg-purple-600 text-white shadow-xl shadow-purple-600/40'
                     : 'bg-white/80 text-purple-600 hover:bg-purple-50 shadow-sm border border-gray-100'
                 }`}
               >
@@ -1052,7 +1055,8 @@ function AppContent() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] xl:hidden"
               />
-              <motion.div 
+              <motion.div
+                id="mobile-menu"
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
@@ -1064,6 +1068,7 @@ function AppContent() {
                   <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}
+                    aria-label="Close navigation menu"
                     className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 transition-all"
                   >
                     <X className="w-4 h-4" />

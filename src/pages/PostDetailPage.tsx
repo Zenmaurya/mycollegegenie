@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -7,6 +7,7 @@ import {
   Clock, Send, Trash2, AlertCircle, ChevronRight
 } from 'lucide-react';
 import { ForumPost, Comment } from '../types';
+import type { SupabaseAuthUser } from '../types';
 import { ForumService } from '../services/forumService';
 import { supabase } from '../supabase';
 import { toast } from 'sonner';
@@ -48,7 +49,7 @@ export const PostDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [post, setPost] = useState<ForumPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);

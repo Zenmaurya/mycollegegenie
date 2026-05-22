@@ -1,3 +1,24 @@
+/**
+ * Minimal typed interface for Supabase auth user objects.
+ * Use this instead of `any` for currentUser state in page components.
+ */
+export interface SupabaseAuthUser {
+  id: string;
+  email?: string;
+  user_metadata: {
+    full_name?: string;
+    avatar_url?: string;
+    name?: string;
+    [key: string]: unknown;
+  };
+  app_metadata: {
+    provider?: string;
+    [key: string]: unknown;
+  };
+  role?: string;
+  created_at?: string;
+}
+
 export interface Testimonial {
   id: string;
   name: string;

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Filter, ArrowUpDown, LayoutGrid, List, ChevronRight, BookOpen, FileText, PlayCircle, Star, Share2, Download, Clock, MapPin, RefreshCw, ChevronDown, ChevronUp, Plus, X, AlertCircle, Check } from 'lucide-react';
 import { Resource } from '../types';
+import type { SupabaseAuthUser } from '../types';
 import { ResourceCard } from '../components/ResourceCard';
 import AnimatedGlowingSearchBar from '../components/ui/animated-glowing-search-bar';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -84,7 +85,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
   const [courseSearch, setCourseSearch] = useState('');
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));

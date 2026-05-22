@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -12,6 +12,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { submitEvent, getNews } from '../services/newsService';
 import { NewsItem } from '../types';
+import type { SupabaseAuthUser } from '../types';
 import { toast } from 'sonner';
 import { ImageSlider } from '../components/ImageSlider';
 import { uploadFile } from '../services/resourceService';
@@ -49,7 +50,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
 
   // Track Supabase auth state
   React.useEffect(() => {

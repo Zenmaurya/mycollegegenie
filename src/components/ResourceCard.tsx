@@ -143,13 +143,14 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         <div className="flex items-center gap-1.5 shrink-0 border-l border-gray-100 pl-3">
           {canDownload && (
             <button onClick={(e) => { e.stopPropagation(); window.open(resource.directDownloadLink || resource.link, '_blank'); }}
-              className="p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-all hover:scale-105" title="Download">
+              className="p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-all hover:scale-105" title="Download" aria-label={`Download ${resource.title}`}>
               <Download className="w-4 h-4" />
             </button>
           )}
 
           <button onClick={(e) => { e.stopPropagation(); onSave(resource.id); }}
-            className={`p-2 rounded-xl transition-all hover:scale-105 ${isSaved ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:bg-gray-50'}`}>
+            className={`p-2 rounded-xl transition-all hover:scale-105 ${isSaved ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:bg-gray-50'}`}
+            aria-label={isSaved ? 'Remove from saved' : 'Save resource'}>
             <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
           </button>
           <div className="p-2 bg-gray-50 text-gray-400 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-all group-hover:-rotate-45 hidden sm:flex">
@@ -199,7 +200,8 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
             <span className="text-[10px] font-bold text-amber-600">{rating.toFixed(1)}</span>
           </div>
           <button onClick={(e) => { e.stopPropagation(); onSave(resource.id); }}
-            className={`p-1.5 rounded-full border transition-all hover:scale-110 ${isSaved ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'}`}>
+            className={`p-1.5 rounded-full border transition-all hover:scale-110 ${isSaved ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'}`}
+            aria-label={isSaved ? 'Remove from saved' : 'Save resource'}>
             <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
           </button>
         </div>
@@ -226,7 +228,8 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         </span>
         {canDownload && (
           <button onClick={(e) => { e.stopPropagation(); window.open(resource.directDownloadLink || resource.link, '_blank'); }}
-            className="ml-auto shrink-0 p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg border border-green-100 transition-all hover:scale-105" title="Download">
+            className="ml-auto shrink-0 p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg border border-green-100 transition-all hover:scale-105"
+            title="Download" aria-label={`Download ${resource.title}`}>
             <Download className="w-3.5 h-3.5" />
           </button>
         )}
@@ -268,7 +271,8 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         {/* Share + Arrow */}
         <div className="flex items-center gap-1.5 shrink-0">
           <button onClick={(e) => { e.stopPropagation(); onShare(resource); }}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 border border-transparent hover:border-gray-200 transition-colors">
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 border border-transparent hover:border-gray-200 transition-colors"
+            aria-label={`Share ${resource.title}`}>
             <Share2 className="w-3.5 h-3.5" />
           </button>
           <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-purple-600 group-hover:text-white border border-gray-100 group-hover:border-purple-600 transition-all group-hover:-rotate-45 shadow-sm">

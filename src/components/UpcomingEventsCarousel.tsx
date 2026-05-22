@@ -144,6 +144,7 @@ export const UpcomingEventsCarousel: React.FC<UpcomingEventsCarouselProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
                   onClick={() => scroll('left')}
+                  aria-label="Scroll events left"
                   className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center justify-center text-gray-700 hover:text-purple-600 hover:scale-110 active:scale-95 transition-all hidden sm:flex"
                 >
                   <ChevronLeft className="w-6 h-6" />
@@ -158,6 +159,7 @@ export const UpcomingEventsCarousel: React.FC<UpcomingEventsCarouselProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   onClick={() => scroll('right')}
+                  aria-label="Scroll events right"
                   className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center justify-center text-gray-700 hover:text-purple-600 hover:scale-110 active:scale-95 transition-all hidden sm:flex"
                 >
                   <ChevronRight className="w-6 h-6" />
@@ -235,6 +237,7 @@ export const UpcomingEventsCarousel: React.FC<UpcomingEventsCarouselProps> = ({
                   {/* Close Button Mobile (Floating) */}
                   <button
                     onClick={() => setSelectedEvent(null)}
+                    aria-label="Close event details"
                     className="absolute top-4 right-4 p-2.5 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-20 sm:hidden"
                   >
                     <X className="w-5 h-5" />
@@ -246,6 +249,7 @@ export const UpcomingEventsCarousel: React.FC<UpcomingEventsCarouselProps> = ({
                   {/* Close Button Desktop */}
                   <button
                     onClick={() => setSelectedEvent(null)}
+                    aria-label="Close event details"
                     className="absolute top-5 right-5 p-2.5 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 hover:text-gray-900 transition-all z-10 hidden sm:block"
                   >
                     <X className="w-5 h-5" />

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapPin, IndianRupee, Search, Plus, X, MessageCircle, GraduationCap, Info, Trash2, Building, ChevronDown, ChevronRight, AlertCircle, ShieldCheck } from 'lucide-react';
 import { PGListing } from '../types';
+import type { SupabaseAuthUser } from '../types';
 import { createPGListing, getPGListings, deletePGListing } from '../services/pgService';
 import { uploadFile } from '../services/resourceService';
 import { supabase } from '../supabase';
@@ -20,7 +21,7 @@ export const FindPGPage: React.FC = () => {
   const [selectedListing, setSelectedListing] = useState<PGListing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [genderFilter, setGenderFilter] = useState<'All' | 'Male' | 'Female'>('All');
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);

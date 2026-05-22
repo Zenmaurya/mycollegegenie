@@ -1,3 +1,4 @@
+﻿import type { SupabaseAuthUser } from '../types';
 import React, { useState, useEffect, useRef } from 'react';
 import { User as UserIcon, X, Loader2, GraduationCap, MapPin, Calendar, FileText, BadgeCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -15,7 +16,7 @@ interface UploaderProfilePopoverProps {
 
 export function UploaderProfilePopover({ uploaderName, uploaderId, resources = [], children }: UploaderProfilePopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [uploaderProfile, setUploaderProfile] = useState<any>(null);
+  const [uploaderProfile, setUploaderProfile] = useState<SupabaseAuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 

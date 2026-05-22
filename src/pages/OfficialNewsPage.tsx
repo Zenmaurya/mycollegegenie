@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { NewsItem } from '../types';
+import type { SupabaseAuthUser } from '../types';
 import { toast } from 'sonner';
 import { supabase } from '../supabase';
 import { getNews, submitNews } from '../services/newsService';
@@ -109,7 +110,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
   // ── Submit News Modal State ───────────────────────────────────────────────
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
   const [submitForm, setSubmitForm] = useState({
     title: '',
     college: '',
