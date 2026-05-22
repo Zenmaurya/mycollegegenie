@@ -14,8 +14,7 @@ import { User } from '@supabase/supabase-js';
 import { ImageSlider, ImageThumbnailStrip } from '../components/ImageSlider';
 import { uploadFile } from '../services/resourceService';
 import { toast } from 'sonner';
-import { VerifiedBadge } from '../components/VerifiedBadge';
-import { VerificationApplyModal } from '../components/VerificationApplyModal';
+
 import { fetchExchangeItems, createExchangeItem } from '../services/exchangeService';
 
 
@@ -80,7 +79,7 @@ export function CampusExchangePage() {
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
-  const [verifyModal, setVerifyModal] = useState<{ id: string; title: string } | null>(null);
+
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [postAdStep, setPostAdStep] = useState(1);
   const [postAdImages, setPostAdImages] = useState<string[]>([]);
@@ -557,18 +556,7 @@ export function CampusExchangePage() {
                           Featured
                         </span>
                       )}
-                      {(item as any).is_verified ? (
-                        <div className="mt-1">
-                          <VerifiedBadge size="sm" />
-                        </div>
-                      ) : currentUser?.id === (item as any).authorId ? (
-                        <button
-                          onClick={e => { e.stopPropagation(); setVerifyModal({ id: item.id, title: item.title }); }}
-                          className="mt-1 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-md text-amber-700 text-[9px] font-black uppercase tracking-wider rounded-xl border border-amber-200 hover:bg-amber-50 transition-all shadow-sm pointer-events-auto"
-                        >
-                          <ShieldCheck className="w-3 h-3" /> Get Verified
-                        </button>
-                      ) : null}
+
                     </div>
                     
                     <button className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-500 hover:text-rose-500 hover:bg-white transition-all shadow-sm">
@@ -706,15 +694,7 @@ export function CampusExchangePage() {
                   
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 leading-tight">{selectedItem.title}</h2>
-                    {(selectedItem as any).is_verified && <VerifiedBadge size="md" />}
-                    {!(selectedItem as any).is_verified && currentUser?.id === (selectedItem as any).authorId && (
-                      <button
-                        onClick={() => setVerifyModal({ id: selectedItem.id, title: selectedItem.title })}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-wider rounded-xl border border-amber-200 hover:bg-amber-100 transition-all"
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5" /> Get Verified ₹99
-                      </button>
-                    )}
+
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-4 mt-4 text-sm font-medium text-gray-500">
@@ -1000,16 +980,7 @@ export function CampusExchangePage() {
         document.body
       )}
 
-      {/* Verification Modal */}
-      {verifyModal && (
-        <VerificationApplyModal
-          isOpen={!!verifyModal}
-          onClose={() => setVerifyModal(null)}
-          listingType="exchange"
-          listingId={verifyModal.id}
-          listingTitle={verifyModal.title}
-        />
-      )}
+
     </div>
   );
 }
