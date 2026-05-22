@@ -34,6 +34,7 @@ import {
   LogIn,
   Eye,
   MonitorPlay,
+  PlayCircle,
   ToggleLeft,
   ToggleRight,
   Image as ImageIcon,
@@ -54,7 +55,7 @@ import { getPGListings, deletePGListing } from '../services/pgService';
 import { getTestimonials, addTestimonial, updateTestimonial, deleteTestimonial } from '../services/testimonialService';
 import { getUsers, updateUserRole } from '../services/userService';
 import { supabase } from '../supabase';
-import { Card as TestimonialPreviewCard } from '../components/ui/demo';
+import { Card as TestimonialPreviewCard, VerifyIcon } from '../components/ui/demo';
 import { College_COURSES, COURSE_METADATA, SUB_CATEGORIES } from '../constants';
 import { toast } from 'sonner';
 import { ConfirmationModal } from '../components/ConfirmationModal';
@@ -138,6 +139,113 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   });
 
   const [isUploading, setIsUploading] = useState(false);
+
+  // ── Playlist Curation State ──
+  const [editingPlaylist, setEditingPlaylist] = useState<Resource | null>(null);
+  const [isAddingPlaylist, setIsAddingPlaylist] = useState(false);
+  const [playlistFormData, setPlaylistFormData] = useState({
+    title: '',
+    course: '',
+    semester: 1,
+    description: '',
+    link: '',
+    tags: '',
+  });
+
+  const getYoutubeThumbnail = (url: string): string | null => {
+    if (!url) return null;
+    try {
+      const u = new URL(url);
+      const videoId = u.searchParams.get('v');
+      if (videoId) {
+        return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+      }
+      if (u.hostname === 'youtu.be') {
+        const vid = u.pathname.replace(/^\//, '');
+        if (vid) return `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+      }
+      const embedMatch = u.pathname.match(/\/embed\/([^/?#]+)/);
+      if (embedMatch) {
+        return `https://i.ytimg.com/vi/${embedMatch[1]}/hqdefault.jpg`;
+      }
+    } catch {
+      const regExp = /(?:youtu\.be\/|[?&]v=|\/embed\/)([A-Za-z0-9_-]{11})/;
+      const match = url.match(regExp);
+      if (match && match[1]) {
+        return `https://i.ytimg.com/vi/${match[1]}/hqdefault.jpg`;
+      }
+    }
+    return null;
+  };
+
+  const handlePlaylistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!playlistFormData.title || !playlistFormData.link || !playlistFormData.course) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    if (!playlistFormData.link.includes('youtube.com') && !playlistFormData.link.includes('youtu.be')) {
+      toast.error('Please enter a valid YouTube Video or Playlist URL');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const tagsArray = playlistFormData.tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t !== '');
+
+      if (editingPlaylist) {
+        const updatedResource: Partial<Resource> = {
+          title: playlistFormData.title,
+          course: playlistFormData.course,
+          semester: Number(playlistFormData.semester),
+          description: playlistFormData.description,
+          link: playlistFormData.link,
+          tags: tagsArray,
+          subCategory: 'Playlist',
+          type: 'Playlist',
+        };
+        await updateResource(editingPlaylist.id, updatedResource);
+        toast.success('Playlist updated successfully!');
+      } else {
+        const newResource = {
+          title: playlistFormData.title,
+          course: playlistFormData.course,
+          semester: Number(playlistFormData.semester),
+          description: playlistFormData.description,
+          link: playlistFormData.link,
+          tags: tagsArray,
+          type: 'Playlist' as const,
+          subCategory: 'Playlist',
+          uploader: appUser?.displayName || 'Admin',
+          uploaderId: appUser?.uid || '',
+          uploaderRole: 'admin',
+          isApproved: true,
+        };
+        await uploadResource(newResource);
+        toast.success('Playlist published successfully!');
+      }
+
+      setIsAddingPlaylist(false);
+      setEditingPlaylist(null);
+      setPlaylistFormData({
+        title: '',
+        course: '',
+        semester: 1,
+        description: '',
+        link: '',
+        tags: '',
+      });
+      fetchResources();
+    } catch (error) {
+      console.error('Error saving playlist:', error);
+      toast.error('Failed to save playlist');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -301,6 +409,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
       } else toast.error('Failed to save settings');
     } catch (err) { toast.error('Network error'); }
     finally { setIsSavingSettings(false); }
+  };
+
+  const saveCarouselConfig = async (newConfig: any) => {
+    try {
+      const updatedSettings = {
+        ...siteSettings,
+        carousel_config: JSON.stringify(newConfig)
+      };
+      const { data: { session } } = await supabase.auth.getSession();
+      const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
+      const res = await fetch(`${API_URL}/api/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify(updatedSettings),
+      });
+      if (res.ok) {
+        setSiteSettings(updatedSettings);
+        setSettingsForm(updatedSettings);
+        return true;
+      } else {
+        toast.error('Failed to save carousel configuration');
+        return false;
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Network error saving carousel configuration');
+      return false;
+    }
   };
 
   // ── Ad Submit ──
@@ -836,12 +972,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               <LayoutDashboard className="w-8 h-8 text-purple-600" />
               Platform Overview
             </h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
                 { label: 'Total Users', value: totalUsers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
                 { label: 'Pending Resources', value: resources.filter(r => !r.isApproved).length, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
                 { label: 'Active PG Listings', value: listings.length, icon: Home, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-100' },
                 { label: 'Pending Verifications', value: verifications.filter(v => v.status === 'pending').length, icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
+                { label: 'Active Playlists', value: resources.filter(r => r.type === 'Playlist').length, icon: Youtube, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' },
+                { label: 'Active Ads', value: ads.filter(a => a.is_active).length, icon: Megaphone, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
               ].map((stat, i) => (
                 <motion.div 
                   key={i} 
@@ -878,22 +1016,327 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
 
 
         {activeTab === 'playlists' && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-32 bg-white/60 backdrop-blur-3xl rounded-[3rem] border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5" />
-            <div className="relative z-10">
-              <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-3xl mx-auto flex items-center justify-center mb-6 shadow-inner rotate-3 hover:rotate-0 transition-transform duration-500 cursor-default">
-                <Youtube className="w-12 h-12 text-purple-600" />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+            {/* Header section */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
+                  <Youtube className="w-8 h-8 text-purple-600 animate-pulse" />
+                  Playlists Curation
+                </h2>
+                <p className="text-sm text-gray-400 font-medium mt-1">Curate and manage YouTube course playlists and video lectures for students.</p>
               </div>
-              <h3 className="text-3xl font-black text-gray-900 tracking-tight">Playlists Curation</h3>
-              <p className="text-gray-500 mt-3 font-medium max-w-sm mx-auto">This feature is in development. You will soon be able to build and manage custom academic collections.</p>
-              <div className="mt-8 inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-full text-xs font-bold uppercase tracking-widest">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-                </span>
-                Coming Soon
-              </div>
+              
+              {!isAddingPlaylist && !editingPlaylist && (
+                <button
+                  onClick={() => {
+                    setIsAddingPlaylist(true);
+                    setEditingPlaylist(null);
+                    setPlaylistFormData({
+                      title: '',
+                      course: College_COURSES[0] || '',
+                      semester: 1,
+                      description: '',
+                      link: '',
+                      tags: '',
+                    });
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-purple-700 transition-all shadow-lg shadow-purple-600/20 self-start sm:self-auto"
+                >
+                  <Plus className="w-4 h-4" /> Add Playlist
+                </button>
+              )}
             </div>
+
+            {/* Stats Overview */}
+            {!isAddingPlaylist && !editingPlaylist && (
+              <div className="bg-purple-50/50 border border-purple-100 rounded-3xl p-6 flex items-center justify-between gap-6 max-w-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center shadow-inner">
+                    <Youtube className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-purple-400">Total Playlists</p>
+                    <p className="text-2xl font-black text-purple-900 leading-none mt-1">
+                      {resources.filter(r => r.type === 'Playlist').length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Playlist Form (Add / Edit) */}
+            {(isAddingPlaylist || editingPlaylist) && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.98 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-xl max-w-3xl mx-auto"
+              >
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                    {editingPlaylist ? <Edit3 className="w-5 h-5 text-purple-600" /> : <Plus className="w-5 h-5 text-purple-600" />}
+                    {editingPlaylist ? 'Edit Playlist' : 'Add New Playlist'}
+                  </h3>
+                  <button 
+                    onClick={() => {
+                      setIsAddingPlaylist(false);
+                      setEditingPlaylist(null);
+                    }}
+                    className="p-2 hover:bg-gray-50 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-400" />
+                  </button>
+                </div>
+
+                <form onSubmit={handlePlaylistSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Playlist Title *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="e.g. Data Structures & Algorithms Lectures"
+                        value={playlistFormData.title}
+                        onChange={e => setPlaylistFormData({...playlistFormData, title: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">YouTube URL (Video or Playlist) *</label>
+                      <input 
+                        type="url" 
+                        required 
+                        placeholder="https://www.youtube.com/playlist?list=..."
+                        value={playlistFormData.link}
+                        onChange={e => setPlaylistFormData({...playlistFormData, link: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Course *</label>
+                      <select 
+                        value={playlistFormData.course}
+                        onChange={e => setPlaylistFormData({...playlistFormData, course: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer"
+                      >
+                        <option value="">Select Course</option>
+                        {College_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Semester *</label>
+                      <select 
+                        value={playlistFormData.semester}
+                        onChange={e => setPlaylistFormData({...playlistFormData, semester: Number(e.target.value)})}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer"
+                      >
+                        {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tags (comma separated)</label>
+                    <input 
+                      type="text" 
+                      placeholder="dsa, algorithms, computer science, programming"
+                      value={playlistFormData.tags}
+                      onChange={e => setPlaylistFormData({...playlistFormData, tags: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Description *</label>
+                    <textarea 
+                      required 
+                      rows={3} 
+                      placeholder="Provide a description detailing what this playlist covers..."
+                      value={playlistFormData.description}
+                      onChange={e => setPlaylistFormData({...playlistFormData, description: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium resize-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                    />
+                  </div>
+
+                  {/* YouTube Live Preview in form */}
+                  {playlistFormData.link && (
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col items-center justify-center">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Live Video Thumbnail Preview</span>
+                      {(() => {
+                        const thumb = getYoutubeThumbnail(playlistFormData.link);
+                        return thumb ? (
+                          <div className="relative aspect-video w-64 rounded-xl overflow-hidden shadow-md">
+                            <img src={thumb} className="w-full h-full object-cover" alt="Playlist Preview" />
+                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                              <PlayCircle className="w-10 h-10 text-white/90" />
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">No video ID detected. (Standard YouTube playlists will fallback to a default icon)</span>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  <div className="flex gap-4 pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={isUploading}
+                      className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isUploading && <RefreshCw className="w-4 h-4 animate-spin" />}
+                      {editingPlaylist ? 'Update Playlist' : 'Publish Playlist'}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsAddingPlaylist(false);
+                        setEditingPlaylist(null);
+                      }}
+                      className="px-6 py-3.5 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+
+            {/* Playlist Grid Display */}
+            {!isAddingPlaylist && !editingPlaylist && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {resources.filter(r => r.type === 'Playlist').map(playlist => {
+                    const thumb = getYoutubeThumbnail(playlist.link);
+                    return (
+                      <motion.div
+                        layout
+                        key={playlist.id}
+                        whileHover={{ y: -6 }}
+                        className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col h-full group"
+                      >
+                        {/* Thumbnail */}
+                        <div className="aspect-video bg-gray-50 relative flex items-center justify-center overflow-hidden shrink-0">
+                          {thumb ? (
+                            <>
+                              <img src={thumb} alt={playlist.title} className="absolute inset-0 w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+                            </>
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 flex items-center justify-center">
+                              <Youtube className="w-12 h-12 text-purple-400" />
+                            </div>
+                          )}
+                          <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-black text-white flex items-center gap-1 uppercase tracking-wider">
+                            <PlayCircle className="w-3.5 h-3.5" />
+                            Playlist
+                          </div>
+                        </div>
+
+                        {/* Badges */}
+                        <div className="flex items-center gap-2 px-5 pt-4 shrink-0">
+                          <span className="text-[9px] font-black px-2.5 py-1 rounded-lg bg-purple-50 text-purple-600 uppercase tracking-widest">
+                            Sem {playlist.semester}
+                          </span>
+                          <span className="text-[9px] font-bold text-gray-400 truncate">
+                            {playlist.course}
+                          </span>
+                        </div>
+
+                        {/* Title */}
+                        <div className="px-5 pt-3 shrink-0">
+                          <h4 className="text-base font-black text-gray-900 group-hover:text-purple-600 transition-colors tracking-tight line-clamp-1">
+                            {playlist.title}
+                          </h4>
+                        </div>
+
+                        {/* Description */}
+                        <div className="px-5 pt-2 shrink-0">
+                          <p className="text-xs text-gray-500 leading-relaxed font-medium line-clamp-2">
+                            {playlist.description || 'No description provided.'}
+                          </p>
+                        </div>
+
+                        <div className="flex-grow" />
+
+                        {/* Actions Footer */}
+                        <div className="flex items-center justify-between px-5 pt-4 pb-5 mt-4 border-t border-gray-50 shrink-0">
+                          <div className="flex gap-1.5 flex-wrap min-w-0">
+                            {playlist.tags.slice(0, 2).map(tag => (
+                              <span key={tag} className="text-[8px] font-black text-gray-400 uppercase tracking-widest truncate">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                          
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setEditingPlaylist(playlist);
+                                setPlaylistFormData({
+                                  title: playlist.title,
+                                  course: playlist.course,
+                                  semester: playlist.semester,
+                                  description: playlist.description,
+                                  link: playlist.link,
+                                  tags: playlist.tags.join(', '),
+                                });
+                              }}
+                              className="p-2 bg-gray-50 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
+                              title="Edit Playlist"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setResourceToDelete(playlist.id);
+                                setIsDeleteModalOpen(true);
+                              }}
+                              className="p-2 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-all"
+                              title="Delete Playlist"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {resources.filter(r => r.type === 'Playlist').length === 0 && (
+                  <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-gray-200">
+                    <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Youtube className="w-8 h-8 text-purple-400" />
+                    </div>
+                    <h3 className="text-lg font-black text-gray-900 mb-1">No playlists curated yet</h3>
+                    <p className="text-sm text-gray-500 max-w-sm mx-auto font-medium mb-6">
+                      Get started by curating the first YouTube lecture series for your courses.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setIsAddingPlaylist(true);
+                        setEditingPlaylist(null);
+                        setPlaylistFormData({
+                          title: '',
+                          course: College_COURSES[0] || '',
+                          semester: 1,
+                          description: '',
+                          link: '',
+                          tags: '',
+                        });
+                      }}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-purple-600/20 hover:bg-purple-700 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" /> Curate First Playlist
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </motion.div>
         )}
 
@@ -1752,33 +2195,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               </div>
             </div>
 
-            <div className="grid gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {testimonials.length > 0 ? testimonials.map(t => (
-                <div key={t.id} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-4">
-                    <img src={t.image} alt={t.name} className="w-14 h-14 rounded-full object-cover" />
-                    <div>
-                      <h4 className="font-bold text-gray-900">{t.name} <span className="text-gray-500 font-normal text-sm">{t.handle}</span></h4>
-                      <p className="text-sm text-gray-600 line-clamp-2 mt-1">{t.text}</p>
+                <div key={t.id} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col justify-between transition-all group relative">
+                  <div>
+                    <div className="flex gap-3">
+                      <img className="w-12 h-12 rounded-full object-cover" src={t.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200"} alt={t.name} />
+                      <div className="flex flex-col justify-center">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-bold text-gray-900 text-sm leading-snug">{t.name}</p>
+                          <VerifyIcon />
+                        </div>
+                        <span className="text-xs text-gray-400 font-medium">{t.handle}</span>
+                      </div>
                     </div>
+                    <p className="text-sm pt-4 text-gray-600 leading-relaxed font-medium italic">
+                      "{t.text}"
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  
+                  <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-gray-50">
                     <button 
                       onClick={() => startEditingTestimonial(t)}
-                      className="p-3 bg-gray-50 text-gray-400 hover:text-purple-600 rounded-xl transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
                     >
-                      <Edit3 className="w-5 h-5" />
+                      <Edit3 className="w-3.5 h-3.5" /> Edit
                     </button>
                     <button 
                       onClick={() => handleTestimonialDelete(t.id)}
-                      className="p-3 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
                     </button>
                   </div>
                 </div>
               )) : (
-                <div className="text-center py-12 bg-white rounded-[2rem] border border-dashed border-gray-200">
+                <div className="col-span-full text-center py-12 bg-white rounded-[2rem] border border-dashed border-gray-200">
                   <p className="text-gray-400 font-medium">No testimonials found.</p>
                 </div>
               )}
@@ -2038,7 +2490,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               ) : (
                 <div className="space-y-3">
                   {news.filter(n => n.category === 'Event').map((ev, idx) => {
-                    const stored = JSON.parse(localStorage.getItem('carouselConfig') || '{}');
+                    const stored = JSON.parse(siteSettings?.carousel_config || '{}');
                     const isEnabled = stored[ev.id]?.show ?? true;
                     const customImg = stored[ev.id]?.imageUrl ?? ev.imageUrl;
                     const isEditing = carouselEditingItem?.id === ev.id && carouselEditingItem?.type === 'real';
@@ -2068,11 +2520,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                 className="flex-1 text-xs px-2 py-1.5 border border-gray-200 rounded-lg"
                               />
                               <button
-                                onClick={() => {
-                                  const config = JSON.parse(localStorage.getItem('carouselConfig') || '{}');
+                                onClick={async () => {
+                                  const config = JSON.parse(siteSettings?.carousel_config || '{}');
                                   config[ev.id] = { ...config[ev.id], imageUrl: carouselImageInput };
-                                  localStorage.setItem('carouselConfig', JSON.stringify(config));
-                                  updateNews(String(ev.id), { imageUrl: carouselImageInput } as any);
+                                  await saveCarouselConfig(config);
+                                  await updateNews(String(ev.id), { imageUrl: carouselImageInput } as any);
                                   setCarouselEditingItem(null);
                                   toast.success('Poster image saved!');
                                 }}
@@ -2091,13 +2543,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         </div>
                         {/* Toggle */}
                         <button
-                          onClick={() => {
-                            const config = JSON.parse(localStorage.getItem('carouselConfig') || '{}');
+                          onClick={async () => {
+                            const config = JSON.parse(siteSettings?.carousel_config || '{}');
                             config[ev.id] = { ...config[ev.id], show: !isEnabled };
-                            localStorage.setItem('carouselConfig', JSON.stringify(config));
+                            await saveCarouselConfig(config);
                             toast.success(isEnabled ? 'Hidden from carousel' : 'Shown in carousel');
-                            // force re-render
-                            setCarouselEditingItem(prev => ({ ...prev, _t: Date.now() }));
                             setCarouselEditingItem(null);
                           }}
                           className={`flex-shrink-0 transition-all ${isEnabled ? 'text-purple-600' : 'text-gray-300'}`}
@@ -2297,7 +2747,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               <h3 className="text-base font-black text-gray-800 mb-5 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-blue-500" /> Platform Statistics
               </h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Notes Count</label>
                   <input type="text" value={settingsForm.stats_notes || ''} onChange={e => setSettingsForm(p => ({...p, stats_notes: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-black" placeholder="5000+" />
@@ -2309,6 +2759,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Students</label>
                   <input type="text" value={settingsForm.stats_students || ''} onChange={e => setSettingsForm(p => ({...p, stats_students: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-black" placeholder="10,000+" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">PYQs Count</label>
+                  <input type="text" value={settingsForm.stats_pyqs || ''} onChange={e => setSettingsForm(p => ({...p, stats_pyqs: e.target.value}))} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-black" placeholder="5,000+" />
                 </div>
               </div>
             </div>

@@ -191,6 +191,10 @@ function AppContent() {
   });
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
+  const [announcementDismissed, setAnnouncementDismissed] = useState(() => {
+    return sessionStorage.getItem('announcementDismissed') === 'true';
+  });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [visibleCount, setVisibleCount] = useState(12);
 
@@ -810,6 +814,19 @@ function AppContent() {
     }
   };
 
+  const fetchSettings = async () => {
+    try {
+      const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
+      const res = await fetch(`${API}/api/settings`);
+      if (res.ok) {
+        const data = await res.json();
+        setSiteSettings(data || {});
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings:', err);
+    }
+  };
+
   // Track whether we've fetched news at least once
   const hasFetchedNews = useRef(false);
 
@@ -817,6 +834,7 @@ function AppContent() {
     if (!hasFetchedNews.current) {
       hasFetchedNews.current = true;
       fetchNews();
+      fetchSettings();
     }
   }, []);
 
@@ -856,6 +874,29 @@ function AppContent() {
   return (
     <div className={`min-h-screen bg-ethereal-mesh text-gray-900 font-sans selection:bg-purple-100 selection:text-purple-900 flex flex-col`}>
       <Toaster position="top-center" expand={false} richColors />
+      
+      {/* Announcement Banner */}
+      {!isFlipbookView && !isAuthPage && siteSettings.announcement_active === 'true' && siteSettings.announcement_text && !announcementDismissed && (
+        <div 
+          className="w-full text-white text-center py-2.5 px-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 relative z-[101] transition-all duration-300"
+          style={{ backgroundColor: siteSettings.announcement_color || '#7c3aed' }}
+        >
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 pr-8">
+            <span>{siteSettings.announcement_text}</span>
+          </div>
+          <button 
+            onClick={() => {
+              setAnnouncementDismissed(true);
+              sessionStorage.setItem('announcementDismissed', 'true');
+            }}
+            className="absolute right-4 hover:scale-110 active:scale-95 transition-all text-white/85 hover:text-white"
+            title="Dismiss announcement"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Navigation Bar */}
       {!isFlipbookView && !isAuthPage && (
       <nav className={`sticky top-0 z-[100] transition-all duration-500 ${
@@ -1284,6 +1325,7 @@ function AppContent() {
               getAverageRating={getAverageRating}
               setSelectedResource={setSelectedResource}
               handleShare={handleShare}
+              siteSettings={siteSettings}
             />
           );
           return (

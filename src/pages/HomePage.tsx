@@ -130,6 +130,7 @@ interface HomePageProps {
   setSelectedResource: (resource: Resource) => void;
   handleShare: (resource: Resource) => void;
   resultsRef?: React.RefObject<HTMLElement>;
+  siteSettings: Record<string, string>;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -141,7 +142,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   getAverageRating,
   setSelectedResource,
   handleShare,
-  resultsRef
+  resultsRef,
+  siteSettings
 }) => {
   const navigate = useNavigate();
   
@@ -150,127 +152,189 @@ export const HomePage: React.FC<HomePageProps> = ({
       case 'purple': return { bg: 'bg-purple-50', text: 'text-purple-600' };
       case 'pink': return { bg: 'bg-pink-50', text: 'text-pink-600' };
       case 'orange': return { bg: 'bg-orange-50', text: 'text-orange-600' };
-      default: return { bg: 'bg-gray-50', text: 'text-gray-600' };
+      default: return { bg: 'bg-purple-50', text: 'text-purple-600' };
     }
   };
 
-  return (
-    <div className="overflow-x-hidden">
-      <Helmet>
-        <title>MyCollegeGenie — India's Biggest Student Platform & Ecosystem</title>
-        <meta name="description" content="My College Genie is India's biggest student platform, building a complete ecosystem to connect every college and every student. Access free notes, PYQs, find PGs, discover events, and join the ultimate student portal for every college need." />
-        <meta name="keywords" content="India biggest student platform, college student ecosystem, university portal, free college notes, PYQs, find PG near college, campus events, student community, college resources, My College Genie" />
-        <link rel="canonical" href="https://mycollegegenie.in/" />
-      </Helmet>
-      {/* Hero Section */}
-      <main className="relative min-h-[80vh] lg:min-h-[92vh] flex items-center pt-8 sm:pt-16 pb-10 sm:pb-16 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none">
-          <motion.div 
-            animate={{ 
-              y: [0, -20, 0],
-              rotate: [0, 5, 0]
-            }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-20 right-[10%] text-indigo-600 hidden sm:block"
-          >
-            <Sparkles className="w-64 h-64" />
-          </motion.div>
-          <motion.div 
-            animate={{ 
-              y: [0, 20, 0],
-              rotate: [0, -5, 0]
-            }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-20 left-[5%] text-pink-600 hidden sm:block"
-          >
-            <FileText className="w-48 h-48" />
-          </motion.div>
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.1, 1],
-              opacity: [0.05, 0.08, 0.05]
-            }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-orange-600 hidden sm:block"
-          >
-            <PlayCircle className="w-[800px] h-[800px]" />
-          </motion.div>
+  const transformedNewsItems = React.useMemo(() => {
+    if (!siteSettings?.carousel_config) return newsItems;
+    try {
+      const config = JSON.parse(siteSettings.carousel_config);
+      return newsItems.map(item => {
+        const itemConfig = config[item.id];
+        if (itemConfig) {
+          return {
+            ...item,
+            imageUrl: itemConfig.imageUrl || item.imageUrl
+          };
+        }
+        return item;
+      }).filter(item => {
+        if (item.category === 'Event') {
+          const itemConfig = config[item.id];
+          if (itemConfig && itemConfig.show === false) {
+            return false;
+          }
+        }
+        return true;
+      });
+    } catch (e) {
+      console.error('Error parsing carousel_config:', e);
+      return newsItems;
+    }
+  }, [newsItems, siteSettings?.carousel_config]);
+
+    const renderHeadline = () => {
+      const headline = siteSettings?.hero_headline || "Every College Student Deserves a Genie.";
+      const words = headline.trim().split(/\s+/);
+      if (words.length <= 1) {
+        return (
+          <h1 className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block leading-[1.1] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600">
+            {headline}
+          </h1>
+        );
+      }
+      const lastWord = words.pop();
+      const remainingText = words.join(' ');
+      
+      return (
+        <div className="mb-4 sm:mb-5 font-black leading-[1] tracking-tighter text-gray-900">
+          <h1 className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block leading-[1.1] mb-2">
+            {remainingText}
+          </h1>
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-4 mt-0.5">
+            <span className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600 leading-[1]">
+              {lastWord}
+            </span>
+            <motion.span 
+              className="text-[#D8B4FE] font-normal text-4xl sm:text-5xl inline-block -rotate-12"
+              animate={{ rotate: [-12, 12, -12], scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              ♡
+            </motion.span>
+          </div>
         </div>
+      );
+    };
 
-        <div className="max-w-7xl mx-auto w-full relative z-10 grid lg:grid-cols-12 gap-8 xl:gap-4 items-center">
-          <div className="max-w-xl lg:max-w-none lg:col-span-5 text-center lg:text-left mx-auto lg:mx-0">
+    const isExternalLink = (url: string) => {
+      return url.startsWith('http://') || url.startsWith('https://');
+    };
+
+    const ctaText = siteSettings?.hero_cta_text || "Explore Resources";
+    const ctaLink = siteSettings?.hero_cta_link || "/browse";
+
+    return (
+      <div className="overflow-x-hidden">
+        <Helmet>
+          <title>MyCollegeGenie — India's Biggest Student Platform & Ecosystem</title>
+          <meta name="description" content="My College Genie is India's biggest student platform, building a complete ecosystem to connect every college and every student. Access free notes, PYQs, find PGs, discover events, and join the ultimate student portal for every college need." />
+          <meta name="keywords" content="India biggest student platform, college student ecosystem, university portal, free college notes, PYQs, find PG near college, campus events, student community, college resources, My College Genie" />
+          <link rel="canonical" href="https://mycollegegenie.in/" />
+        </Helmet>
+        {/* Hero Section */}
+        <main className="relative min-h-[80vh] lg:min-h-[92vh] flex items-center pt-8 sm:pt-16 pb-10 sm:pb-16 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
+          {/* Animated Background Elements */}
+          <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none">
             <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 bg-[#EFEFFD] px-4 py-2 rounded-2xl mb-6 sm:mb-8 mx-auto lg:mx-0"
+              animate={{ 
+                y: [0, -20, 0],
+                rotate: [0, 5, 0]
+              }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-20 right-[10%] text-indigo-600 hidden sm:block"
             >
-              <GraduationCap className="w-4 h-4 text-[#4400FF]" />
-              <span className="text-xs font-bold text-[#4400FF]">A platform students are building together</span>
+              <Sparkles className="w-64 h-64" />
             </motion.div>
-
-            <div className="mb-4 sm:mb-5 font-black leading-[1] tracking-tighter text-gray-900">
-              <h1 className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block leading-[1]">
-                Every College
-              </h1>
-              <h1 className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block leading-[1]">
-                Student Deserves
-              </h1>
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-4 mt-0.5">
-                <span className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600 leading-[1]">
-                  a Genie.
-                </span>
-                <motion.span 
-                  className="text-[#D8B4FE] font-normal text-4xl sm:text-5xl inline-block -rotate-12"
-                  animate={{ rotate: [-12, 12, -12], scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  ♡
-                </motion.span>
-              </div>
-            </div>
-
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-              className="text-base sm:text-lg lg:text-lg text-gray-600 w-full mb-5 leading-relaxed font-medium px-2 sm:px-0 text-center lg:text-left lg:pr-8 xl:pr-16"
-            >
-              From PYQs and notes to PGs, communities, campus exchange, and career opportunities. My College Genie is your all-in-one companion for every chapter of college life. We started with DU. Now we're building India's biggest student ecosystem — connecting every student, every college, every city under one platform.
-              <span className="block whitespace-nowrap mt-1.5 font-semibold tracking-tight text-gray-900">
-                One platform. Million students. Endless possibilities.
-              </span>
-            </motion.p>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1 }}
-              className="mb-5 sm:mb-6"
-            >
-              <span className="font-['Caveat',cursive] italic text-2xl sm:text-3xl text-gray-800 border-b-2 border-pink-500 pb-1 px-1">Notes Se Naukri Takk.</span>
-            </motion.div>
-
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              animate={{ 
+                y: [0, 20, 0],
+                rotate: [0, -5, 0]
+              }}
+              transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute bottom-20 left-[5%] text-pink-600 hidden sm:block"
             >
-              <Link 
-                to="/browse"
-                className="w-full sm:w-[240px] bg-[#4400FF] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-[#3300CC] hover:shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer"
-              >
-                <Search className="w-5 h-5" />
-                Explore Resources
-              </Link>
-              <a href="https://www.linkedin.com/company/my-college-genie/" target="_blank" rel="noopener noreferrer" className="w-full sm:w-[240px] bg-white text-[#4400FF] border border-gray-200 px-8 py-4 rounded-xl font-bold text-base hover:bg-gray-50 transition-all flex items-center justify-center gap-3">
-                <Users className="w-5 h-5" />
-                Join Our Team
-              </a>
+              <FileText className="w-48 h-48" />
+            </motion.div>
+            <motion.div 
+              animate={{ 
+                scale: [1, 1.1, 1],
+                opacity: [0.05, 0.08, 0.05]
+              }}
+              transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-orange-600 hidden sm:block"
+            >
+              <PlayCircle className="w-[800px] h-[800px]" />
             </motion.div>
           </div>
+  
+          <div className="max-w-7xl mx-auto w-full relative z-10 grid lg:grid-cols-12 gap-8 xl:gap-4 items-center">
+            <div className="max-w-xl lg:max-w-none lg:col-span-5 text-center lg:text-left mx-auto lg:mx-0">
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+                className="inline-flex items-center gap-2 bg-[#EFEFFD] px-4 py-2 rounded-2xl mb-6 sm:mb-8 mx-auto lg:mx-0"
+              >
+                <GraduationCap className="w-4 h-4 text-[#4400FF]" />
+                <span className="text-xs font-bold text-[#4400FF]">A platform students are building together</span>
+              </motion.div>
+  
+              {renderHeadline()}
+  
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className="text-base sm:text-lg lg:text-lg text-gray-600 w-full mb-5 leading-relaxed font-medium px-2 sm:px-0 text-center lg:text-left lg:pr-8 xl:pr-16"
+              >
+                {siteSettings?.hero_subtext || "From PYQs and notes to PGs, communities, campus exchange, and career opportunities. My College Genie is your all-in-one companion for every chapter of college life. We started with DU. Now we're building India's biggest student ecosystem — connecting every student, every college, every city under one platform."}
+                <span className="block whitespace-nowrap mt-1.5 font-semibold tracking-tight text-gray-900">
+                  One platform. Million students. Endless possibilities.
+                </span>
+              </motion.p>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1 }}
+                className="mb-5 sm:mb-6"
+              >
+                <span className="font-['Caveat',cursive] italic text-2xl sm:text-3xl text-gray-800 border-b-2 border-pink-500 pb-1 px-1">Notes Se Naukri Takk.</span>
+              </motion.div>
+  
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              >
+                {isExternalLink(ctaLink) ? (
+                  <a 
+                    href={ctaLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-[240px] bg-[#4400FF] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-[#3300CC] hover:shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer"
+                  >
+                    <Search className="w-5 h-5" />
+                    {ctaText}
+                  </a>
+                ) : (
+                  <Link 
+                    to={ctaLink}
+                    className="w-full sm:w-[240px] bg-[#4400FF] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-[#3300CC] hover:shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer"
+                  >
+                    <Search className="w-5 h-5" />
+                    {ctaText}
+                  </Link>
+                )}
+                <a href="https://www.linkedin.com/company/my-college-genie/" target="_blank" rel="noopener noreferrer" className="w-full sm:w-[240px] bg-white text-[#4400FF] border border-gray-200 px-8 py-4 rounded-xl font-bold text-base hover:bg-gray-50 transition-all flex items-center justify-center gap-3">
+                  <Users className="w-5 h-5" />
+                  Join Our Team
+                </a>
+              </motion.div>
+            </div>
 
           {/* Hero Visual */}
           <motion.div 
@@ -421,7 +485,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* Carousel */}
-        <UpcomingEventsCarousel newsItems={newsItems} isLoading={isNewsLoading} />
+        <UpcomingEventsCarousel newsItems={transformedNewsItems} isLoading={isNewsLoading} />
 
       </section>
 
@@ -693,16 +757,33 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:22px_22px]" />
           </div>
           
-          {[
-            { end: 10, suffix: 'k+', label: 'Resources', sublabel: 'Someone uploaded exactly what you need. Just now.', color: 'text-purple-400' },
-            { end: 25, suffix: 'k+', label: 'Active Users', sublabel: "You're not studying alone anymore.", color: 'text-blue-400' },
-            { end: 70, suffix: '+',  label: 'Colleges', sublabel: 'Your college is already here. Are you?', color: 'text-emerald-400' },
-            { end: 5,  suffix: 'k+', label: 'PYQs', sublabel: 'Stop searching. Start solving.', color: 'text-pink-400' },
-          ].map((stat, i) => (
-            <div key={i}>
-              <CountUpStat end={stat.end} suffix={stat.suffix} label={stat.label} sublabel={stat.sublabel} color={stat.color} />
-            </div>
-          ))}
+          {(() => {
+            const parseStatValue = (val: string | undefined, defaultEnd: number, defaultSuffix: string) => {
+              if (!val) return { end: defaultEnd, suffix: defaultSuffix };
+              const cleanVal = val.replace(/,/g, '');
+              const numMatch = cleanVal.match(/^(\d+(?:\.\d+)?)/);
+              if (!numMatch) return { end: defaultEnd, suffix: defaultSuffix };
+              const end = parseFloat(numMatch[1]);
+              const suffix = cleanVal.substring(numMatch[1].length);
+              return { end, suffix };
+            };
+
+            const notesStat = parseStatValue(siteSettings?.stats_notes, 10, 'k+');
+            const studentsStat = parseStatValue(siteSettings?.stats_students, 25, 'k+');
+            const collegesStat = parseStatValue(siteSettings?.stats_colleges, 70, '+');
+            const pyqsStat = parseStatValue(siteSettings?.stats_pyqs, 5, 'k+');
+
+            return [
+              { end: notesStat.end, suffix: notesStat.suffix, label: 'Resources', sublabel: 'Someone uploaded exactly what you need. Just now.', color: 'text-purple-400' },
+              { end: studentsStat.end, suffix: studentsStat.suffix, label: 'Active Users', sublabel: "You're not studying alone anymore.", color: 'text-blue-400' },
+              { end: collegesStat.end, suffix: collegesStat.suffix, label: 'Colleges', sublabel: 'Your college is already here. Are you?', color: 'text-emerald-400' },
+              { end: pyqsStat.end, suffix: pyqsStat.suffix, label: 'PYQs', sublabel: 'Stop searching. Start solving.', color: 'text-pink-400' },
+            ].map((stat, i) => (
+              <div key={i}>
+                <CountUpStat end={stat.end} suffix={stat.suffix} label={stat.label} sublabel={stat.sublabel} color={stat.color} />
+              </div>
+            ));
+          })()}
         </div>
       </section>
     </div>
