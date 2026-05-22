@@ -221,7 +221,8 @@ export function CampusExchangePage() {
     }
 
     return result;
-  }, [searchQuery, selectedCampus, activeCategory, minPrice, maxPrice, selectedTypes, sortBy]);
+  }, [items, searchQuery, selectedCampus, activeCategory, minPrice, maxPrice, selectedTypes, sortBy]);
+
 
   const getTypeStyle = (type: string) => {
     switch(type) {
