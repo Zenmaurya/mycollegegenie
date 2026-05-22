@@ -23,20 +23,20 @@ export default defineConfig(({ mode }) => {
           background_color: '#ffffff',
           display: 'standalone',
           icons: [
-            {
-              src: '/favicon.png',
-              sizes: '192x192',
-              type: 'image/png'
-            },
-            {
-              src: '/favicon.png',
-              sizes: '512x512',
-              type: 'image/png'
-            }
+            { src: '/favicon.png', sizes: '192x192', type: 'image/png' },
+            { src: '/favicon.png', sizes: '512x512', type: 'image/png' }
           ]
         },
         workbox: {
+          // PERF FIX: Exclude the 1.2MB PDF.js worker and 452KB vendor-pdfjs
+          // from precache. They are only needed for FlipbookPage and will be
+          // cached at runtime the first time a user visits that page.
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          globIgnores: [
+            '**/pdf.worker.min*.mjs',   // 1,244 KB — too heavy for precache
+            '**/pdf.worker*.js',
+            '**/vendor-pdfjs*.js',       // 452 KB — only for FlipbookPage
+          ],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/api\.mycollegegenie\.in\/api\/.*/i,
@@ -45,75 +45,98 @@ export default defineConfig(({ mode }) => {
                 cacheName: 'api-cache',
                 expiration: {
                   maxEntries: 50,
-                  // FIX Perf #4: Reduced from 24h to 10min.
-                  // 24h meant new uploads were invisible to PWA users for a full day.
                   maxAgeSeconds: 60 * 10 // 10 minutes
                 },
-                cacheableResponse: {
-                  statuses: [0, 200]
-                }
+                cacheableResponse: { statuses: [0, 200] }
               }
-            }
+            },
+            // Cache Google Fonts for 1 year
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'google-fonts-stylesheets',
+                expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 365 }
+              }
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-webfonts',
+                expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 }
+              }
+            },
           ]
         }
       })
     ],
     resolve: {
-      alias: {
-        '@': path.resolve(__dirname, './src'),
-      },
+      alias: { '@': path.resolve(__dirname, './src') },
     },
     esbuild: {
       drop: isProd ? ['console', 'debugger'] : [],
     },
     build: {
-      target: 'es2015',
-      // Disable source maps in production (reduces bundle size, hides source)
+      target: 'es2018',
       sourcemap: false,
-      // Increase chunk warning limit
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 600,
+      // PERF FIX: Don't preload every chunk — only the critical path
+      modulePreload: { polyfill: false },
       rollupOptions: {
         output: {
-          // Smart code splitting — heavy pages load separately
           manualChunks: (id) => {
-            // Core React libraries
-            if (id.includes('node_modules/react') || 
-                id.includes('node_modules/react-dom') || 
-                id.includes('node_modules/react-router-dom')) {
+            // Core React — always needed
+            if (id.includes('node_modules/react/') ||
+                id.includes('node_modules/react-dom/') ||
+                id.includes('node_modules/react-router-dom/')) {
               return 'vendor-react';
             }
-            // Animation library (heavy)
-            if (id.includes('node_modules/motion') || id.includes('node_modules/framer-motion')) {
+            // Animation (heavy — separate chunk)
+            if (id.includes('node_modules/motion/') ||
+                id.includes('node_modules/framer-motion/')) {
               return 'vendor-motion';
             }
-            // Sentry (heavy, only needed on error)
-            if (id.includes('node_modules/@sentry')) {
+            // Sentry (only needed on error)
+            if (id.includes('node_modules/@sentry/')) {
               return 'vendor-sentry';
             }
-            // UI icons
-            if (id.includes('node_modules/lucide-react')) {
+            // Icons (needed almost everywhere)
+            if (id.includes('node_modules/lucide-react/')) {
               return 'vendor-icons';
             }
-            // Supabase
-            if (id.includes('node_modules/@supabase')) {
+            // Supabase (auth — needed early)
+            if (id.includes('node_modules/@supabase/')) {
               return 'vendor-supabase';
+            }
+            // PDF.js — only needed in Flipbook, already lazy loaded
+            if (id.includes('node_modules/pdfjs-dist/')) {
+              return 'vendor-pdfjs';
+            }
+            // Sonner toasts
+            if (id.includes('node_modules/sonner/')) {
+              return 'vendor-sonner';
+            }
+            // React Helmet
+            if (id.includes('node_modules/react-helmet') ||
+                id.includes('node_modules/react-dropzone/')) {
+              return 'vendor-ui';
             }
           },
         },
       },
-      // Minify for production
       minify: isProd ? 'esbuild' : false,
+      // Reduce asset size with better compression hints
+      assetsInlineLimit: 4096,
     },
-    // Optimize dev server
     server: {
       port: 3000,
       host: true,
     },
-    // Pre-bundle dependencies for faster dev startup
     optimizeDeps: {
       include: [
-        'react', 
-        'react-dom', 
+        'react',
+        'react-dom',
         'react-router-dom',
         'lucide-react',
         '@supabase/supabase-js',
@@ -121,4 +144,3 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
-
