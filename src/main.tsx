@@ -8,12 +8,14 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { registerSW } from 'virtual:pwa-register';
 
 // Register PWA Service Worker
+const isDev = import.meta.env.DEV;
 const updateSW = registerSW({
   onNeedRefresh() {
-    console.log('New content available, please refresh.');
+    if (isDev) console.log('New content available, please refresh.');
+    // In production: could show a toast here if desired
   },
   onOfflineReady() {
-    console.log('App is ready to work offline.');
+    if (isDev) console.log('App is ready to work offline.');
   },
 });
 

@@ -165,9 +165,19 @@ function AppContent() {
     const handleScroll = () => {
       setShowBackToTop(window.scrollY > 400);
     };
-    window.addEventListener('scroll', handleScroll);
+    // passive:true — improves scroll performance (never calls preventDefault)
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // ESC key closes mobile menu (keyboard accessibility)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) setIsMobileMenuOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileMenuOpen]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -181,7 +191,6 @@ function AppContent() {
   });
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
-  const [newsError, setNewsError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [visibleCount, setVisibleCount] = useState(12);
 
@@ -773,7 +782,6 @@ function AppContent() {
 
   const fetchNews = async () => {
     setIsNewsLoading(true);
-    setNewsError(null);
     try {
       const data = await getNews();
       if (data && data.length > 0) {
@@ -781,30 +789,22 @@ function AppContent() {
       } else {
         // Fallback: Fetch AI-generated updates from the secure backend endpoint
         const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
-        const aiResponse = await fetch(`${API}/api/news/ai-updates`);
-        
-        if (!aiResponse.ok) {
-          throw new Error('AI features are currently unavailable or rate-limited.');
-        }
-
-        const parsedNews = await aiResponse.json();
-        if (parsedNews && parsedNews.length > 0) {
-          setNewsItems(parsedNews);
-        } else {
-          throw new Error("No news found from AI fallback");
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 10_000);
+        try {
+          const aiResponse = await fetch(`${API}/api/news/ai-updates`, { signal: ctrl.signal });
+          clearTimeout(tid);
+          if (aiResponse.ok) {
+            const parsedNews = await aiResponse.json();
+            if (parsedNews && parsedNews.length > 0) setNewsItems(parsedNews);
+          }
+        } catch {
+          clearTimeout(tid);
+          // Silently fall through — no news is fine
         }
       }
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : '';
-      if (errMsg.includes('AI features are currently unavailable')) {
-        console.warn('[News] AI updates disabled or unavailable on backend — using mock news data.');
-      } else {
-        console.error("Error fetching news:", err);
-      }
-      setNewsError(null); // Don't show error to users — mock data handles it
-
-      // Fallback mock data if API fails or for demo
-      setNewsItems([]);
+      // Silent fail — individual pages (OfficialNewsPage) handle their own loading
     } finally {
       setIsNewsLoading(false);
     }
