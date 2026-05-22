@@ -38,18 +38,7 @@ export default defineConfig(({ mode }) => {
             '**/vendor-pdfjs*.js',       // 452 KB — only for FlipbookPage
           ],
           runtimeCaching: [
-            {
-              urlPattern: /^https:\/\/api\.mycollegegenie\.in\/api\/.*/i,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'api-cache',
-                expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 60 * 10 // 10 minutes
-                },
-                cacheableResponse: { statuses: [0, 200] }
-              }
-            },
+
             // Cache Google Fonts for 1 year
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
