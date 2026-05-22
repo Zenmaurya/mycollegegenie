@@ -56,7 +56,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
 
   const loadNews = () => {
     import('../lib/apiClient').then(({ fetchWithAuth }) => {
-      fetchWithAuth('/api/news?limit=200')
+      fetchWithAuth('/api/news?limit=60')
         .then((data: any[]) => {
           const mapped: NewsItem[] = (Array.isArray(data) ? data : []).map(item => ({
             id: item.id,
@@ -88,11 +88,17 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
 
   const sourceItems = localItems.length > 0 ? localItems : propItems;
 
-  // Show all news (no date filter here — let users see everything)
-  const news = React.useMemo(() =>
-    sourceItems.filter(item => item.category !== 'Event'),
-    [sourceItems]
-  );
+  // Show news from last 2 months only — keeps page fast and relevant
+  const news = React.useMemo(() => {
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+    return sourceItems.filter(item => {
+      if (item.category === 'Event') return false;
+      const itemDate = new Date(item.createdAt || Date.now());
+      if (!isNaN(itemDate.getTime())) return itemDate >= twoMonthsAgo;
+      return true; // keep items with no date
+    });
+  }, [sourceItems]);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
