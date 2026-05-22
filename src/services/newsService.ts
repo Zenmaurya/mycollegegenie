@@ -1,12 +1,9 @@
-import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
 /**
  * newsService.ts — Backend API version (MySQL/Express)
- * Replaces Firebase Firestore with the Express REST API.
  */
+import { fetchWithAuth } from '../lib/apiClient';
 import { supabase } from '../supabase';
 import { News } from '../types';
-
-
 
 // ── GET /api/news ───────────────────────────────────────────
 export const getNews = async (
@@ -22,7 +19,6 @@ export const getNews = async (
 
     const data = await fetchWithAuth(`/api/news?${params}`);
 
-    // Normalise backend shape → frontend NewsItem shape
     return (Array.isArray(data) ? data : []).map((item: any) => ({
       id: item.id,
       title: item.title,
@@ -37,15 +33,16 @@ export const getNews = async (
       description: item.description || item.summary || '',
       createdAt: item.created_at || new Date().toISOString(),
       isApproved: Boolean(item.is_approved),
+      submitted_by_name: item.submitted_by_name || null,
+      submitted_by_id:   item.submitted_by_id   || null,
     } as News));
   } catch (error) {
     const isConnRefused = error instanceof TypeError && error.message.includes('fetch');
     if (isConnRefused) {
-      console.warn('[newsService] Backend unavailable — falling back to mock data. Start backend with `npm run dev`.');
+      console.warn('[newsService] Backend unavailable — falling back to mock data.');
     } else {
       console.error('[newsService] getNews error:', error);
     }
-
     return [];
   }
 };
@@ -98,7 +95,7 @@ export const deleteNews = async (id: string) => {
   }
 };
 
-// ── PATCH /api/news/:id/approve ─── Admin approve news/event
+// ── PATCH /api/news/:id/approve ─── Admin approve
 export const approveNews = async (id: string): Promise<void> => {
   try {
     await fetchWithAuth(`/api/news/${id}`, {
@@ -111,7 +108,7 @@ export const approveNews = async (id: string): Promise<void> => {
   }
 };
 
-// ── POST /api/news (Event submission with image) ────────────
+// ── POST /api/news (Event with image upload) ────────────────
 export const submitEvent = async (
   formData: { title: string; college: string; date: string; venue: string; eligibility: string; description: string; image?: File | null; imageUrl?: string }
 ) => {
@@ -120,7 +117,6 @@ export const submitEvent = async (
   if (!token) throw new Error('Not authenticated');
 
   let imageUrl = formData.imageUrl || '';
-  // Upload poster image if provided (legacy fallback)
   if (formData.image && !imageUrl) {
     const uploadForm = new FormData();
     uploadForm.append('image', formData.image);
@@ -147,7 +143,29 @@ export const submitEvent = async (
       description: formData.description,
       category: 'Event',
       image_url: imageUrl,
-      is_approved: false, // Admin must approve
+      is_approved: false,
+    }),
+  });
+};
+
+// ── POST /api/news (News submission by student) ─────────────
+export const submitNews = async (
+  formData: { title: string; college: string; date: string; summary: string; url?: string; category?: string }
+): Promise<{ id: string; message: string }> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error('Not authenticated');
+
+  return await fetchWithAuth('/api/news', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: formData.title,
+      college: formData.college,
+      date: formData.date,
+      summary: formData.summary,
+      description: formData.summary,
+      url: formData.url || '',
+      category: formData.category || 'News',
+      is_approved: false,
     }),
   });
 };

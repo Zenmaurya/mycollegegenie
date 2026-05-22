@@ -59,6 +59,7 @@ export interface News {
 }
 
 export interface NewsItem {
+  id?: string;
   title: string;
   date: string;
   summary: string;
@@ -70,6 +71,9 @@ export interface NewsItem {
   imageUrl?: string;
   description?: string;
   time?: string;
+  createdAt?: string;
+  submitted_by_name?: string | null;
+  submitted_by_id?: string | null;
 }
 
 export interface EventPoster {
