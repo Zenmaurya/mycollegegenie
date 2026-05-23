@@ -1,4 +1,4 @@
-﻿import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, useAnimation } from 'motion/react';
 import { GraduationCap, FileText, PlayCircle, Search, Newspaper, ChevronRight, Users, Globe, Award, MessageSquare, ArrowRight, Sparkles, Building, Calendar, Zap } from 'lucide-react';
@@ -184,38 +184,28 @@ export const HomePage: React.FC<HomePageProps> = ({
     }
   }, [newsItems, siteSettings?.carousel_config]);
 
-    const renderHeadline = () => {
-      const headline = siteSettings?.hero_headline || "Every College Student Deserves a Genie.";
-      const words = headline.trim().split(/\s+/);
-      if (words.length <= 1) {
+     const renderHeadline = () => {
         return (
-          <h1 className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block leading-[1.1] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600">
-            {headline}
-          </h1>
-        );
-      }
-      const lastWord = words.pop();
-      const remainingText = words.join(' ');
-      
-      return (
-        <div className="mb-4 sm:mb-5 font-black leading-[1] tracking-tighter text-gray-900">
-          <h1 className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block leading-[1.1] mb-2">
-            {remainingText}
-          </h1>
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-4 mt-0.5">
-            <span className="text-[2.4rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600 leading-[1]">
-              {lastWord}
-            </span>
-            <motion.span 
-              className="text-[#D8B4FE] font-normal text-4xl sm:text-5xl inline-block -rotate-12"
-              animate={{ rotate: [-12, 12, -12], scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              ♡
-            </motion.span>
+          <div className="mb-4 sm:mb-5 font-black leading-[1.1] tracking-tighter text-gray-900 text-center lg:text-left">
+            <h1 className="text-[2.6rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block mb-2">
+              <span className="block md:inline">Every College</span>
+              <span className="hidden md:inline"> </span>
+              <span className="block md:inline">Student Deserves</span>
+            </h1>
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-4 mt-0.5">
+              <span className="text-[2.6rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600 leading-[1.1]">
+                a Genie.
+              </span>
+              <motion.span 
+                className="text-[#D8B4FE] font-normal text-4xl sm:text-5xl inline-block -rotate-12"
+                animate={{ rotate: [-12, 12, -12], scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                ♡
+              </motion.span>
+            </div>
           </div>
-        </div>
-      );
+        );
     };
 
     const isExternalLink = (url: string) => {
@@ -281,7 +271,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
   
           <div className="max-w-7xl mx-auto w-full relative z-10 grid lg:grid-cols-12 gap-8 xl:gap-4 items-center">
-            <div className="max-w-xl lg:max-w-none lg:col-span-5 text-center lg:text-left mx-auto lg:mx-0 flex flex-col items-center lg:items-start">
+            <div className="max-w-xl lg:max-w-none lg:col-span-5 text-center lg:text-left mx-auto lg:mx-0">
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -800,5 +790,8 @@ export const HomePage: React.FC<HomePageProps> = ({
     </div>
   );
 };
+
+
+
 
 
