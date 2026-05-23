@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -80,10 +80,15 @@ export const PostDetailPage: React.FC = () => {
 
   const handleUpvote = async () => {
     if (!post || !currentUser) { toast.error('Sign in to vote.'); return; }
+    const upvotes = Array.isArray(post.upvotes) ? post.upvotes : [];
     try {
-      const res = await ForumService.toggleUpvote(post.id, currentUser.id, post.upvotes.includes(currentUser.id));
+      const res = await ForumService.toggleUpvote(post.id, currentUser.id, upvotes.includes(currentUser.id));
       if (res && res.upvotes) {
-        setPost(prev => prev ? { ...prev, upvotes: res.upvotes, downvotes: res.downvotes } : prev);
+        setPost(prev => prev ? {
+          ...prev,
+          upvotes: Array.isArray(res.upvotes) ? res.upvotes : [],
+          downvotes: Array.isArray(res.downvotes) ? res.downvotes : []
+        } : prev);
       }
     } catch (err) {
       toast.error('Failed to vote');
@@ -92,10 +97,15 @@ export const PostDetailPage: React.FC = () => {
 
   const handleDownvote = async () => {
     if (!post || !currentUser) { toast.error('Sign in to vote.'); return; }
+    const downvotes = Array.isArray(post.downvotes) ? post.downvotes : [];
     try {
-      const res = await ForumService.toggleDownvote(post.id, currentUser.id, post.downvotes.includes(currentUser.id));
+      const res = await ForumService.toggleDownvote(post.id, currentUser.id, downvotes.includes(currentUser.id));
       if (res && res.downvotes) {
-        setPost(prev => prev ? { ...prev, upvotes: res.upvotes, downvotes: res.downvotes } : prev);
+        setPost(prev => prev ? {
+          ...prev,
+          upvotes: Array.isArray(res.upvotes) ? res.upvotes : [],
+          downvotes: Array.isArray(res.downvotes) ? res.downvotes : []
+        } : prev);
       }
     } catch (err) {
       toast.error('Failed to vote');
@@ -154,9 +164,11 @@ export const PostDetailPage: React.FC = () => {
 
   if (!post) return null;
 
-  const isUpvoted = currentUser && post.upvotes.includes(currentUser.id);
-  const isDownvoted = currentUser && post.downvotes.includes(currentUser.id);
-  const score = post.upvotes.length - post.downvotes.length;
+  const upvotes = Array.isArray(post.upvotes) ? post.upvotes : [];
+  const downvotes = Array.isArray(post.downvotes) ? post.downvotes : [];
+  const isUpvoted = currentUser && upvotes.includes(currentUser.id);
+  const isDownvoted = currentUser && downvotes.includes(currentUser.id);
+  const score = upvotes.length - downvotes.length;
   const topicColor = TOPIC_COLORS[post.topic] || 'bg-gray-50 text-gray-600 border-gray-200';
 
   return (
@@ -320,9 +332,11 @@ export const PostDetailPage: React.FC = () => {
         <AnimatePresence>
           {comments.length > 0 ? (
             comments.map((comment, i) => {
-              const cScore = (comment.upvotes?.length || 0) - (comment.downvotes?.length || 0);
-              const cUpvoted = currentUser && comment.upvotes?.includes(currentUser.id);
-              const cDownvoted = currentUser && comment.downvotes?.includes(currentUser.id);
+              const cUpvotes = Array.isArray(comment.upvotes) ? comment.upvotes : [];
+              const cDownvotes = Array.isArray(comment.downvotes) ? comment.downvotes : [];
+              const cScore = cUpvotes.length - cDownvotes.length;
+              const cUpvoted = currentUser && cUpvotes.includes(currentUser.id);
+              const cDownvoted = currentUser && cDownvotes.includes(currentUser.id);
               return (
                 <motion.div key={comment.id} layout
                   initial={{ opacity: 0, y: 8 }}
@@ -372,26 +386,34 @@ export const PostDetailPage: React.FC = () => {
                       try {
                         const res = await ForumService.toggleCommentUpvote(postId, comment.id, currentUser.id, !!cUpvoted);
                         if (res && res.upvotes) {
-                          setComments(prev => prev.map(c => c.id === comment.id ? { ...c, upvotes: res.upvotes, downvotes: res.downvotes } : c));
+                          setComments(prev => prev.map(c => c.id === comment.id ? {
+                            ...c,
+                            upvotes: Array.isArray(res.upvotes) ? res.upvotes : [],
+                            downvotes: Array.isArray(res.downvotes) ? res.downvotes : []
+                          } : c));
                         }
                       } catch(e) { toast.error('Failed to vote'); }
                     }}
                       className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-black transition-all ${cUpvoted ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'}`}>
                       <ThumbsUp className="w-3 h-3" />
-                      <span>{comment.upvotes?.length || 0}</span>
+                      <span>{cUpvotes.length}</span>
                     </button>
                     <button onClick={async () => {
                       if (!postId || !currentUser) { toast.error('Sign in to vote.'); return; }
                       try {
                         const res = await ForumService.toggleCommentDownvote(postId, comment.id, currentUser.id, !!cDownvoted);
                         if (res && res.downvotes) {
-                          setComments(prev => prev.map(c => c.id === comment.id ? { ...c, upvotes: res.upvotes, downvotes: res.downvotes } : c));
+                          setComments(prev => prev.map(c => c.id === comment.id ? {
+                            ...c,
+                            upvotes: Array.isArray(res.upvotes) ? res.upvotes : [],
+                            downvotes: Array.isArray(res.downvotes) ? res.downvotes : []
+                          } : c));
                         }
                       } catch(e) { toast.error('Failed to vote'); }
                     }}
                       className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-black transition-all ${cDownvoted ? 'text-rose-500 bg-rose-50' : 'text-gray-400 hover:text-rose-500 hover:bg-rose-50'}`}>
                       <ThumbsDown className="w-3 h-3" />
-                      <span>{comment.downvotes?.length || 0}</span>
+                      <span>{cDownvotes.length}</span>
                     </button>
                     <span className={`ml-1 text-xs font-black tabular-nums ${cScore > 0 ? 'text-purple-600' : cScore < 0 ? 'text-rose-500' : 'text-gray-400'}`}>
                       {cScore > 0 ? `+${cScore}` : cScore}

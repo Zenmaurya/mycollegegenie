@@ -93,6 +93,19 @@ export const uploadFile = (
   });
 };
 
+function safeArray(val: any): any[] {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 // ── Normalise backend row → Resource shape ──────────────────
 function normaliseResource(item: any): Resource {
   return {
@@ -104,7 +117,7 @@ function normaliseResource(item: any): Resource {
     semester: Number(item.semester) || 0,
     subCategory: item.sub_category || item.subCategory || '',
     subjectCode: item.subject_code || item.subjectCode || '',
-    tags: Array.isArray(item.tags) ? item.tags : (typeof item.tags === 'string' ? JSON.parse(item.tags || '[]') : []),
+    tags: safeArray(item.tags),
     link: item.link || item.file_url || item.fileUrl || '',
     directDownloadLink: item.direct_download_link || item.directDownloadLink || '',
     uploadDate: item.upload_date || item.uploadDate || new Date(item.created_at || Date.now()).toISOString().split('T')[0],
@@ -112,8 +125,8 @@ function normaliseResource(item: any): Resource {
     uploaderId: item.uploader_id || item.uploaderId || '',
     uploaderRole: item.uploader_role || item.uploaderRole || 'user',
     isApproved: Boolean(item.is_approved),
-    ratings: Array.isArray(item.ratings) ? item.ratings : (typeof item.ratings === 'string' ? JSON.parse(item.ratings || '[]') : []),
-    reports: Array.isArray(item.reports) ? item.reports : (typeof item.reports === 'string' ? JSON.parse(item.reports || '[]') : []),
+    ratings: safeArray(item.ratings),
+    reports: safeArray(item.reports),
   };
 }
 

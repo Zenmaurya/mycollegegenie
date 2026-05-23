@@ -98,24 +98,34 @@ export const ForumPage: React.FC = () => {
     }
   };
 
-  const handleUpvote = async (postId: string, upvotes: string[]) => {
+  const handleUpvote = async (postId: string, rawUpvotes: string[]) => {
     const user = await getCurrentUser();
     if (!user) { toast.error('Sign in to vote.'); return; }
+    const upvotes = Array.isArray(rawUpvotes) ? rawUpvotes : [];
     try {
       const res = await ForumService.toggleUpvote(postId, user.id, upvotes.includes(user.id));
       if (res && res.upvotes) {
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, upvotes: res.upvotes, downvotes: res.downvotes } : p));
+        setPosts(prev => prev.map(p => p.id === postId ? {
+          ...p,
+          upvotes: Array.isArray(res.upvotes) ? res.upvotes : [],
+          downvotes: Array.isArray(res.downvotes) ? res.downvotes : []
+        } : p));
       }
     } catch (err) { toast.error('Failed to vote'); }
   };
 
-  const handleDownvote = async (postId: string, downvotes: string[]) => {
+  const handleDownvote = async (postId: string, rawDownvotes: string[]) => {
     const user = await getCurrentUser();
     if (!user) { toast.error('Sign in to vote.'); return; }
+    const downvotes = Array.isArray(rawDownvotes) ? rawDownvotes : [];
     try {
       const res = await ForumService.toggleDownvote(postId, user.id, downvotes.includes(user.id));
       if (res && res.downvotes) {
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, upvotes: res.upvotes, downvotes: res.downvotes } : p));
+        setPosts(prev => prev.map(p => p.id === postId ? {
+          ...p,
+          upvotes: Array.isArray(res.upvotes) ? res.upvotes : [],
+          downvotes: Array.isArray(res.downvotes) ? res.downvotes : []
+        } : p));
       }
     } catch (err) { toast.error('Failed to vote'); }
   };
@@ -203,9 +213,11 @@ export const ForumPage: React.FC = () => {
             </div>
           ) : filteredPosts.length > 0 ? (
             filteredPosts.map((post, i) => {
-              const isUpvoted = currentUser && post.upvotes.includes(currentUser.id);
-              const isDownvoted = currentUser && post.downvotes.includes(currentUser.id);
-              const score = post.upvotes.length - post.downvotes.length;
+              const upvotes = Array.isArray(post.upvotes) ? post.upvotes : [];
+              const downvotes = Array.isArray(post.downvotes) ? post.downvotes : [];
+              const isUpvoted = currentUser && upvotes.includes(currentUser.id);
+              const isDownvoted = currentUser && downvotes.includes(currentUser.id);
+              const score = upvotes.length - downvotes.length;
               const topicColor = TOPIC_COLORS[post.topic] || 'bg-gray-50 text-gray-600 border-gray-200';
 
               return (

@@ -25,8 +25,8 @@ export const ForumService = {
         course: p.course,
         topic: p.topic,
         createdAt: p.created_at,
-        upvotes: p.upvotes || [],
-        downvotes: p.downvotes || [],
+        upvotes: Array.isArray(p.upvotes) ? p.upvotes : [],
+        downvotes: Array.isArray(p.downvotes) ? p.downvotes : [],
         commentCount: p.comment_count || 0
       }));
       
@@ -52,8 +52,8 @@ export const ForumService = {
         course: p.course,
         topic: p.topic,
         createdAt: p.created_at,
-        upvotes: p.upvotes || [],
-        downvotes: p.downvotes || [],
+        upvotes: Array.isArray(p.upvotes) ? p.upvotes : [],
+        downvotes: Array.isArray(p.downvotes) ? p.downvotes : [],
         commentCount: p.comment_count || 0
       } as ForumPost;
     } catch (error) {
@@ -111,8 +111,8 @@ export const ForumService = {
         authorName: c.author_name,
         content: c.content,
         createdAt: c.created_at,
-        upvotes: c.upvotes || [],
-        downvotes: c.downvotes || []
+        upvotes: Array.isArray(c.upvotes) ? c.upvotes : [],
+        downvotes: Array.isArray(c.downvotes) ? c.downvotes : []
       }));
       if (callback) callback(comments);
       return comments;
