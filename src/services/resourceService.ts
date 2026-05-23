@@ -4,6 +4,7 @@
  */
 import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
 import { supabase } from '../supabase';
+import { config } from '../lib/config';
 import { Resource, ResourceType } from '../types';
 
 // FIX Bug #5: OperationType was referenced throughout this file but never declared.
@@ -57,7 +58,9 @@ export const uploadFile = async (
   if (meta.subject)     params.set('subject',     meta.subject);
   if (meta.subjectCode) params.set('subjectCode', meta.subjectCode);
 
-  const url = `${import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in'}/api/resources/upload?${params.toString()}`;
+  // BUG FIX: was using import.meta.env.VITE_API_URL directly — now uses config.apiUrl
+  // so it respects the same centralised config as the rest of the app.
+  const url = `${config.apiUrl}/api/resources/upload?${params.toString()}`;
 
   // Step 2: Wrap ONLY the XHR in a Promise (it's callback-based, not async).
   // No async work happens inside the Promise constructor — safe pattern.
@@ -79,16 +82,24 @@ export const uploadFile = async (
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const data = JSON.parse(xhr.responseText);
-          resolve(data.url);
+          if (!data.url) {
+            // Upload "succeeded" but server returned no URL — log for debugging
+            console.error('[uploadFile] Server responded 200 but no URL in response:', xhr.responseText);
+            reject(new Error('Upload completed but server did not return a file URL. Contact admin.'));
+          } else {
+            resolve(data.url);
+          }
         } catch {
-          reject(new Error('Failed to parse upload response'));
+          reject(new Error('Failed to parse upload response from server.'));
         }
       } else {
         try {
           const err = JSON.parse(xhr.responseText);
-          reject(new Error(err.error || `Upload failed with status ${xhr.status}`));
+          const msg = err.error || `Upload failed with status ${xhr.status}`;
+          console.error('[uploadFile] HTTP', xhr.status, ':', msg);
+          reject(new Error(msg));
         } catch {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
+          reject(new Error(`Upload failed with status ${xhr.status}. Please try again.`));
         }
       }
     };
@@ -202,6 +213,8 @@ export const uploadResource = async (
     const result = await fetchWithAuth('/api/resources', {
       method: 'POST',
       body: JSON.stringify(payload),
+      timeoutMs: 30_000, // BUG FIX: was default 15s — increased to 30s because
+                          // server may be slow after a large file upload completes.
     });
     return result.id;
   } catch (error) {
