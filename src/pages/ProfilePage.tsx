@@ -7,7 +7,7 @@ import {
   ShieldCheck, Check, Package, HelpCircle, 
   ChevronRight, ExternalLink, Folder
 } from 'lucide-react';
-import { supabase } from '../supabase';
+import { supabase, logout } from '../supabase';
 import { getUserProfile, updateUserProfile } from '../services/userService';
 import { toast } from 'sonner';
 import { User as AppUser } from '../types';
@@ -40,6 +40,7 @@ export const ProfilePage: React.FC = () => {
   const [avatarTab, setAvatarTab] = useState(0);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
@@ -85,8 +86,10 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
     try {
-      await supabase.auth.signOut();
+      await logout(); // scope:'local' — clears instantly, no network wait
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -164,10 +167,15 @@ export const ProfilePage: React.FC = () => {
             {/* Sign Out */}
             <button 
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 p-4 bg-white text-rose-600 rounded-[2rem] font-bold hover:bg-rose-50 transition-all border border-gray-100 hover:border-rose-100 shadow-sm"
+              disabled={isSigningOut}
+              className="w-full flex items-center justify-center gap-2 p-4 bg-white text-rose-600 rounded-[2rem] font-bold hover:bg-rose-50 transition-all border border-gray-100 hover:border-rose-100 shadow-sm disabled:opacity-70"
             >
-              <LogOut className="w-5 h-5" />
-              Sign Out
+              {isSigningOut ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <LogOut className="w-5 h-5" />
+              )}
+              {isSigningOut ? 'Signing Out...' : 'Sign Out'}
             </button>
           </div>
 

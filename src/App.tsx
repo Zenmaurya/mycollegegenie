@@ -86,6 +86,7 @@ function AppContent() {
   const [sortBy, setSortBy] = useState<'Title' | 'Date' | 'Rating' | 'Course'>('Date');
   const [isEventRequestModalOpen, setIsEventRequestModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showNewBadge, setShowNewBadge] = useState(true);
 
@@ -1222,16 +1223,19 @@ function AppContent() {
                           View Profile
                         </Link>
                         <button
-                          onClick={async () => { 
-                            setIsMobileMenuOpen(false); 
+                          onClick={async () => {
+                            setIsMobileMenuOpen(false);
+                            if (isSigningOut) return;
+                            setIsSigningOut(true);
                             try { await logout(); } catch (e) { console.error(e); } finally { window.location.href = '/login'; }
                           }}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 font-semibold text-[13px] transition-all"
+                          disabled={isSigningOut}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 font-semibold text-[13px] transition-all disabled:opacity-60"
                         >
                           <span className="w-8 h-8 rounded-xl bg-red-50 text-red-400 flex items-center justify-center shrink-0">
-                            <LogOut className="w-4 h-4" />
+                            {isSigningOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
                           </span>
-                          Sign Out
+                          {isSigningOut ? 'Signing Out...' : 'Sign Out'}
                         </button>
                       </>
                     ) : (

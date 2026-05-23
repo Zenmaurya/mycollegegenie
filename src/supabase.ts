@@ -50,10 +50,14 @@ export async function signUpWithEmail(email: string, password: string, metadata?
   return data;
 }
 
-/** Logout */
+/** Logout — scope:'local' clears session from localStorage immediately.
+ * This avoids a network round-trip to Supabase auth servers, which
+ * can hang for 30+ seconds on slow/mobile networks, making it look like
+ * the button doesn't work. The server-side token is short-lived anyway.
+ */
 export async function logout() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  // Clear local session immediately (no network wait)
+  await supabase.auth.signOut({ scope: 'local' });
 }
 
 /** Password reset email */
