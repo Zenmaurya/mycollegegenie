@@ -30,7 +30,7 @@ const CATEGORIES = [
   { id: 'others', name: 'Others', icon: MoreHorizontal, count: '60+' },
 ];
 
-export function CampusExchangePage() {
+export function CampusExchangePage({ user: propUser }: { user?: any }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
@@ -77,7 +77,7 @@ export function CampusExchangePage() {
     loadItems();
   }, [refreshTrigger]);
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const currentUser = propUser ?? null;
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -147,13 +147,7 @@ export function CampusExchangePage() {
     }
   };
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user || null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+
 
   const handleTypeToggle = (type: string) => {
     setSelectedTypes(prev => 

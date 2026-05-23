@@ -1381,6 +1381,7 @@ function AppContent() {
                     setSelectedResource={setSelectedResource}
                     handleShare={handleShare}
                     setIsUploadModalOpen={openUploadModal}
+                    user={user}
                   />
                 } />
                 <Route path="/playlists" element={
@@ -1407,9 +1408,9 @@ function AppContent() {
                     resultsRef={resultsRef}
                   />
                 } />
-                <Route path="/forum" element={<ForumPage />} />
-                <Route path="/find-pg" element={<FindPGPage />} />
-                <Route path="/campus-exchange" element={<CampusExchangePage />} />
+                <Route path="/forum" element={<ForumPage user={user} />} />
+                <Route path="/find-pg" element={<FindPGPage user={user} />} />
+                <Route path="/campus-exchange" element={<CampusExchangePage user={user} />} />
                 <Route path="/forum/:postId" element={<PostDetailPage />} />
                 <Route path="/admin" element={
                   isAuthLoading ? (
@@ -1433,8 +1434,8 @@ function AppContent() {
                 <Route path="/privacy" element={<PrivacyPage />} />
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/contact" element={<ContactPage />} />
-                <Route path="/news" element={<OfficialNewsPage newsItems={newsItems} isLoading={isNewsLoading} />} />
-                <Route path="/events" element={<CollegeEventsPage newsItems={newsItems} isLoading={isNewsLoading} />} />
+                <Route path="/news" element={<OfficialNewsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
+                <Route path="/events" element={<CollegeEventsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
                 <Route path="/otp-verify" element={<OTPVerificationPage />} />
                 <Route path="/contributors" element={<ContributorsPage />} />
                 <Route path="/blog" element={<BlogPage />} />

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -48,9 +48,10 @@ const DU_COLLEGES = [
 interface OfficialNewsPageProps {
   newsItems: NewsItem[];
   isLoading: boolean;
+  user?: any;
 }
 
-export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: propItems, isLoading: propLoading }) => {
+export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: propItems, isLoading: propLoading, user: propUser }) => {
   // Self-fetch news data
   const [localItems, setLocalItems] = useState<NewsItem[]>([]);
   const [localLoading, setLocalLoading] = useState(true);
@@ -110,7 +111,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
   // ── Submit News Modal State ───────────────────────────────────────────────
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
-  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
+  const currentUser = propUser ?? null;
   const [submitForm, setSubmitForm] = useState({
     title: '',
     college: '',
@@ -122,13 +123,6 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
   });
 
   // Auth state
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setCurrentUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
 
   // URL param → open news detail
   useEffect(() => {
@@ -166,7 +160,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
   // ── Handle News Submission ────────────────────────────────────────────────
   const handleSubmitNews = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = propUser;
     if (!user) { toast.error('Please sign in to submit news.'); return; }
     if (!submitForm.title.trim() || !submitForm.summary.trim()) {
       toast.error('Title and summary are required.'); return;

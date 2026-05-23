@@ -41,6 +41,7 @@ interface BrowsePageProps {
   setSelectedResource: (resource: Resource | null) => void;
   handleShare: (resource: Resource) => void;
   setIsUploadModalOpen: (open: boolean) => void;
+  user?: any;
 }
 
 export const BrowsePage: React.FC<BrowsePageProps> = ({
@@ -71,7 +72,8 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
   selectedResource,
   setSelectedResource,
   handleShare,
-  setIsUploadModalOpen
+  setIsUploadModalOpen,
+  user: propUser
 }) => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -85,15 +87,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
   const [courseSearch, setCourseSearch] = useState('');
-  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user || null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  const currentUser = propUser ?? null;
 
   useEffect(() => {
     const resourceId = searchParams.get('resourceId');

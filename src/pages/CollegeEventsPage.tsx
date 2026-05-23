@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -21,9 +21,10 @@ import { CollegeMMY_EVENTS } from '../components/UpcomingEventsCarousel';
 interface CollegeEventsPageProps {
   newsItems: NewsItem[];
   isLoading: boolean;
+  user?: any;
 }
 
-export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems: propItems, isLoading: propLoading }) => {
+export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems: propItems, isLoading: propLoading, user: propUser }) => {
   // Self-fetch events — eliminates race condition with App.tsx timing
   const [localItems, setLocalItems] = React.useState<NewsItem[]>([]);
   const [localLoading, setLocalLoading] = React.useState(true);
@@ -50,16 +51,9 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
-  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
+  const currentUser = propUser ?? null;
 
-  // Track Supabase auth state
-  React.useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+
   const [submitForm, setSubmitForm] = useState({
     title: '',
     college: '',
@@ -144,7 +138,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
 
   const handleSubmitEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = propUser;
     if (!user) {
       toast.error('Please sign in to submit an event.');
       return;

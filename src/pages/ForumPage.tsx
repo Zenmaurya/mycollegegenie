@@ -35,9 +35,9 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export const ForumPage: React.FC = () => {
+export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   const [posts, setPosts] = useState<ForumPost[]>([]);
-  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
+  const currentUser = propUser ?? null;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('All');
   const [selectedTopic, setSelectedTopic] = useState('All');
@@ -48,13 +48,6 @@ export const ForumPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'hot' | 'new' | 'top'>('new');
   const [newPost, setNewPost] = useState({ title: '', content: '', course: '', topic: SUB_CATEGORIES[0] });
 
-  useEffect(() => { 
-    getCurrentUser().then(u => setCurrentUser(u)); 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setCurrentUser(session?.user || null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
   useEffect(() => { setLimitCount(10); }, [selectedCourse, selectedTopic, activeTab]);
 
   const fetchPosts = async () => {
@@ -82,7 +75,7 @@ export const ForumPage: React.FC = () => {
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = await getCurrentUser();
+    const user = propUser;
     if (!user) return;
     if (!newPost.title.trim()) { toast.error('Please enter a title.'); return; }
     if (!newPost.course) { toast.error('Please select a course.'); return; }
@@ -99,7 +92,7 @@ export const ForumPage: React.FC = () => {
   };
 
   const handleUpvote = async (postId: string, rawUpvotes: string[]) => {
-    const user = await getCurrentUser();
+    const user = propUser;
     if (!user) { toast.error('Sign in to vote.'); return; }
     const upvotes = Array.isArray(rawUpvotes) ? rawUpvotes : [];
     try {
@@ -115,7 +108,7 @@ export const ForumPage: React.FC = () => {
   };
 
   const handleDownvote = async (postId: string, rawDownvotes: string[]) => {
-    const user = await getCurrentUser();
+    const user = propUser;
     if (!user) { toast.error('Sign in to vote.'); return; }
     const downvotes = Array.isArray(rawDownvotes) ? rawDownvotes : [];
     try {

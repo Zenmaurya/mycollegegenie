@@ -16,12 +16,12 @@ import { Camera, Loader2, X as XIcon } from 'lucide-react';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { VerificationApplyModal } from '../components/VerificationApplyModal';
 
-export const FindPGPage: React.FC = () => {
+export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   const [listings, setListings] = useState<PGListing[]>([]);
   const [selectedListing, setSelectedListing] = useState<PGListing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
+  const currentUser = propUser ?? null;
   const [searchQuery, setSearchQuery] = useState('');
   const [genderFilter, setGenderFilter] = useState<'All' | 'Male' | 'Female'>('All');
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -39,14 +39,6 @@ export const FindPGPage: React.FC = () => {
   });
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
-  // Track Supabase auth state
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
 
   useEffect(() => {
     setFetchError(null);
