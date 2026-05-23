@@ -50,6 +50,7 @@ import { Resource, NewsItem, User as AppUser } from './types';
 // Supabase
 import { supabase, logout } from './supabase';
 import { createUserProfile } from './services/userService';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { getResources, uploadResource, uploadFile, rateResource, reportResource } from './services/resourceService';
 import { submitEvent } from './services/newsService';
 
@@ -105,7 +106,7 @@ function AppContent() {
     const fetchSaved = async () => {
       try {
         const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
-        const token = (await supabase.auth.refreshSession().catch(() => supabase.auth.getSession())).data.session?.access_token;
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
         if (!token) return;
         const res = await fetch(`${API}/api/users/me/saved`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -135,7 +136,7 @@ function AppContent() {
 
     try {
       const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
-      const token = (await supabase.auth.refreshSession().catch(() => supabase.auth.getSession())).data.session?.access_token;
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
       
       const res = await fetch(`${API}/api/users/me/saved${isCurrentlySaved ? `/${id}` : ''}`, {
         method: isCurrentlySaved ? 'DELETE' : 'POST',
@@ -238,7 +239,7 @@ function AppContent() {
     setIsPostingComment(true);
     try {
       const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
-      const token = (await supabase.auth.refreshSession().catch(() => supabase.auth.getSession())).data.session?.access_token;
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
       const res = await fetch(`${API}/api/resources/${selectedResource.id}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -261,7 +262,7 @@ function AppContent() {
     setIsPostingTip(true);
     try {
       const API = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
-      const token = (await supabase.auth.refreshSession().catch(() => supabase.auth.getSession())).data.session?.access_token;
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
       const res = await fetch(`${API}/api/resources/${selectedResource.id}/exam-tips`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -1459,7 +1460,11 @@ function AppContent() {
       </main>
 
       {/* ── Auth overlay panel (login / signup) ── */}
-      {isLoginSignupPage && <LoginPage user={appUser} />}
+      {isLoginSignupPage && (
+        <ErrorBoundary key="login-boundary">
+          <LoginPage user={appUser} />
+        </ErrorBoundary>
+      )}
 
       {/* Footer */}
       {!isAuthPage && !isLoginSignupPage && !isFlipbookView && (
