@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+﻿import React, { useRef, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, useAnimation } from 'motion/react';
 import { GraduationCap, FileText, PlayCircle, Search, Newspaper, ChevronRight, Users, Globe, Award, MessageSquare, ArrowRight, Sparkles, Building, Calendar, Zap } from 'lucide-react';
@@ -245,7 +245,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <meta name="twitter:image" content="https://mycollegegenie.in/og-image.png" />
         </Helmet>
         {/* Hero Section */}
-        <main className="relative min-h-[80vh] lg:min-h-[92vh] flex items-center pt-8 sm:pt-16 pb-10 sm:pb-16 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
+        <main className="relative flex flex-col pt-8 sm:pt-12 lg:pt-16 pb-16 sm:pb-24 lg:pb-32 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
           {/* Animated Background Elements */}
           <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none">
             <motion.div 
@@ -800,3 +800,4 @@ export const HomePage: React.FC<HomePageProps> = ({
     </div>
   );
 };
+
