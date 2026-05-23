@@ -82,6 +82,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AdminTab | 'pending' | 'approved' | 'upload'>('overview');
+  const [resourceSubTab, setResourceSubTab] = useState<'pending' | 'approved' | 'upload'>('approved');
   const [verifications, setVerifications] = useState<any[]>([]);
   const [emailModal, setEmailModal] = useState<{ id: number; email: string; name: string } | null>(null);
   const [emailForm, setEmailForm] = useState({ subject: '', message: '' });
@@ -622,6 +623,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     }
   };
 
+  const handleToggleApprove = async (resource: Resource) => {
+    try {
+      const nextStatus = !resource.isApproved;
+      await updateResource(resource.id, { isApproved: nextStatus });
+      setResources(prev => prev.map(r => r.id === resource.id ? { ...r, isApproved: nextStatus } : r));
+      toast.success(nextStatus ? 'Resource is now visible!' : 'Resource is now hidden!');
+    } catch (error) {
+      console.error('Failed to toggle resource visibility:', error);
+      toast.error('Failed to update resource visibility.');
+    }
+  };
+
   const handleDelete = (id: string) => {
     setResourceToDelete(id);
     setIsDeleteModalOpen(true);
@@ -788,7 +801,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
         tags: '',
         file: null
       });
-      setActiveTab('approved');
+      setActiveTab('resources');
+      setResourceSubTab('approved');
     } catch (error) {
       console.error('Failed to process resource:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to process resource. Please check if there are missing fields.');
@@ -860,7 +874,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
       tags: resource.tags.join(', '),
       file: null
     });
-    setActiveTab('upload');
+    setActiveTab('resources');
+    setResourceSubTab('upload');
   };
 
   const startEditingNews = (n: News) => {
@@ -889,10 +904,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     });
   };
 
+
   const filteredResources = resources.filter(r => {
-    const matchesTab = activeTab === 'pending' ? !r.isApproved : r.isApproved;
+    const isPendingTab = (activeTab === 'resources' && resourceSubTab === 'pending') || activeTab === 'pending';
+    const matchesTab = isPendingTab ? !r.isApproved : r.isApproved;
     const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         r.course.toLowerCase().includes(searchQuery.toLowerCase());
+                          r.course.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCourse = selectedCourse === 'All Courses' || r.course === selectedCourse;
     return matchesTab && matchesSearch && matchesCourse;
   });
@@ -1343,314 +1360,360 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
         )}
 
         {activeTab === 'resources' && (
-          <div className="mb-8 flex bg-white p-1 rounded-2xl border border-gray-200 shadow-sm w-fit">
-            <button onClick={() => setActiveTab('pending')} className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50">View Pending</button>
-            <button onClick={() => setActiveTab('approved')} className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50">View Approved</button>
-            <button onClick={() => setActiveTab('upload')} className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50">Upload New</button>
-          </div>
-        )}
-
-        {activeTab === 'pending' || activeTab === 'approved' ? (
           <div className="space-y-6">
-            {/* Back to Resources Nav */}
-            <div className="flex items-center gap-4 mb-4">
-              <button onClick={() => setActiveTab('resources')} className="text-purple-600 font-bold hover:underline">← Back to Resources</button>
-              <h2 className="text-2xl font-black text-gray-900 capitalize">{activeTab} Resources</h2>
-            </div>
-            {/* Filters */}
-            <div className="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-                <input 
-                  type="text"
-                  placeholder="Search resources..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-sm sm:text-base font-medium"
-                />
+            {/* Unified Resources Header & Sub-Tabs */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 capitalize flex items-center gap-2">
+                  <FileText className="w-8 h-8 text-purple-600" />
+                  Resources Management
+                </h2>
+                <p className="text-xs text-gray-400 font-medium">Manage uploaded PDF books, PYQs, lecture notes and playlists.</p>
               </div>
-              <select 
-                value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target.value)}
-                className="w-full text-ellipsis overflow-hidden px-4 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-purple-500/20 text-sm sm:text-base font-black uppercase tracking-widest"
-              >
-                <option>All Courses</option>
-                {College_COURSES.map(c => <option key={c}>{c}</option>)}
-              </select>
+              <div className="flex bg-white p-1 rounded-2xl border border-gray-200 shadow-sm w-fit shrink-0">
+                <button 
+                  onClick={() => { setResourceSubTab('approved'); setEditingResource(null); }}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${resourceSubTab === 'approved' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                  View Approved
+                </button>
+                <button 
+                  onClick={() => { setResourceSubTab('pending'); setEditingResource(null); }}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative ${resourceSubTab === 'pending' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                  View Pending
+                  {resources.filter(r => !r.isApproved).length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                      {resources.filter(r => !r.isApproved).length}
+                    </span>
+                  )}
+                </button>
+                <button 
+                  onClick={() => { setResourceSubTab('upload'); setEditingResource(null); }}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${resourceSubTab === 'upload' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                  {editingResource ? 'Edit Resource' : 'Upload New'}
+                </button>
+              </div>
             </div>
 
-            {/* Resource List */}
-            <div className="grid gap-4 sm:gap-6">
-              {isLoading ? (
-                [1, 2, 3].map(i => <div key={i} className="h-32 bg-white rounded-[2rem] animate-pulse" />)
-              ) : filteredResources.length > 0 ? (
-                filteredResources.map(resource => (
-                    <div key={resource.id} className="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
-                      <div className="flex items-start gap-4 sm:gap-6">
-                        <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${resource.type === 'Playlist' ? 'bg-rose-50 text-rose-600' : 'bg-purple-50 text-purple-600'}`}>
-                          {resource.type === 'Playlist' ? <Youtube className="w-5 h-5 sm:w-7 sm:h-7" /> : <FileText className="w-5 h-5 sm:w-7 sm:h-7" />}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-sm sm:text-xl font-black text-gray-900 truncate tracking-tight">{resource.title}</h3>
-                          <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-6 gap-y-1.5 mt-1.5 text-[10px] sm:text-xs text-gray-400 font-black uppercase tracking-widest">
-                            <span className="flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {resource.course}</span>
-                            <span className="bg-gray-50 px-2 py-0.5 rounded-lg">Sem {resource.semester}</span>
-                            <span className="flex items-center gap-1.5"><UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {resource.uploader}</span>
-                          </div>
-                        </div>
-                      </div>
+            {/* Sub-Tab content */}
+            {resourceSubTab === 'upload' ? (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white p-6 sm:p-12 rounded-[2.5rem] sm:rounded-[3rem] border border-gray-100 shadow-2xl shadow-purple-900/5 max-w-3xl mx-auto"
+              >
+                <div className="flex items-center justify-between mb-8 sm:mb-12">
+                  <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-4 tracking-tight">
+                    {editingResource ? <Edit3 className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" /> : <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />}
+                    {editingResource ? 'Edit Resource Details' : 'Upload New Content'}
+                  </h2>
+                  {editingResource && (
+                    <button 
+                      onClick={() => {
+                        setEditingResource(null);
+                        setResourceSubTab('approved');
+                        setFormData({
+                          title: '',
+                          type: 'Note',
+                          course: '',
+                          semester: 1,
+                          subCategory: 'Lecture Notes',
+                          description: '',
+                          link: '',
+                          directDownloadLink: '',
+                          tags: '',
+                          file: null
+                        });
+                      }}
+                      className="px-4 py-2 hover:bg-gray-100 rounded-xl transition-colors text-xs font-bold text-gray-500"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+                
+                <form onSubmit={handleUpload} className="space-y-6 sm:space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                    <div className="space-y-2.5">
+                      <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Resource Title</label>
+                      <input 
+                        required
+                        type="text"
+                        placeholder="e.g. Microeconomics Unit 1 Notes"
+                        value={formData.title}
+                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                        className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
+                      />
+                    </div>
+                    <div className="space-y-2.5">
+                      <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Resource Type</label>
+                      <select 
+                        value={formData.type}
+                        onChange={(e) => setFormData({...formData, type: e.target.value as any})}
+                        className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
+                      >
+                        <option value="Note">Note</option>
+                        <option value="PYQ">PYQ</option>
+                        <option value="Playlist">Playlist</option>
+                        <option value="Book">Book</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2.5">
+                      <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Course</label>
+                      <select 
+                        value={formData.course}
+                        onChange={(e) => setFormData({...formData, course: e.target.value})}
+                        className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
+                      >
+                        <option value="" disabled>Select Course</option>
+                        {College_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-2.5">
+                      <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Semester</label>
+                      <select 
+                        value={formData.semester}
+                        onChange={(e) => setFormData({...formData, semester: parseInt(e.target.value)})}
+                        className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
+                      >
+                        {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-2.5">
+                      <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Sub-Category</label>
+                      <select 
+                        value={formData.subCategory}
+                        onChange={(e) => setFormData({...formData, subCategory: e.target.value})}
+                        className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
+                      >
+                        {(COURSE_METADATA[formData.course]?.subCategories || SUB_CATEGORIES).map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
 
-                      <div className="flex items-center gap-2 sm:gap-4">
-                        {resource.type !== 'Playlist' && (
-                          <button 
-                            onClick={() => navigate(`/flipbook/${resource.id}`)}
-                            className="p-2.5 sm:p-3.5 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white rounded-2xl transition-all shadow-sm"
-                            title="View on Website (Flipbook)"
-                          >
-                            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
-                          </button>
+                  <div className="space-y-2.5">
+                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Resource Link (Google Drive/YouTube)</label>
+                    <input 
+                      required={!formData.file}
+                      type="url"
+                      placeholder="https://..."
+                      value={formData.link}
+                      onChange={(e) => setFormData({...formData, link: e.target.value})}
+                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Or Upload PDF/File</label>
+                    <div 
+                      {...getRootProps()} 
+                      className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all cursor-pointer ${
+                        isDragActive ? 'border-purple-500 bg-purple-50' : 'border-gray-100 hover:border-purple-400 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input {...getInputProps()} />
+                      <div className="flex flex-col items-center gap-2">
+                        {formData.file ? (
+                          <>
+                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                              <CheckCircle2 className="w-6 h-6 text-green-600" />
+                            </div>
+                            <p className="text-sm font-medium text-gray-900">{formData.file.name}</p>
+                            <button 
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFormData(prev => ({ ...prev, file: null }));
+                              }}
+                              className="text-xs text-red-500 hover:text-red-600 font-bold uppercase tracking-wider"
+                            >
+                              Remove File
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                              <Upload className="w-6 h-6 text-purple-600" />
+                            </div>
+                            <p className="text-sm font-medium text-gray-900">Drag & drop a file here, or click to select</p>
+                            <p className="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
+                          </>
                         )}
-                        <button 
-                          onClick={() => window.open(resource.link, '_blank')}
-                          className="p-2.5 sm:p-3.5 bg-gray-50 text-gray-400 hover:text-purple-600 rounded-2xl transition-colors"
-                          title="View Resource"
-                        >
-                          <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </button>
-                        <button 
-                          onClick={() => startEditingResource(resource)}
-                          className="p-2.5 sm:p-3.5 bg-gray-50 text-gray-400 hover:text-indigo-600 rounded-2xl transition-colors"
-                          title="Edit Resource"
-                        >
-                          <Edit3 className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </button>
-                        {activeTab === 'pending' && (
-                          <button 
-                            onClick={() => handleApprove(resource.id)}
-                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 sm:px-8 py-2.5 sm:py-3.5 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all"
-                          >
-                            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                            Approve
-                          </button>
-                        )}
-                        <button 
-                          onClick={() => handleDelete(resource.id)}
-                          className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 sm:px-8 py-2.5 sm:py-3.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all"
-                        >
-                          <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                          Delete
-                        </button>
                       </div>
                     </div>
-                ))
-              ) : (
-                <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-gray-200">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-8 h-8 text-gray-300" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">No resources found</h3>
-                  <p className="text-gray-500">Try adjusting your filters or search query.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : activeTab === 'upload' ? (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white p-6 sm:p-12 rounded-[2.5rem] sm:rounded-[3rem] border border-gray-100 shadow-2xl shadow-purple-900/5 max-w-3xl mx-auto"
-          >
-            <div className="flex items-center justify-between mb-8 sm:mb-12">
-              <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-4 tracking-tight">
-                {editingResource ? <Edit3 className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" /> : <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />}
-                {editingResource ? 'Edit Resource' : 'Upload New Content'}
-              </h2>
-              {editingResource && (
-                <button 
-                  onClick={() => {
-                    setEditingResource(null);
-                    setFormData({
-                      title: '',
-                      type: 'Note',
-                      course: '',
-                      semester: 1,
-                      subCategory: 'Lecture Notes',
-                      description: '',
-                      link: '',
-                      directDownloadLink: '',
-                      tags: ''
-                    });
-                  }}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <X className="w-6 h-6 text-gray-400" />
-                </button>
-              )}
-            </div>
-            
-            <form onSubmit={handleUpload} className="space-y-6 sm:space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-                <div className="space-y-2.5">
-                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Resource Title</label>
-                  <input 
-                    required
-                    type="text"
-                    placeholder="e.g. Microeconomics Unit 1 Notes"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
-                  />
-                </div>
-                <div className="space-y-2.5">
-                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Resource Type</label>
-                  <select 
-                    value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value as any})}
-                    className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
-                  >
-                    <option value="Note">Note</option>
-                    <option value="PYQ">PYQ</option>
-                    <option value="Playlist">Playlist</option>
-                    <option value="Book">Book</option>
-                  </select>
-                </div>
-                <div className="space-y-2.5">
-                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Course</label>
-                  <select 
-                    value={formData.course}
-                    onChange={(e) => setFormData({...formData, course: e.target.value})}
-                    className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
-                  >
-                    <option value="" disabled>Select Course</option>
-                    {College_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-2.5">
-                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Semester</label>
-                  <select 
-                    value={formData.semester}
-                    onChange={(e) => setFormData({...formData, semester: parseInt(e.target.value)})}
-                    className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
-                  >
-                    {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-2.5">
-                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Sub-Category</label>
-                  <select 
-                    value={formData.subCategory}
-                    onChange={(e) => setFormData({...formData, subCategory: e.target.value})}
-                    className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
-                  >
-                    {(COURSE_METADATA[formData.course]?.subCategories || SUB_CATEGORIES).map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
-              <div className="space-y-2.5">
-                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Resource Link (Google Drive/YouTube)</label>
-                <input 
-                  required={!formData.file}
-                  type="url"
-                  placeholder="https://..."
-                  value={formData.link}
-                  onChange={(e) => setFormData({...formData, link: e.target.value})}
-                  className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
-                />
-              </div>
+                  <div className="space-y-2.5">
+                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Direct Download Link (Optional)</label>
+                    <input 
+                      type="url"
+                      placeholder="Direct PDF link"
+                      value={formData.directDownloadLink}
+                      onChange={(e) => setFormData({...formData, directDownloadLink: e.target.value})}
+                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
+                    />
+                  </div>
 
-              <div className="space-y-2.5">
-                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Or Upload PDF/File</label>
-                <div 
-                  {...getRootProps()} 
-                  className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all cursor-pointer ${
-                    isDragActive ? 'border-purple-500 bg-purple-50' : 'border-gray-100 hover:border-purple-400 hover:bg-gray-50'
-                  }`}
-                >
-                  <input {...getInputProps()} />
-                  <div className="flex flex-col items-center gap-2">
-                    {formData.file ? (
-                      <>
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                          <CheckCircle2 className="w-6 h-6 text-green-600" />
-                        </div>
-                        <p className="text-sm font-medium text-gray-900">{formData.file.name}</p>
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFormData(prev => ({ ...prev, file: null }));
-                          }}
-                          className="text-xs text-red-500 hover:text-red-600 font-bold uppercase tracking-wider"
-                        >
-                          Remove File
-                        </button>
-                      </>
+                  <div className="space-y-2.5">
+                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
+                    <textarea 
+                      rows={3}
+                      placeholder="Briefly describe the resource..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none resize-none text-sm sm:text-base font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Tags (Comma separated)</label>
+                    <input 
+                      type="text"
+                      placeholder="economics, notes, sem1"
+                      value={formData.tags}
+                      onChange={(e) => setFormData({...formData, tags: e.target.value})}
+                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={isUploading}
+                    className="w-full py-4 sm:py-5 bg-purple-600 text-white rounded-2xl font-black text-sm sm:text-lg uppercase tracking-widest shadow-2xl shadow-purple-600/20 hover:bg-purple-700 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                  >
+                    {isUploading ? (
+                      <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
+                    ) : editingResource ? (
+                      <Save className="w-5 h-5 sm:w-6 sm:h-6" />
                     ) : (
-                      <>
-                        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                          <Upload className="w-6 h-6 text-purple-600" />
-                        </div>
-                        <p className="text-sm font-medium text-gray-900">Drag & drop a file here, or click to select</p>
-                        <p className="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
-                      </>
+                      <Upload className="w-5 h-5 sm:w-6 sm:h-6" />
                     )}
+                    {isUploading ? 'Processing...' : editingResource ? 'Update Resource' : 'Publish Resource'}
+                  </button>
+                </form>
+              </motion.div>
+            ) : (
+              <div className="space-y-6">
+                {/* Filters */}
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                    <input 
+                      type="text"
+                      placeholder="Search resources..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-sm font-medium"
+                    />
                   </div>
+                  <select 
+                    value={selectedCourse}
+                    onChange={(e) => setSelectedCourse(e.target.value)}
+                    className="w-full md:w-64 text-ellipsis overflow-hidden px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500/20 text-xs font-black uppercase tracking-widest"
+                  >
+                    <option>All Courses</option>
+                    {College_COURSES.map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                {/* Resource List */}
+                <div className="grid gap-4 sm:gap-6">
+                  {isLoading ? (
+                    [1, 2, 3].map(i => <div key={i} className="h-32 bg-white rounded-2xl animate-pulse" />)
+                  ) : filteredResources.length > 0 ? (
+                    filteredResources.map(resource => (
+                      <div key={resource.id} className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
+                        <div className="flex items-start gap-4 sm:gap-6 min-w-0 flex-1">
+                          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${resource.type === 'Playlist' ? 'bg-rose-50 text-rose-600' : 'bg-purple-50 text-purple-600'}`}>
+                            {resource.type === 'Playlist' ? <Youtube className="w-5 h-5 sm:w-6 sm:h-6" /> : <FileText className="w-5 h-5 sm:w-6 sm:h-6" />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-sm sm:text-base font-black text-gray-900 truncate tracking-tight">{resource.title}</h3>
+                            <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-6 gap-y-1.5 mt-1.5 text-[10px] sm:text-xs text-gray-400 font-black uppercase tracking-widest">
+                              <span className="flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {resource.course}</span>
+                              <span className="bg-gray-50 px-2 py-0.5 rounded-lg">Sem {resource.semester}</span>
+                              <span className="flex items-center gap-1.5"><UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {resource.uploader}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                          {resource.type !== 'Playlist' && (
+                            <button 
+                              onClick={() => navigate(`/flipbook/${resource.id}`)}
+                              className="p-2 sm:p-2.5 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white rounded-xl transition-all shadow-sm"
+                              title="View Flipbook"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => window.open(resource.link, '_blank')}
+                            className="p-2 sm:p-2.5 bg-gray-50 text-gray-400 hover:text-purple-600 rounded-xl transition-colors"
+                            title="View Resource"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => startEditingResource(resource)}
+                            className="p-2 sm:p-2.5 bg-gray-50 text-gray-400 hover:text-indigo-600 rounded-xl transition-colors"
+                            title="Edit Details"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          
+                          {/* Toggle visibility (Hide/Show) */}
+                          <button 
+                            onClick={() => handleToggleApprove(resource)}
+                            className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all ${
+                              resource.isApproved 
+                                ? 'bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white' 
+                                : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
+                            }`}
+                            title={resource.isApproved ? "Hide Resource" : "Show/Approve Resource"}
+                          >
+                            {resource.isApproved ? (
+                              <>
+                                <XCircle className="w-3.5 h-3.5" />
+                                Hide
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Show
+                              </>
+                            )}
+                          </button>
+
+                          <button 
+                            onClick={() => handleDelete(resource.id)}
+                            className="p-2 sm:p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-colors"
+                            title="Delete Resource"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Search className="w-8 h-8 text-gray-300" />
+                      </div>
+                      <h3 className="text-lg font-black text-gray-900">No resources found</h3>
+                      <p className="text-gray-500 text-xs">Try adjusting your filters or search query.</p>
+                    </div>
+                  )}
                 </div>
               </div>
-
-              <div className="space-y-2.5">
-                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Direct Download Link (Optional)</label>
-                <input 
-                  type="url"
-                  placeholder="Direct PDF link"
-                  value={formData.directDownloadLink}
-                  onChange={(e) => setFormData({...formData, directDownloadLink: e.target.value})}
-                  className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
-                <textarea 
-                  rows={3}
-                  placeholder="Briefly describe the resource..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none resize-none text-sm sm:text-base font-medium"
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Tags (Comma separated)</label>
-                <input 
-                  type="text"
-                  placeholder="economics, notes, sem1"
-                  value={formData.tags}
-                  onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                  className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
-                />
-              </div>
-
-              <button 
-                type="submit"
-                disabled={isUploading}
-                className="w-full py-4 sm:py-5 bg-purple-600 text-white rounded-2xl font-black text-sm sm:text-lg uppercase tracking-widest shadow-2xl shadow-purple-600/20 hover:bg-purple-700 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-              >
-                {isUploading ? (
-                  <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
-                ) : editingResource ? (
-                  <Save className="w-5 h-5 sm:w-6 sm:h-6" />
-                ) : (
-                  <Upload className="w-5 h-5 sm:w-6 sm:h-6" />
-                )}
-                {isUploading ? 'Processing...' : editingResource ? 'Update Resource' : 'Publish Resource'}
-              </button>
-            </form>
-          </motion.div>
-        ) : activeTab === 'news' ? (
+            )}
+          </div>
+        )}
+        {activeTab === 'news' ? (
           <div className="grid lg:grid-cols-2 gap-8">
             {/* News Form */}
             <motion.div 
