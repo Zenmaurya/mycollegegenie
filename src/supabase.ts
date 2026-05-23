@@ -1,7 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { config } from './lib/config';
 
-export const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+export const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, {
+  auth: {
+    // Ensure token auto-refresh is always active — prevents 1-hour session expiry
+    // causing all API calls to silently fail ("content disappears" bug)
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+});
 
 // ── Auth Helper Functions ──
 

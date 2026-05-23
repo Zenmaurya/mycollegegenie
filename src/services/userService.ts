@@ -13,8 +13,10 @@ export const getUserProfile = async (uid?: string) => {
     if (uid) {
       return await fetchWithAuth(`/api/users/public/${uid}`);
     } else {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
+      // FIX: Use getUser() instead of getSession() — getUser() verifies the token
+      // is still valid with Supabase server and auto-refreshes if needed.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
       return await fetchWithAuth('/api/users/me');
     }
   } catch (error) {
@@ -32,8 +34,9 @@ export const updateUserProfile = async (data: {
   photoUrl?: string;
 }) => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
+    // FIX: getUser() auto-refreshes expired token; getSession() does not
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
     return await fetchWithAuth('/api/users/me', {
       method: 'PATCH',
@@ -61,8 +64,9 @@ export const createUserProfile = async (
   additionalData?: { college?: string; course?: string }
 ) => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return null;
+    // FIX: getUser() auto-refreshes expired token; getSession() does not
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
 
     if (additionalData && Object.keys(additionalData).length > 0) {
       return await fetchWithAuth('/api/users/me', {

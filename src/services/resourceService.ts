@@ -32,7 +32,8 @@ export const uploadFile = (
 ): Promise<string> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // FIX: refreshSession auto-refreshes expired tokens; getSession() just reads cache
+      const { data: { session } } = await supabase.auth.refreshSession().catch(() => supabase.auth.getSession());
       const token = session?.access_token;
       if (!token) {
         reject(new Error('Not authenticated'));

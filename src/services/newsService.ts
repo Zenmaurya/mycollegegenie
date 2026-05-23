@@ -112,7 +112,8 @@ export const approveNews = async (id: string): Promise<void> => {
 export const submitEvent = async (
   formData: { title: string; college: string; date: string; venue: string; eligibility: string; description: string; image?: File | null; imageUrl?: string }
 ) => {
-  const { data: { session } } = await supabase.auth.getSession();
+  // FIX: getUser() auto-refreshes expired token; getSession() does not
+  const { data: { session } } = await supabase.auth.refreshSession().catch(() => supabase.auth.getSession());
   const token = session?.access_token;
   if (!token) throw new Error('Not authenticated');
 
@@ -152,7 +153,8 @@ export const submitEvent = async (
 export const submitNews = async (
   formData: { title: string; college: string; date: string; summary: string; url?: string; category?: string }
 ): Promise<{ id: string; message: string }> => {
-  const { data: { session } } = await supabase.auth.getSession();
+  // FIX: getUser() auto-refreshes expired token; getSession() does not
+  const { data: { session } } = await supabase.auth.refreshSession().catch(() => supabase.auth.getSession());
   if (!session?.access_token) throw new Error('Not authenticated');
 
   return await fetchWithAuth('/api/news', {

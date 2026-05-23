@@ -7,8 +7,54 @@ interface ApiClientOptions extends RequestInit {
 }
 
 /**
+ * Get a valid, non-expired access token.
+ *
+ * WHY NOT getSession()?
+ * supabase.auth.getSession() reads from localStorage and returns the cached
+ * token — it does NOT check if it's expired or refresh it automatically.
+ * After ~1 hour the token expires and every API call silently fails (backend
+ * returns 401) causing all content to disappear until the user clears cache.
+ *
+ * FIX: Use refreshSession() which always returns a fresh token if possible.
+ * Falls back to cached session only if refresh fails (e.g. offline).
+ */
+async function getFreshToken(): Promise<string | undefined> {
+  try {
+    // 1. Try to get current session from cache first (fast path)
+    const { data: { session: cached } } = await supabase.auth.getSession();
+
+    // 2. If no session at all, user is not logged in
+    if (!cached) return undefined;
+
+    // 3. Check if token is expired or about to expire in next 60 seconds
+    const expiresAt = cached.expires_at; // Unix timestamp in seconds
+    const nowSecs = Math.floor(Date.now() / 1000);
+    const isExpiredOrExpiring = !expiresAt || expiresAt - nowSecs < 60;
+
+    if (!isExpiredOrExpiring) {
+      // Token is fresh — use it directly (avoids unnecessary network call)
+      return cached.access_token;
+    }
+
+    // 4. Token expired/expiring — force refresh
+    const { data: { session: refreshed }, error } = await supabase.auth.refreshSession();
+    if (error) {
+      // Refresh failed (e.g. refresh token expired too — user must re-login)
+      console.warn('[apiClient] Token refresh failed:', error.message);
+      // Return existing token as last resort (backend will reject with 401 if truly expired)
+      return cached.access_token;
+    }
+    return refreshed?.access_token;
+  } catch {
+    // Network error during refresh — fall back to cached session
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token;
+  }
+}
+
+/**
  * A centralized wrapper around `fetch` that:
- *  - Automatically attaches the Supabase JWT for authenticated requests.
+ *  - Automatically attaches a FRESH Supabase JWT (auto-refreshes on expiry).
  *  - Aborts requests that take longer than `timeoutMs` (default 15 s) so the
  *    UI never hangs indefinitely when the backend is unreachable.
  *  - Throws a typed Error with a human-readable message on non-2xx responses.
@@ -19,9 +65,8 @@ export async function fetchWithAuth(
 ): Promise<any> {
   const { timeoutMs = 15_000, ...restOptions } = options;
 
-  // Auth token (optional — unauthenticated endpoints still work)
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
+  // Get fresh, auto-refreshed token
+  const token = await getFreshToken();
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
