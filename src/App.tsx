@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo, useCallback, useEffect, useRef, Suspense, lazy } from 'react';
+import { useDebounce } from './hooks/useDebounce'; // MED-02: search debounce
 import { createPortal } from 'react-dom';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import { BookOpen, Search, Upload, Youtube, Newspaper, Home, Share2, ChevronRight, ChevronLeft, ChevronDown, GraduationCap, FileText, PlayCircle, X, ExternalLink, Filter, Plus, CheckCircle2, AlertCircle, User, Calendar, Globe, Star, Flag, AlertTriangle, ArrowUpDown, File, Trash2, RefreshCw, Clock, MapPin, Menu, LayoutGrid, List, MessageSquare, MessageCircle, Lightbulb, ArrowUp, Download, Building, Instagram, Linkedin, LogIn, LogOut, Sparkles, Loader2, Mail, Lock, Eye, EyeOff, Store, LibraryBig, BedDouble, ShoppingBag, MessagesSquare, Rss, LayoutDashboard } from 'lucide-react';
@@ -533,6 +534,10 @@ function AppContent() {
     return parseFloat((sum / ratings.length).toFixed(1));
   };
 
+  // MED-02 FIX: Debounce searchQuery so filtering only runs 350ms after user stops typing.
+  // Without this, every single keystroke triggers the entire filter+sort computation.
+  const debouncedSearch = useDebounce(searchQuery, 350);
+
   const filteredResources = useMemo(() => {
     let baseResources = resources;
 
@@ -544,7 +549,7 @@ function AppContent() {
       const isVisible = resource.isApproved || (user && resource.uploaderId === user.id);
       if (!isVisible) return false;
 
-      const q = searchQuery.toLowerCase();
+      const q = debouncedSearch.toLowerCase();
       const matchesQuery = !q ||
         resource.title.toLowerCase().includes(q) ||
         resource.course.toLowerCase().includes(q) ||
@@ -571,7 +576,8 @@ function AppContent() {
       }
       return 0;
     });
-  }, [searchQuery, activeFilter, selectedSubCategory, selectedCourse, selectedSemester, resources, sortBy]);
+  // MED-02: debouncedSearch (not raw searchQuery) so filter doesn't run on every keystroke
+  }, [debouncedSearch, activeFilter, selectedSubCategory, selectedCourse, selectedSemester, resources, sortBy]);
 
   const handleRate = async (resourceId: string, rating: number) => {
     if (!user) {

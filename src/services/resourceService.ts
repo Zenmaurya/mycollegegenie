@@ -23,76 +23,84 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   throw error instanceof Error ? error : new Error(msg);
 }
 
-// ── Upload file via backend (Cloudinary or R2 depending on file type) ────────────
-export const uploadFile = (
+/**
+ * Upload a file to the backend (PDF → Cloudflare R2, images → Cloudinary).
+ *
+ * CRIT-05 FIX: Removed 'new Promise(async executor)' anti-pattern.
+ * The old code wrapped an async function in a Promise constructor, which means:
+ *  - Any unhandled throw inside async code left the Promise permanently pending
+ *  - This caused memory leaks and upload spinners that never stopped
+ *
+ * FIX: Async work (token fetch) happens BEFORE creating the XHR Promise.
+ * The Promise constructor only wraps the XHR (which is inherently callback-based).
+ */
+export const uploadFile = async (
   file: File,
   folder: 'pyqs' | 'notes' | 'books' | 'resources' | 'exchange' | 'events' | 'avatars' | 'pg' = 'resources',
   meta: { subject?: string; course?: string; subjectCode?: string } = {},
   onProgress?: (percent: number) => void
 ): Promise<string> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // FIX: refreshSession auto-refreshes expired tokens; getSession() just reads cache
-      const { data: { session } } = await supabase.auth.refreshSession().catch(() => supabase.auth.getSession());
-      const token = session?.access_token;
-      if (!token) {
-        reject(new Error('Not authenticated'));
-        return;
-      }
+  // Step 1: Get a fresh token BEFORE creating the XHR Promise.
+  // If this fails, it throws normally — no leaked Promise.
+  const { data: { session } } = await supabase.auth.refreshSession().catch(() => supabase.auth.getSession());
+  const token = session?.access_token;
+  if (!token) {
+    throw new Error('Not authenticated. Please sign in to upload files.');
+  }
 
-      const formData = new FormData();
-      formData.append('file', file);
+  const formData = new FormData();
+  formData.append('file', file);
 
-      // Build query string — backend uses these to name the R2 file
-      const params = new URLSearchParams({ folder });
-      if (meta.course)      params.set('course',      meta.course);
-      if (meta.subject)     params.set('subject',     meta.subject);
-      if (meta.subjectCode) params.set('subjectCode', meta.subjectCode);
+  // Build query string — backend uses these to name the R2 file
+  const params = new URLSearchParams({ folder });
+  if (meta.course)      params.set('course',      meta.course);
+  if (meta.subject)     params.set('subject',     meta.subject);
+  if (meta.subjectCode) params.set('subjectCode', meta.subjectCode);
 
-      const xhr = new XMLHttpRequest();
-      const url = `${import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in'}/api/resources/upload?${params.toString()}`;
+  const url = `${import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in'}/api/resources/upload?${params.toString()}`;
 
-      xhr.open('POST', url, true);
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+  // Step 2: Wrap ONLY the XHR in a Promise (it's callback-based, not async).
+  // No async work happens inside the Promise constructor — safe pattern.
+  return new Promise<string>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
 
-      if (onProgress && xhr.upload) {
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            onProgress(percent);
-          }
-        };
-      }
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const data = JSON.parse(xhr.responseText);
-            resolve(data.url);
-          } catch (e) {
-            reject(new Error('Failed to parse upload response'));
-          }
-        } else {
-          try {
-            const err = JSON.parse(xhr.responseText);
-            reject(new Error(err.error || `Upload failed with status ${xhr.status}`));
-          } catch (e) {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
-          }
+    if (onProgress && xhr.upload) {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent);
         }
       };
-
-      xhr.onerror = () => {
-        reject(new Error('Network error during file upload'));
-      };
-
-      xhr.send(formData);
-    } catch (error) {
-      console.error('[resourceService] uploadFile error:', error);
-      reject(error);
     }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          resolve(data.url);
+        } catch {
+          reject(new Error('Failed to parse upload response'));
+        }
+      } else {
+        try {
+          const err = JSON.parse(xhr.responseText);
+          reject(new Error(err.error || `Upload failed with status ${xhr.status}`));
+        } catch {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Network error during file upload'));
+    xhr.ontimeout = () => reject(new Error('Upload timed out. Check your connection.'));
+    xhr.timeout = 120_000; // 2 minute timeout for large files
+
+    xhr.send(formData);
   });
 };
+
 
 function safeArray(val: any): any[] {
   if (Array.isArray(val)) return val;
