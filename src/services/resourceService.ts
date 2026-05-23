@@ -24,41 +24,73 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 }
 
 // ── Upload file via backend (Cloudinary or R2 depending on file type) ────────────
-export const uploadFile = async (
+export const uploadFile = (
   file: File,
   folder: 'pyqs' | 'notes' | 'books' | 'resources' | 'exchange' | 'events' | 'avatars' | 'pg' = 'resources',
-  meta: { subject?: string; course?: string; subjectCode?: string } = {}
+  meta: { subject?: string; course?: string; subjectCode?: string } = {},
+  onProgress?: (percent: number) => void
 ): Promise<string> => {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) throw new Error('Not authenticated');
+  return new Promise(async (resolve, reject) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        reject(new Error('Not authenticated'));
+        return;
+      }
 
-    const formData = new FormData();
-    formData.append('file', file);
+      const formData = new FormData();
+      formData.append('file', file);
 
-    // Build query string — backend uses these to name the R2 file
-    const params = new URLSearchParams({ folder });
-    if (meta.course)      params.set('course',      meta.course);
-    if (meta.subject)     params.set('subject',     meta.subject);
-    if (meta.subjectCode) params.set('subjectCode', meta.subjectCode);
+      // Build query string — backend uses these to name the R2 file
+      const params = new URLSearchParams({ folder });
+      if (meta.course)      params.set('course',      meta.course);
+      if (meta.subject)     params.set('subject',     meta.subject);
+      if (meta.subjectCode) params.set('subjectCode', meta.subjectCode);
 
-    const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in'}/api/resources/upload?${params.toString()}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
+      const xhr = new XMLHttpRequest();
+      const url = `${import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in'}/api/resources/upload?${params.toString()}`;
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || 'File upload failed');
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+      if (onProgress && xhr.upload) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(percent);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            resolve(data.url);
+          } catch (e) {
+            reject(new Error('Failed to parse upload response'));
+          }
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err.error || `Upload failed with status ${xhr.status}`));
+          } catch (e) {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error('Network error during file upload'));
+      };
+
+      xhr.send(formData);
+    } catch (error) {
+      console.error('[resourceService] uploadFile error:', error);
+      reject(error);
     }
-    const data = await response.json();
-    return data.url;
-  } catch (error) {
-    console.error('[resourceService] uploadFile error:', error);
-    throw error;
-  }
+  });
 };
 
 // ── Normalise backend row → Resource shape ──────────────────

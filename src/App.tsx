@@ -700,11 +700,15 @@ function AppContent() {
         if (currentType === 'Note') folder = 'notes';
         // Pass course + subject + code so R2 key is descriptive:
         // e.g. notes/20260512_a1b2_bcom-hons_microeconomics_11017502_my-notes.pdf
+        const toastId = toast.loading('Uploading file (0%)... Please wait.');
         finalLink = await uploadFile(formData.file, folder, {
           course:      formData.course,
           subject:     formData.title,        // use resource title as subject hint
           subjectCode: formData.subjectCode,
+        }, (percent) => {
+          toast.loading(`Uploading file (${percent}%)... Please wait.`, { id: toastId });
         });
+        toast.dismiss(toastId);
       }
 
       let autoSubCategory = 'Lecture Notes';

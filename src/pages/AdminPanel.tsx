@@ -717,7 +717,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
       let finalDirectDownloadLink = formData.directDownloadLink;
 
       if (formData.file) {
-        toast.loading('Uploading file...', { id: 'upload-toast' });
+        toast.loading('Uploading file (0%)... Please wait.', { id: 'upload-toast' });
         let folder: 'pyqs' | 'books' | 'notes' | 'resources' = 'resources';
         if (formData.type === 'PYQ') folder = 'pyqs';
         if (formData.type === 'Book') folder = 'books';
@@ -725,6 +725,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
         const fileUrl = await uploadFile(formData.file, folder, {
           course:  formData.course,
           subject: formData.title,
+        }, (percent) => {
+          toast.loading(`Uploading file (${percent}%)... Please wait.`, { id: 'upload-toast' });
         });
         finalLink = fileUrl;
         finalDirectDownloadLink = fileUrl;
