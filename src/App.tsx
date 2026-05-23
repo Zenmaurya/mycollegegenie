@@ -843,7 +843,7 @@ function AppContent() {
   }, []);
 
   const handleShare = async (resource: Resource) => {
-    const shareUrl = `${window.location.origin}/browse?resourceId=${resource.id}`;
+    const shareUrl = `${import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in'}/api/resources/share/${resource.id}`;
     const shareData = {
       title: resource.title,
       text: `Check out this resource: ${resource.title} for ${resource.course} via MyCollegeGenie`,
@@ -2161,8 +2161,9 @@ function AppContent() {
                       <motion.a 
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        href={selectedResource.directDownloadLink} 
-                        download
+                        href={`${import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in'}/api/resources/download/${selectedResource.id}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 h-11 rounded-xl text-sm font-bold transition-all shadow-lg shadow-green-600/20"
                       >
                         <Download className="w-4 h-4 shrink-0" />
