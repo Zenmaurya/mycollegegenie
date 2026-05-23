@@ -281,7 +281,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
   
           <div className="max-w-7xl mx-auto w-full relative z-10 grid lg:grid-cols-12 gap-8 xl:gap-4 items-center">
-            <div className="max-w-xl lg:max-w-none lg:col-span-5 text-center lg:text-left mx-auto lg:mx-0">
+            <div className="max-w-xl lg:max-w-none lg:col-span-5 text-center lg:text-left mx-auto lg:mx-0 flex flex-col items-center lg:items-start">
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -301,7 +301,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 className="text-base sm:text-lg lg:text-lg text-gray-600 w-full mb-5 leading-relaxed font-medium px-2 sm:px-0 text-center lg:text-left lg:pr-8 xl:pr-16"
               >
                 {siteSettings?.hero_subtext || "From PYQs and notes to PGs, communities, campus exchange, and career opportunities. My College Genie is your all-in-one companion for every chapter of college life. We started with DU. Now we're building India's biggest student ecosystem — connecting every student, every college, every city under one platform."}
-                <span className="block whitespace-nowrap mt-1.5 font-semibold tracking-tight text-gray-900">
+                <span className="block mt-1.5 font-semibold tracking-tight text-gray-900 text-center lg:text-left">
                   One platform. Million students. Endless possibilities.
                 </span>
               </motion.p>
@@ -800,4 +800,5 @@ export const HomePage: React.FC<HomePageProps> = ({
     </div>
   );
 };
+
 
