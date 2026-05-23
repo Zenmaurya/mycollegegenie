@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -171,7 +171,7 @@ export const FindPGPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24">
+    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24 md:pb-8">
       <Helmet>
         <title>Find PG, Flats & Roommates Near Your College | MyCollegeGenie</title>
         <meta name="description" content="Find paying guest accommodations, flats, and roommates near your college campus. Browse verified student housing listings by area and budget." />
@@ -464,7 +464,7 @@ export const FindPGPage: React.FC = () => {
                           id="pg-budget"
                           name="budget"
                           type="text"
-                          placeholder="e.g. ₹8,000 - ₹12,000"
+                          placeholder="e.g. ?8,000 - ?12,000"
                           value={newListing.budget}
                           onChange={(e) => setNewListing({ ...newListing, budget: e.target.value })}
                           className="w-full px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none font-bold text-xs sm:text-sm"
@@ -630,7 +630,7 @@ export const FindPGPage: React.FC = () => {
                           onClick={() => setVerifyModal({ id: selectedListing.id, title: selectedListing.location })}
                           className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-wider rounded-xl border border-amber-200 hover:bg-amber-100 transition-all"
                         >
-                          <ShieldCheck className="w-3.5 h-3.5" /> Get Verified ₹99
+                          <ShieldCheck className="w-3.5 h-3.5" /> Get Verified ?99
                         </button>
                       )}
                     </div>

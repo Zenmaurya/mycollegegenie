@@ -126,7 +126,7 @@ export const PlaylistPage: React.FC<PlaylistPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24">
+    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24 md:pb-8">
       <Helmet>
         <title>College Course YouTube Playlists &amp; Video Lectures | MyCollegeGenie</title>
         <meta name="description" content="Curated YouTube playlists for college courses. Study smarter with hand-picked video lectures for all your university programmes." />

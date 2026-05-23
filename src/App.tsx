@@ -922,7 +922,7 @@ function AppContent() {
           </Link>
 
           {/* Center: Desktop Navigation */}
-          <div className="hidden xl:flex items-center justify-center gap-0.5 absolute left-1/2 -translate-x-1/2 z-10 bg-white/40 hover:bg-white/60 backdrop-blur-md px-1.5 py-1.5 rounded-full border border-gray-100/50 shadow-sm transition-colors duration-500">
+          <div className="hidden lg:flex items-center justify-center gap-0.5 absolute left-1/2 -translate-x-1/2 z-10 bg-white/40 hover:bg-white/60 backdrop-blur-md px-1.5 py-1.5 rounded-full border border-gray-100/50 shadow-sm transition-colors duration-500">
             {[
               { to: '/', icon: Home, label: 'Home', active: location.pathname === '/' },
               { to: '/browse', icon: LibraryBig, label: 'Browse', active: location.pathname === '/browse' },
@@ -1028,7 +1028,7 @@ function AppContent() {
           {/* Right: Auth & Mobile Menu */}
           <div className="flex items-center gap-3 sm:gap-4 z-10">
             {user ? (
-              <div className="hidden xl:block">
+              <div className="hidden lg:block">
                 <Link to="/profile" className="flex items-center gap-3 group p-1.5 pl-4 bg-white/60 hover:bg-white border border-gray-100/80 hover:border-purple-200 rounded-full transition-all duration-300 shadow-sm hover:shadow-[0_8px_20px_-6px_rgba(147,51,234,0.2)] cursor-pointer">
                   <div className="flex flex-col items-end">
                     <span className="text-[13px] font-bold text-gray-900 leading-none group-hover:text-purple-700 transition-colors max-w-[120px] truncate">
@@ -1050,7 +1050,7 @@ function AppContent() {
                 </Link>
               </div>
             ) : (
-              <div className="hidden xl:block">
+              <div className="hidden lg:block">
                 <Link
                   to="/login"
                   className="bg-purple-600 text-white px-6 py-2.5 rounded-full font-bold flex items-center gap-2 hover:bg-purple-700 hover:shadow-lg hover:shadow-purple-600/30 transition-all hover:-translate-y-0.5 active:translate-y-0 group"
@@ -1062,7 +1062,7 @@ function AppContent() {
             )}
 
             {/* Mobile Menu Toggle */}
-            <div className="xl:hidden flex items-center gap-3">
+            <div className="lg:hidden flex items-center gap-3">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -1099,7 +1099,7 @@ function AppContent() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] xl:hidden"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] lg:hidden"
               />
               <motion.div
                 id="mobile-menu"
@@ -1107,7 +1107,7 @@ function AppContent() {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-                className="fixed top-0 right-0 bottom-0 w-full max-w-[300px] bg-white z-[260] xl:hidden flex flex-col overflow-hidden shadow-[-24px_0_60px_rgba(0,0,0,0.14)]"
+                className="fixed top-0 right-0 bottom-0 w-full max-w-[300px] bg-white z-[260] lg:hidden flex flex-col overflow-hidden shadow-[-24px_0_60px_rgba(0,0,0,0.14)]"
               >
                 {/* Gradient Header */}
                 <div className="relative shrink-0 bg-gradient-to-br from-[#5636A7] via-[#6d42c7] to-[#8b5cf6] px-5 pt-12 pb-6 overflow-hidden">
@@ -1265,7 +1265,7 @@ function AppContent() {
             onClick={scrollToTop}
             whileHover={{ scale: 1.1, y: -2 }}
             whileTap={{ scale: 0.95 }}
-            className="fixed bottom-24 sm:bottom-8 right-4 sm:right-8 z-[150] p-3.5 sm:p-4 bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-2xl shadow-2xl shadow-purple-600/40 hover:shadow-purple-600/60 transition-shadow"
+            className="fixed bottom-24 sm:bottom-8 md:bottom-8 right-4 sm:right-8 z-[150] p-3.5 sm:p-4 bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-2xl shadow-2xl shadow-purple-600/40 hover:shadow-purple-600/60 transition-shadow"
           >
             <ArrowUp className="w-5 h-5 sm:w-6 sm:h-6" />
           </motion.button>
@@ -1274,7 +1274,7 @@ function AppContent() {
 
       {/* Mobile Bottom Navigation */}
       {!isFlipbookView && !isAuthPage && !isLoginSignupPage && (
-      <div className="xl:hidden fixed bottom-0 left-0 right-0 z-[110] bg-white/95 backdrop-blur-2xl border-t border-gray-100 pb-[env(safe-area-inset-bottom,8px)] shadow-[0_-12px_40px_rgba(0,0,0,0.06)]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[110] bg-white/95 backdrop-blur-2xl border-t border-gray-100 pb-[env(safe-area-inset-bottom,8px)] shadow-[0_-12px_40px_rgba(0,0,0,0.06)]">
         <div className="flex items-center justify-around px-1 pt-2 pb-1.5 relative">
         {[{ to: '/', icon: Home, label: 'Home', active: location.pathname === '/' },
           { to: '/browse', icon: LibraryBig, label: 'Browse', active: location.pathname === '/browse' },
@@ -1462,7 +1462,7 @@ function AppContent() {
 
       {/* Footer */}
       {!isAuthPage && !isLoginSignupPage && !isFlipbookView && (
-        <footer className="pt-8 lg:pt-16 pb-24 lg:pb-8 px-4 bg-[#0B0914] border-t border-white/5 shrink-0 relative text-gray-400">
+        <footer className="pt-8 lg:pt-16 pb-24 md:pb-8 lg:pb-8 px-4 bg-[#0B0914] border-t border-white/5 shrink-0 relative text-gray-400">
           {/* Subtle background glow */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/10 blur-[120px] rounded-full" />

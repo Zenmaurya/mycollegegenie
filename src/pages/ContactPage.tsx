@@ -79,7 +79,7 @@ export const ContactPage: React.FC = () => {
   const labelClass = 'block text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1';
 
   return (
-    <div className="min-h-screen bg-transparent pt-6 sm:pt-8 pb-24">
+    <div className="min-h-screen bg-transparent pt-6 sm:pt-8 pb-24 md:pb-8">
       <Helmet>
         <title>Contact Us | MyCollegeGenie — India's Student Platform</title>
         <meta name="description" content="Get in touch with the MyCollegeGenie team. Report issues, suggest features, or partner with us to empower students across India." />

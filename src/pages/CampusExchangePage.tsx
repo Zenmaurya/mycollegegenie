@@ -233,7 +233,7 @@ export function CampusExchangePage() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24">
+    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24 md:pb-8">
       <Helmet>
         <title>Campus Exchange - Buy & Sell College Essentials | MyCollegeGenie</title>
         <meta name="description" content="Buy, sell, exchange or donate textbooks, electronics, and college essentials directly with other students on your campus." />

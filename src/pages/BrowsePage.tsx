@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -127,7 +127,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
   const hasActiveFilters = searchQuery || activeFilter !== 'All' || selectedCourse !== 'All Courses' || selectedSemester !== 'All Semesters' || selectedSubCategory !== 'All';
 
   return (
-    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24">
+    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24 md:pb-8">
       <Helmet>
         <title>{selectedResource ? `${selectedResource.title} | MyCollegeGenie` : 'Browse Free College Notes & PYQs | MyCollegeGenie'}</title>
         <meta name="description" content={selectedResource ? (selectedResource.description?.replace(/<[^>]*>?/gm, '').substring(0, 150) || `Download ${selectedResource.title} for ${selectedResource.course}`) : "Browse and download free study material for your college. Filter by course, semester, and resource type. Get notes, PYQs, books, and more."} />
@@ -326,7 +326,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
         {/* Resources Grid/List */}
         {filteredResources.length > 0 ? (
           <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8" 
+            ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8" 
             : "space-y-4 sm:space-y-6"
           }>
             {filteredResources.slice(0, visibleCount).map((resource) => (
@@ -461,7 +461,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                   <>
                     {/* Row 1: Course + Semester side-by-side */}
                     <div className="grid grid-cols-2 gap-4">
-                      {/* ── Custom Course Picker ── */}
+                      {/* -- Custom Course Picker -- */}
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-600 uppercase tracking-widest ml-0.5">Course</label>
                         <div className="relative">
@@ -489,7 +489,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                             className="absolute inset-0 opacity-0 pointer-events-none"
                           />
 
-                          {/* Dropdown panel — rendered inline, contained inside modal */}
+                          {/* Dropdown panel � rendered inline, contained inside modal */}
                           <AnimatePresence>
                             {courseDropdownOpen && (
                               <motion.div
@@ -514,7 +514,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                                   </div>
                                 </div>
 
-                                {/* Options list — max-height contained */}
+                                {/* Options list � max-height contained */}
                                 <div className="overflow-y-auto max-h-40">
                                   {courses
                                     .filter(c => c.toLowerCase().includes(courseSearch.toLowerCase()))

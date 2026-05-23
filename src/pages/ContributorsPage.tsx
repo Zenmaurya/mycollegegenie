@@ -32,7 +32,7 @@ export function ContributorsPage() {
   const wallOfFame = contributors.filter(c => c.category === 'wall_of_fame');
 
   return (
-    <div className="min-h-screen bg-[#0B0914] text-white pt-24 pb-20 relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-[#0B0914] text-white pt-24 pb-20 md:pb-6 relative overflow-hidden flex flex-col">
       <Helmet>
         <title>Our Team & Contributors | My College Genie</title>
         <meta name="description" content="Meet the team and top contributors behind My College Genie." />
