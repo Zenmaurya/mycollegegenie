@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -198,13 +198,20 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
 
   return (
     <div className="min-h-screen bg-transparent">
-      <Helmet>
-        <title>{selectedNews ? `${selectedNews.title} | MyCollegeGenie` : 'Latest College News & Announcements | MyCollegeGenie'}</title>
-        <meta name="description" content={selectedNews ? selectedNews.summary : 'Stay updated with the latest official news, exam updates, and announcements from Delhi University and colleges across India.'} />
-        <meta property="og:title" content={selectedNews ? selectedNews.title : 'Latest College News | MyCollegeGenie'} />
-        <meta property="og:description" content={selectedNews ? selectedNews.summary : 'Official news and updates.'} />
-        <meta property="og:image" content={selectedNews ? `https://picsum.photos/seed/${selectedNews.title}/1200/630` : 'https://picsum.photos/seed/news/1200/630'} />
+            <Helmet>
+        <title>{selectedNews ? `${selectedNews.title} | MyCollegeGenie` : 'Latest College News, Notices & Updates | MyCollegeGenie'}</title>
+        <meta name="description" content={selectedNews ? selectedNews.summary : 'Stay updated with the latest official college notices, exam date sheets, university news, and campus announcements in one place.'} />
+        <meta name="keywords" content="college official notices, university exam updates, latest campus news, date sheet release, university announcements" />
+        <link rel="canonical" href="https://mycollegegenie.in/news" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="https://mycollegegenie.in/news" />
+        <meta property="og:title" content={selectedNews ? selectedNews.title : 'Latest College News, Notices & Updates | MyCollegeGenie'} />
+        <meta property="og:description" content={selectedNews ? selectedNews.summary : 'Stay updated with the latest official college notices, exam date sheets, university news, and campus announcements in one place.'} />
+        <meta property="og:image" content={selectedNews ? `https://picsum.photos/seed/${selectedNews.title}/1200/630` : 'https://mycollegegenie.in/og-image.png'} />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={selectedNews ? selectedNews.title : 'Latest College News, Notices & Updates | MyCollegeGenie'} />
+        <meta name="twitter:description" content={selectedNews ? selectedNews.summary : 'Stay updated with the latest official college notices, exam date sheets, university news, and campus announcements in one place.'} />
+        <meta name="twitter:image" content={selectedNews ? `https://picsum.photos/seed/${selectedNews.title}/1200/630` : 'https://mycollegegenie.in/og-image.png'} />
       </Helmet>
 
       {/* ── Header ── */}
@@ -769,3 +776,4 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
     </div>
   );
 };
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+ï»¿import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -483,7 +483,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                             className="absolute inset-0 opacity-0 pointer-events-none"
                           />
 
-                          {/* Dropdown panel — rendered inline, contained inside modal */}
+                          {/* Dropdown panel ï¿½ rendered inline, contained inside modal */}
                           <AnimatePresence>
                             {courseDropdownOpen && (
                               <motion.div
@@ -508,7 +508,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                                   </div>
                                 </div>
 
-                                {/* Options list — max-height contained */}
+                                {/* Options list ï¿½ max-height contained */}
                                 <div className="overflow-y-auto max-h-40">
                                   {courses
                                     .filter(c => c.toLowerCase().includes(courseSearch.toLowerCase()))
@@ -617,3 +617,4 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
     </div>
   );
 };
+

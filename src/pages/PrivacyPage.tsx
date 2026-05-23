@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { Shield, Lock, Eye, FileText, ChevronRight, ArrowLeft, Check, Server } from 'lucide-react';
@@ -17,11 +17,10 @@ export const PrivacyPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-transparent pt-6 sm:pt-8 pb-24">
-      <Helmet>
+            <Helmet>
         <title>Privacy Policy | MyCollegeGenie</title>
-        <meta name="description" content="Read MyCollegeGenie's privacy policy. Learn how we collect, use, and protect your data across our student platform." />
+        <meta name="description" content="Read our privacy policy to understand how we protect your data." />
         <meta name="robots" content="noindex, follow" />
-        <link rel="canonical" href="https://mycollegegenie.in/privacy" />
       </Helmet>
 
       {/* Decorative blobs */}
@@ -234,3 +233,4 @@ export const PrivacyPage: React.FC = () => {
     </div>
   );
 };
+

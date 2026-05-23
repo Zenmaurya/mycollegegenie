@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import {
@@ -80,9 +80,9 @@ export const ContactPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-transparent pt-6 sm:pt-8 pb-24 md:pb-8">
-      <Helmet>
-        <title>Contact Us | MyCollegeGenie — India's Student Platform</title>
-        <meta name="description" content="Get in touch with the MyCollegeGenie team. Report issues, suggest features, or partner with us to empower students across India." />
+            <Helmet>
+        <title>Contact Us | MyCollegeGenie</title>
+        <meta name="description" content="Get in touch with the MyCollegeGenie team. We are here to help you with any queries, suggestions, or feedback." />
         <link rel="canonical" href="https://mycollegegenie.in/contact" />
       </Helmet>
 
@@ -363,3 +363,4 @@ export const ContactPage: React.FC = () => {
     </div>
   );
 };
+

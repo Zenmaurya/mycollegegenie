@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -231,6 +231,16 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
       <Helmet>
         <title>Campus Exchange - Buy & Sell College Essentials | MyCollegeGenie</title>
         <meta name="description" content="Buy, sell, exchange or donate textbooks, electronics, and college essentials directly with other students on your campus." />
+              {/* Structured Data for Marketplace */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "Campus Exchange - Buy & Sell College Essentials",
+            "description": "Student marketplace to buy, sell, and exchange college items.",
+            "url": "https://mycollegegenie.in/campus-exchange"
+          })}
+        </script>
       </Helmet>
 
       {/* Hero Section */}
@@ -978,3 +988,5 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
     </div>
   );
 }
+
+

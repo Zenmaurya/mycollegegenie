@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -171,22 +171,24 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
 
   return (
     <div className="min-h-screen bg-transparent">
-      <Helmet>
-        <title>{selectedEvent ? `${selectedEvent.title} | MyCollegeGenie` : 'Upcoming College Events & Fests | MyCollegeGenie'}</title>
-        <meta name="description" content={selectedEvent ? selectedEvent.summary : "Discover and participate in the latest college events, fests, hackathons, and workshops happening at universities across India."} />
+            <Helmet>
+        <title>{selectedEvent ? `${selectedEvent.title} | MyCollegeGenie` : 'Upcoming College Fests, Hackathons & Events | MyCollegeGenie'}</title>
+        <meta name="description" content={selectedEvent ? selectedEvent.summary : "Discover and register for upcoming college fests, tech hackathons, cultural events, and career seminars happening in universities across India."} />
+        <meta name="keywords" content="college fests India, upcoming hackathons for students, university cultural fest, tech fest registration, campus events calendar" />
+        <link rel="canonical" href="https://mycollegegenie.in/events" />
         
         {/* Open Graph / Social Meta Tags */}
         <meta property="og:type" content="article" />
         <meta property="og:site_name" content="MyCollegeGenie" />
-        <meta property="og:title" content={selectedEvent ? selectedEvent.title : 'Upcoming College Events | MyCollegeGenie'} />
-        <meta property="og:description" content={selectedEvent ? selectedEvent.summary : "Stay updated with the latest college events, fests, and workshops happening across University."} />
-        <meta property="og:image" content={selectedEvent ? `https://picsum.photos/seed/${selectedEvent.title}/1200/630` : 'https://picsum.photos/seed/events/1200/630'} />
+        <meta property="og:url" content="https://mycollegegenie.in/events" />
+        <meta property="og:title" content={selectedEvent ? selectedEvent.title : 'Upcoming College Fests, Hackathons & Events | MyCollegeGenie'} />
+        <meta property="og:description" content={selectedEvent ? selectedEvent.summary : "Discover and register for upcoming college fests, tech hackathons, cultural events, and career seminars happening in universities across India."} />
+        <meta property="og:image" content={selectedEvent ? `https://picsum.photos/seed/${selectedEvent.title}/1200/630` : 'https://mycollegegenie.in/og-image.png'} />
         
-        {/* Twitter Meta Tags */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={selectedEvent ? selectedEvent.title : 'Upcoming College Events | MyCollegeGenie'} />
-        <meta name="twitter:description" content={selectedEvent ? selectedEvent.summary : "Stay updated with the latest college events, fests, and workshops happening across University."} />
-        <meta name="twitter:image" content={selectedEvent ? `https://picsum.photos/seed/${selectedEvent.title}/1200/630` : 'https://picsum.photos/seed/events/1200/630'} />
+        <meta name="twitter:title" content={selectedEvent ? selectedEvent.title : 'Upcoming College Fests, Hackathons & Events | MyCollegeGenie'} />
+        <meta name="twitter:description" content={selectedEvent ? selectedEvent.summary : "Discover and register for upcoming college fests, tech hackathons, cultural events, and career seminars happening in universities across India."} />
+        <meta name="twitter:image" content={selectedEvent ? `https://picsum.photos/seed/${selectedEvent.title}/1200/630` : 'https://mycollegegenie.in/og-image.png'} />
       </Helmet>
 
       {/* Header Section */}
@@ -904,3 +906,4 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
     </div>
   );
 };
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 // FIX Perf #5: Replaced 'framer-motion' with 'motion' — same library, avoids duplicate bundle code.
 import { motion, AnimatePresence } from 'motion/react';
@@ -107,8 +107,9 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <div className="min-h-screen pt-6 pb-12 px-4 sm:px-6 lg:px-8 bg-[#F8F9FD]">
-      <Helmet>
-        <title>Dashboard | MyCollegeGenie</title>
+            <Helmet>
+        <title>My Profile | MyCollegeGenie</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
       <div className="max-w-6xl mx-auto">
@@ -418,3 +419,4 @@ export const ProfilePage: React.FC = () => {
     </div>
   );
 };
+

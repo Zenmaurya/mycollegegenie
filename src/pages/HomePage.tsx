@@ -229,9 +229,20 @@ export const HomePage: React.FC<HomePageProps> = ({
       <div className="overflow-x-hidden">
         <Helmet>
           <title>MyCollegeGenie — India's Biggest Student Platform & Ecosystem</title>
-          <meta name="description" content="My College Genie is India's biggest student platform, building a complete ecosystem to connect every college and every student. Access free notes, PYQs, find PGs, discover events, and join the ultimate student portal for every college need." />
-          <meta name="keywords" content="India biggest student platform, college student ecosystem, university portal, free college notes, PYQs, find PG near college, campus events, student community, college resources, My College Genie" />
+          <meta name="description" content="Every College Student Deserves a Genie. From PYQs and notes to PGs, communities, campus exchange, and career opportunities. Join India's biggest student ecosystem." />
+          <meta name="keywords" content="my college genie, college student ecosystem, DU notes, previous year question papers, find PG near college, campus events, university portal, notes se naukri takk" />
           <link rel="canonical" href="https://mycollegegenie.in/" />
+          
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content="https://mycollegegenie.in/" />
+          <meta property="og:title" content="MyCollegeGenie — India's Biggest Student Platform & Ecosystem" />
+          <meta property="og:description" content="Every College Student Deserves a Genie. From PYQs and notes to PGs, communities, campus exchange, and career opportunities." />
+          <meta property="og:image" content="https://mycollegegenie.in/og-image.png" />
+          
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content="MyCollegeGenie — India's Biggest Student Platform & Ecosystem" />
+          <meta name="twitter:description" content="Every College Student Deserves a Genie. From PYQs and notes to PGs, communities, campus exchange, and career opportunities." />
+          <meta name="twitter:image" content="https://mycollegegenie.in/og-image.png" />
         </Helmet>
         {/* Hero Section */}
         <main className="relative min-h-[80vh] lg:min-h-[92vh] flex items-center pt-8 sm:pt-16 pb-10 sm:pb-16 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">

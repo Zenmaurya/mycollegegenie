@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+﻿import React, { useEffect, useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
@@ -353,9 +353,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
 
   return (
     <>
-      <Helmet>
-        <title>{isSignup ? 'Sign Up' : 'Login'} | MyCollegeGenie</title>
-        <meta name="description" content="Log in to MyCollegeGenie to access free notes, campus events, forums, and join India's biggest student ecosystem." />
+            <Helmet>
+        <title>Login / Sign Up | MyCollegeGenie</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
       {/* 
@@ -489,3 +489,4 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
     </>
   );
 };
+

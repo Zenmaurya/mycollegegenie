@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Users, Star, Lightbulb, X, Award, Linkedin, Instagram, Github, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -33,9 +33,22 @@ export function ContributorsPage() {
 
   return (
     <div className="min-h-screen bg-[#0B0914] text-white pt-24 pb-20 md:pb-6 relative overflow-hidden flex flex-col">
-      <Helmet>
-        <title>Our Team & Contributors | My College Genie</title>
-        <meta name="description" content="Meet the team and top contributors behind My College Genie." />
+            <Helmet>
+        <title>Top Contributors & Student Ambassadors | MyCollegeGenie</title>
+        <meta name="description" content="Meet the amazing top contributors, content creators, and student ambassadors who are building India's biggest student ecosystem." />
+        <meta name="keywords" content="top student contributors, college ambassadors, MyCollegeGenie team, student community leaders" />
+        <link rel="canonical" href="https://mycollegegenie.in/contributors" />
+        
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://mycollegegenie.in/contributors" />
+        <meta property="og:title" content="Top Contributors & Student Ambassadors | MyCollegeGenie" />
+        <meta property="og:description" content="Meet the amazing top contributors, content creators, and student ambassadors who are building India's biggest student ecosystem." />
+        <meta property="og:image" content="https://mycollegegenie.in/og-image.png" />
+        
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Top Contributors & Student Ambassadors | MyCollegeGenie" />
+        <meta name="twitter:description" content="Meet the amazing top contributors, content creators, and student ambassadors who are building India's biggest student ecosystem." />
+        <meta name="twitter:image" content="https://mycollegegenie.in/og-image.png" />
       </Helmet>
 
       {/* Background Glows */}
@@ -323,3 +336,4 @@ export function ContributorsPage() {
     </div>
   );
 }
+

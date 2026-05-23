@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { FileText, ArrowRight } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -11,9 +11,22 @@ export function BlogPage() {
 
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 relative overflow-hidden bg-white">
-      <Helmet>
-        <title>Blog | My College Genie</title>
-        <meta name="description" content="Read the latest news, updates, and student stories on the My College Genie Blog." />
+            <Helmet>
+        <title>Student Life Blog - Career, Internships & Tips | MyCollegeGenie</title>
+        <meta name="description" content="Read our latest articles on college survival guides, internship cracking tips, career advice, and student lifestyle from MyCollegeGenie experts." />
+        <meta name="keywords" content="college survival guide, how to get internship, student career advice, college lifestyle blog, interview preparation tips" />
+        <link rel="canonical" href="https://mycollegegenie.in/blog" />
+        
+        <meta property="og:type" content="blog" />
+        <meta property="og:url" content="https://mycollegegenie.in/blog" />
+        <meta property="og:title" content="Student Life Blog - Career, Internships & Tips | MyCollegeGenie" />
+        <meta property="og:description" content="Read our latest articles on college survival guides, internship cracking tips, career advice, and student lifestyle from MyCollegeGenie experts." />
+        <meta property="og:image" content="https://mycollegegenie.in/og-image.png" />
+        
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Student Life Blog - Career, Internships & Tips | MyCollegeGenie" />
+        <meta name="twitter:description" content="Read our latest articles on college survival guides, internship cracking tips, career advice, and student lifestyle from MyCollegeGenie experts." />
+        <meta name="twitter:image" content="https://mycollegegenie.in/og-image.png" />
       </Helmet>
 
       {/* Decorative Elements */}
@@ -49,3 +62,4 @@ export function BlogPage() {
     </div>
   );
 }
+

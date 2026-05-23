@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { Scale, FileText, CheckCircle2, AlertCircle, ArrowLeft, GraduationCap } from 'lucide-react';
@@ -7,11 +7,10 @@ import { Link } from 'react-router-dom';
 export const TermsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-transparent pt-6 sm:pt-8 pb-24">
-      <Helmet>
-        <title>Terms of Service | MyCollegeGenie</title>
-        <meta name="description" content="Read MyCollegeGenie's terms of service and usage guidelines for India's biggest student platform." />
+            <Helmet>
+        <title>Terms & Conditions | MyCollegeGenie</title>
+        <meta name="description" content="Read the terms and conditions for using MyCollegeGenie platform." />
         <meta name="robots" content="noindex, follow" />
-        <link rel="canonical" href="https://mycollegegenie.in/terms" />
       </Helmet>
 
       {/* Decorative blobs */}
@@ -163,3 +162,4 @@ export const TermsPage: React.FC = () => {
     </div>
   );
 };
+

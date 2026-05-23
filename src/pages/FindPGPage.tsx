@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -169,6 +169,16 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
         <meta name="description" content="Find paying guest accommodations, flats, and roommates near your college campus. Browse verified student housing listings by area and budget." />
         <meta name="keywords" content="PG near University, college hostel, roommate University, PG near North Zone, paying guest near college" />
         <link rel="canonical" href="https://mycollegegenie.in/find-pg" />
+              {/* Structured Data for RealEstate/Accommodation */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "RealEstateAgent",
+            "name": "MyCollegeGenie PG Finder",
+            "description": "Find verified PGs and Hostels near your college.",
+            "url": "https://mycollegegenie.in/find-pg"
+          })}
+        </script>
       </Helmet>
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mb-6 sm:mb-16">
@@ -699,3 +709,5 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
     </div>
   );
 };
+
+
