@@ -240,12 +240,12 @@ function AppContent() {
 
     return [...filtered].sort((a, b) => {
       if (sortBy === 'Title') return a.title.localeCompare(b.title);
-      if (sortBy === 'Date') return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
-      if (sortBy === 'Rating') return getAverageRating((b as any).ratings) - getAverageRating((a as any).ratings);
+      if (sortBy === 'Date') return (b.uploadTimestamp || 0) - (a.uploadTimestamp || 0);
+      if (sortBy === 'Rating') return (b.averageRating || 0) - (a.averageRating || 0);
       if (sortBy === 'Course') return a.course.localeCompare(b.course);
       return 0;
     });
-  }, [debouncedSearch, activeFilter, selectedSubCategory, selectedCourse, selectedSemester, resources, sortBy, user, getAverageRating]);
+  }, [debouncedSearch, activeFilter, selectedSubCategory, selectedCourse, selectedSemester, resources, sortBy, user]);
 
   // ── Rating handler (needs both resources + selectedResource) ───
   const handleRate = useCallback(async (resourceId: string, rating: number) => {

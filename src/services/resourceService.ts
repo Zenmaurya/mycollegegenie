@@ -127,6 +127,12 @@ function safeArray(val: any): any[] {
 
 // ── Normalise backend row → Resource shape ──────────────────
 function normaliseResource(item: any): Resource {
+  const uploadDateStr = item.upload_date || item.uploadDate || new Date(item.created_at || Date.now()).toISOString().split('T')[0];
+  const ratings = safeArray(item.ratings);
+  const averageRating = ratings.length > 0 
+    ? parseFloat((ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length).toFixed(1)) 
+    : 0;
+
   return {
     id: item.id,
     title: item.title,
@@ -139,12 +145,14 @@ function normaliseResource(item: any): Resource {
     tags: safeArray(item.tags),
     link: item.link || item.file_url || item.fileUrl || '',
     directDownloadLink: item.direct_download_link || item.directDownloadLink || '',
-    uploadDate: item.upload_date || item.uploadDate || new Date(item.created_at || Date.now()).toISOString().split('T')[0],
+    uploadDate: uploadDateStr,
+    uploadTimestamp: new Date(uploadDateStr).getTime(),
     uploader: item.uploader || item.uploader_name || item.uploaderName || '',
     uploaderId: item.uploader_id || item.uploaderId || '',
     uploaderRole: item.uploader_role || item.uploaderRole || 'user',
     isApproved: Boolean(item.is_approved),
-    ratings: safeArray(item.ratings),
+    ratings,
+    averageRating,
     reports: safeArray(item.reports),
   };
 }

@@ -49,6 +49,8 @@ export interface Resource {
   ratings: number[];
   reports: { reason: string; date: string }[];
   isApproved?: boolean;
+  averageRating?: number;
+  uploadTimestamp?: number;
 }
 
 export interface User {
