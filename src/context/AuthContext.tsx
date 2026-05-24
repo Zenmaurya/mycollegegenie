@@ -63,22 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return null;
     };
 
-    // 1. Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const sbUser = (session?.user ?? null) as SupabaseUser | null;
-      setUser(sbUser);
-      if (sbUser) {
-        const profile = await fetchProfileWithRetry();
-        if (profile) setAppUser(profile);
-      }
-      clearTimeout(safetyTimer);
-      setIsAuthLoading(false);
-    }).catch(() => {
-      clearTimeout(safetyTimer);
-      setIsAuthLoading(false);
-    });
-
-    // 2. Listen for auth changes
+    // Unified single auth initialization listener (handles both initial load and updates)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         const sbUser = (session?.user ?? null) as SupabaseUser | null;
@@ -91,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setAppUser(null);
         }
+        clearTimeout(safetyTimer);
         setIsAuthLoading(false);
       },
     );

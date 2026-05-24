@@ -22,6 +22,9 @@ const authTimeout = <T>(promise: Promise<T>, ms: number = 5000): Promise<T> => {
   return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
 };
 
+// Global cache to deduplicate concurrent Supabase session refresh requests
+let activeRefreshPromise: Promise<string | undefined> | null = null;
+
 export async function getFreshToken(): Promise<string | undefined> {
   try {
     // Fast path: get cached session from localStorage (no network)
@@ -41,22 +44,30 @@ export async function getFreshToken(): Promise<string | undefined> {
     }
 
     // Token expiring soon or already expired → refresh
-    console.log(`[apiClient] Token expires in ${secondsLeft}s, refreshing…`);
-    try {
-      const { data: { session: refreshed }, error: refreshErr } = await authTimeout(
-        supabase.auth.refreshSession(), 8000
-      );
-      if (!refreshErr && refreshed?.access_token) {
-        return refreshed.access_token;
-      }
-      console.warn('[apiClient] Refresh failed, using cached token:', refreshErr?.message);
-    } catch (refreshEx) {
-      console.warn('[apiClient] Refresh threw, using cached token:', refreshEx);
+    if (activeRefreshPromise) {
+      console.log('[apiClient] Refresh already in progress, sharing active promise…');
+      return activeRefreshPromise;
     }
 
-    // Last resort: return the cached (possibly expired) token
-    // Backend will return 401 if truly expired → fetchWithAuth will retry
-    return cached.access_token;
+    console.log(`[apiClient] Token expires in ${secondsLeft}s, refreshing…`);
+    activeRefreshPromise = (async () => {
+      try {
+        const { data: { session: refreshed }, error: refreshErr } = await authTimeout(
+          supabase.auth.refreshSession(), 8000
+        );
+        if (!refreshErr && refreshed?.access_token) {
+          return refreshed.access_token;
+        }
+        console.warn('[apiClient] Refresh failed, using cached token:', refreshErr?.message);
+      } catch (refreshEx) {
+        console.warn('[apiClient] Refresh threw, using cached token:', refreshEx);
+      } finally {
+        activeRefreshPromise = null;
+      }
+      return cached.access_token;
+    })();
+
+    return activeRefreshPromise;
 
   } catch (err) {
     console.warn('[apiClient] getFreshToken failed:', err);
