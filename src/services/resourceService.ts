@@ -39,7 +39,8 @@ export const uploadFile = async (
   file: File,
   folder: 'pyqs' | 'notes' | 'books' | 'resources' | 'exchange' | 'events' | 'avatars' | 'pg' = 'resources',
   meta: { subject?: string; course?: string; subjectCode?: string } = {},
-  onProgress?: (percent: number) => void
+  onProgress?: (percent: number) => void,
+  _isRetry = false
 ): Promise<string> => {
   // Step 1: Get a fresh token BEFORE creating the XHR Promise.
   // If this fails, it throws normally — no leaked Promise.
@@ -93,6 +94,26 @@ export const uploadFile = async (
         }
       } else {
         try {
+          // If 401 and not already a retry, force refresh session and retry once!
+          if (xhr.status === 401 && !_isRetry) {
+            console.warn('[uploadFile] Got 401 on file upload, force-refreshing session and retrying...');
+            supabase.auth.refreshSession()
+              .then(({ data: { session: refreshed } }) => {
+                if (refreshed?.access_token) {
+                  uploadFile(file, folder, meta, onProgress, true)
+                    .then(resolve)
+                    .catch(reject);
+                } else {
+                  reject(new Error('Session expired. Please sign in again.'));
+                }
+              })
+              .catch(err => {
+                console.error('[uploadFile] Session refresh failed on retry:', err);
+                reject(new Error('Authentication failed. Please sign in again.'));
+              });
+            return;
+          }
+
           const err = JSON.parse(xhr.responseText);
           const msg = err.error || `Upload failed with status ${xhr.status}`;
           console.error('[uploadFile] HTTP', xhr.status, ':', msg);
