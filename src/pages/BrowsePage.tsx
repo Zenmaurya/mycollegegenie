@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -11,6 +11,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { fetchWithAuth } from '../lib/apiClient';
 import { toast } from 'sonner';
+import { useResources } from '../context/ResourceContext';
 
 interface BrowsePageProps {
   resources: Resource[];
@@ -88,6 +89,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
   const [courseSearch, setCourseSearch] = useState('');
   const currentUser = propUser ?? null;
+  const { isResourcesLoading } = useResources();
 
   useEffect(() => {
     const resourceId = searchParams.get('resourceId');
@@ -318,7 +320,24 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
         </div>
 
         {/* Resources Grid/List */}
-        {filteredResources.length > 0 ? (
+        {isResourcesLoading && filteredResources.length === 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white border border-gray-100 rounded-[2rem] p-5 space-y-4 animate-pulse border-dashed">
+                <div className="aspect-video bg-gray-50 rounded-2xl w-full" />
+                <div className="space-y-2">
+                  <div className="h-3 bg-gray-200 rounded w-1/3" />
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                  <div className="h-3 bg-gray-200 rounded w-full" />
+                </div>
+                <div className="pt-2 border-t border-gray-50 flex justify-between items-center">
+                  <div className="h-3 bg-gray-200 rounded w-1/4" />
+                  <div className="h-3 bg-gray-200 rounded w-1/5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredResources.length > 0 ? (
           <div className={viewMode === 'grid' 
             ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8" 
             : "space-y-4 sm:space-y-6"

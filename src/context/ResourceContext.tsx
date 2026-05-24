@@ -21,22 +21,41 @@ interface ResourceContextValue {
   savedResourceIds: string[];
   toggleSave: (id: string) => Promise<void>;
   refetchResources: () => Promise<void>;
+  isResourcesLoading: boolean;
 }
 
 const ResourceContext = createContext<ResourceContextValue | null>(null);
 
 export function ResourceProvider({ children }: { children: React.ReactNode }) {
   const { user, appUser } = useAuth();
-  const [resources, setResources] = useState<Resource[]>([]);
+  const [resources, setResources] = useState<Resource[]>(() => {
+    try {
+      const cached = localStorage.getItem('mcg_cached_resources');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [savedResourceIds, setSavedResourceIds] = useState<string[]>([]);
+  const [isResourcesLoading, setIsResourcesLoading] = useState(true);
 
   const refetchResources = useCallback(async () => {
+    setIsResourcesLoading(true);
     try {
       const includeUnapproved = appUser?.role === 'admin';
       const data = await getResources(includeUnapproved);
-      if (data) setResources(data);
+      if (data) {
+        setResources(data);
+        try {
+          localStorage.setItem('mcg_cached_resources', JSON.stringify(data));
+        } catch (e) {
+          console.warn('[ResourceContext] Failed to write cache to localStorage:', e);
+        }
+      }
     } catch (err) {
       console.error('[ResourceContext] fetch resources error:', err);
+    } finally {
+      setIsResourcesLoading(false);
     }
   }, [appUser?.role]);
 
@@ -100,7 +119,7 @@ export function ResourceProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ResourceContext.Provider
-      value={{ resources, setResources, savedResourceIds, toggleSave, refetchResources }}
+      value={{ resources, setResources, savedResourceIds, toggleSave, refetchResources, isResourcesLoading }}
     >
       {children}
     </ResourceContext.Provider>
