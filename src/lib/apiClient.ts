@@ -18,10 +18,19 @@ interface ApiClientOptions extends RequestInit {
  * FIX: Use refreshSession() which always returns a fresh token if possible.
  * Falls back to cached session only if refresh fails (e.g. offline).
  */
+const authTimeout = <T>(promise: Promise<T>, ms: number = 5000): Promise<T> => {
+  let timeoutId: NodeJS.Timeout;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('Supabase auth operation timed out')), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+};
+
 export async function getFreshToken(): Promise<string | undefined> {
   try {
     // 1. Try to get current session from cache first (fast path)
-    const { data: { session: cached } } = await supabase.auth.getSession();
+    // Wrap in timeout to prevent indefinite hangs if localStorage lock is deadlocked
+    const { data: { session: cached } } = await authTimeout(supabase.auth.getSession(), 5000);
 
     // 2. If no session at all, user is not logged in
     if (!cached) return undefined;
@@ -37,7 +46,7 @@ export async function getFreshToken(): Promise<string | undefined> {
     }
 
     // 4. Token expired/expiring — force refresh
-    const { data: { session: refreshed }, error } = await supabase.auth.refreshSession();
+    const { data: { session: refreshed }, error } = await authTimeout(supabase.auth.refreshSession(), 10000);
     if (error) {
       // Refresh failed (e.g. refresh token expired too — user must re-login)
       console.warn('[apiClient] Token refresh failed:', error.message);
@@ -45,10 +54,15 @@ export async function getFreshToken(): Promise<string | undefined> {
       return cached.access_token;
     }
     return refreshed?.access_token;
-  } catch {
-    // Network error during refresh — fall back to cached session
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token;
+  } catch (err) {
+    // Network error or timeout during refresh
+    console.warn('[apiClient] getFreshToken error:', err);
+    try {
+      const { data: { session } } = await authTimeout(supabase.auth.getSession(), 3000);
+      return session?.access_token;
+    } catch {
+      return undefined;
+    }
   }
 }
 
