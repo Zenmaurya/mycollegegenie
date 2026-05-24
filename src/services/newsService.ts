@@ -1,7 +1,7 @@
 /**
  * newsService.ts — Backend API version (MySQL/Express)
  */
-import { fetchWithAuth } from '../lib/apiClient';
+import { fetchWithAuth, getFreshToken } from '../lib/apiClient';
 import { supabase } from '../supabase';
 import { News } from '../types';
 
@@ -113,9 +113,8 @@ export const submitEvent = async (
   formData: { title: string; college: string; date: string; venue: string; eligibility: string; description: string; image?: File | null; imageUrl?: string }
 ) => {
   // FIX: getUser() auto-refreshes expired token; getSession() does not
-  const { data: { session } } = await supabase.auth.refreshSession().catch(() => supabase.auth.getSession());
-  const token = session?.access_token;
-  if (!token) throw new Error('Not authenticated');
+  const token = await getFreshToken();
+  if (!token) throw new Error('Not authenticated.');
 
   let imageUrl = formData.imageUrl || '';
   if (formData.image && !imageUrl) {
@@ -154,8 +153,8 @@ export const submitNews = async (
   formData: { title: string; college: string; date: string; summary: string; url?: string; category?: string }
 ): Promise<{ id: string; message: string }> => {
   // FIX: getUser() auto-refreshes expired token; getSession() does not
-  const { data: { session } } = await supabase.auth.refreshSession().catch(() => supabase.auth.getSession());
-  if (!session?.access_token) throw new Error('Not authenticated');
+  const token = await getFreshToken();
+  if (!token) throw new Error('Not authenticated.');
 
   return await fetchWithAuth('/api/news', {
     method: 'POST',

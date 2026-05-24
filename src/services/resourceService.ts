@@ -2,7 +2,7 @@
  * resourceService.ts — Backend API version (MySQL/Express + Cloudinary/R2)
  * Replaces Firebase Firestore and Firebase Storage.
  */
-import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
+import { fetchWithAuth, safeJsonParse, getFreshToken } from '../lib/apiClient';
 import { supabase } from '../supabase';
 import { config } from '../lib/config';
 import { Resource, ResourceType } from '../types';
@@ -43,8 +43,7 @@ export const uploadFile = async (
 ): Promise<string> => {
   // Step 1: Get a fresh token BEFORE creating the XHR Promise.
   // If this fails, it throws normally — no leaked Promise.
-  const { data: { session } } = await supabase.auth.refreshSession().catch(() => supabase.auth.getSession());
-  const token = session?.access_token;
+  const token = await getFreshToken();
   if (!token) {
     throw new Error('Not authenticated. Please sign in to upload files.');
   }

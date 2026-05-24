@@ -18,7 +18,7 @@ interface ApiClientOptions extends RequestInit {
  * FIX: Use refreshSession() which always returns a fresh token if possible.
  * Falls back to cached session only if refresh fails (e.g. offline).
  */
-async function getFreshToken(): Promise<string | undefined> {
+export async function getFreshToken(): Promise<string | undefined> {
   try {
     // 1. Try to get current session from cache first (fast path)
     const { data: { session: cached } } = await supabase.auth.getSession();
