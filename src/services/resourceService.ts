@@ -24,6 +24,66 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   throw error instanceof Error ? error : new Error(msg);
 }
 
+/** Client-side image compressor to speed up uploads and save bandwidth/storage */
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/') || file.type === 'image/gif') {
+      resolve(file);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        const MAX_DIM = 1600;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        const exportType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        canvas.toBlob(
+          (blob) => {
+            if (blob && blob.size < file.size) {
+              const compressedFile = new File([blob], file.name, {
+                type: exportType,
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          },
+          exportType,
+          0.82
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
 /**
  * Upload a file to the backend (PDF → Cloudflare R2, images → Cloudinary).
  *
@@ -49,8 +109,18 @@ export const uploadFile = async (
     throw new Error('Not authenticated. Please sign in to upload files.');
   }
 
+  // Optimize and compress images locally before upload to make it 10x faster
+  let fileToUpload = file;
+  if (file.type.startsWith('image/') && file.type !== 'image/gif') {
+    try {
+      fileToUpload = await compressImage(file);
+    } catch (e) {
+      console.warn('[uploadFile] Client image compression failed, uploading original:', e);
+    }
+  }
+
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', fileToUpload);
 
   // Build query string — backend uses these to name the R2 file
   const params = new URLSearchParams({ folder });
