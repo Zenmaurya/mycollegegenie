@@ -51,9 +51,19 @@ export function ResourceProvider({ children }: { children: React.ReactNode }) {
       setSavedResourceIds([]);
       return;
     }
-    fetchWithAuth('/api/users/me/saved')
-      .then(data => setSavedResourceIds(Array.isArray(data) ? data : []))
-      .catch(err => console.error('[ResourceContext] fetch saved error:', err));
+    // Small delay to let token settle after login before fetching saved items
+    const timer = setTimeout(() => {
+      fetchWithAuth('/api/users/me/saved')
+        .then(data => setSavedResourceIds(Array.isArray(data) ? data : []))
+        .catch(err => {
+          // 401 here is non-critical — token may still be refreshing
+          // silently ignore so it doesn't pollute console during normal login
+          if (!String(err?.message).includes('401') && !String(err?.message).includes('token')) {
+            console.warn('[ResourceContext] fetch saved error (non-critical):', err?.message);
+          }
+        });
+    }, 1500); // 1.5s delay — gives token time to settle after auth state change
+    return () => clearTimeout(timer);
   }, [user]);
 
   const toggleSave = useCallback(async (id: string) => {

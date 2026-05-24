@@ -153,14 +153,25 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
 
       if (formData.file) {
         // ── Pre-flight: check storage is configured ──
+        // NOTE: We intentionally do NOT block on health check failure (including 401).
+        // If the user is logged in and the upload itself fails, they'll get a clear
+        // error from the actual upload request. Health check is best-effort only.
         try {
           const health = await fetchWithAuth('/api/resources/upload/health');
           if (health?.r2 !== 'configured') {
-            throw new Error('File storage is not configured on the server. Please use a Google Drive / direct link instead, or contact admin.');
+            // R2 is explicitly not configured — warn but still allow Google Drive link
+            console.warn('[Upload] R2 not configured on server. File upload may fail.');
+            // Only hard-block if user has NO link fallback
+            if (!formData.link?.trim()) {
+              throw new Error('File storage is not configured on the server. Please use a Google Drive link instead, or contact admin.');
+            }
           }
         } catch (healthErr: any) {
-          // Only block if it's a real config error — network errors we let through
-          if (healthErr.message?.includes('not configured')) throw healthErr;
+          // IMPORTANT: 401 / network errors on health check should NOT block the upload.
+          // The actual upload request will show the real error if something is wrong.
+          if (healthErr.message?.includes('not configured on the server')) throw healthErr;
+          // Anything else (401, timeout, network) — log and continue
+          console.warn('[Upload] Health check failed (ignoring):', healthErr.message);
         }
 
         let folder: 'pyqs' | 'books' | 'notes' | 'resources' = 'resources';
@@ -178,7 +189,6 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
           toast.dismiss(toastId);
         } catch (uploadErr) {
           toast.dismiss(toastId);
-          // Re-throw with clear message so the outer catch shows it to the user
           throw uploadErr;
         }
       }
@@ -234,10 +244,28 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
         toast.error('Upload timed out. Please check your internet connection and try again.', { duration: 8000 });
       } else if (msg.toLowerCase().includes('network') || msg.toLowerCase().includes('fetch')) {
         toast.error('Network error. Make sure you are connected to the internet.', { duration: 8000 });
-      } else if (msg.toLowerCase().includes('not authenticated') || msg.toLowerCase().includes('sign in')) {
-        toast.error('Your session expired. Please sign in again.', { duration: 8000 });
+      } else if (
+        msg.toLowerCase().includes('not authenticated') ||
+        (msg.toLowerCase().includes('sign in') && !msg.toLowerCase().includes('storage'))
+      ) {
+        // Session expired — give user a reload option
+        toast.error(
+          'Session expired. Please refresh the page and sign in again.',
+          {
+            duration: 10000,
+            action: { label: 'Refresh', onClick: () => window.location.reload() },
+          }
+        );
       } else if (msg.toLowerCase().includes('r2 not configured') || msg.toLowerCase().includes('storage not configured')) {
-        toast.error('File storage not set up on the server. Please contact admin.', { duration: 10000 });
+        toast.error('File storage not set up on the server. Please use a Google Drive link instead or contact admin.', { duration: 10000 });
+      } else if (msg.toLowerCase().includes('invalid token') || msg.toLowerCase().includes('expired token') || msg.includes('401')) {
+        toast.error(
+          'Authentication error. Please refresh the page.',
+          {
+            duration: 10000,
+            action: { label: 'Refresh', onClick: () => window.location.reload() },
+          }
+        );
       } else {
         toast.error(msg || 'Upload failed. Please try again.', { duration: 8000 });
       }
