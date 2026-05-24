@@ -20,7 +20,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useResources } from '../context/ResourceContext';
 import { uploadResource, uploadFile } from '../services/resourceService';
-import { fetchWithAuth } from '../lib/apiClient';
+import { fetchWithAuth, getFreshToken } from '../lib/apiClient';
 import { College_COURSES, COURSE_METADATA } from '../constants';
 
 interface ResourceUploadModalProps {
@@ -118,6 +118,16 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { toast.error('Please sign in to upload resources.'); return; }
+
+    // Safety check: ensure active session token is present before starting upload
+    const freshToken = await getFreshToken();
+    if (!freshToken) {
+      toast.error('Session expired. Please refresh the page and sign in again.', {
+        duration: 10000,
+        action: { label: 'Refresh', onClick: () => window.location.reload() },
+      });
+      return;
+    }
 
     let currentType = formData.type;
 
