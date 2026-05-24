@@ -42,7 +42,10 @@ export const College_COURSES = [
   'Bachelor of Business Administration (Financial Investment Analysis) [BBA(FIA)]',
   'B.A. (Hons.) Business Economics [BBE]',
   'Bachelor of Elementary Education (B.El.Ed.)',
-  'Bachelor of Fine Arts (BFA)'
+  'Bachelor of Fine Arts (BFA)',
+  'Ability Enhancement Course (AEC)',
+  'Skill Enhancement Course (SEC)',
+  'Value Addition Course (VAC)'
 ];
 
 export const COURSE_METADATA: Record<string, { semesters: number; subCategories?: string[] }> = {
