@@ -1,10 +1,11 @@
-﻿import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { User } from '../types';
 import { AuthForm } from '../components/AuthForm';
 import { motion, AnimatePresence } from 'motion/react';
+import { createPortal } from 'react-dom';
 
 /* ─────────────────────────────────────────────────────────────────────── */
 /* Animated eye helpers                                                      */
@@ -351,7 +352,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
 
   const isSignup = location.pathname === '/signup';
 
-  return (
+  return createPortal(
     <>
             <Helmet>
         <title>Login / Sign Up | MyCollegeGenie</title>
@@ -486,7 +487,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
         onClick={() => navigate(-1)}
         style={{ pointerEvents: 'auto' }}
       />
-    </>
+    </>,
+    document.body
   );
 };
 
