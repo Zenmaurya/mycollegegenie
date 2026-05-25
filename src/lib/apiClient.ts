@@ -24,6 +24,7 @@ const authTimeout = <T>(promise: Promise<T>, ms: number = 5000): Promise<T> => {
 
 // Global cache to deduplicate concurrent Supabase session refresh requests
 let activeRefreshPromise: Promise<string | undefined> | null = null;
+let lastKnownToken: string | undefined = undefined;
 
 /**
  * Helper to directly inspect localStorage for a cached Supabase session token.
@@ -65,13 +66,17 @@ export async function getFreshToken(): Promise<string | undefined> {
       const secondsLeft = expiresAt ? expiresAt - nowSecs : 0;
 
       if (secondsLeft > 120) {
+        lastKnownToken = cached.access_token;
         return cached.access_token;
       }
 
       // Token expiring soon or already expired → refresh
       if (activeRefreshPromise) {
         console.log('[apiClient] Refresh already in progress, sharing active promise…');
-        return activeRefreshPromise;
+        return activeRefreshPromise.then(tok => {
+          if (tok) lastKnownToken = tok;
+          return tok;
+        });
       }
 
       console.log(`[apiClient] Token expires in ${secondsLeft}s, refreshing…`);
@@ -81,6 +86,7 @@ export async function getFreshToken(): Promise<string | undefined> {
             supabase.auth.refreshSession(), 25000
           );
           if (!refreshErr && refreshed?.access_token) {
+            lastKnownToken = refreshed.access_token;
             return refreshed.access_token;
           }
           console.warn('[apiClient] Refresh failed, using cached token:', refreshErr?.message);
@@ -89,6 +95,7 @@ export async function getFreshToken(): Promise<string | undefined> {
         } finally {
           activeRefreshPromise = null;
         }
+        lastKnownToken = cached.access_token;
         return cached.access_token;
       })();
 
@@ -98,7 +105,7 @@ export async function getFreshToken(): Promise<string | undefined> {
     console.warn('[apiClient] getFreshToken failed or timed out:', err);
   }
 
-  // ── Fail-Safe Fallback: Direct LocalStorage parsing ──
+  // ── Fail-Safe Fallback 1: Direct LocalStorage parsing ──
   // If getSession/refreshSession timed out or threw (common on slow mobile connections when
   // returning from system gallery app suspension), try to directly retrieve the token
   // from localStorage. The backend's DB-fallback allows a 30-day grace period for expired tokens.
@@ -107,10 +114,19 @@ export async function getFreshToken(): Promise<string | undefined> {
     const localSession = getSessionFromLocalStorageFallback();
     if (localSession?.access_token) {
       console.log('[apiClient] Direct localStorage fallback succeeded!');
+      lastKnownToken = localSession.access_token;
       return localSession.access_token;
     }
   } catch (fallbackErr) {
     console.warn('[apiClient] LocalStorage fallback failed:', fallbackErr);
+  }
+
+  // ── Fail-Safe Fallback 2: Global In-Memory Cache ──
+  // If the sandbox blocks localStorage access (e.g. Safari Private Browsing) or Supabase fails,
+  // we return our ultimate in-memory fallback to avoid triggering false session expirations on uploads.
+  if (lastKnownToken) {
+    console.log('[apiClient] Returning module-cached lastKnownToken as ultimate fail-safe!');
+    return lastKnownToken;
   }
 
   return undefined;

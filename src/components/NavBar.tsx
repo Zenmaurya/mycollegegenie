@@ -219,7 +219,7 @@ export function NavBar() {
             </div>
 
             {/* Admin link (role-gated) */}
-            {appUser?.role === 'admin' && (
+            {(appUser?.role === 'admin' || appUser?.role === 'moderator') && (
               <Link
                 to="/admin"
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 group whitespace-nowrap ${
@@ -256,7 +256,7 @@ export function NavBar() {
                       {user.user_metadata?.full_name || 'Student'}
                     </span>
                     <span className="text-[9px] font-black text-gray-400 mt-1.5 group-hover:text-purple-500 transition-colors uppercase tracking-widest">
-                      {appUser?.role === 'admin' ? 'Admin Profile' : 'View Profile'}
+                      {appUser?.role === 'admin' || appUser?.role === 'moderator' ? 'Admin Profile' : 'View Profile'}
                     </span>
                   </div>
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-purple-100 bg-purple-50 shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-inner">
@@ -371,9 +371,9 @@ export function NavBar() {
                         {user.user_metadata?.full_name || (appUser as any)?.display_name || 'Student'}
                       </p>
                       <p className="text-white/60 text-[11px] font-medium mt-0.5 truncate">{user.email}</p>
-                      {appUser?.role === 'admin' && (
+                      {(appUser?.role === 'admin' || appUser?.role === 'moderator') && (
                         <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-amber-400/20 text-amber-200 text-[9px] font-black uppercase tracking-wider rounded-full border border-amber-300/20">
-                          Admin
+                          {appUser.role}
                         </span>
                       )}
                     </div>
@@ -419,7 +419,7 @@ export function NavBar() {
                     );
                   })}
 
-                  {appUser?.role === 'admin' && (
+                  {(appUser?.role === 'admin' || appUser?.role === 'moderator') && (
                     <>
                       <div className="my-3 border-t border-gray-100" />
                       <Link
@@ -458,7 +458,7 @@ export function NavBar() {
                         View Profile
                       </Link>
                       <button
-                        onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                        onClick={handleLogout}
                         disabled={isSigningOut}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 font-semibold text-[13px] transition-all disabled:opacity-60"
                       >

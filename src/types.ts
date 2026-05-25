@@ -58,7 +58,7 @@ export interface User {
   email: string;
   displayName: string;
   photoURL: string;
-  role: 'user' | 'admin' | 'faculty';
+  role: 'user' | 'admin' | 'faculty' | 'moderator';
   is_verified?: boolean | number;
   createdAt: string;
   college?: string;

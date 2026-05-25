@@ -400,11 +400,11 @@ function AppContent() {
               <Route path="/campus-exchange" element={<CampusExchangePage user={user} />} />
 
               <Route path="/admin" element={
-                isAuthLoading ? (
+                (isAuthLoading || (user && !appUser)) ? (
                   <div className="min-h-screen flex items-center justify-center">
                     <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
                   </div>
-                ) : appUser?.role === 'admin' ? (
+                ) : (appUser?.role === 'admin' || appUser?.role === 'moderator') ? (
                   <AdminPanel user={user} appUser={appUser} isAuthLoading={isAuthLoading} />
                 ) : user ? (
                   <Navigate to="/" replace />

@@ -283,7 +283,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   // Auth guard is handled at the route level in App.tsx.
   // This effect only fetches data once admin access is confirmed.
   useEffect(() => {
-    if (!isAuthLoading && appUser?.role === 'admin') {
+    if (!isAuthLoading && (appUser?.role === 'admin' || appUser?.role === 'moderator')) {
       fetchResources();
       fetchNewsData();
       fetchTestimonials();
