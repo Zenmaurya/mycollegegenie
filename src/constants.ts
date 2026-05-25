@@ -45,7 +45,55 @@ export const College_COURSES = [
   'Bachelor of Fine Arts (BFA)',
   'Ability Enhancement Course (AEC)',
   'Skill Enhancement Course (SEC)',
-  'Value Addition Course (VAC)'
+  'Value Addition Course (VAC)',
+
+  // ── Delhi University Postgraduate (Master's) Courses ──
+  'M.A. Economics',
+  'M.A. English',
+  'M.A. History',
+  'M.A. Political Science',
+  'M.A. Psychology',
+  'M.A. Sociology',
+  'M.A. Hindi',
+  'M.A. Geography',
+  'M.A. Sanskrit',
+  'M.A. Philosophy',
+  'M.Sc. Physics',
+  'M.Sc. Chemistry',
+  'M.Sc. Botany',
+  'M.Sc. Zoology',
+  'M.Sc. Mathematics',
+  'M.Sc. Statistics',
+  'M.Sc. Computer Science',
+  'M.Sc. Microbiology',
+  'M.Sc. Anthropology',
+  'M.Sc. Geology',
+  'Master of Commerce (M.Com.)',
+  'Master of Computer Applications (MCA)',
+  'Master of Laws (LL.M.)',
+  'Bachelor of Laws (LL.B.)',
+  'Master of Education (M.Ed.)',
+  'Bachelor of Education (B.Ed.)',
+
+  // ── Delhi University Ph.D. Courses ──
+  'Ph.D. Economics',
+  'Ph.D. English',
+  'Ph.D. History',
+  'Ph.D. Political Science',
+  'Ph.D. Sociology',
+  'Ph.D. Psychology',
+  'Ph.D. Commerce',
+  'Ph.D. Computer Science',
+  'Ph.D. Physics',
+  'Ph.D. Chemistry',
+  'Ph.D. Mathematics',
+  'Ph.D. Zoology',
+  'Ph.D. Botany',
+  'Ph.D. Law',
+  'Ph.D. Geography',
+  'Ph.D. Philosophy',
+  'Ph.D. Sanskrit',
+  'Ph.D. Urdu'
 ];
 
 export const COURSE_METADATA: Record<string, { semesters: number; subCategories?: string[] }> = {
@@ -56,6 +104,7 @@ export const COURSE_METADATA: Record<string, { semesters: number; subCategories?
   'B.Tech. (Information Technology and Mathematical Innovations)': { semesters: 8, subCategories: ['Syllabus', 'Lecture Notes', 'Engineering Drawings', 'PYQs'] },
   'B.A. Programme': { semesters: 6, subCategories: ['Syllabus', 'Lecture Notes', 'PYQs'] },
   'B.Com. Programme': { semesters: 6, subCategories: ['Syllabus', 'Lecture Notes', 'PYQs'] },
+  
   'Master of Business Administration (MBA)': { 
     semesters: 4, 
     subCategories: [
@@ -87,6 +136,54 @@ export const COURSE_METADATA: Record<string, { semesters: number; subCategories?
       'MBAFT-6403: Global Business Management'
     ] 
   },
+
+  // ── PG / Master's Courses metadata (4 semesters) ──
+  'M.A. Economics': { semesters: 4 },
+  'M.A. English': { semesters: 4 },
+  'M.A. History': { semesters: 4 },
+  'M.A. Political Science': { semesters: 4 },
+  'M.A. Psychology': { semesters: 4 },
+  'M.A. Sociology': { semesters: 4 },
+  'M.A. Hindi': { semesters: 4 },
+  'M.A. Geography': { semesters: 4 },
+  'M.A. Sanskrit': { semesters: 4 },
+  'M.A. Philosophy': { semesters: 4 },
+  'M.Sc. Physics': { semesters: 4 },
+  'M.Sc. Chemistry': { semesters: 4 },
+  'M.Sc. Botany': { semesters: 4 },
+  'M.Sc. Zoology': { semesters: 4 },
+  'M.Sc. Mathematics': { semesters: 4 },
+  'M.Sc. Statistics': { semesters: 4 },
+  'M.Sc. Computer Science': { semesters: 4 },
+  'M.Sc. Microbiology': { semesters: 4 },
+  'M.Sc. Anthropology': { semesters: 4 },
+  'M.Sc. Geology': { semesters: 4 },
+  'Master of Commerce (M.Com.)': { semesters: 4 },
+  'Master of Computer Applications (MCA)': { semesters: 4 },
+  'Master of Laws (LL.M.)': { semesters: 4 },
+  'Bachelor of Laws (LL.B.)': { semesters: 6 },
+  'Master of Education (M.Ed.)': { semesters: 4 },
+  'Bachelor of Education (B.Ed.)': { semesters: 4 },
+
+  // ── Ph.D. Courses metadata (6 semesters) ──
+  'Ph.D. Economics': { semesters: 6 },
+  'Ph.D. English': { semesters: 6 },
+  'Ph.D. History': { semesters: 6 },
+  'Ph.D. Political Science': { semesters: 6 },
+  'Ph.D. Sociology': { semesters: 6 },
+  'Ph.D. Psychology': { semesters: 6 },
+  'Ph.D. Commerce': { semesters: 6 },
+  'Ph.D. Computer Science': { semesters: 6 },
+  'Ph.D. Physics': { semesters: 6 },
+  'Ph.D. Chemistry': { semesters: 6 },
+  'Ph.D. Mathematics': { semesters: 6 },
+  'Ph.D. Zoology': { semesters: 6 },
+  'Ph.D. Botany': { semesters: 6 },
+  'Ph.D. Law': { semesters: 6 },
+  'Ph.D. Geography': { semesters: 6 },
+  'Ph.D. Philosophy': { semesters: 6 },
+  'Ph.D. Sanskrit': { semesters: 6 },
+  'Ph.D. Urdu': { semesters: 6 }
 };
 
 export const EVENT_POSTERS: any[] = [];
