@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, IndianRupee, Search, Plus, X, MessageCircle, GraduationCap, Info, Trash2, Building, ChevronDown, ChevronRight, AlertCircle, ShieldCheck } from 'lucide-react';
+import { MapPin, IndianRupee, Search, Plus, X, MessageCircle, GraduationCap, Info, Trash2, Building, ChevronDown, ChevronRight, AlertCircle, ShieldCheck, UserCheck } from 'lucide-react';
 import { PGListing } from '../types';
 import type { SupabaseAuthUser } from '../types';
 import { createPGListing, getPGListings, deletePGListing } from '../services/pgService';
@@ -187,14 +187,14 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
         </script>
       </Helmet>
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 mb-2 sm:mb-4">
-        <div className="bg-white/40 backdrop-blur-md border border-gray-100/80 rounded-2xl sm:rounded-[2rem] p-3 sm:p-6 lg:p-8 shadow-xl shadow-purple-900/5 text-center relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 mb-3 sm:mb-6">
+        <div className="bg-white/40 backdrop-blur-md border border-gray-100/80 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 lg:p-10 shadow-xl shadow-purple-900/5 text-center relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-60 h-60 bg-purple-100 rounded-full blur-[80px] opacity-40 pointer-events-none" />
           
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-600 text-[9px] sm:text-xs font-black uppercase tracking-widest mb-2 sm:mb-3.5 border border-purple-100/60"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-600 text-[9px] sm:text-xs font-black uppercase tracking-widest mb-2 sm:mb-3.5 border border-purple-100/60"
           >
             <Building className="w-3.5 h-3.5" />
             Find Your Perfect Roommate
@@ -204,7 +204,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-lg sm:text-3xl md:text-4xl font-black text-gray-900 mb-1 sm:mb-2 tracking-tight"
+            className="text-2xl sm:text-4xl md:text-5xl font-black text-gray-900 mb-1 sm:mb-2 tracking-tight"
           >
             Find <span className="text-purple-600">PG Partner</span>
           </motion.h1>
@@ -213,10 +213,30 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="hidden sm:block text-[11px] sm:text-sm text-gray-500 font-medium max-w-xl mx-auto mb-4 sm:mb-6 px-2 sm:px-0 leading-relaxed"
+            className="text-[11px] sm:text-sm text-gray-500 font-medium max-w-xl mx-auto mb-4 sm:mb-6 px-2 sm:px-0 leading-relaxed"
           >
-            Connect with fellow students from University looking for accommodation. Filter by college, location, and budget.
+            Connect with fellow students looking for accommodation near your college campus. Filter by college, location, and budget.
           </motion.p>
+
+          {/* Guarantee Badges Row like Campus Exchange */}
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="flex flex-wrap justify-center gap-1.5 sm:gap-2.5 max-w-3xl mx-auto mb-5 sm:mb-7 overflow-x-auto pb-1 no-scrollbar shrink-0"
+          >
+            {[
+              { icon: ShieldCheck, text: 'Verified PGs', color: 'text-purple-600', bg: 'bg-purple-50 border-purple-100/60' },
+              { icon: UserCheck, text: 'Verified Students', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100/60' },
+              { icon: MapPin, text: 'Near College', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100/60' },
+              { icon: IndianRupee, text: 'Zero Brokerage', color: 'text-pink-600', bg: 'bg-pink-50 border-pink-100/60' }
+            ].map((badge, idx) => (
+              <div key={idx} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border ${badge.bg} whitespace-nowrap`}>
+                <badge.icon className={`w-3.5 h-3.5 shrink-0 ${badge.color}`} />
+                <span className={`text-[10px] sm:text-xs font-bold ${badge.color}`}>{badge.text}</span>
+              </div>
+            ))}
+          </motion.div>
 
           {/* Compact Search & Filter Bar */}
           <motion.div 
@@ -233,7 +253,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                 placeholder="Search by college or location..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8.5 pr-3 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none text-xs sm:text-sm font-medium"
+                className="w-full pl-8.5 pr-3 py-2 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none text-xs sm:text-sm font-medium"
               />
             </div>
             
@@ -244,7 +264,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                   <button
                     key={g}
                     onClick={() => setGenderFilter(g)}
-                    className={`flex-1 md:flex-initial px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-md sm:rounded-lg font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
+                    className={`flex-1 md:flex-initial px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-md sm:rounded-lg font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
                       genderFilter === g 
                         ? 'bg-white text-purple-600 shadow-sm border border-gray-100/50' 
                         : 'text-gray-500 hover:text-gray-900'
@@ -258,7 +278,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
               {/* Post Listing Button inside search box - Desktop Only */}
               <button 
                 onClick={() => setIsPostModalOpen(true)}
-                className="hidden md:flex items-center gap-1.5 bg-purple-600 text-white px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black uppercase tracking-widest text-[9px] sm:text-xs shadow-lg shadow-purple-600/10 hover:bg-purple-700 active:scale-98 transition-all shrink-0 whitespace-nowrap"
+                className="hidden md:flex items-center gap-1.5 bg-purple-600 text-white px-5 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-black uppercase tracking-widest text-[9px] sm:text-xs shadow-lg shadow-purple-600/10 hover:bg-purple-700 active:scale-98 transition-all shrink-0 whitespace-nowrap"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Post Listing
@@ -266,6 +286,17 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
             </div>
           </motion.div>
         </div>
+      </div>
+
+      {/* Mobile-Only Post Listing Button below Search Bar */}
+      <div className="max-w-7xl mx-auto px-2 mb-4 md:hidden">
+        <button 
+          onClick={() => setIsPostModalOpen(true)}
+          className="w-full flex items-center justify-center gap-1.5 px-4 py-3 bg-purple-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs shadow-lg shadow-purple-600/20 hover:bg-purple-700 active:scale-98 transition-all"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Post PG Listing
+        </button>
       </div>
 
       {/* Listings Grid */}
@@ -756,20 +787,6 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
           listingTitle={verifyModal.title}
         />
       )}
-
-      {/* Floating Action Button for Mobile */}
-      <div className="fixed bottom-24 right-4 z-50 md:hidden">
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setIsPostModalOpen(true)}
-          className="bg-purple-600 text-white p-3.5 rounded-full shadow-lg shadow-purple-600/30 hover:bg-purple-700 active:scale-95 transition-all flex items-center justify-center border border-purple-500/10"
-          aria-label="Post PG Listing"
-        >
-          <Plus className="w-6 h-6" />
-        </motion.button>
-      </div>
     </div>
   );
 };
-
-
