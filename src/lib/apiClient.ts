@@ -25,60 +25,95 @@ const authTimeout = <T>(promise: Promise<T>, ms: number = 5000): Promise<T> => {
 // Global cache to deduplicate concurrent Supabase session refresh requests
 let activeRefreshPromise: Promise<string | undefined> | null = null;
 
+/**
+ * Helper to directly inspect localStorage for a cached Supabase session token.
+ * Provides a highly-resilient offline/low-connectivity fallback.
+ */
+function getSessionFromLocalStorageFallback(): any {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  try {
+    const storage = window.localStorage;
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        const val = storage.getItem(key);
+        if (val) {
+          const parsed = JSON.parse(val);
+          if (parsed && typeof parsed === 'object') {
+            return parsed;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[apiClient] Error reading localStorage fallback:', err);
+  }
+  return null;
+}
+
 export async function getFreshToken(): Promise<string | undefined> {
   try {
-    // Fast path: get cached session from localStorage (no network)
+    // Fast path: get cached session from localStorage (generous 15s timeout for mobile/slow networks)
     const { data: { session: cached }, error: sessionErr } = await authTimeout(
-      supabase.auth.getSession(), 4000
+      supabase.auth.getSession(), 15000
     );
 
-    if (sessionErr || !cached) return undefined;
+    if (!sessionErr && cached) {
+      // If token is still valid for more than 2 minutes, use it directly
+      const expiresAt = cached.expires_at;
+      const nowSecs = Math.floor(Date.now() / 1000);
+      const secondsLeft = expiresAt ? expiresAt - nowSecs : 0;
 
-    // If token is still valid for more than 2 minutes, use it directly
-    const expiresAt = cached.expires_at;
-    const nowSecs = Math.floor(Date.now() / 1000);
-    const secondsLeft = expiresAt ? expiresAt - nowSecs : 0;
+      if (secondsLeft > 120) {
+        return cached.access_token;
+      }
 
-    if (secondsLeft > 120) {
-      return cached.access_token;
-    }
+      // Token expiring soon or already expired → refresh
+      if (activeRefreshPromise) {
+        console.log('[apiClient] Refresh already in progress, sharing active promise…');
+        return activeRefreshPromise;
+      }
 
-    // Token expiring soon or already expired → refresh
-    if (activeRefreshPromise) {
-      console.log('[apiClient] Refresh already in progress, sharing active promise…');
+      console.log(`[apiClient] Token expires in ${secondsLeft}s, refreshing…`);
+      activeRefreshPromise = (async () => {
+        try {
+          const { data: { session: refreshed }, error: refreshErr } = await authTimeout(
+            supabase.auth.refreshSession(), 25000
+          );
+          if (!refreshErr && refreshed?.access_token) {
+            return refreshed.access_token;
+          }
+          console.warn('[apiClient] Refresh failed, using cached token:', refreshErr?.message);
+        } catch (refreshEx) {
+          console.warn('[apiClient] Refresh threw, using cached token:', refreshEx);
+        } finally {
+          activeRefreshPromise = null;
+        }
+        return cached.access_token;
+      })();
+
       return activeRefreshPromise;
     }
-
-    console.log(`[apiClient] Token expires in ${secondsLeft}s, refreshing…`);
-    activeRefreshPromise = (async () => {
-      try {
-        const { data: { session: refreshed }, error: refreshErr } = await authTimeout(
-          supabase.auth.refreshSession(), 8000
-        );
-        if (!refreshErr && refreshed?.access_token) {
-          return refreshed.access_token;
-        }
-        console.warn('[apiClient] Refresh failed, using cached token:', refreshErr?.message);
-      } catch (refreshEx) {
-        console.warn('[apiClient] Refresh threw, using cached token:', refreshEx);
-      } finally {
-        activeRefreshPromise = null;
-      }
-      return cached.access_token;
-    })();
-
-    return activeRefreshPromise;
-
   } catch (err) {
-    console.warn('[apiClient] getFreshToken failed:', err);
-    // Try one more time with a simple getSession
-    try {
-      const { data: { session } } = await authTimeout(supabase.auth.getSession(), 2000);
-      return session?.access_token;
-    } catch {
-      return undefined;
-    }
+    console.warn('[apiClient] getFreshToken failed or timed out:', err);
   }
+
+  // ── Fail-Safe Fallback: Direct LocalStorage parsing ──
+  // If getSession/refreshSession timed out or threw (common on slow mobile connections when
+  // returning from system gallery app suspension), try to directly retrieve the token
+  // from localStorage. The backend's DB-fallback allows a 30-day grace period for expired tokens.
+  try {
+    console.log('[apiClient] Attempting direct localStorage fallback…');
+    const localSession = getSessionFromLocalStorageFallback();
+    if (localSession?.access_token) {
+      console.log('[apiClient] Direct localStorage fallback succeeded!');
+      return localSession.access_token;
+    }
+  } catch (fallbackErr) {
+    console.warn('[apiClient] LocalStorage fallback failed:', fallbackErr);
+  }
+
+  return undefined;
 }
 
 /**
@@ -124,9 +159,9 @@ export async function fetchWithAuth(
     if (response.status === 401 && !_isRetry) {
       console.warn('[apiClient] Got 401, force-refreshing token and retrying…');
       try {
-        // Force refresh regardless of expiry time
+        // Force refresh regardless of expiry time (generous 25s timeout for mobile resilience)
         const { data: { session: fresh } } = await authTimeout(
-          supabase.auth.refreshSession(), 8000
+          supabase.auth.refreshSession(), 25000
         );
         if (fresh?.access_token) {
           // Retry the same request with the new token
