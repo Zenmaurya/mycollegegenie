@@ -20,6 +20,35 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Camera, X, Plus, ImageOff, Maximize2 } from 'lucide-react';
 
+/**
+ * Generates an optimized Cloudinary URL with specified width, height, and cropping.
+ * Uses automatic format selection (WebP/AVIF) and automatic quality compression.
+ */
+export function getOptimizedCloudinaryUrl(
+  url: string | null | undefined,
+  width?: number,
+  height?: number,
+  crop: string = 'fill'
+): string {
+  if (!url) return '';
+  if (!url.includes('res.cloudinary.com')) return url; // Skip external images
+
+  // If it already has transformations (e.g. contains '/w_'), return it
+  if (url.includes('/w_') || url.includes('/q_') || url.includes('/f_')) return url;
+
+  // Build the transformation string
+  const parts = [];
+  if (width) parts.push(`w_${width}`);
+  if (height) parts.push(`h_${height}`);
+  if (width || height) parts.push(`c_${crop}`);
+  parts.push('q_auto');
+  parts.push('f_auto');
+  const transform = parts.join(',');
+
+  // Inject the transformation string after '/upload/'
+  return url.replace('/image/upload/', `/image/upload/${transform}/`);
+}
+
 interface ImageSliderProps {
   images: string[];                          // URLs to display
   editable?: boolean;                        // Show upload controls
@@ -198,7 +227,7 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
       <AnimatePresence mode="wait" initial={false}>
         <motion.img
           key={images[current] + current}
-          src={images[current]}
+          src={getOptimizedCloudinaryUrl(images[current], 600, undefined, 'limit')}
           alt={`Image ${current + 1}`}
           onClick={(e) => { e.stopPropagation(); setIsFullScreen(true); }}
           className="absolute inset-0 w-full h-full object-cover cursor-pointer"
@@ -333,7 +362,7 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
               </div>
 
               <img
-                src={images[current]}
+                src={getOptimizedCloudinaryUrl(images[current], 1200, undefined, 'limit')}
                 alt={`Fullscreen ${current + 1}`}
                 className="max-w-full max-h-full object-contain rounded-lg"
                 crossOrigin="anonymous"
@@ -393,7 +422,7 @@ export const ImageThumbnailStrip: React.FC<{
             i === current ? 'border-purple-500 scale-95' : 'border-transparent opacity-60 hover:opacity-100'
           }`}
         >
-          <img src={url} alt={`Thumb ${i + 1}`} className="w-full h-full object-cover" crossOrigin="anonymous" referrerPolicy="no-referrer" />
+          <img src={getOptimizedCloudinaryUrl(url, 120, 120, 'fill')} alt={`Thumb ${i + 1}`} className="w-full h-full object-cover" crossOrigin="anonymous" referrerPolicy="no-referrer" />
         </button>
       ))}
     </div>

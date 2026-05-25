@@ -11,7 +11,7 @@ import { supabase } from '../supabase';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ConfirmationModal } from '../components/ConfirmationModal';
-import { ImageSlider } from '../components/ImageSlider';
+import { ImageSlider, getOptimizedCloudinaryUrl } from '../components/ImageSlider';
 import { Camera, Loader2, X as XIcon } from 'lucide-react';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { VerificationApplyModal } from '../components/VerificationApplyModal';
@@ -428,7 +428,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                     <div className="mt-auto pt-2.5 sm:pt-4 border-t border-gray-100 flex items-center justify-between">
                        <div className="flex items-center gap-2 sm:gap-3">
                           <img 
-                            src={listing.authorPhoto || `https://ui-avatars.com/api/?name=${listing.authorName}&background=f3e8ff&color=9333ea`} 
+                            src={getOptimizedCloudinaryUrl(listing.authorPhoto, 80, 80) || `https://ui-avatars.com/api/?name=${listing.authorName}&background=f3e8ff&color=9333ea`} 
                             alt="Profile"
                             className="w-6 sm:w-8 h-6 sm:h-8 rounded-full object-cover border border-purple-100"
                           />
