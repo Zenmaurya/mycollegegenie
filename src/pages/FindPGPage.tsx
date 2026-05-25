@@ -35,7 +35,8 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
     budget: '',
     gender: 'Male' as 'Male' | 'Female' | 'Any',
     description: '',
-    socialLink: '',
+    contactPhone: '',
+    contactSocial: '',
     images: [] as string[]
   });
   const [isUploadingImages, setIsUploadingImages] = useState(false);
@@ -80,6 +81,13 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
       return;
     }
 
+    if (!newListing.contactPhone.trim() && !newListing.contactSocial.trim()) {
+      toast.error('Please provide at least a Phone Number or a Social Media Link for contact.');
+      return;
+    }
+
+    const combinedContact = [newListing.contactPhone.trim(), newListing.contactSocial.trim()].filter(Boolean).join(' || ');
+
     try {
       await createPGListing({
         college: newListing.college,
@@ -87,7 +95,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
         budget: newListing.budget,
         gender: newListing.gender,
         description: newListing.description,
-        socialLink: newListing.socialLink,
+        socialLink: combinedContact,
         images: newListing.images
       });
       toast.success('Listing posted successfully!');
@@ -98,7 +106,8 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
         budget: '', 
         gender: 'Male', 
         description: '', 
-        socialLink: '',
+        contactPhone: '',
+        contactSocial: '',
         images: []
       });
     } catch (error) {
@@ -572,18 +581,31 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Contact Through</label>
-                      <input 
-                        required
-                        id="pg-social-link"
-                        name="socialLink"
-                        type="text"
-                        placeholder="e.g. Instagram, Snapchat, or Facebook link"
-                        value={newListing.socialLink}
-                        onChange={(e) => setNewListing({ ...newListing, socialLink: e.target.value })}
-                        className="w-full px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none font-bold text-xs sm:text-sm"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Phone / WhatsApp <span className="text-[9px] font-normal text-gray-400 font-sans lowercase tracking-normal">(optional if social is provided)</span></label>
+                        <input 
+                          id="pg-phone"
+                          name="contactPhone"
+                          type="text"
+                          placeholder="e.g. +91 9876543210"
+                          value={newListing.contactPhone}
+                          onChange={(e) => setNewListing({ ...newListing, contactPhone: e.target.value })}
+                          className="w-full px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none font-bold text-xs sm:text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Social Media Link <span className="text-[9px] font-normal text-gray-400 font-sans lowercase tracking-normal">(optional if phone is provided)</span></label>
+                        <input 
+                          id="pg-social-link"
+                          name="contactSocial"
+                          type="text"
+                          placeholder="e.g. Instagram or Facebook link"
+                          value={newListing.contactSocial}
+                          onChange={(e) => setNewListing({ ...newListing, contactSocial: e.target.value })}
+                          className="w-full px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none font-bold text-xs sm:text-sm"
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -741,24 +763,85 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                     </p>
                  </div>
 
-                  <button 
-                    onClick={() => {
-                      try {
-                        const url = new URL(selectedListing.socialLink);
-                        if (url.protocol === 'http:' || url.protocol === 'https:') {
-                          window.open(url.href, '_blank');
-                        } else {
-                          toast.error('Invalid link format.');
-                        }
-                      } catch {
-                        toast.error('Invalid link format.');
+                  {(() => {
+                    const rawContact = selectedListing.socialLink || '';
+                    const hasBoth = rawContact.includes(' || ');
+                    
+                    if (hasBoth) {
+                      const [phone, social] = rawContact.split(' || ');
+                      return (
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          {phone && (
+                            <a
+                              href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm shadow-xl shadow-emerald-500/20 transition-all active:scale-98"
+                            >
+                              <MessageCircle className="w-5 h-5" />
+                              WhatsApp Student
+                            </a>
+                          )}
+                          {social && (
+                            <button
+                              onClick={() => {
+                                try {
+                                  const url = social.startsWith('http') ? social : `https://${social}`;
+                                  window.open(url, '_blank');
+                                } catch {
+                                  toast.error('Invalid link format.');
+                                }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm shadow-xl shadow-purple-600/20 transition-all active:scale-98"
+                            >
+                              <Info className="w-5 h-5" />
+                              Connect via Social
+                            </button>
+                          )}
+                        </div>
+                      );
+                    } else {
+                      const isPhone = /^[+\d\s()-]+$/.test(rawContact.trim()) && rawContact.trim().length >= 8;
+                      if (isPhone) {
+                        return (
+                          <a
+                            href={`https://wa.me/${rawContact.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-emerald-500/20 transition-all active:scale-98"
+                          >
+                            <MessageCircle className="w-5 h-5" />
+                            WhatsApp Student
+                          </a>
+                        );
+                      } else {
+                        return (
+                          <button
+                            onClick={() => {
+                              try {
+                                const url = new URL(rawContact);
+                                if (url.protocol === 'http:' || url.protocol === 'https:') {
+                                  window.open(url.href, '_blank');
+                                } else {
+                                  window.open(`https://${rawContact}`, '_blank');
+                                }
+                              } catch {
+                                if (rawContact.includes('.') || rawContact.includes('/') || rawContact.startsWith('@')) {
+                                  window.open(rawContact.startsWith('@') ? `https://instagram.com/${rawContact.replace('@', '')}` : `https://${rawContact}`, '_blank');
+                                } else {
+                                  toast.error('Invalid link format.');
+                                }
+                              }
+                            }}
+                            className="w-full py-4 rounded-2xl bg-purple-600 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
+                          >
+                            <MessageCircle className="w-5 h-5" />
+                            Connect via Social
+                          </button>
+                        );
                       }
-                    }}
-                    className="w-full py-4 rounded-2xl bg-purple-600 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                    Connect via Social
-                  </button>
+                    }
+                  })()}
               </div>
             </motion.div>
           </div>

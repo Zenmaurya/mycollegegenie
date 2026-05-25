@@ -118,7 +118,10 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
   };
 
   const handlePublishAd = async () => {
-    if (!postAdForm.phone.trim()) { toast.error('Please add a phone/WhatsApp number.'); return; }
+    if (!postAdForm.phone.trim() && !postAdForm.instagram.trim()) {
+      toast.error('Please provide at least a Phone Number or Instagram username for contact.');
+      return;
+    }
     setIsSubmittingAd(true);
     try {
       let imageUrl = null;
@@ -946,7 +949,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
 
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-900">Phone / WhatsApp <span className="text-red-500">*</span></label>
+                            <label className="text-sm font-bold text-gray-900">Phone / WhatsApp <span className="text-xs text-gray-400 font-normal">(Optional if Instagram is provided)</span></label>
                             <div className="relative">
                               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                                 <MessageCircle className="w-5 h-5" />
@@ -956,7 +959,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                           </div>
                           
                           <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-900">Instagram Username (Optional)</label>
+                            <label className="text-sm font-bold text-gray-900">Instagram Username <span className="text-xs text-gray-400 font-normal">(Optional if Phone is provided)</span></label>
                             <div className="relative">
                               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                                 <AtSign className="w-5 h-5" />
