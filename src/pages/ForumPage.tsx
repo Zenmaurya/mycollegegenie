@@ -36,6 +36,53 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+export function shortenCourse(courseName: string): string {
+  if (!courseName) return 'General';
+  const bracketMatch = courseName.match(/\[([^\]]+)\]/);
+  if (bracketMatch) return bracketMatch[1];
+  const parenMatch = courseName.match(/\(([^)]+)\)/);
+  if (parenMatch) {
+    const content = parenMatch[1];
+    if (content.length <= 10) return content;
+  }
+  const courseLower = courseName.toLowerCase();
+  if (courseLower.includes('economics')) return courseLower.includes('hons') ? 'B.A. Econ (H)' : 'B.A. Econ';
+  if (courseLower.includes('computer science')) return courseLower.includes('hons') ? 'B.Sc. CS (H)' : 'B.Sc. CS';
+  if (courseLower.includes('political science')) return courseLower.includes('hons') ? 'B.A. Pol Sci (H)' : 'B.A. Pol Sci';
+  if (courseLower.includes('information technology')) return 'B.Tech IT';
+  if (courseLower.includes('business economics')) return 'B.A. BBE';
+  if (courseLower.includes('elementary education')) return 'B.El.Ed';
+  if (courseLower.includes('mathematical sciences')) return 'B.Sc. Math Sci';
+  if (courseLower.includes('physical sciences')) return 'B.Sc. Phys Sci';
+  if (courseLower.includes('life sciences')) return 'B.Sc. Life Sci';
+  if (courseLower.includes('english')) return courseLower.includes('hons') ? 'B.A. Eng (H)' : 'B.A. Eng';
+  if (courseLower.includes('history')) return courseLower.includes('hons') ? 'B.A. Hist (H)' : 'B.A. Hist';
+  if (courseLower.includes('philosophy')) return courseLower.includes('hons') ? 'B.A. Phil (H)' : 'B.A. Phil';
+  if (courseLower.includes('geography')) return courseLower.includes('hons') ? 'B.A. Geog (H)' : 'B.A. Geog';
+  if (courseLower.includes('psychology')) return courseLower.includes('hons') ? 'B.A. Psych (H)' : 'B.A. Psych';
+  if (courseLower.includes('sociology')) return courseLower.includes('hons') ? 'B.A. Soc (H)' : 'B.A. Soc';
+  if (courseLower.includes('sanskrit')) return courseLower.includes('hons') ? 'B.A. Skt (H)' : 'B.A. Skt';
+  if (courseLower.includes('hindi')) return courseLower.includes('hons') ? 'B.A. Hindi (H)' : 'B.A. Hindi';
+  if (courseLower.includes('botany')) return courseLower.includes('hons') ? 'B.Sc. Bot (H)' : 'B.Sc. Bot';
+  if (courseLower.includes('chemistry')) return courseLower.includes('hons') ? 'B.Sc. Chem (H)' : 'B.Sc. Chem';
+  if (courseLower.includes('physics')) return courseLower.includes('hons') ? 'B.Sc. Phys (H)' : 'B.Sc. Phys';
+  if (courseLower.includes('zoology')) return courseLower.includes('hons') ? 'B.Sc. Zool (H)' : 'B.Sc. Zool';
+  if (courseLower.includes('mathematics')) return courseLower.includes('hons') ? 'B.Sc. Math (H)' : 'B.Sc. Math';
+  if (courseLower.includes('statistics')) return courseLower.includes('hons') ? 'B.Sc. Stats (H)' : 'B.Sc. Stats';
+  if (courseLower.includes('microbiology')) return courseLower.includes('hons') ? 'B.Sc. Micro (H)' : 'B.Sc. Micro';
+  if (courseLower.includes('biomedical science')) return courseLower.includes('hons') ? 'B.Sc. BioMed (H)' : 'B.Sc. BioMed';
+  if (courseLower.includes('electronics')) return courseLower.includes('hons') ? 'B.Sc. Elec (H)' : 'B.Sc. Elec';
+  if (courseLower.includes('instrumentation')) return courseLower.includes('hons') ? 'B.Sc. Inst (H)' : 'B.Sc. Inst';
+  if (courseLower.includes('geology')) return courseLower.includes('hons') ? 'B.Sc. Geol (H)' : 'B.Sc. Geol';
+  if (courseLower.includes('anthropology')) return courseLower.includes('hons') ? 'B.Sc. Anthro (H)' : 'B.Sc. Anthro';
+  if (courseLower.includes('food technology')) return courseLower.includes('hons') ? 'B.Sc. Food Tech (H)' : 'B.Sc. Food Tech';
+  if (courseLower.includes('polymer science')) return courseLower.includes('hons') ? 'B.Sc. Poly Sci (H)' : 'B.Sc. Poly Sci';
+  if (courseLower.includes('b.com. (hons.)')) return 'B.Com (H)';
+  if (courseLower.includes('b.com. programme')) return 'B.Com Prog';
+  if (courseLower.includes('b.a. programme')) return 'B.A. Prog';
+  return courseName.length > 22 ? courseName.substring(0, 20) + '…' : courseName;
+}
+
 export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const currentUser = propUser ?? null;
@@ -242,75 +289,99 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  className="group bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-purple-100 transition-all duration-200"
+                  className="group bg-white border border-gray-100 rounded-2xl sm:rounded-[1.8rem] overflow-hidden shadow-sm hover:shadow-[0_12px_36px_rgba(147,51,234,0.06)] hover:border-purple-200/50 transition-all duration-300"
                 >
-                  <div className="flex">
-                    {/* Vote Column */}
-                    <div className="flex flex-col items-center gap-1 px-3 py-4 bg-gray-50/60 border-r border-gray-100 w-14 shrink-0">
+                  <div className="flex flex-col sm:flex-row">
+                    {/* Desktop Vote Column - Hidden on Mobile */}
+                    <div className="hidden sm:flex flex-col items-center gap-1.5 px-3 py-5 bg-gray-50/50 border-r border-gray-100/60 w-14 shrink-0 justify-start">
                       <button onClick={() => handleUpvote(post.id, post.upvotes)}
-                        className={`p-1.5 rounded-lg transition-all ${isUpvoted ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'}`}>
+                        className={`p-1.5 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 ${isUpvoted ? 'text-purple-600 bg-purple-100/60 shadow-sm' : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'}`}>
                         <ThumbsUp className="w-4 h-4" />
                       </button>
-                      <span className={`text-sm font-black tabular-nums ${score > 0 ? 'text-purple-600' : score < 0 ? 'text-rose-500' : 'text-gray-500'}`}>
+                      <span className={`text-xs font-black tabular-nums ${score > 0 ? 'text-purple-600' : score < 0 ? 'text-rose-500' : 'text-gray-400'}`}>
                         {score}
                       </span>
                       <button onClick={() => handleDownvote(post.id, post.downvotes)}
-                        className={`p-1.5 rounded-lg transition-all ${isDownvoted ? 'text-rose-500 bg-rose-50' : 'text-gray-400 hover:text-rose-500 hover:bg-rose-50'}`}>
+                        className={`p-1.5 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 ${isDownvoted ? 'text-rose-500 bg-rose-100/60 shadow-sm' : 'text-gray-400 hover:text-rose-500 hover:bg-rose-50'}`}>
                         <ThumbsDown className="w-4 h-4" />
                       </button>
                     </div>
 
-                    {/* Main Content */}
-                    <div className="flex-1 p-4 sm:p-5 min-w-0">
-                      {/* Tags */}
-                      <div className="flex flex-wrap items-center gap-2 mb-2.5">
-                        <span className="px-2.5 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-black uppercase tracking-wider rounded-full border border-purple-100">
-                          {post.course}
-                        </span>
-                        <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full border ${topicColor}`}>
-                          {post.topic}
-                        </span>
+                    {/* Main Card Content */}
+                    <div className="flex-1 p-4 sm:p-6 min-w-0 flex flex-col">
+                      
+                      {/* Premium Header: Author Profile + Tags */}
+                      <div className="flex items-center justify-between gap-3 mb-3.5">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {/* Social Author Avatar */}
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-[11px] font-black shrink-0 shadow-md shadow-purple-500/10 transition-transform group-hover:scale-105 duration-300">
+                            {post.authorName?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="block text-xs font-black text-gray-800 leading-none mb-1 truncate">
+                              {post.authorName}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[9px] text-gray-400 font-bold uppercase tracking-wider leading-none">
+                              <Clock className="w-2.5 h-2.5" /> {timeAgo(post.createdAt)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Shortened Tags */}
+                        <div className="flex items-center gap-1.5 shrink-0 max-w-[50%] overflow-hidden">
+                          <span className="px-2 py-0.5 bg-purple-50/80 text-purple-600 text-[9px] font-black uppercase tracking-wider rounded-full border border-purple-100/60 truncate" title={post.course}>
+                            {shortenCourse(post.course)}
+                          </span>
+                          <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full border truncate ${topicColor}`}>
+                            {post.topic}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Title */}
                       <Link to={`/forum/${post.id}`}>
-                        <h3 className="text-base sm:text-lg font-black text-gray-900 mb-1.5 group-hover:text-purple-600 transition-colors leading-snug line-clamp-2">
+                        <h3 className="text-[15px] sm:text-[18px] font-black text-gray-900 mb-2 group-hover:text-purple-600 transition-colors leading-snug line-clamp-2">
                           {post.title}
                         </h3>
                       </Link>
 
                       {/* Content Preview */}
-                      <p className="text-sm text-gray-500 line-clamp-2 font-medium leading-relaxed mb-3">
+                      <p className="text-[13px] sm:text-[14px] text-gray-500 line-clamp-3 font-medium leading-relaxed mb-4">
                         {post.content}
                       </p>
 
-                      {/* Footer */}
-                      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                        {/* Author */}
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-[10px] font-black shrink-0">
-                            {post.authorName?.[0]?.toUpperCase() || 'U'}
-                          </div>
-                          <span className="text-xs font-bold text-gray-600 truncate max-w-[100px]">{post.authorName}</span>
+                      {/* Interactivity Row (Footer) */}
+                      <div className="flex items-center justify-between border-t border-gray-50 pt-4 mt-auto gap-3">
+                        
+                        {/* Mobile Vote Pill - Only Visible on Mobile */}
+                        <div className="sm:hidden flex items-center bg-gray-50/90 rounded-xl p-0.5 border border-gray-100/80">
+                          <button onClick={() => handleUpvote(post.id, post.upvotes)}
+                            className={`p-1.5 rounded-lg transition-all duration-200 ${isUpvoted ? 'text-purple-600 bg-purple-100/50 shadow-sm' : 'text-gray-400'}`}>
+                            <ThumbsUp className="w-3.5 h-3.5" />
+                          </button>
+                          <span className={`text-[11px] font-black px-2 tabular-nums min-w-[20px] text-center ${score > 0 ? 'text-purple-600' : score < 0 ? 'text-rose-500' : 'text-gray-500'}`}>
+                            {score}
+                          </span>
+                          <button onClick={() => handleDownvote(post.id, post.downvotes)}
+                            className={`p-1.5 rounded-lg transition-all duration-200 ${isDownvoted ? 'text-rose-500 bg-rose-100/50 shadow-sm' : 'text-gray-400'}`}>
+                            <ThumbsDown className="w-3.5 h-3.5" />
+                          </button>
                         </div>
 
-                        <div className="flex items-center gap-1 text-gray-400">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span className="text-xs font-medium">{timeAgo(post.createdAt)}</span>
-                        </div>
-
-                        {/* Comments */}
+                        {/* Comments Count Pill */}
                         <Link to={`/forum/${post.id}`}
-                          className="flex items-center gap-1.5 text-gray-400 hover:text-purple-600 transition-colors ml-auto">
-                          <MessageCircle className="w-4 h-4" />
-                          <span className="text-xs font-bold">{post.commentCount} comments</span>
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50/80 hover:bg-purple-50 hover:text-purple-600 text-gray-500 border border-gray-100/50 hover:border-purple-100/50 rounded-xl transition-all duration-200 font-bold text-[11px]">
+                          <MessageCircle className="w-4 h-4 shrink-0 text-gray-400 hover:text-purple-500" />
+                          <span>{post.commentCount} <span className="hidden xs:inline">comments</span></span>
                         </Link>
 
+                        {/* Premium View/Action Button */}
                         <Link to={`/forum/${post.id}`}
-                          className="flex items-center gap-1 text-xs font-black text-purple-600 hover:text-purple-700 transition-colors">
-                          View <ChevronRight className="w-3.5 h-3.5" />
+                          className="flex items-center gap-1 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 active:bg-purple-200 text-purple-600 hover:text-purple-700 rounded-xl transition-all duration-200 font-black text-[10px] uppercase tracking-wider shrink-0">
+                          <span>View</span> <ChevronRight className="w-3.5 h-3.5" />
                         </Link>
                       </div>
+
                     </div>
                   </div>
                 </motion.div>
