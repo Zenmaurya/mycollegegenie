@@ -182,99 +182,110 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
         </script>
       </Helmet>
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mb-6 sm:mb-16">
-        <div className="bg-white/40 backdrop-blur-md border border-gray-100 rounded-2xl sm:rounded-3xl p-5 sm:p-12 lg:p-16 shadow-xl shadow-purple-900/5 text-center">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 mb-2 sm:mb-4">
+        <div className="bg-white/40 backdrop-blur-md border border-gray-100/80 rounded-2xl sm:rounded-[2rem] p-3 sm:p-6 lg:p-8 shadow-xl shadow-purple-900/5 text-center relative overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-60 h-60 bg-purple-100 rounded-full blur-[80px] opacity-40 pointer-events-none" />
+          
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-purple-50 text-purple-600 text-[9px] sm:text-xs font-black uppercase tracking-widest mb-3 sm:mb-6"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-600 text-[9px] sm:text-xs font-black uppercase tracking-widest mb-2 sm:mb-3.5 border border-purple-100/60"
           >
-            <Building className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <Building className="w-3.5 h-3.5" />
             Find Your Perfect Roommate
           </motion.div>
+          
           <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-2xl sm:text-5xl md:text-7xl font-black text-gray-900 mb-2 sm:mb-6 tracking-tight"
+            className="text-lg sm:text-3xl md:text-4xl font-black text-gray-900 mb-1 sm:mb-2 tracking-tight"
           >
             Find <span className="text-purple-600">PG Partner</span>
           </motion.h1>
+          
           <motion.p 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xs sm:text-lg text-gray-500 font-medium max-w-2xl mx-auto mb-5 sm:mb-10 px-2 sm:px-0"
+            className="hidden sm:block text-[11px] sm:text-sm text-gray-500 font-medium max-w-xl mx-auto mb-4 sm:mb-6 px-2 sm:px-0 leading-relaxed"
           >
             Connect with fellow students from University looking for accommodation. Filter by college, location, and budget.
           </motion.p>
 
-          {/* Search & Filter Bar */}
+          {/* Compact Search & Filter Bar */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="max-w-4xl mx-auto flex flex-col lg:flex-row gap-2 sm:gap-4 p-1.5 sm:p-2 bg-white rounded-2xl sm:rounded-3xl shadow-xl shadow-purple-600/5 border border-gray-100"
+            className="max-w-4xl mx-auto flex flex-col md:flex-row gap-2 p-1.5 bg-white rounded-xl sm:rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100"
           >
+            {/* Search Input */}
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input 
                 type="text"
                 placeholder="Search by college or location..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-4 rounded-xl sm:rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none text-[11px] sm:text-base font-medium"
+                className="w-full pl-8.5 pr-3 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none text-xs sm:text-sm font-medium"
               />
             </div>
-            <div className="flex gap-1 p-1 bg-gray-50 rounded-2xl overflow-x-auto no-scrollbar">
-              {(['All', 'Male', 'Female'] as const).map((g) => (
-                <button
-                  key={g}
-                  onClick={() => setGenderFilter(g)}
-                  className={`flex-1 lg:flex-none px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
-                    genderFilter === g 
-                      ? 'bg-white text-purple-600 shadow-sm' 
-                      : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                >
-                  {g}
-                </button>
-              ))}
+            
+            {/* Filter pills and CTA button */}
+            <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
+              <div className="flex gap-0.5 p-0.5 bg-gray-50 rounded-lg sm:rounded-xl overflow-x-auto no-scrollbar shrink-0 w-full md:w-auto">
+                {(['All', 'Male', 'Female'] as const).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGenderFilter(g)}
+                    className={`flex-1 md:flex-initial px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-md sm:rounded-lg font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
+                      genderFilter === g 
+                        ? 'bg-white text-purple-600 shadow-sm border border-gray-100/50' 
+                        : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Post Listing Button inside search box - Desktop Only */}
+              <button 
+                onClick={() => setIsPostModalOpen(true)}
+                className="hidden md:flex items-center gap-1.5 bg-purple-600 text-white px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black uppercase tracking-widest text-[9px] sm:text-xs shadow-lg shadow-purple-600/10 hover:bg-purple-700 active:scale-98 transition-all shrink-0 whitespace-nowrap"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Post Listing
+              </button>
             </div>
-            <button 
-              onClick={() => setIsPostModalOpen(true)}
-              className="w-full lg:w-auto bg-purple-600 text-white px-5 sm:px-8 py-2.5 sm:py-4 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-[9px] sm:text-xs shadow-lg shadow-purple-600/20 hover:bg-purple-700 transition-all flex items-center justify-center gap-1.5 sm:gap-2"
-            >
-              <Plus className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
-              Post Listing
-            </button>
           </motion.div>
         </div>
       </div>
 
       {/* Listings Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-16">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-1 sm:py-3">
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm p-5 space-y-4 flex flex-col h-full">
+              <div key={i} className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm p-3 sm:p-5 space-y-3 sm:space-y-4 flex flex-col h-full">
                 {/* Simulated images/thumbnail */}
-                <Skeleton className="h-48 sm:h-52 w-full rounded-2xl" />
+                <Skeleton className="h-36 sm:h-48 md:h-52 w-full rounded-xl sm:rounded-2xl" />
                 {/* Simulated details */}
-                <div className="space-y-3 flex-1">
-                  <Skeleton className="h-5 w-3/4 rounded-full" />
-                  <Skeleton className="h-4 w-1/2 rounded-full" />
+                <div className="space-y-2 sm:space-y-3 flex-1">
+                  <Skeleton className="h-4 sm:h-5 w-3/4 rounded-full" />
+                  <Skeleton className="h-3 sm:h-4 w-1/2 rounded-full" />
                 </div>
                 {/* Simulated author & button */}
-                <div className="pt-4 border-t border-gray-100 flex justify-between items-center mt-auto">
-                  <div className="flex items-center gap-3 flex-1 mr-4">
-                    <Skeleton className="w-8 h-8 rounded-full shrink-0" />
-                    <div className="space-y-1.5 flex-1">
-                      <Skeleton className="h-3 w-2/3 rounded-full" />
-                      <Skeleton className="h-2.5 w-1/3 rounded-full" />
+                <div className="pt-2.5 sm:pt-4 border-t border-gray-100 flex justify-between items-center mt-auto">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 mr-4">
+                    <Skeleton className="w-6 sm:w-8 h-6 sm:h-8 rounded-full shrink-0" />
+                    <div className="space-y-1 sm:space-y-1.5 flex-1">
+                      <Skeleton className="h-2.5 sm:h-3 w-2/3 rounded-full" />
+                      <Skeleton className="h-2 sm:h-2.5 w-1/3 rounded-full" />
                     </div>
                   </div>
-                  <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                  <Skeleton className="w-6 sm:w-8 h-6 sm:h-8 rounded-full shrink-0" />
                 </div>
               </div>
             ))}
@@ -303,7 +314,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
             </button>
           </div>
         ) : filteredListings.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {filteredListings.map((listing, index) => (
               <motion.div
                 key={listing.id}
@@ -311,23 +322,23 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 onClick={() => setSelectedListing(listing)}
-                className="group bg-white rounded-[2rem] border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-purple-600/10 transition-all hover:-translate-y-1 cursor-pointer flex flex-col h-full"
+                className="group bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-purple-600/10 transition-all hover:-translate-y-1 cursor-pointer flex flex-col h-full"
               >
                 {/* Top: Images */}
-                <div className="relative h-48 sm:h-52 w-full bg-gray-50 shrink-0">
+                <div className="relative h-36 sm:h-48 md:h-52 w-full bg-gray-50 shrink-0">
                    {listing.images && listing.images.length > 0 ? (
                       <div className="h-full w-full" onClick={e => e.stopPropagation()}>
                         <ImageSlider images={listing.images} aspectRatio="auto" className="h-full rounded-none" />
                       </div>
                    ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
-                        <Building className="w-10 h-10 mb-2" />
-                        <span className="text-xs font-medium">No Images</span>
+                        <Building className="w-8 h-8 sm:w-10 sm:h-10 mb-1 sm:mb-2" />
+                        <span className="text-[10px] sm:text-xs font-medium">No Images</span>
                       </div>
                    )}
                    {/* Badges Overlay */}
-                   <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
-                      <div className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 ${
+                   <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 items-end">
+                      <div className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 ${
                         listing.gender === 'Male' ? 'bg-blue-500/90 text-white' : 'bg-pink-500/90 text-white'
                       }`}>
                         {listing.gender} Only
@@ -337,51 +348,51 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                       ) : currentUser?.id === listing.authorId ? (
                         <button
                           onClick={e => { e.stopPropagation(); setVerifyModal({ id: listing.id, title: listing.location }); }}
-                          className="flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-md text-amber-700 text-[9px] font-black uppercase tracking-wider rounded-xl border border-amber-200 hover:bg-amber-50 transition-all shadow-sm"
+                          className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white/90 backdrop-blur-md text-amber-700 text-[8px] sm:text-[9px] font-black uppercase tracking-wider rounded-lg sm:rounded-xl border border-amber-200 hover:bg-amber-50 transition-all shadow-sm"
                         >
-                          <ShieldCheck className="w-3 h-3" /> Get Verified
+                          <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Get Verified
                         </button>
                       ) : null}
                    </div>
-                   <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl font-bold text-gray-900 shadow-sm flex items-center gap-1 border border-white">
-                      <IndianRupee className="w-4 h-4 text-purple-600" />
+                   <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 bg-white/95 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs md:text-sm text-gray-900 shadow-sm flex items-center gap-0.5 sm:gap-1 border border-white">
+                      <IndianRupee className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600" />
                       {listing.budget}
                    </div>
                 </div>
 
                 {/* Bottom: Info */}
-                <div className="p-5 flex-1 flex flex-col">
-                  <div className="flex justify-between items-start mb-3 gap-2">
-                    <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-tight line-clamp-2 flex-1">{listing.location}</h3>
+                <div className="p-3 sm:p-5 flex-1 flex flex-col">
+                  <div className="flex justify-between items-start mb-1.5 sm:mb-3 gap-2">
+                    <h3 className="font-bold text-gray-900 text-sm sm:text-base md:text-lg leading-tight line-clamp-2 flex-1">{listing.location}</h3>
                     {currentUser?.id === listing.authorId && (
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleDelete(listing.id); }}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all shrink-0 -mt-1 -mr-1"
+                        className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all shrink-0 -mt-0.5 -mr-0.5"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </button>
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-2 text-gray-500 text-xs sm:text-sm mb-4">
-                    <GraduationCap className="w-4 h-4 text-purple-600 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-gray-500 text-[10px] sm:text-xs md:text-sm mb-2.5 sm:mb-4">
+                    <GraduationCap className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                     <span className="truncate font-medium">{listing.college}</span>
                   </div>
 
-                  <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
-                     <div className="flex items-center gap-3">
+                  <div className="mt-auto pt-2.5 sm:pt-4 border-t border-gray-100 flex items-center justify-between">
+                     <div className="flex items-center gap-2 sm:gap-3">
                         <img 
                           src={listing.authorPhoto || `https://ui-avatars.com/api/?name=${listing.authorName}&background=f3e8ff&color=9333ea`} 
                           alt="Profile"
-                          className="w-8 h-8 rounded-full object-cover border border-purple-100"
+                          className="w-6 sm:w-8 h-6 sm:h-8 rounded-full object-cover border border-purple-100"
                         />
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-gray-900">{listing.authorName}</span>
-                          <span className="text-[10px] text-gray-400">Posted {new Date(listing.createdAt).toLocaleDateString()}</span>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[10px] sm:text-xs font-bold text-gray-900 truncate">{listing.authorName}</span>
+                          <span className="text-[8px] sm:text-[10px] text-gray-400">Posted {new Date(listing.createdAt).toLocaleDateString()}</span>
                         </div>
                      </div>
-                     <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                        <ChevronRight className="w-4 h-4" />
+                     <div className="w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
+                        <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                      </div>
                   </div>
                 </div>
@@ -728,6 +739,18 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
           listingTitle={verifyModal.title}
         />
       )}
+
+      {/* Floating Action Button for Mobile */}
+      <div className="fixed bottom-24 right-4 z-50 md:hidden">
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setIsPostModalOpen(true)}
+          className="bg-purple-600 text-white p-3.5 rounded-full shadow-lg shadow-purple-600/30 hover:bg-purple-700 active:scale-95 transition-all flex items-center justify-center border border-purple-500/10"
+          aria-label="Post PG Listing"
+        >
+          <Plus className="w-6 h-6" />
+        </motion.button>
+      </div>
     </div>
   );
 };
