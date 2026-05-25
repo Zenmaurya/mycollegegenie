@@ -94,7 +94,7 @@ function AppContent() {
 
   // ── Filter / search state ──────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'All' | 'Note' | 'PYQ' | 'Book'>('All');
+  const [activeFilter, setActiveFilter] = useState<'All' | 'Note' | 'PYQ' | 'Book' | 'Syllabus'>('All');
   const [selectedCourse, setSelectedCourse] = useState('All Courses');
   const [selectedSemester, setSelectedSemester] = useState('All Semesters');
   const [selectedSubCategory, setSelectedSubCategory] = useState('All');

@@ -1451,13 +1451,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Resource Type</label>
                       <select 
                         value={formData.type}
-                        onChange={(e) => setFormData({...formData, type: e.target.value as any})}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          let subCat = formData.subCategory;
+                          if (val === 'Note') subCat = 'Lecture Notes';
+                          else if (val === 'PYQ') subCat = 'PYQs';
+                          else if (val === 'Book') subCat = 'Reference Books';
+                          else if (val === 'Syllabus') subCat = 'Syllabus';
+                          setFormData({...formData, type: val as any, subCategory: subCat});
+                        }}
                         className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none text-sm sm:text-base font-black uppercase tracking-widest"
                       >
                         <option value="Note">Note</option>
                         <option value="PYQ">PYQ</option>
                         <option value="Playlist">Playlist</option>
                         <option value="Book">Book</option>
+                        <option value="Syllabus">Syllabus</option>
                       </select>
                     </div>
                     <div className="space-y-2.5">

@@ -172,6 +172,7 @@ export function ResourceDetailModal({
                 className={`px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors ${
                   resource.type === 'Note' ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' :
                   resource.type === 'PYQ' ? 'bg-violet-100 text-violet-600 hover:bg-violet-200' :
+                  resource.type === 'Syllabus' ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' :
                   'bg-rose-100 text-rose-600 hover:bg-rose-200'
                 }`}>
                 {resource.type}
@@ -368,7 +369,7 @@ export function ResourceDetailModal({
 
               {/* Action buttons */}
               <div className="pt-4 flex flex-col sm:flex-row flex-wrap gap-3 border-t border-gray-100">
-                {(resource.type === 'Note' || resource.type === 'PYQ') && (
+                {(resource.type === 'Note' || resource.type === 'PYQ' || resource.type === 'Syllabus') && (
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={() => { handleClose(); navigate(`/flipbook/${resource.id}`); }}
                     className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 h-11 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20">

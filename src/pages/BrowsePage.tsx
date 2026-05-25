@@ -17,8 +17,8 @@ interface BrowsePageProps {
   resources: Resource[];
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  activeFilter: 'All' | 'Note' | 'PYQ' | 'Book';
-  setActiveFilter: (filter: 'All' | 'Note' | 'PYQ' | 'Book') => void;
+  activeFilter: 'All' | 'Note' | 'PYQ' | 'Book' | 'Syllabus';
+  setActiveFilter: (filter: 'All' | 'Note' | 'PYQ' | 'Book' | 'Syllabus') => void;
   selectedCourse: string;
   setSelectedCourse: (course: string) => void;
   selectedSemester: string;

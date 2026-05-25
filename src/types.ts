@@ -28,7 +28,7 @@ export interface Testimonial {
   createdAt: string;
 }
 
-export type ResourceType = 'Note' | 'PYQ' | 'Playlist' | 'Book';
+export type ResourceType = 'Note' | 'PYQ' | 'Playlist' | 'Book' | 'Syllabus';
 
 export interface Resource {
   id: string;

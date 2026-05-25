@@ -49,6 +49,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
     PYQ:      { bg: 'bg-pink-50',    text: 'text-pink-600',    border: 'border-pink-100',   iconBg: 'bg-pink-100' },
     Book:     { bg: 'bg-amber-50',   text: 'text-amber-600',   border: 'border-amber-100',  iconBg: 'bg-amber-100' },
     Playlist: { bg: 'bg-red-50',     text: 'text-red-500',     border: 'border-red-100',    iconBg: 'bg-red-100' },
+    Syllabus: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', iconBg: 'bg-emerald-100' },
   };
 
   const cfg = typeConfig[resource.type] ?? typeConfig.Note;
@@ -58,9 +59,10 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
     PYQ: Clock,
     Book: BookOpen,
     Playlist: Youtube,
+    Syllabus: GraduationCap,
   }[resource.type] ?? FileText;
 
-  const isSyllabus = resource.subCategory === 'Syllabus';
+  const isSyllabus = resource.subCategory === 'Syllabus' || resource.type === 'Syllabus';
   const rating = getAverageRating(resource.ratings);
   const canDownload = !(resource.type === 'Note' || resource.type === 'PYQ') && (isSyllabus || resource.directDownloadLink);
 

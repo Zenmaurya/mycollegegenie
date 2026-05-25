@@ -42,7 +42,7 @@ const INITIAL_FORM = {
   course: '',
   subjectCode: '',
   semester: '1',
-  type: '' as 'Note' | 'PYQ' | 'Book' | 'Playlist' | '',
+  type: '' as 'Note' | 'PYQ' | 'Book' | 'Playlist' | 'Syllabus' | '',
   subCategory: '',
   tags: '',
   description: '',
@@ -201,6 +201,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
       let autoSubCategory = 'Lecture Notes';
       if (currentType === 'PYQ') autoSubCategory = 'PYQs';
       if (currentType === 'Book') autoSubCategory = 'Reference Books';
+      if (currentType === 'Syllabus') autoSubCategory = 'Syllabus';
 
       const resourceData: any = {
         title: formData.title,
@@ -405,7 +406,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                       <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Type <span className="text-red-400">*</span></label>
                         <div className="flex flex-wrap gap-2">
-                          {(['Note', 'PYQ', 'Book', 'Playlist'] as const).map(t => (
+                          {(['Note', 'PYQ', 'Book', 'Playlist', 'Syllabus'] as const).map(t => (
                             <button key={t} type="button"
                               onClick={() => setFormData(d => ({ ...d, type: t }))}
                               className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${formData.type === t ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-purple-300 hover:text-purple-700'}`}
