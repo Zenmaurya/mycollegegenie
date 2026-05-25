@@ -122,6 +122,60 @@ export const uploadFile = async (
     throw new Error('Not authenticated. Please sign in to upload files.');
   }
 
+  // ── High Performance direct-to-R2 upload using Presigned PUT URLs ──
+  // Bypasses backend server bytes hop, enabling massive speed improvement on mobile & WiFi.
+  if (file.type === 'application/pdf') {
+    try {
+      const presignResponse = await fetchWithAuth('/api/resources/presign-upload', {
+        method: 'POST',
+        body: JSON.stringify({
+          filename: file.name,
+          mimeType: file.type,
+          folder,
+          course: meta.course,
+          subject: meta.subject,
+          subjectCode: meta.subjectCode,
+        }),
+      });
+
+      if (presignResponse && presignResponse.uploadUrl && presignResponse.fileUrl) {
+        const { uploadUrl, fileUrl } = presignResponse;
+        
+        return new Promise<string>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('PUT', uploadUrl, true);
+          xhr.setRequestHeader('Content-Type', file.type);
+
+          if (onProgress && xhr.upload) {
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                onProgress(percent);
+              }
+            };
+          }
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(fileUrl);
+            } else {
+              reject(new Error(`Direct storage upload failed with status ${xhr.status}`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error('Network error during direct storage upload.'));
+          xhr.ontimeout = () => reject(new Error('Direct storage upload timed out. Please check your network connection.'));
+          xhr.timeout = 300_000; // Generous 5-minute timeout window
+          
+          xhr.send(file);
+        });
+      }
+    } catch (presignErr) {
+      console.warn('[uploadFile] Direct presigned upload failed, falling back to multi-hop backend upload:', presignErr);
+      // Continuous uptime guarantee: fall back seamlessly to legacy multi-hop upload if presigning endpoint fails
+    }
+  }
+
   // Optimize and compress images locally before upload to make it 10x faster
   let fileToUpload = file;
   if (file.type.startsWith('image/') && file.type !== 'image/gif') {

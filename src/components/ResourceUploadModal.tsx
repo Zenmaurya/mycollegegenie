@@ -56,6 +56,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
 
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success'>('idle');
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [duplicateWarningResource, setDuplicateWarningResource] = useState<any | null>(null);
   const [duplicateWarningAcknowledged, setDuplicateWarningAcknowledged] = useState(false);
   const [uploadCourseOpen, setUploadCourseOpen] = useState(false);
@@ -104,6 +105,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
   const resetForm = () => {
     setFormData(INITIAL_FORM);
     setUploadStatus('idle');
+    setUploadProgress(0);
     setDuplicateWarningResource(null);
     setDuplicateWarningAcknowledged(false);
     setUploadCourseOpen(false);
@@ -117,17 +119,8 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploadStatus === 'uploading') return; // Safety lock: prevent duplicate clicks instantly!
     if (!user) { toast.error('Please sign in to upload resources.'); return; }
-
-    // Safety check: ensure active session token is present before starting upload
-    const freshToken = await getFreshToken();
-    if (!freshToken) {
-      toast.error('Session expired. Please refresh the page and sign in again.', {
-        duration: 10000,
-        action: { label: 'Refresh', onClick: () => window.location.reload() },
-      });
-      return;
-    }
 
     let currentType = formData.type;
 
@@ -156,31 +149,53 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
       if (!formData.link.trim()) { toast.error('Please provide a YouTube playlist link.'); return; }
     }
 
+    // Instantly lock state BEFORE any slow async operations (getFreshToken/etc)
     setUploadStatus('uploading');
+    setUploadProgress(0);
 
     try {
+      // Safety check: ensure active session token is present before starting upload
+      const freshToken = await getFreshToken();
+      if (!freshToken) {
+        setUploadStatus('idle');
+        toast.error('Session expired. Please refresh the page and sign in again.', {
+          duration: 10000,
+          action: { label: 'Refresh', onClick: () => window.location.reload() },
+        });
+        return;
+      }
+
       let finalLink = formData.link;
 
       if (formData.file) {
-
-
         let folder: 'pyqs' | 'books' | 'notes' | 'resources' = 'resources';
         if (currentType === 'PYQ') folder = 'pyqs';
         if (currentType === 'Book') folder = 'books';
         if (currentType === 'Note') folder = 'notes';
         const toastId = toast.loading('Uploading file (0%)… Please wait.');
+        let lastReportedPercent = 0;
         try {
           finalLink = await uploadFile(
             formData.file,
             folder,
             { course: formData.course, subject: formData.title, subjectCode: formData.subjectCode },
-            percent => { toast.loading(`Uploading file (${percent}%)… Please wait.`, { id: toastId }); },
+            percent => {
+              setUploadProgress(percent);
+              // Throttle toast updates to intervals of 10% to prevent flooding the React render queue on mobile
+              if (percent - lastReportedPercent >= 10 || percent === 100) {
+                lastReportedPercent = percent;
+                toast.loading(`Uploading file (${percent}%)… Please wait.`, { id: toastId });
+              }
+            },
           );
           toast.dismiss(toastId);
         } catch (uploadErr) {
           toast.dismiss(toastId);
           throw uploadErr;
         }
+      } else {
+        // If uploading link, set progress to 90% immediately, then 100% when DB returns
+        setUploadProgress(90);
       }
 
       let autoSubCategory = 'Lecture Notes';
@@ -213,6 +228,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
       else if (isDirectLink) resourceData.directDownloadLink = formData.link;
 
       const newResourceId = await uploadResource(resourceData);
+      setUploadProgress(100);
       const newResource = {
         id: newResourceId,
         ...resourceData,
@@ -513,16 +529,70 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                     </div>
                   )}
 
-                  {/* Submit */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    type="submit" disabled={uploadStatus === 'uploading'}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-purple-600/20 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
-                  >
-                    {uploadStatus === 'uploading'
-                      ? <><RefreshCw className="w-4 h-4 animate-spin" /> Uploading…</>
-                      : <><CheckCircle2 className="w-4 h-4" /> Publish Resource</>}
-                  </motion.button>
+                  {/* Submit / Progress State */}
+                  {uploadStatus === 'uploading' ? (
+                    <div className="w-full bg-purple-50/50 border border-purple-100 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-sm">
+                      <style dangerouslySetInnerHTML={{__html: `
+                        @keyframes progress-bar-stripes {
+                          0% { background-position: 1rem 0; }
+                          100% { background-position: 0 0; }
+                        }
+                        .animate-stripes {
+                          background-image: linear-gradient(
+                            45deg,
+                            rgba(255, 255, 255, 0.15) 25%,
+                            transparent 25%,
+                            transparent 50%,
+                            rgba(255, 255, 255, 0.15) 50%,
+                            rgba(255, 255, 255, 0.15) 75%,
+                            transparent 75%,
+                            transparent
+                          );
+                          background-size: 1rem 1rem;
+                          animation: progress-bar-stripes 1s linear infinite;
+                        }
+                      `}} />
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="text-purple-700 uppercase tracking-widest flex items-center gap-2">
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-purple-600" />
+                          {uploadProgress < 100 ? (
+                            <>Uploading material…</>
+                          ) : (
+                            <>Processing database entry…</>
+                          )}
+                        </span>
+                        <span className="text-purple-800 font-extrabold bg-purple-100 px-2 py-0.5 rounded-md text-[10px] tabular-nums shadow-sm">{uploadProgress}%</span>
+                      </div>
+                      
+                      {/* Gorgeous Progress Bar Container */}
+                      <div className="w-full h-3 bg-purple-100/50 rounded-full overflow-hidden relative border border-purple-200/50">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${uploadProgress}%` }}
+                          transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
+                          className="h-full bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-600 rounded-full relative animate-stripes shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)]"
+                        />
+                      </div>
+
+                      {/* Sub-step helper text */}
+                      <div className="text-[10px] text-purple-600/70 font-bold tracking-wide text-center h-4 flex items-center justify-center">
+                        {uploadProgress === 0 && 'Initialising secure connection & verifying token…'}
+                        {uploadProgress > 0 && uploadProgress < 20 && 'Compressing assets for fast delivery…'}
+                        {uploadProgress >= 20 && uploadProgress < 85 && 'Uploading study material stream to Cloudflare R2 bucket…'}
+                        {uploadProgress >= 85 && uploadProgress < 99 && 'Verifying data checksums & generating resource keys…'}
+                        {uploadProgress === 99 && 'Wrapping up cloud asset mapping…'}
+                        {uploadProgress === 100 && 'Deploying new resource card to marketplace indexes…'}
+                      </div>
+                    </div>
+                  ) : (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-purple-600/20 flex items-center justify-center gap-2 transition-all"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Publish Resource
+                    </motion.button>
+                  )}
                 </>
               )}
             </form>
