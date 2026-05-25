@@ -162,27 +162,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
       let finalLink = formData.link;
 
       if (formData.file) {
-        // ── Pre-flight: check storage is configured ──
-        // NOTE: We intentionally do NOT block on health check failure (including 401).
-        // If the user is logged in and the upload itself fails, they'll get a clear
-        // error from the actual upload request. Health check is best-effort only.
-        try {
-          const health = await fetchWithAuth('/api/resources/upload/health');
-          if (health?.r2 !== 'configured') {
-            // R2 is explicitly not configured — warn but still allow Google Drive link
-            console.warn('[Upload] R2 not configured on server. File upload may fail.');
-            // Only hard-block if user has NO link fallback
-            if (!formData.link?.trim()) {
-              throw new Error('File storage is not configured on the server. Please use a Google Drive link instead, or contact admin.');
-            }
-          }
-        } catch (healthErr: any) {
-          // IMPORTANT: 401 / network errors on health check should NOT block the upload.
-          // The actual upload request will show the real error if something is wrong.
-          if (healthErr.message?.includes('not configured on the server')) throw healthErr;
-          // Anything else (401, timeout, network) — log and continue
-          console.warn('[Upload] Health check failed (ignoring):', healthErr.message);
-        }
+
 
         let folder: 'pyqs' | 'books' | 'notes' | 'resources' = 'resources';
         if (currentType === 'PYQ') folder = 'pyqs';

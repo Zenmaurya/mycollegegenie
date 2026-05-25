@@ -116,80 +116,139 @@ export async function getFreshToken(): Promise<string | undefined> {
   return undefined;
 }
 
+// Global memory cache for all GET API requests to enable instant load times on page navigation
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
+
+const getCache = new Map<string, CacheEntry>();
+const inFlightRequests = new Map<string, Promise<any>>();
+
+/** Clears all in-memory API caches — automatically triggered on data mutations */
+export function clearApiCache(): void {
+  getCache.clear();
+  inFlightRequests.clear();
+  console.log('[apiClient] Cleared entire global API cache.');
+}
+
 /**
  * Centralized fetch wrapper:
- * - Attaches fresh Supabase JWT
- * - 15s timeout by default
+ * - Deduplicates concurrent matching requests (shares single active fetch promise)
+ * - Caches GET requests for 30s to make page navigation buttery smooth (0ms latency!)
+ * - Invalidation: Any mutating request (POST, PATCH, DELETE) automatically wipes the cache
+ * - Attaches fresh Supabase JWT with 15s default request timeout
  * - On 401: force-refreshes token and retries ONCE automatically
- * - Throws typed Error with human-readable message on failure
  */
 export async function fetchWithAuth(
   endpoint: string,
   options: ApiClientOptions = {}
 ): Promise<any> {
   const { timeoutMs = 15_000, _isRetry = false, ...restOptions } = options;
+  const isGet = !restOptions.method || restOptions.method.toUpperCase() === 'GET';
 
-  const token = await getFreshToken();
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(restOptions.headers || {}),
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  // Any mutating write request immediately clears the cache to guarantee the next page has fresh data
+  if (!isGet) {
+    clearApiCache();
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  // Create a unique key for the endpoint + options headers/body
+  const cacheKey = `${endpoint}:${restOptions.method || 'GET'}:${JSON.stringify(restOptions.headers || {})}`;
 
-  try {
-    const response = await fetch(`${config.apiUrl}${endpoint}`, {
-      ...restOptions,
-      headers,
-      signal: controller.signal,
-    });
+  if (isGet) {
+    // 1. Check if we have a valid cache entry (valid for 30 seconds)
+    const cached = getCache.get(cacheKey);
+    const now = Date.now();
+    if (cached && (now - cached.timestamp) < 30_000) {
+      console.log(`[apiClient] ⚡ Cache HIT (0ms): ${endpoint}`);
+      return cached.data;
+    }
 
-    clearTimeout(timeoutId);
+    // 2. Check if there is already an in-flight request for this endpoint to deduplicate concurrent calls
+    const activePromise = inFlightRequests.get(cacheKey);
+    if (activePromise) {
+      console.log(`[apiClient] 🤝 Sharing active in-flight request for: ${endpoint}`);
+      return activePromise;
+    }
+  }
 
-    // ── 401 Auto-retry with force-refreshed token ──
-    // If we get a 401 and this isn't already a retry, force-refresh the token
-    // and try the request one more time. This handles the case where the cached
-    // token was stale but refresh hadn't triggered yet.
-    if (response.status === 401 && !_isRetry) {
-      console.warn('[apiClient] Got 401, force-refreshing token and retrying…');
-      try {
-        // Force refresh regardless of expiry time (generous 25s timeout for mobile resilience)
-        const { data: { session: fresh } } = await authTimeout(
-          supabase.auth.refreshSession(), 25000
-        );
-        if (fresh?.access_token) {
-          // Retry the same request with the new token
-          return fetchWithAuth(endpoint, { ...options, _isRetry: true });
+  // Define the actual fetch operation
+  const fetchPromise = (async () => {
+    const token = await getFreshToken();
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(restOptions.headers || {}),
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(`${config.apiUrl}${endpoint}`, {
+        ...restOptions,
+        headers,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // ── 401 Auto-retry with force-refreshed token ──
+      if (response.status === 401 && !_isRetry) {
+        console.warn('[apiClient] Got 401, force-refreshing token and retrying…');
+        try {
+          const { data: { session: fresh } } = await authTimeout(
+            supabase.auth.refreshSession(), 25000
+          );
+          if (fresh?.access_token) {
+            // Retry the same request with the new token
+            return fetchWithAuth(endpoint, { ...options, _isRetry: true });
+          }
+        } catch (retryErr) {
+          console.warn('[apiClient] Force refresh failed on retry:', retryErr);
         }
-      } catch (retryErr) {
-        console.warn('[apiClient] Force refresh failed on retry:', retryErr);
+      }
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        const message = errData.error || `Request failed: ${response.statusText || response.status}`;
+        throw new Error(message);
+      }
+
+      if (response.status === 204) return null;
+
+      const result = await response.json();
+
+      // Store in cache for 30 seconds if it's a GET request
+      if (isGet) {
+        getCache.set(cacheKey, { data: result, timestamp: Date.now() });
+      }
+
+      return result;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+
+      if (err.name === 'AbortError') {
+        throw new Error('Request timed out. Please check your internet connection and try again.');
+      }
+
+      throw err;
+    } finally {
+      if (isGet) {
+        inFlightRequests.delete(cacheKey);
       }
     }
+  })();
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      const message = errData.error || `Request failed: ${response.statusText || response.status}`;
-      throw new Error(message);
-    }
-
-    if (response.status === 204) return null;
-
-    return response.json();
-  } catch (err: any) {
-    clearTimeout(timeoutId);
-
-    if (err.name === 'AbortError') {
-      throw new Error('Request timed out. Please check your internet connection and try again.');
-    }
-
-    throw err;
+  if (isGet) {
+    inFlightRequests.set(cacheKey, fetchPromise);
   }
+
+  return fetchPromise;
 }
 
 /**
