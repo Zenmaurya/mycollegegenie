@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -13,6 +13,7 @@ import type { SupabaseAuthUser } from '../types';
 import { toast } from 'sonner';
 import { supabase } from '../supabase';
 import { getNews, submitNews } from '../services/newsService';
+import { Skeleton } from '../components/ui/skeleton';
 
 // ── DU Colleges list for dropdown ──────────────────────────────────────────
 const DU_COLLEGES = [
@@ -314,13 +315,22 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
 
         {localLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white rounded-3xl border border-gray-100 animate-pulse shadow-sm flex overflow-hidden h-40">
-                <div className="w-40 bg-gray-100 shrink-0" />
-                <div className="flex-1 p-5 space-y-3">
-                  <div className="h-4 bg-gray-100 rounded-full" />
-                  <div className="h-3 bg-gray-100 rounded-full w-3/4" />
-                  <div className="h-3 bg-gray-100 rounded-full w-1/2" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-3xl border border-gray-100 shadow-sm flex overflow-hidden h-40 p-4 gap-4">
+                <Skeleton className="w-32 sm:w-40 h-full rounded-2xl shrink-0" />
+                <div className="flex-1 flex flex-col justify-between py-1">
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Skeleton className="h-3.5 w-16 rounded-md" />
+                      <Skeleton className="h-3.5 w-12 rounded-md" />
+                    </div>
+                    <Skeleton className="h-4.5 w-full rounded-full" />
+                    <Skeleton className="h-4.5 w-2/3 rounded-full" />
+                  </div>
+                  <div className="pt-2 border-t border-gray-50 flex justify-between items-center mt-auto">
+                    <Skeleton className="h-3.5 w-1/4 rounded-full" />
+                    <Skeleton className="h-4 w-10 rounded-full" />
+                  </div>
                 </div>
               </div>
             ))}

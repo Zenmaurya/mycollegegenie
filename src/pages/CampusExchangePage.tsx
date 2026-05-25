@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -14,6 +14,7 @@ import { User } from '@supabase/supabase-js';
 import { ImageSlider, ImageThumbnailStrip } from '../components/ImageSlider';
 import { uploadFile } from '../services/resourceService';
 import { toast } from 'sonner';
+import { Skeleton } from '../components/ui/skeleton';
 
 import { fetchExchangeItems, createExchangeItem } from '../services/exchangeService';
 
@@ -532,7 +533,25 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
 
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
               {isLoadingItems ? (
-                <div className="col-span-full py-12 text-center text-gray-500 font-bold">Loading items...</div>
+                Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm p-4 flex flex-col h-full space-y-4">
+                    {/* Simulated image ratio 4/3 */}
+                    <Skeleton className="aspect-[4/3] w-full rounded-xl" />
+                    {/* Simulated title */}
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-3/4 rounded-full" />
+                      <Skeleton className="h-3 w-1/2 rounded-full" />
+                    </div>
+                    {/* Simulated details & avatar */}
+                    <div className="pt-4 border-t border-gray-100 flex justify-between items-center mt-auto">
+                      <div className="space-y-1.5 flex-1 mr-4">
+                        <Skeleton className="h-3 w-2/3 rounded-full" />
+                        <Skeleton className="h-2.5 w-1/3 rounded-full" />
+                      </div>
+                      <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                    </div>
+                  </div>
+                ))
               ) : filteredItems.map((item) => (
                 <motion.div 
                   key={item.id}

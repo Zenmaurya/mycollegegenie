@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { ImageSlider } from '../components/ImageSlider';
 import { uploadFile } from '../services/resourceService';
 import { CollegeMMY_EVENTS } from '../components/UpcomingEventsCarousel';
+import { Skeleton } from '../components/ui/skeleton';
 
 interface CollegeEventsPageProps {
   newsItems: NewsItem[];
@@ -443,12 +444,21 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="bg-white rounded-3xl border border-gray-100 animate-pulse shadow-sm overflow-hidden">
-                <div className="h-56 bg-gray-100" />
-                <div className="p-5 space-y-3">
-                  <div className="h-4 bg-gray-100 rounded-full w-3/4" />
-                  <div className="h-3 bg-gray-100 rounded-full w-1/2" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm flex flex-col p-4 gap-4">
+                <Skeleton className="aspect-[4/3] w-full rounded-2xl shrink-0" />
+                <div className="flex-1 flex flex-col gap-3 py-1 mt-auto">
+                  <Skeleton className="h-5 w-3/4 rounded-full" />
+                  <Skeleton className="h-3.5 w-full rounded-full" />
+                  <Skeleton className="h-3.5 w-2/3 rounded-full" />
+                  <div className="flex items-center gap-1.5 pt-1.5">
+                    <Skeleton className="w-3.5 h-3.5 rounded-full" />
+                    <Skeleton className="h-3 w-1/3 rounded-full" />
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-auto">
+                    <Skeleton className="h-3.5 w-1/4 rounded-full" />
+                    <Skeleton className="w-7 h-7 rounded-full shrink-0" />
+                  </div>
                 </div>
               </div>
             ))}

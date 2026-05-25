@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -15,6 +15,7 @@ import { ForumService } from '../services/forumService';
 import { getCurrentUser, supabase } from '../supabase';
 import { College_COURSES, SUB_CATEGORIES } from '../constants';
 import { toast } from 'sonner';
+import { Skeleton } from '../components/ui/skeleton';
 
 const TOPIC_COLORS: Record<string, string> = {
   'Exam Tips': 'bg-amber-50 text-amber-700 border-amber-200',
@@ -200,9 +201,32 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
         {/* Posts */}
         <div className="space-y-4">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-32 gap-4">
-              <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
-              <p className="text-gray-400 font-medium text-sm">Loading discussions...</p>
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm flex p-4 gap-4">
+                  {/* Vote simulated column */}
+                  <div className="flex flex-col items-center gap-2 w-10 shrink-0">
+                    <Skeleton className="w-6 h-6 rounded-lg" />
+                    <Skeleton className="w-4 h-4 rounded-full" />
+                    <Skeleton className="w-6 h-6 rounded-lg" />
+                  </div>
+                  {/* Main simulated details */}
+                  <div className="flex-1 space-y-3">
+                    <div className="flex gap-2">
+                      <Skeleton className="h-4.5 w-16 rounded-full" />
+                      <Skeleton className="h-4.5 w-20 rounded-full" />
+                    </div>
+                    <Skeleton className="h-5 w-3/4 rounded-full" />
+                    <Skeleton className="h-3.5 w-full rounded-full" />
+                    <Skeleton className="h-3.5 w-2/3 rounded-full" />
+                    <div className="pt-2 border-t border-gray-50 flex items-center gap-3">
+                      <Skeleton className="w-6 h-6 rounded-full" />
+                      <Skeleton className="h-3.5 w-24 rounded-full" />
+                      <Skeleton className="h-3.5 w-16 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredPosts.length > 0 ? (
             filteredPosts.map((post, i) => {

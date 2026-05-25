@@ -1,8 +1,9 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Users, Star, Lightbulb, X, Award, Linkedin, Instagram, Github, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Contributor, getContributors } from '../services/contributorService';
+import { Skeleton } from '../components/ui/skeleton';
 
 export function ContributorsPage() {
   const [selectedContributor, setSelectedContributor] = useState<Contributor | null>(null);
@@ -86,8 +87,49 @@ export function ContributorsPage() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+          <div className="space-y-24">
+            <div>
+              <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
+                <Skeleton className="w-6 h-6 bg-white/10 rounded-md" />
+                <Skeleton className="h-6 w-32 bg-white/10 rounded-md" />
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="w-16 h-16 bg-white/10 rounded-full shrink-0" />
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-5 w-3/4 bg-white/10 rounded-full" />
+                        <Skeleton className="h-4.5 w-1/2 bg-white/10 rounded-full" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-4 w-full bg-white/10 rounded-full" />
+                    <Skeleton className="h-4 w-2/3 bg-white/10 rounded-full" />
+                    <div className="flex gap-2">
+                      <Skeleton className="h-6 w-16 bg-white/10 rounded-full" />
+                      <Skeleton className="h-6 w-20 bg-white/10 rounded-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
+                <Skeleton className="w-6 h-6 bg-white/10 rounded-md" />
+                <Skeleton className="h-6 w-48 bg-white/10 rounded-md" />
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-between space-y-4">
+                    <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 rounded-full shrink-0" />
+                    <Skeleton className="h-4 w-3/4 bg-white/10 rounded-full" />
+                    <Skeleton className="h-3 w-1/2 bg-white/10 rounded-full" />
+                    <Skeleton className="h-6 w-20 bg-white/10 rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <>

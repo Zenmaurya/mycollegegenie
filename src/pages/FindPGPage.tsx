@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
@@ -15,6 +15,7 @@ import { ImageSlider } from '../components/ImageSlider';
 import { Camera, Loader2, X as XIcon } from 'lucide-react';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { VerificationApplyModal } from '../components/VerificationApplyModal';
+import { Skeleton } from '../components/ui/skeleton';
 
 export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   const [listings, setListings] = useState<PGListing[]>([]);
@@ -254,8 +255,29 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
       {/* Listings Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-16">
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm p-5 space-y-4 flex flex-col h-full">
+                {/* Simulated images/thumbnail */}
+                <Skeleton className="h-48 sm:h-52 w-full rounded-2xl" />
+                {/* Simulated details */}
+                <div className="space-y-3 flex-1">
+                  <Skeleton className="h-5 w-3/4 rounded-full" />
+                  <Skeleton className="h-4 w-1/2 rounded-full" />
+                </div>
+                {/* Simulated author & button */}
+                <div className="pt-4 border-t border-gray-100 flex justify-between items-center mt-auto">
+                  <div className="flex items-center gap-3 flex-1 mr-4">
+                    <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                    <div className="space-y-1.5 flex-1">
+                      <Skeleton className="h-3 w-2/3 rounded-full" />
+                      <Skeleton className="h-2.5 w-1/3 rounded-full" />
+                    </div>
+                  </div>
+                  <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : fetchError ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-red-200">
