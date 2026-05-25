@@ -45,6 +45,11 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
   const [items, setItems] = useState<any[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [searchQuery, selectedCampus, activeCategory, minPrice, maxPrice, selectedTypes, sortBy]);
 
   useEffect(() => {
     const loadItems = async () => {
@@ -552,7 +557,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                     </div>
                   </div>
                 ))
-              ) : filteredItems.map((item) => (
+              ) : filteredItems.slice(0, visibleCount).map((item) => (
                 <motion.div 
                   key={item.id}
                   onClick={() => setSelectedItem(item)}
@@ -643,6 +648,17 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                 </div>
               )}
             </div>
+
+            {filteredItems.length > visibleCount && (
+              <div className="flex justify-center mt-10">
+                <button
+                  onClick={() => setVisibleCount(prev => prev + 12)}
+                  className="px-6 py-3 bg-white border border-purple-100 hover:border-purple-200 hover:bg-purple-50/50 text-purple-600 font-black uppercase tracking-widest text-[10px] sm:text-xs rounded-xl shadow-md hover:shadow-lg active:scale-98 transition-all flex items-center gap-2"
+                >
+                  Load More Items
+                </button>
+              </div>
+            )}
           </div>
 
         </div>

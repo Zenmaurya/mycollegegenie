@@ -39,6 +39,11 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
     images: [] as string[]
   });
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [searchQuery, genderFilter]);
 
 
   useEffect(() => {
@@ -314,91 +319,103 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
             </button>
           </div>
         ) : filteredListings.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {filteredListings.map((listing, index) => (
-              <motion.div
-                key={listing.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                onClick={() => setSelectedListing(listing)}
-                className="group bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-purple-600/10 transition-all hover:-translate-y-1 cursor-pointer flex flex-col h-full"
-              >
-                {/* Top: Images */}
-                <div className="relative h-36 sm:h-48 md:h-52 w-full bg-gray-50 shrink-0">
-                   {listing.images && listing.images.length > 0 ? (
-                      <div className="h-full w-full" onClick={e => e.stopPropagation()}>
-                        <ImageSlider images={listing.images} aspectRatio="auto" className="h-full rounded-none" />
-                      </div>
-                   ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
-                        <Building className="w-8 h-8 sm:w-10 sm:h-10 mb-1 sm:mb-2" />
-                        <span className="text-[10px] sm:text-xs font-medium">No Images</span>
-                      </div>
-                   )}
-                   {/* Badges Overlay */}
-                   <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 items-end">
-                      <div className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 ${
-                        listing.gender === 'Male' ? 'bg-blue-500/90 text-white' : 'bg-pink-500/90 text-white'
-                      }`}>
-                        {listing.gender} Only
-                      </div>
-                      {(listing as any).is_verified ? (
-                        <VerifiedBadge size="sm" />
-                      ) : currentUser?.id === listing.authorId ? (
-                        <button
-                          onClick={e => { e.stopPropagation(); setVerifyModal({ id: listing.id, title: listing.location }); }}
-                          className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white/90 backdrop-blur-md text-amber-700 text-[8px] sm:text-[9px] font-black uppercase tracking-wider rounded-lg sm:rounded-xl border border-amber-200 hover:bg-amber-50 transition-all shadow-sm"
-                        >
-                          <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Get Verified
-                        </button>
-                      ) : null}
-                   </div>
-                   <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 bg-white/95 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs md:text-sm text-gray-900 shadow-sm flex items-center gap-0.5 sm:gap-1 border border-white">
-                      <IndianRupee className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600" />
-                      {listing.budget}
-                   </div>
-                </div>
-
-                {/* Bottom: Info */}
-                <div className="p-3 sm:p-5 flex-1 flex flex-col">
-                  <div className="flex justify-between items-start mb-1.5 sm:mb-3 gap-2">
-                    <h3 className="font-bold text-gray-900 text-sm sm:text-base md:text-lg leading-tight line-clamp-2 flex-1">{listing.location}</h3>
-                    {currentUser?.id === listing.authorId && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDelete(listing.id); }}
-                        className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all shrink-0 -mt-0.5 -mr-0.5"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      </button>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center gap-1.5 text-gray-500 text-[10px] sm:text-xs md:text-sm mb-2.5 sm:mb-4">
-                    <GraduationCap className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                    <span className="truncate font-medium">{listing.college}</span>
-                  </div>
-
-                  <div className="mt-auto pt-2.5 sm:pt-4 border-t border-gray-100 flex items-center justify-between">
-                     <div className="flex items-center gap-2 sm:gap-3">
-                        <img 
-                          src={listing.authorPhoto || `https://ui-avatars.com/api/?name=${listing.authorName}&background=f3e8ff&color=9333ea`} 
-                          alt="Profile"
-                          className="w-6 sm:w-8 h-6 sm:h-8 rounded-full object-cover border border-purple-100"
-                        />
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-[10px] sm:text-xs font-bold text-gray-900 truncate">{listing.authorName}</span>
-                          <span className="text-[8px] sm:text-[10px] text-gray-400">Posted {new Date(listing.createdAt).toLocaleDateString()}</span>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+              {filteredListings.slice(0, visibleCount).map((listing, index) => (
+                <motion.div
+                  key={listing.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => setSelectedListing(listing)}
+                  className="group bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-purple-600/10 transition-all hover:-translate-y-1 cursor-pointer flex flex-col h-full"
+                >
+                  {/* Top: Images */}
+                  <div className="relative h-36 sm:h-48 md:h-52 w-full bg-gray-50 shrink-0">
+                     {listing.images && listing.images.length > 0 ? (
+                        <div className="h-full w-full" onClick={e => e.stopPropagation()}>
+                          <ImageSlider images={listing.images} aspectRatio="auto" className="h-full rounded-none" />
                         </div>
+                     ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                          <Building className="w-8 h-8 sm:w-10 sm:h-10 mb-1 sm:mb-2" />
+                          <span className="text-[10px] sm:text-xs font-medium">No Images</span>
+                        </div>
+                     )}
+                     {/* Badges Overlay */}
+                     <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 items-end">
+                        <div className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 ${
+                          listing.gender === 'Male' ? 'bg-blue-500/90 text-white' : 'bg-pink-500/90 text-white'
+                        }`}>
+                          {listing.gender} Only
+                        </div>
+                        {(listing as any).is_verified ? (
+                          <VerifiedBadge size="sm" />
+                        ) : currentUser?.id === listing.authorId ? (
+                          <button
+                            onClick={e => { e.stopPropagation(); setVerifyModal({ id: listing.id, title: listing.location }); }}
+                            className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white/90 backdrop-blur-md text-amber-700 text-[8px] sm:text-[9px] font-black uppercase tracking-wider rounded-lg sm:rounded-xl border border-amber-200 hover:bg-amber-50 transition-all shadow-sm"
+                          >
+                            <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Get Verified
+                          </button>
+                        ) : null}
                      </div>
-                     <div className="w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
-                        <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                     <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 bg-white/95 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs md:text-sm text-gray-900 shadow-sm flex items-center gap-0.5 sm:gap-1 border border-white">
+                        <IndianRupee className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600" />
+                        {listing.budget}
                      </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+
+                  {/* Bottom: Info */}
+                  <div className="p-3 sm:p-5 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-1.5 sm:mb-3 gap-2">
+                      <h3 className="font-bold text-gray-900 text-sm sm:text-base md:text-lg leading-tight line-clamp-2 flex-1">{listing.location}</h3>
+                      {currentUser?.id === listing.authorId && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(listing.id); }}
+                          className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all shrink-0 -mt-0.5 -mr-0.5"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-1.5 text-gray-500 text-[10px] sm:text-xs md:text-sm mb-2.5 sm:mb-4">
+                      <GraduationCap className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                      <span className="truncate font-medium">{listing.college}</span>
+                    </div>
+
+                    <div className="mt-auto pt-2.5 sm:pt-4 border-t border-gray-100 flex items-center justify-between">
+                       <div className="flex items-center gap-2 sm:gap-3">
+                          <img 
+                            src={listing.authorPhoto || `https://ui-avatars.com/api/?name=${listing.authorName}&background=f3e8ff&color=9333ea`} 
+                            alt="Profile"
+                            className="w-6 sm:w-8 h-6 sm:h-8 rounded-full object-cover border border-purple-100"
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[10px] sm:text-xs font-bold text-gray-900 truncate">{listing.authorName}</span>
+                            <span className="text-[8px] sm:text-[10px] text-gray-400">Posted {new Date(listing.createdAt).toLocaleDateString()}</span>
+                          </div>
+                       </div>
+                       <div className="w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
+                          <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                       </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {filteredListings.length > visibleCount && (
+              <div className="flex justify-center mt-8 mb-4">
+                <button
+                  onClick={() => setVisibleCount(prev => prev + 12)}
+                  className="px-6 py-3 bg-white border border-purple-100 hover:border-purple-200 hover:bg-purple-50/50 text-purple-600 font-black uppercase tracking-widest text-[10px] sm:text-xs rounded-xl shadow-md hover:shadow-lg active:scale-98 transition-all flex items-center gap-2"
+                >
+                  Load More Listings
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
