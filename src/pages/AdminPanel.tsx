@@ -144,6 +144,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   // ── Playlist Curation State ──
   const [editingPlaylist, setEditingPlaylist] = useState<Resource | null>(null);
   const [isAddingPlaylist, setIsAddingPlaylist] = useState(false);
+  
+  // ── Carousel Inline Editor State ──
+  const [carouselEditForm, setCarouselEditForm] = useState({
+    title: '',
+    college: '',
+    date: '',
+    summary: '',
+    url: '',
+    imageUrl: '',
+  });
+  const [isUploadingCarouselImageInline, setIsUploadingCarouselImageInline] = useState(false);
   const [playlistFormData, setPlaylistFormData] = useState({
     title: '',
     course: '',
@@ -1965,11 +1976,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         </div>
                         <h3 className="text-sm font-bold text-gray-900 mb-1 leading-tight">{n.title}</h3>
                         <p className="text-[10px] text-gray-500 line-clamp-2 mb-3">{n.summary}</p>
-                        <div className="flex items-center gap-4">
+                         <div className="flex items-center gap-4 flex-wrap">
                           {!(n as any).isApproved && (
                             <button 
                               onClick={() => handleApproveNews(n.id)}
-                              className="text-[10px] font-black text-green-600 uppercase tracking-widest hover:underline flex items-center gap-1"
+                              className="text-[10px] font-black text-green-600 uppercase tracking-widest hover:underline flex items-center gap-1 animate-pulse"
                             >
                               <CheckCircle2 className="w-3 h-3" /> Approve
                             </button>
@@ -1980,6 +1991,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                           >
                             <Edit3 className="w-3 h-3" /> Edit
                           </button>
+                          {n.category === 'Event' && (
+                            <button
+                              onClick={async () => {
+                                const stored = JSON.parse(siteSettings?.carousel_config || '{}');
+                                const isEnabled = stored[n.id]?.show ?? true;
+                                const nextState = !isEnabled;
+                                
+                                const config = { ...stored };
+                                config[n.id] = { ...config[n.id], show: nextState };
+                                await saveCarouselConfig(config);
+                                
+                                // Fetch settings again to update local state
+                                await fetchSettings();
+                                toast.success(nextState ? 'Shown in carousel!' : 'Hidden from carousel!');
+                              }}
+                              className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:underline ${
+                                (JSON.parse(siteSettings?.carousel_config || '{}')[n.id]?.show ?? true)
+                                  ? 'text-purple-600 font-bold'
+                                  : 'text-gray-400 font-medium'
+                              }`}
+                            >
+                              <MonitorPlay className="w-3 h-3" />
+                              {(JSON.parse(siteSettings?.carousel_config || '{}')[n.id]?.show ?? true)
+                                ? 'In Carousel'
+                                : 'Add to Carousel'}
+                            </button>
+                          )}
                           <button 
                             onClick={() => handleNewsDelete(n.id)}
                             className="text-[10px] font-black text-rose-600 uppercase tracking-widest hover:underline flex items-center gap-1"
@@ -2588,33 +2626,162 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                           <p className="text-sm font-black text-gray-800 line-clamp-1">{ev.title}</p>
                           <p className="text-xs text-gray-400 mt-0.5">{ev.college} · {ev.date}</p>
                           {isEditing ? (
-                            <div className="flex gap-2 mt-2">
-                              <input
-                                type="text"
-                                value={carouselImageInput}
-                                onChange={e => setCarouselImageInput(e.target.value)}
-                                placeholder="Paste poster image URL..."
-                                className="flex-1 text-xs px-2 py-1.5 border border-gray-200 rounded-lg"
-                              />
-                              <button
-                                onClick={async () => {
-                                  const config = JSON.parse(siteSettings?.carousel_config || '{}');
-                                  config[ev.id] = { ...config[ev.id], imageUrl: carouselImageInput };
-                                  await saveCarouselConfig(config);
-                                  await updateNews(String(ev.id), { imageUrl: carouselImageInput } as any);
-                                  setCarouselEditingItem(null);
-                                  toast.success('Poster image saved!');
-                                }}
-                                className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-lg font-bold"
-                              >Save</button>
-                              <button onClick={() => setCarouselEditingItem(null)} className="text-xs bg-gray-100 text-gray-600 px-2 py-1.5 rounded-lg font-bold">✕</button>
+                            <div className="mt-3 p-4 bg-gray-50 border border-gray-150 rounded-2xl space-y-3">
+                              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Edit Event Details</span>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-black text-gray-400 uppercase">Event Title</label>
+                                  <input
+                                    type="text"
+                                    value={carouselEditForm.title}
+                                    onChange={e => setCarouselEditForm({ ...carouselEditForm, title: e.target.value })}
+                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-purple-500 transition-colors"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-black text-gray-400 uppercase">College</label>
+                                  <input
+                                    type="text"
+                                    value={carouselEditForm.college}
+                                    onChange={e => setCarouselEditForm({ ...carouselEditForm, college: e.target.value })}
+                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-purple-500 transition-colors"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-black text-gray-400 uppercase">Date / Time</label>
+                                  <input
+                                    type="text"
+                                    value={carouselEditForm.date}
+                                    onChange={e => setCarouselEditForm({ ...carouselEditForm, date: e.target.value })}
+                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-purple-500 transition-colors"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-black text-gray-400 uppercase">Registration Link / URL</label>
+                                  <input
+                                    type="text"
+                                    value={carouselEditForm.url}
+                                    onChange={e => setCarouselEditForm({ ...carouselEditForm, url: e.target.value })}
+                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-purple-500 transition-colors"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-gray-400 uppercase">Short Description / Summary</label>
+                                <textarea
+                                  value={carouselEditForm.summary}
+                                  onChange={e => setCarouselEditForm({ ...carouselEditForm, summary: e.target.value })}
+                                  rows={2}
+                                  className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white resize-none outline-none focus:border-purple-500 transition-colors"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-gray-400 uppercase block mb-1">Poster Image</label>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  <input
+                                    type="text"
+                                    value={carouselEditForm.imageUrl}
+                                    onChange={e => setCarouselEditForm({ ...carouselEditForm, imageUrl: e.target.value })}
+                                    placeholder="Paste image URL..."
+                                    className="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-purple-500 transition-colors"
+                                  />
+                                  <div className="relative">
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      id={`carousel-inline-file-${ev.id}`}
+                                      className="hidden"
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        setIsUploadingCarouselImageInline(true);
+                                        const id = toast.loading('Uploading poster image...');
+                                        try {
+                                          const url = await uploadImageToEndpoint(file, '/api/news/upload-image');
+                                          setCarouselEditForm(prev => ({ ...prev, imageUrl: url }));
+                                          toast.success('Image uploaded successfully!', { id });
+                                        } catch (err) {
+                                          toast.error('Image upload failed', { id });
+                                        } finally {
+                                          setIsUploadingCarouselImageInline(false);
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={`carousel-inline-file-${ev.id}`}
+                                      className="text-xs bg-white border border-gray-250 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-sm select-none"
+                                    >
+                                      <Upload className="w-3.5 h-3.5" /> Upload File
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2 justify-end pt-2">
+                                <button
+                                  onClick={async () => {
+                                    const config = JSON.parse(siteSettings?.carousel_config || '{}');
+                                    config[ev.id] = { ...config[ev.id], imageUrl: carouselEditForm.imageUrl };
+                                    await saveCarouselConfig(config);
+                                    
+                                    // Update the event details in database
+                                    await updateNews(String(ev.id), {
+                                      title: carouselEditForm.title,
+                                      college: carouselEditForm.college,
+                                      date: carouselEditForm.date,
+                                      summary: carouselEditForm.summary,
+                                      url: carouselEditForm.url,
+                                      imageUrl: carouselEditForm.imageUrl,
+                                    } as any);
+
+                                    // Refresh local state to reflect immediately in lists
+                                    setNews(prev => prev.map(n => n.id === ev.id ? {
+                                      ...n,
+                                      title: carouselEditForm.title,
+                                      college: carouselEditForm.college,
+                                      date: carouselEditForm.date,
+                                      summary: carouselEditForm.summary,
+                                      url: carouselEditForm.url,
+                                      imageUrl: carouselEditForm.imageUrl,
+                                    } : n));
+
+                                    setCarouselEditingItem(null);
+                                    toast.success('Event details and poster saved!');
+                                  }}
+                                  className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold shadow-md shadow-purple-600/10 transition-colors"
+                                >
+                                  Save Event
+                                </button>
+                                <button
+                                  onClick={() => setCarouselEditingItem(null)}
+                                  className="text-xs bg-white border border-gray-250 hover:bg-gray-50 text-gray-600 px-3 py-2 rounded-lg font-bold transition-colors shadow-sm"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
                             </div>
                           ) : (
                             <button
-                              onClick={() => { setCarouselEditingItem({ id: ev.id, type: 'real' }); setCarouselImageInput(customImg || ''); }}
+                              onClick={() => {
+                                setCarouselEditingItem({ id: ev.id, type: 'real' });
+                                setCarouselEditForm({
+                                  title: ev.title || '',
+                                  college: ev.college || '',
+                                  date: ev.date || '',
+                                  summary: ev.summary || '',
+                                  url: ev.url || '',
+                                  imageUrl: customImg || '',
+                                });
+                              }}
                               className="mt-1 text-[10px] text-purple-500 hover:text-purple-700 font-bold flex items-center gap-1"
                             >
-                              <Edit3 className="w-3 h-3" /> Edit poster image
+                              <Edit3 className="w-3 h-3" /> Edit details & poster
                             </button>
                           )}
                         </div>
