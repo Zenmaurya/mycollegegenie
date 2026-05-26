@@ -1131,6 +1131,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         onChange={e => setPlaylistFormData({...playlistFormData, link: e.target.value})}
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                       />
+                      <p className="text-[10px] text-gray-400 mt-1 leading-normal">
+                        💡 <strong>Pro-Tip:</strong> Standard playlist links (<code>.../playlist?list=...</code>) don't have video IDs, so they show a default icon. To show the first video's thumbnail as the cover, enter a link that includes the first video (e.g., <code>.../watch?v=VIDEO_ID&list=PLAYLIST_ID</code>)!
+                      </p>
                     </div>
 
                     <div className="space-y-2">
