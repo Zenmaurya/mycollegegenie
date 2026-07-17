@@ -65,7 +65,7 @@ export function UploaderProfilePopover({ uploaderName, uploaderId, resources = [
     <div className="relative inline-block" ref={popoverRef}>
       <div onClick={handleToggle} className="cursor-pointer">
         {children || (
-          <button className="text-xs font-bold text-purple-600 hover:text-purple-800 transition-colors focus:outline-none flex items-center gap-1">
+          <button className="text-xs font-bold text-brand-primary hover:text-brand-dark transition-colors focus:outline-none flex items-center gap-1">
             {displayName}
           </button>
         )}
@@ -81,7 +81,7 @@ export function UploaderProfilePopover({ uploaderName, uploaderId, resources = [
             className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-50 overflow-hidden"
           >
             {/* Header / Cover Area */}
-            <div className="h-16 bg-gradient-to-r from-purple-500 to-indigo-500 relative">
+            <div className="h-16 bg-gradient-to-r from-brand-primary to-indigo-500 relative">
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
                 className="absolute top-2 right-2 p-1.5 text-white/80 hover:text-white hover:bg-white/20 rounded-full transition-colors z-10"
@@ -101,7 +101,7 @@ export function UploaderProfilePopover({ uploaderName, uploaderId, resources = [
                   ) : avatarValue && !avatarValue.startsWith('avatar:') ? (
                     <img src={avatarValue} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-purple-100 flex items-center justify-center text-xl font-black text-purple-700">
+                    <div className="w-full h-full bg-brand-primary/20 flex items-center justify-center text-xl font-black text-brand-primary">
                       {getInitials(displayName)}
                     </div>
                   )}
@@ -134,12 +134,12 @@ export function UploaderProfilePopover({ uploaderName, uploaderId, resources = [
                   <div className="flex flex-col gap-1.5 mt-2">
                     {uploaderProfile?.course && (
                       <p className="text-xs text-gray-600 font-medium flex items-center gap-1.5">
-                        <GraduationCap className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                        <GraduationCap className="w-3.5 h-3.5 text-brand-primary shrink-0" />
                         <span className="truncate">{uploaderProfile.course}</span>
                       </p>
                     )}
                     <p className="text-xs text-gray-600 font-medium flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <MapPin className="w-3.5 h-3.5 text-mark-ink shrink-0" />
                       <span className="truncate">{uploaderProfile?.college || 'University Student'}</span>
                     </p>
                     {uploaderProfile?.created_at && (

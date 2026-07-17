@@ -167,7 +167,7 @@ export const FlipbookPage: React.FC = () => {
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           className="mb-6"
         >
-          <Loader2 className="w-16 h-16 text-purple-500" />
+          <Loader2 className="w-16 h-16 text-brand-primary" />
         </motion.div>
         <h2 className="text-2xl font-black tracking-tighter uppercase mb-2">Magic in Progress</h2>
         <p className="text-gray-400 font-medium animate-pulse">Converting your document into a Flipbook...</p>
@@ -183,7 +183,7 @@ export const FlipbookPage: React.FC = () => {
         <p className="text-gray-400 mb-6">The resource you are looking for might have been removed or the link is invalid.</p>
         <button 
           onClick={() => navigate(-1)}
-          className="px-8 py-4 bg-purple-600 rounded-2xl font-black uppercase tracking-widest hover:bg-purple-700 transition-all shadow-xl shadow-purple-600/20"
+          className="px-8 py-4 bg-brand-primary rounded-2xl font-black uppercase tracking-widest hover:bg-brand-primary transition-all shadow-xl shadow-brand-primary/20"
         >
           Go Back
         </button>
@@ -330,7 +330,7 @@ export const FlipbookPage: React.FC = () => {
 
                 <button 
                   onClick={() => setIsSinglePage(!isSinglePage)} 
-                  className={`p-2 rounded-lg transition-colors hidden sm:block ${isSinglePage ? 'bg-purple-600 text-white' : 'hover:bg-white/10 text-white'}`}
+                  className={`p-2 rounded-lg transition-colors hidden sm:block ${isSinglePage ? 'bg-brand-primary text-white' : 'hover:bg-white/10 text-white'}`}
                   title={isSinglePage ? "Switch to Double Page" : "Switch to Single Page"}
                 >
                   {isSinglePage ? <FileText className="w-5 h-5" /> : <BookOpen className="w-5 h-5" />}
@@ -344,7 +344,7 @@ export const FlipbookPage: React.FC = () => {
       {/* Progress Bar */}
       <div className="h-1 bg-white/5 w-full relative z-50">
         <motion.div 
-          className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 shadow-[0_0_10px_rgba(147,51,234,0.5)]"
+          className="h-full bg-gradient-to-r from-brand-primary to-indigo-500 shadow-[0_0_10px_rgba(147,51,234,0.5)]"
           initial={{ width: 0 }}
           animate={{ width: `${((currentPage + 1) / pages.length) * 100}%` }}
         />

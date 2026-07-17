@@ -23,7 +23,7 @@ interface ReportModalProps {
 }
 
 export function ReportModal({ isOpen, resource, onClose, onSuccess }: ReportModalProps) {
-  const { user } = useAuth();
+  const { user, openAuthModal } = useAuth();
   const { setResources } = useResources();
   const [reportReason, setReportReason] = useState('');
 
@@ -34,7 +34,7 @@ export function ReportModal({ isOpen, resource, onClose, onSuccess }: ReportModa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) { toast.error('Please sign in to report resources.'); return; }
+    if (!user) { openAuthModal('Please sign in to report resources.'); return; }
     if (!resource || !reportReason.trim()) return;
 
     try {
@@ -76,7 +76,7 @@ export function ReportModal({ isOpen, resource, onClose, onSuccess }: ReportModa
             className="relative w-full max-w-md bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-2xl"
           >
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold flex items-center gap-2 text-rose-600">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-mark-ink">
                 <Flag className="w-5 h-5" /> Report Resource
               </h2>
               <button type="button" onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -86,24 +86,22 @@ export function ReportModal({ isOpen, resource, onClose, onSuccess }: ReportModa
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {!user ? (
-                <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-6">
-                  <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
-                    <AlertCircle className="w-8 h-8 text-amber-600" />
+                <div className="flex flex-col items-center justify-center p-8 text-center h-[300px]">
+                  <div className="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center mb-4">
+                    <AlertCircle className="w-8 h-8 text-brand-primary" />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Sign in Required</h3>
-                    <p className="text-gray-500 font-medium">
-                      You need to be signed in to report a resource. Join the community to help us keep it safe.
-                    </p>
-                  </div>
-                  <Link to="/login" className="w-full sm:w-auto px-8 bg-rose-600 hover:bg-rose-700 text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-rose-600/20 block text-center">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Sign in Required</h3>
+                  <p className="text-gray-500 mb-6 max-w-sm">
+                    You must be signed in to report a resource. This helps us prevent spam and track reports.
+                  </p>
+                  <button type="button" onClick={() => openAuthModal('Please sign in to report resources.')} className="bg-mark hover:bg-mark-ink text-white w-full max-w-xs py-3 rounded-2xl font-bold transition-all">
                     Sign In to Continue
-                  </Link>
+                  </button>
                 </div>
               ) : (
                 <>
-                  <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4">
-                    <p className="text-xs text-rose-600 leading-relaxed">
+                  <div className="bg-mark-soft border border-mark-soft rounded-2xl p-4">
+                    <p className="text-xs text-mark-ink leading-relaxed">
                       Please provide a reason for reporting this resource. Our team will review it for inappropriate content or inaccuracies.
                     </p>
                   </div>
@@ -112,7 +110,7 @@ export function ReportModal({ isOpen, resource, onClose, onSuccess }: ReportModa
                     <textarea
                       required rows={4}
                       placeholder="e.g. This document contains incorrect formulas in Chapter 3…"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all text-gray-900 resize-none"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-mark-ink/20 focus:border-mark transition-all text-gray-900 resize-none"
                       value={reportReason}
                       onChange={e => setReportReason(e.target.value)}
                     />
@@ -125,7 +123,7 @@ export function ReportModal({ isOpen, resource, onClose, onSuccess }: ReportModa
                     </motion.button>
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       type="submit"
-                      className="flex-1 px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-rose-600/20">
+                      className="flex-1 px-6 py-3 bg-mark hover:bg-mark-ink text-white rounded-xl font-bold transition-all shadow-lg shadow-mark-ink/20">
                       Submit Report
                     </motion.button>
                   </div>

@@ -63,23 +63,11 @@ export interface User {
   createdAt: string;
   college?: string;
   course?: string;
+  exchange_count?: number;
+  resource_count?: number;
+  forum_count?: number;
 }
 
-export interface News {
-  id: string;
-  title: string;
-  date: string;
-  summary: string;
-  url: string;
-  category: 'News' | 'Event';
-  college: string;
-  eligibility?: 'All' | 'DU Only' | 'College Specific' | 'NCWEB' | 'Girls Only' | 'DU + SOL' | 'DU + SOL + NCWEB';
-  venue?: string;
-  imageUrl?: string;
-  description?: string;
-  createdAt: any;
-  isApproved?: boolean;
-}
 
 export interface NewsItem {
   id?: string;
@@ -97,6 +85,7 @@ export interface NewsItem {
   createdAt?: string;
   submitted_by_name?: string | null;
   submitted_by_id?: string | null;
+  isApproved?: boolean;
 }
 
 export interface EventPoster {

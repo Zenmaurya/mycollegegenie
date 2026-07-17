@@ -182,7 +182,7 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
         onDragLeave={() => setDragOver(false)}
         onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
         className={`relative w-full rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-all ${
-          dragOver ? 'border-purple-400 bg-purple-50/50' : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100/50'
+          dragOver ? 'border-brand-primary bg-brand-surface/50' : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100/50'
         } ${className}`}
       >
         <Camera className="w-8 h-8 text-gray-300" />
@@ -419,7 +419,7 @@ export const ImageThumbnailStrip: React.FC<{
           key={i}
           onClick={() => onSelect(i)}
           className={`shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
-            i === current ? 'border-purple-500 scale-95' : 'border-transparent opacity-60 hover:opacity-100'
+            i === current ? 'border-brand-primary scale-95' : 'border-transparent opacity-60 hover:opacity-100'
           }`}
         >
           <img src={getOptimizedCloudinaryUrl(url, 120, 120, 'fill')} alt={`Thumb ${i + 1}`} className="w-full h-full object-cover" crossOrigin="anonymous" referrerPolicy="no-referrer" />

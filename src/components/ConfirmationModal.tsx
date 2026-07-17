@@ -42,7 +42,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           >
             <div className="p-6 sm:p-8">
               <div className="flex items-center justify-between mb-6">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${type === 'danger' ? 'bg-rose-50 text-rose-600' : 'bg-purple-50 text-purple-600'}`}>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${type === 'danger' ? 'bg-mark-soft text-mark-ink' : 'bg-brand-surface text-brand-primary'}`}>
                   <AlertCircle className="w-6 h-6" />
                 </div>
                 <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
@@ -67,8 +67,8 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   }}
                   className={`flex-1 px-6 py-3.5 rounded-2xl text-white font-black uppercase tracking-widest text-[10px] shadow-lg transition-all ${
                     type === 'danger' 
-                      ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20' 
-                      : 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/20'
+                      ? 'bg-mark hover:bg-mark-ink shadow-mark-ink/20' 
+                      : 'bg-brand-primary hover:bg-brand-primary shadow-brand-primary/20'
                   }`}
                 >
                   {confirmText}

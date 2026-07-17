@@ -30,38 +30,20 @@ export class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
       return (
-        <div style={{
-          minHeight: '100vh', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: '24px',
-          padding: '24px', textAlign: 'center',
-          fontFamily: 'Inter, system-ui, sans-serif',
-          background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
-        }}>
-          <div style={{ fontSize: '72px' }}>😵</div>
+        <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-6 text-center font-['Inter'] bg-paper">
           <div>
-            <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#1f2937', marginBottom: '8px' }}>
+            <h1 className="text-3xl font-black text-ink mb-2 font-['Fraunces']">
               Oops! Something went wrong
             </h1>
-            <p style={{ color: '#6b7280', fontSize: '15px', maxWidth: '400px', fontWeight: 500 }}>
+            <p className="text-ink-soft text-sm max-w-md font-medium mx-auto">
               The app encountered an unexpected error. Your data is safe.
             </p>
-            {isDev && this.state.error && (
-              <pre style={{
-                marginTop: '16px', padding: '12px', background: '#fef2f2',
-                border: '1px solid #fecaca', borderRadius: '8px', fontSize: '11px',
-                color: '#991b1b', textAlign: 'left', maxWidth: '600px', overflowX: 'auto',
-              }}>
-                {String(this.state.error)}
-              </pre>
-            )}
           </div>
-          <button onClick={this.handleReset} style={{
-            padding: '12px 32px', background: 'linear-gradient(135deg, #7c3aed, #9333ea)',
-            color: 'white', border: 'none', borderRadius: '16px', fontSize: '15px',
-            fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 24px rgba(124,58,237,0.3)',
-          }}>
+          <button 
+            onClick={this.handleReset} 
+            className="px-8 py-3 bg-mark text-mark-ink border border-mark-ink/10 hover:bg-mark-ink hover:text-white rounded-xl text-sm font-bold shadow-sm transition-all"
+          >
             Go to Home Page
           </button>
         </div>

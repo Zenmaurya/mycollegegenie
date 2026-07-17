@@ -10,31 +10,48 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, logout as supabaseLogout } from '../supabase';
 import { createUserProfile } from '../services/userService';
-import type { User as AppUser } from '../types';
-
-// Minimal typed Supabase auth user
-export interface SupabaseUser {
-  id: string;
-  email?: string;
-  user_metadata: Record<string, any>;
-  app_metadata: Record<string, any>;
-}
+import type { User as AppUser, SupabaseAuthUser } from '../types';
 
 interface AuthContextValue {
-  user: SupabaseUser | null;
+  user: SupabaseAuthUser | null;
   appUser: AppUser | null;
   isAuthLoading: boolean;
   logout: () => Promise<void>;
+  isAuthModalOpen: boolean;
+  authModalMessage?: string;
+  openAuthModal: (message?: string) => void;
+  closeAuthModal: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [user, setUser] = useState<SupabaseAuthUser | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  
+  // Auth Modal State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMessage, setAuthModalMessage] = useState<string | undefined>();
 
   useEffect(() => {
+    /*
+    // DEV BYPASS CHECK
+    const bypassToken = import.meta.env.VITE_DEV_BYPASS_TOKEN;
+    if (bypassToken) {
+      setUser({ id: 'dev-bypass-user-123', email: 'admin@mycollegegenie.in' } as any);
+      setAppUser({
+        id: 'dev-bypass-user-123',
+        email: 'admin@mycollegegenie.in',
+        displayName: 'Dev Admin',
+        role: 'admin',
+        created_at: new Date().toISOString()
+      } as unknown as AppUser);
+      setIsAuthLoading(false);
+      return;
+    }
+    */
+
     // Safety timeout — ensures loading spinner never hangs forever
     const safetyTimer = setTimeout(() => setIsAuthLoading(false), 8000);
 
@@ -65,15 +82,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Unified single auth initialization listener (handles both initial load and updates)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const sbUser = (session?.user ?? null) as SupabaseUser | null;
-        setUser(sbUser);
-        if (sbUser) {
-          // Short delay to let lock settle after auth state change
-          await new Promise(r => setTimeout(r, 300));
+      async (event, session) => {
+        setIsAuthLoading(true);
+        if (session?.user) {
+          // Downcast to our minimal interface
+          setUser(session.user as unknown as SupabaseAuthUser);
           const profile = await fetchProfileWithRetry();
           if (profile) setAppUser(profile);
         } else {
+          setUser(null);
           setAppUser(null);
         }
         clearTimeout(safetyTimer);
@@ -97,8 +114,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const openAuthModal = useCallback((message?: string) => {
+    setAuthModalMessage(message);
+    setIsAuthModalOpen(true);
+  }, []);
+
+  const closeAuthModal = useCallback(() => {
+    setIsAuthModalOpen(false);
+    setAuthModalMessage(undefined);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, appUser, isAuthLoading, logout }}>
+    <AuthContext.Provider value={{ user, appUser, isAuthLoading, logout, isAuthModalOpen, authModalMessage, openAuthModal, closeAuthModal }}>
       {children}
     </AuthContext.Provider>
   );

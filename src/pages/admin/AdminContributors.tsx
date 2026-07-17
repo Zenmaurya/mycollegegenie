@@ -175,14 +175,14 @@ export const AdminContributors: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
-            <Users className="w-7 h-7 text-purple-600" />
+            <Users className="w-7 h-7 text-brand-primary" />
             Contributors & Team
           </h2>
           <p className="text-sm text-gray-400 font-medium mt-1">Manage the Core Team, Top Contributors, and Wall of Fame.</p>
         </div>
         <button
           onClick={() => openForm()}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-purple-700 transition-all shadow-lg shadow-purple-600/20 whitespace-nowrap"
+          className="flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-brand-primary transition-all shadow-lg shadow-brand-primary/20 whitespace-nowrap"
         >
           <Plus className="w-4 h-4" /> Add Member
         </button>
@@ -192,7 +192,7 @@ export const AdminContributors: React.FC = () => {
         <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-black text-gray-900 flex items-center gap-3">
-              {editingContributor ? <Edit3 className="w-5 h-5 text-purple-600" /> : <Plus className="w-5 h-5 text-purple-600" />}
+              {editingContributor ? <Edit3 className="w-5 h-5 text-brand-primary" /> : <Plus className="w-5 h-5 text-brand-primary" />}
               {editingContributor ? 'Edit Member' : 'New Member'}
             </h3>
             <button onClick={() => setIsFormOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -204,7 +204,7 @@ export const AdminContributors: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Name *</label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium" />
+                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium" />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Category *</label>
@@ -217,17 +217,17 @@ export const AdminContributors: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Role / Title</label>
-                <input type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium" placeholder="e.g. Founder, Notes Uploader" />
+                <input type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium" placeholder="e.g. Founder, Notes Uploader" />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Points / Contributions</label>
-                <input type="number" value={formData.contributions} onChange={e => setFormData({...formData, contributions: parseInt(e.target.value) || 0})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium" />
+                <input type="number" value={formData.contributions} onChange={e => setFormData({...formData, contributions: parseInt(e.target.value) || 0})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium" />
               </div>
             </div>
 
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Bio / Quote</label>
-              <textarea rows={2} value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none resize-none text-sm font-medium" />
+              <textarea rows={2} value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none resize-none text-sm font-medium" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -236,7 +236,7 @@ export const AdminContributors: React.FC = () => {
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Profile Image URL</label>
                   <div className="flex gap-2">
                     <input type="url" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} placeholder="Paste URL or upload..." className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm" />
-                    <label className={`cursor-pointer shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${isUploadingImage ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100'}`}>
+                    <label className={`cursor-pointer shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${isUploadingImage ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-brand-surface border-brand-primary/20 text-brand-primary hover:bg-brand-primary/20'}`}>
                       {isUploadingImage ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                       <input type="file" accept="image/*" className="hidden" disabled={isUploadingImage} onChange={handleImageUpload} />
                     </label>
@@ -252,7 +252,7 @@ export const AdminContributors: React.FC = () => {
                   {formData.badges && formData.badges.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.badges.map((badge, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-600 text-xs font-bold">
+                        <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-surface text-brand-primary text-xs font-bold">
                           {badge}
                           <button type="button" onClick={() => removeBadge(idx)} className="hover:text-red-500"><X className="w-3 h-3" /></button>
                         </span>
@@ -282,7 +282,7 @@ export const AdminContributors: React.FC = () => {
               <button type="button" onClick={() => setIsFormOpen(false)} className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors">
                 Cancel
               </button>
-              <button type="submit" disabled={isSubmitting || isUploadingImage} className="flex-1 py-3 bg-purple-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              <button type="submit" disabled={isSubmitting || isUploadingImage} className="flex-1 py-3 bg-brand-primary text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-brand-primary transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {editingContributor ? 'Update Member' : 'Save Member'}
               </button>
@@ -301,7 +301,7 @@ export const AdminContributors: React.FC = () => {
               placeholder="Search by name or role..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
             />
           </div>
         </div>
@@ -320,7 +320,7 @@ export const AdminContributors: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={4} className="py-12 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-primary mx-auto" />
                   </td>
                 </tr>
               ) : filteredContributors.length === 0 ? (
@@ -341,10 +341,10 @@ export const AdminContributors: React.FC = () => {
                     </td>
                     <td className="py-4 px-6">
                       <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${
-                        contributor.category === 'core_team' ? 'bg-purple-50 text-purple-600' :
+                        contributor.category === 'core_team' ? 'bg-brand-surface text-brand-primary' :
                         contributor.category === 'feature_contributor' ? 'bg-blue-50 text-blue-600' :
                         contributor.category === 'resource_contributor' ? 'bg-emerald-50 text-emerald-600' :
-                        'bg-pink-50 text-pink-600'
+                        'bg-mark-soft text-mark-ink'
                       }`}>
                         {contributor.category.replace('_', ' ')}
                       </span>

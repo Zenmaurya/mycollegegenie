@@ -36,22 +36,42 @@ export const fetchExchangeItems = async (filters?: {
     queryParams.append('q', filters.q);
   }
 
-  return await fetchWithAuth(`/api/exchange?${queryParams.toString()}`);
+  try {
+    return await fetchWithAuth(`/api/campus-exchange?${queryParams.toString()}`);
+  } catch (error) {
+    console.error('[exchangeService] fetchExchangeItems error:', error);
+    throw error;
+  }
 };
 
 export const fetchUserListings = async (): Promise<ExchangeItem[]> => {
-  return await fetchWithAuth('/api/exchange/me');
+  try {
+    return await fetchWithAuth('/api/campus-exchange/me');
+  } catch (error) {
+    console.error('[exchangeService] fetchUserListings error:', error);
+    throw error;
+  }
 };
 
 export const createExchangeItem = async (itemData: Partial<ExchangeItem>): Promise<any> => {
-  return await fetchWithAuth('/api/exchange', {
-    method: 'POST',
-    body: JSON.stringify(itemData),
-  });
+  try {
+    return await fetchWithAuth('/api/campus-exchange', {
+      method: 'POST',
+      body: JSON.stringify(itemData),
+    });
+  } catch (error) {
+    console.error('[exchangeService] createExchangeItem error:', error);
+    throw error;
+  }
 };
 
 export const deleteExchangeItem = async (id: string): Promise<void> => {
-  await fetchWithAuth(`/api/exchange/${id}`, {
-    method: 'DELETE',
-  });
+  try {
+    await fetchWithAuth(`/api/campus-exchange/${id}`, {
+      method: 'DELETE',
+    });
+  } catch (error) {
+    console.error('[exchangeService] deleteExchangeItem error:', error);
+    throw error;
+  }
 };

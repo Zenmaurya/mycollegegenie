@@ -30,11 +30,12 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
     <footer className="pt-8 lg:pt-16 pb-24 md:pb-8 lg:pb-8 px-4 bg-[#0B0914] border-t border-white/5 shrink-0 relative text-gray-400">
       {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/10 blur-[120px] rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-brand-primary/10 blur-[120px] rounded-full" />
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="grid grid-cols-2 md:grid-cols-12 gap-x-4 gap-y-8 lg:gap-12 mb-8 lg:mb-12">
+        {!appUser && (
+          <div className="grid grid-cols-2 md:grid-cols-12 gap-x-4 gap-y-8 lg:gap-12 mb-8 lg:mb-12">
 
           {/* Brand */}
           <div className="col-span-2 md:col-span-5 lg:col-span-4 pr-0 lg:pr-8 flex flex-col items-start text-left">
@@ -57,7 +58,7 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
                 whileInView={{ clipPath: 'inset(0 0 0 0)' }}
                 transition={{ duration: 2, ease: 'linear' }}
                 viewport={{ once: true }}
-                className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-bold inline-block"
+                className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-mark font-bold inline-block"
               >
                 Notes se Naukri Tak.
               </motion.span>
@@ -68,8 +69,8 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
                 <Linkedin className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors" />
               </a>
               <a href="https://www.instagram.com/mycollegegenie.in" target="_blank" rel="noopener noreferrer" title="Instagram"
-                className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:border-pink-500/50 hover:bg-pink-500/10 transition-all group hover:-translate-y-1">
-                <Instagram className="w-5 h-5 text-gray-400 group-hover:text-pink-400 transition-colors" />
+                className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:border-mark/50 hover:bg-mark/10 transition-all group hover:-translate-y-1">
+                <Instagram className="w-5 h-5 text-gray-400 group-hover:text-mark-ink transition-colors" />
               </a>
               <a href="https://www.reddit.com/r/AskMyCollegeGenie" target="_blank" rel="noopener noreferrer" title="Reddit"
                 className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:border-orange-500/50 hover:bg-orange-500/10 transition-all group hover:-translate-y-1">
@@ -91,26 +92,26 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
             <h4 className="text-white font-bold mb-4 lg:mb-6 text-sm">Academic Hub</h4>
             <ul className="space-y-4 font-medium text-[13px]">
               <li>
-                <Link to="/" onClick={() => window.scrollTo(0, 0)} className="hover:text-purple-400 transition-colors flex items-center gap-2">
-                  <ChevronRight className="w-3 h-3 text-purple-500" /> Home
+                <Link to="/" onClick={() => window.scrollTo(0, 0)} className="hover:text-brand-primary transition-colors flex items-center gap-2">
+                  <ChevronRight className="w-3 h-3 text-brand-primary" /> Home
                 </Link>
               </li>
               <li>
                 <button
                   onClick={() => { navigate('/browse'); }}
-                  className="hover:text-purple-400 transition-colors flex items-center gap-2"
+                  className="hover:text-brand-primary transition-colors flex items-center gap-2"
                 >
-                  <ChevronRight className="w-3 h-3 text-purple-500" /> Browse
+                  <ChevronRight className="w-3 h-3 text-brand-primary" /> Browse
                 </button>
               </li>
               <li>
-                <Link to="/playlists" className="hover:text-purple-400 transition-colors flex items-center gap-2">
-                  <ChevronRight className="w-3 h-3 text-purple-500" /> Playlists
+                <Link to="/playlists" className="hover:text-brand-primary transition-colors flex items-center gap-2">
+                  <ChevronRight className="w-3 h-3 text-brand-primary" /> Playlists
                 </Link>
               </li>
               <li>
-                <button onClick={onOpenUpload} className="hover:text-purple-400 transition-colors flex items-center gap-2">
-                  <ChevronRight className="w-3 h-3 text-purple-500" /> Upload
+                <button onClick={onOpenUpload} className="hover:text-brand-primary transition-colors flex items-center gap-2">
+                  <ChevronRight className="w-3 h-3 text-brand-primary" /> Upload
                 </button>
               </li>
             </ul>
@@ -120,17 +121,17 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
           <div className="col-span-1 md:col-span-3 lg:col-span-3">
             <h4 className="text-white font-bold mb-4 lg:mb-6 text-sm">Campus Life</h4>
             <ul className="space-y-4 font-medium text-[13px]">
-              <li><Link to="/find-pg" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Find PG</Link></li>
+              <li><Link to="/find-pg" className="hover:text-brand-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-brand-primary" /> Find PG</Link></li>
               <li>
-                <Link to="/campus-exchange" className="hover:text-purple-400 transition-colors flex items-center gap-2">
-                  <ChevronRight className="w-3 h-3 text-purple-500" />
+                <Link to="/campus-exchange" className="hover:text-brand-primary transition-colors flex items-center gap-2">
+                  <ChevronRight className="w-3 h-3 text-brand-primary" />
                   <ShoppingBag className="w-3 h-3" /> Campus Exchange
                   {showNewBadge && <span className="bg-[#FF0080] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1">NEW</span>}
                 </Link>
               </li>
-              <li><Link to="/forum" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Student Forums</Link></li>
-              <li><Link to="/news" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Official News</Link></li>
-              <li><Link to="/events" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> College Events</Link></li>
+              <li><Link to="/forum" className="hover:text-brand-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-brand-primary" /> Student Forums</Link></li>
+              <li><Link to="/news" className="hover:text-brand-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-brand-primary" /> Official News</Link></li>
+              <li><Link to="/events" className="hover:text-brand-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-brand-primary" /> College Events</Link></li>
             </ul>
           </div>
 
@@ -138,14 +139,14 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
           <div className="col-span-2 md:col-span-3 lg:col-span-3">
             <h4 className="text-white font-bold mb-4 lg:mb-6 text-sm">Support &amp; Legal</h4>
             <ul className="space-y-4 font-medium text-[13px]">
-              <li><Link to="/contact" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Contact Us</Link></li>
-              <li><Link to="/blog" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Blog</Link></li>
-              <li><Link to="/contributors" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Our Team &amp; Contributors</Link></li>
-              <li><Link to="/privacy" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Terms of Service</Link></li>
+              <li><Link to="/contact" className="hover:text-brand-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-brand-primary" /> Contact Us</Link></li>
+              <li><Link to="/blog" className="hover:text-brand-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-brand-primary" /> Blog</Link></li>
+              <li><Link to="/contributors" className="hover:text-brand-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-brand-primary" /> Our Team &amp; Contributors</Link></li>
+              <li><Link to="/privacy" className="hover:text-brand-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-brand-primary" /> Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-brand-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-brand-primary" /> Terms of Service</Link></li>
               {appUser?.role === 'admin' && (
                 <li className="pt-2">
-                  <Link to="/admin" className="flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors font-bold bg-purple-500/10 px-3 py-2 rounded-lg inline-flex border border-purple-500/20">
+                  <Link to="/admin" className="flex items-center gap-2 text-brand-primary hover:text-brand-primary/20 transition-colors font-bold bg-brand-primary/10 px-3 py-2 rounded-lg inline-flex border border-brand-primary/20">
                     <LayoutGrid className="w-4 h-4" /> Admin Panel
                   </Link>
                 </li>
@@ -153,14 +154,15 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
             </ul>
           </div>
         </div>
+        )}
 
         {/* Bottom bar */}
-        <div className="pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className={!appUser ? "pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4" : "flex flex-col md:flex-row items-center justify-between gap-4"}>
           <p className="text-sm font-medium">
             © {new Date().getFullYear()} My College Genie. All rights reserved.
           </p>
           <div className="flex items-center gap-2 text-sm font-bold bg-white/5 px-4 py-2 rounded-full border border-white/5">
-            Built with <span className="text-purple-400 animate-pulse">💜</span> for college students
+            Built with <span className="text-brand-primary animate-pulse">💜</span> for college students
           </div>
         </div>
       </div>

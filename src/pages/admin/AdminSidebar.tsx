@@ -75,7 +75,7 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, 
     <div className="w-full md:w-64 bg-white/80 backdrop-blur-xl border-r border-white/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex-shrink-0 h-auto md:h-[calc(100vh-5rem)] md:sticky top-20 overflow-y-auto custom-scrollbar">
       <div className="p-6">
         <h2 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2 mb-1">
-          <Settings className="w-6 h-6 text-purple-600" />
+          <Settings className="w-6 h-6 text-brand-primary" />
           Admin
         </h2>
         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Command Center</p>
@@ -94,20 +94,20 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, 
                   onClick={() => setActiveTab(item.id as AdminTab)}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-300 group ${
                     activeTab === item.id 
-                      ? 'bg-gradient-to-r from-purple-50 to-indigo-50/50 text-purple-700 font-bold shadow-[inset_0_1px_4px_rgba(147,51,234,0.1)]' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-purple-600 font-medium'
+                      ? 'bg-gradient-to-r from-brand-surface to-indigo-50/50 text-brand-primary font-bold shadow-[inset_0_1px_4px_rgba(147,51,234,0.1)]' 
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-brand-primary font-medium'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`flex items-center justify-center p-1.5 rounded-lg transition-colors ${
-                      activeTab === item.id ? 'bg-purple-100/50 text-purple-600' : 'text-gray-400 group-hover:text-purple-500 group-hover:bg-purple-50/50'
+                      activeTab === item.id ? 'bg-brand-primary/20/50 text-brand-primary' : 'text-gray-400 group-hover:text-brand-primary group-hover:bg-brand-surface/50'
                     }`}>
                       <item.icon className="w-4 h-4" />
                     </div>
                     <span className="text-sm">{item.label}</span>
                   </div>
                   {item.badge && item.badge > 0 && (
-                    <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-mark text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                       {item.badge}
                     </span>
                   )}

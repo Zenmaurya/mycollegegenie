@@ -27,7 +27,7 @@ interface ResourceContextValue {
 const ResourceContext = createContext<ResourceContextValue | null>(null);
 
 export function ResourceProvider({ children }: { children: React.ReactNode }) {
-  const { user, appUser } = useAuth();
+  const { user, appUser, openAuthModal } = useAuth();
   const [resources, setResources] = useState<Resource[]>(() => {
     try {
       const cached = localStorage.getItem('mcg_cached_resources');
@@ -87,7 +87,7 @@ export function ResourceProvider({ children }: { children: React.ReactNode }) {
 
   const toggleSave = useCallback(async (id: string) => {
     if (!user) {
-      toast.error('Please sign in to save resources');
+      openAuthModal('Please sign in to save resources');
       return;
     }
     const wasSaved = savedResourceIds.includes(id);

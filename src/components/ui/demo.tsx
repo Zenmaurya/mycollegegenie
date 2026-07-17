@@ -89,7 +89,7 @@ export default function Marquee() {
   if (loading) {
     return (
       <div className="flex justify-center p-8">
-        <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-purple-600 animate-spin" />
+        <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-brand-primary animate-spin" />
       </div>
     );
   }

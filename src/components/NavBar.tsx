@@ -135,28 +135,28 @@ export function NavBar() {
                   to={to}
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 group relative whitespace-nowrap ${
                     active
-                      ? 'text-purple-700'
+                      ? 'text-brand-primary'
                       : 'text-gray-500 hover:text-gray-900 hover:bg-white/70 border border-transparent'
                   }`}
                 >
                   {active && (
                     <motion.div
                       layoutId="desktopNavActiveIndicator"
-                      className="absolute inset-0 bg-white rounded-full shadow-[0_2px_12px_-2px_rgba(147,51,234,0.18)] border border-purple-100/60 z-0"
+                      className="absolute inset-0 bg-white rounded-full shadow-[0_2px_12px_-2px_rgba(147,51,234,0.18)] border border-brand-primary/20/60 z-0"
                     />
                   )}
                   <span
                     className={`relative z-10 flex items-center justify-center w-6 h-6 rounded-full shrink-0 transition-all duration-300 ${
                       active
-                        ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-[0_2px_8px_rgba(147,51,234,0.35)] scale-110'
-                        : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600 group-hover:scale-105'
+                        ? 'bg-gradient-to-br from-brand-primary to-indigo-600 text-white shadow-[0_2px_8px_rgba(147,51,234,0.35)] scale-110'
+                        : 'bg-gray-100 text-gray-500 group-hover:bg-brand-primary/20 group-hover:text-brand-primary group-hover:scale-105'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" strokeWidth={active ? 2.5 : 2} />
                   </span>
                   <span className="leading-none relative z-10">{label}</span>
                   {isNew && showNewBadge && (
-                    <span className="absolute -top-1.5 -right-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-20 shadow-sm shadow-pink-500/20">
+                    <span className="absolute -top-1.5 -right-1 bg-gradient-to-r from-mark to-mark text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-20 shadow-sm shadow-mark-ink/20">
                       NEW
                     </span>
                   )}
@@ -171,15 +171,15 @@ export function NavBar() {
               <button
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 whitespace-nowrap ${
                   isUpdatesActive
-                    ? 'bg-white text-purple-700 shadow-[0_2px_12px_-2px_rgba(147,51,234,0.18)] border border-purple-100/60'
+                    ? 'bg-white text-brand-primary shadow-[0_2px_12px_-2px_rgba(147,51,234,0.18)] border border-brand-primary/20/60'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-white/70 border border-transparent'
                 }`}
               >
                 <span
                   className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 transition-all duration-300 ${
                     isUpdatesActive
-                      ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 scale-105'
-                      : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600'
+                      ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/30 scale-105'
+                      : 'bg-gray-100 text-gray-500 group-hover:bg-brand-primary/20 group-hover:text-brand-primary'
                   }`}
                 >
                   <Rss className="w-3.5 h-3.5" />
@@ -198,14 +198,14 @@ export function NavBar() {
                       to={to}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-bold transition-all ${
                         location.pathname === to
-                          ? 'text-purple-700 bg-purple-50'
-                          : 'text-gray-600 hover:text-purple-700 hover:bg-purple-50'
+                          ? 'text-brand-primary bg-brand-surface'
+                          : 'text-gray-600 hover:text-brand-primary hover:bg-brand-surface'
                       }`}
                     >
                       <span
                         className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${
                           location.pathname === to
-                            ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30'
+                            ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/30'
                             : 'bg-gray-100 text-gray-500'
                         }`}
                       >
@@ -224,15 +224,15 @@ export function NavBar() {
                 to="/admin"
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 group whitespace-nowrap ${
                   location.pathname === '/admin'
-                    ? 'bg-white text-purple-700 shadow-[0_2px_12px_-2px_rgba(147,51,234,0.18)] border border-purple-100/60'
+                    ? 'bg-white text-brand-primary shadow-[0_2px_12px_-2px_rgba(147,51,234,0.18)] border border-brand-primary/20/60'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-white/70 border border-transparent'
                 }`}
               >
                 <span
                   className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 transition-all duration-300 ${
                     location.pathname === '/admin'
-                      ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 scale-105'
-                      : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600'
+                      ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/30 scale-105'
+                      : 'bg-gray-100 text-gray-500 group-hover:bg-brand-primary/20 group-hover:text-brand-primary'
                   }`}
                 >
                   <LayoutDashboard className="w-3.5 h-3.5" />
@@ -249,17 +249,17 @@ export function NavBar() {
               <div className="hidden lg:block">
                 <Link
                   to="/profile"
-                  className="flex items-center gap-3 group p-1.5 pl-4 bg-white/60 hover:bg-white border border-gray-100/80 hover:border-purple-200 rounded-full transition-all duration-300 shadow-sm hover:shadow-[0_8px_20px_-6px_rgba(147,51,234,0.2)] cursor-pointer"
+                  className="flex items-center gap-3 group p-1.5 pl-4 bg-white/60 hover:bg-white border border-gray-100/80 hover:border-brand-primary/20 rounded-full transition-all duration-300 shadow-sm hover:shadow-[0_8px_20px_-6px_rgba(147,51,234,0.2)] cursor-pointer"
                 >
                   <div className="flex flex-col items-end">
-                    <span className="text-[13px] font-bold text-gray-900 leading-none group-hover:text-purple-700 transition-colors max-w-[120px] truncate">
+                    <span className="text-[13px] font-bold text-gray-900 leading-none group-hover:text-brand-primary transition-colors max-w-[120px] truncate">
                       {user.user_metadata?.full_name || 'Student'}
                     </span>
-                    <span className="text-[9px] font-black text-gray-400 mt-1.5 group-hover:text-purple-500 transition-colors uppercase tracking-widest">
+                    <span className="text-[9px] font-black text-gray-400 mt-1.5 group-hover:text-brand-primary transition-colors uppercase tracking-widest">
                       {appUser?.role === 'admin' || appUser?.role === 'moderator' ? 'Admin Profile' : 'View Profile'}
                     </span>
                   </div>
-                  <div className="w-9 h-9 rounded-full overflow-hidden border border-purple-100 bg-purple-50 shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-inner">
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-brand-primary/20 bg-brand-surface shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-inner">
                     {user.user_metadata?.avatar_url || (appUser as any)?.photo_url ? (
                       <img
                         src={user.user_metadata?.avatar_url || (appUser as any)?.photo_url}
@@ -269,7 +269,7 @@ export function NavBar() {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-purple-600">
+                      <div className="w-full h-full flex items-center justify-center text-brand-primary">
                         <User className="w-4 h-4" />
                       </div>
                     )}
@@ -280,7 +280,7 @@ export function NavBar() {
               <div className="hidden lg:block">
                 <Link
                   to="/login"
-                  className="bg-purple-600 text-white px-6 py-2.5 rounded-full font-bold flex items-center gap-2 hover:bg-purple-700 hover:shadow-lg hover:shadow-purple-600/30 transition-all hover:-translate-y-0.5 active:translate-y-0 group"
+                  className="bg-brand-primary text-white px-6 py-2.5 rounded-full font-bold flex items-center gap-2 hover:bg-brand-primary hover:shadow-lg hover:shadow-brand-primary/30 transition-all hover:-translate-y-0.5 active:translate-y-0 group"
                 >
                   <User className="w-4 h-4 group-hover:scale-110 transition-transform fill-white" />
                   SIGN IN
@@ -298,8 +298,8 @@ export function NavBar() {
                 aria-controls="mobile-menu"
                 className={`p-2.5 rounded-2xl transition-all duration-500 relative overflow-hidden group ${
                   isMobileMenuOpen
-                    ? 'bg-purple-600 text-white shadow-xl shadow-purple-600/40'
-                    : 'bg-white/80 text-purple-600 hover:bg-purple-50 shadow-sm border border-gray-100'
+                    ? 'bg-brand-primary text-white shadow-xl shadow-brand-primary/40'
+                    : 'bg-white/80 text-brand-primary hover:bg-brand-surface shadow-sm border border-gray-100'
                 }`}
               >
                 <motion.div
@@ -398,23 +398,23 @@ export function NavBar() {
                         to={to}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-[13px] ${
-                          isActive ? 'bg-purple-50 text-purple-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                          isActive ? 'bg-brand-surface text-brand-primary' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                       >
                         <span
                           className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                            isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'bg-gray-100 text-gray-500'
+                            isActive ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/30' : 'bg-gray-100 text-gray-500'
                           }`}
                         >
                           <Icon className="w-4 h-4" />
                         </span>
                         <span className="flex-1 leading-none">{label}</span>
                         {isNew && showNewBadge && (
-                          <span className="text-[8px] font-black bg-gradient-to-r from-pink-500 to-rose-500 text-white px-1.5 py-0.5 rounded-full">
+                          <span className="text-[8px] font-black bg-gradient-to-r from-mark to-mark text-white px-1.5 py-0.5 rounded-full">
                             NEW
                           </span>
                         )}
-                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />}
+                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-brand-primary" />}
                       </Link>
                     );
                   })}
@@ -426,12 +426,12 @@ export function NavBar() {
                         to="/admin"
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-[13px] ${
-                          location.pathname === '/admin' ? 'bg-purple-50 text-purple-700' : 'text-gray-600 hover:bg-gray-50'
+                          location.pathname === '/admin' ? 'bg-brand-surface text-brand-primary' : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
                         <span
                           className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                            location.pathname === '/admin' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'bg-gray-800 text-white'
+                            location.pathname === '/admin' ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/30' : 'bg-gray-800 text-white'
                           }`}
                         >
                           <LayoutDashboard className="w-4 h-4" />
@@ -472,7 +472,7 @@ export function NavBar() {
                     <Link
                       to="/signup"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-[#5636A7] to-[#7c3aed] text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-600/20 hover:opacity-90 transition-all"
+                      className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-[#5636A7] to-[#7c3aed] text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-primary/20 hover:opacity-90 transition-all"
                     >
                       <User className="w-4 h-4" />
                       Sign In / Sign Up
@@ -495,7 +495,7 @@ export function NavBar() {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             whileHover={{ scale: 1.1, y: -2 }}
             whileTap={{ scale: 0.95 }}
-            className="fixed bottom-24 sm:bottom-8 md:bottom-8 right-4 sm:right-8 z-[150] p-3.5 sm:p-4 bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-2xl shadow-2xl shadow-purple-600/40 hover:shadow-purple-600/60 transition-shadow"
+            className="fixed bottom-24 sm:bottom-8 md:bottom-8 right-4 sm:right-8 z-[150] p-3.5 sm:p-4 bg-gradient-to-br from-brand-primary to-brand-primary text-white rounded-2xl shadow-2xl shadow-brand-primary/40 hover:shadow-brand-primary/60 transition-shadow"
             aria-label="Back to top"
           >
             <ArrowUp className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -516,14 +516,14 @@ export function NavBar() {
                   {active && (
                     <motion.div
                       layoutId="mobileNavActiveIndicator"
-                      className="absolute -top-2 left-1/2 -translate-x-1/2 w-10 h-1 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-b-full shadow-[0_2px_8px_rgba(147,51,234,0.4)]"
+                      className="absolute -top-2 left-1/2 -translate-x-1/2 w-10 h-1 bg-gradient-to-r from-brand-primary to-indigo-500 rounded-b-full shadow-[0_2px_8px_rgba(147,51,234,0.4)]"
                     />
                   )}
                   <motion.div
                     whileTap={{ scale: 0.85 }}
                     className={`relative flex items-center justify-center w-11 h-9 rounded-2xl transition-all duration-300 ${
                       active
-                        ? 'bg-gradient-to-br from-purple-100 to-indigo-50 shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_2px_6px_rgba(147,51,234,0.12)] border border-purple-200/50'
+                        ? 'bg-gradient-to-br from-brand-primary/20 to-indigo-50 shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_2px_6px_rgba(147,51,234,0.12)] border border-brand-primary/20/50'
                         : 'group-active:bg-gray-50'
                     }`}
                   >
@@ -531,19 +531,19 @@ export function NavBar() {
                       strokeWidth={active ? 2.5 : 2}
                       className={`w-[20px] h-[20px] transition-all duration-300 ${
                         active
-                          ? 'text-purple-700 drop-shadow-[0_2px_4px_rgba(147,51,234,0.2)] scale-110'
+                          ? 'text-brand-primary drop-shadow-[0_2px_4px_rgba(147,51,234,0.2)] scale-110'
                           : 'text-slate-400 group-hover:text-slate-600'
                       }`}
                     />
                     {isNew && showNewBadge && (
-                      <span className="absolute -top-1 -right-1.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-20 shadow-sm shadow-pink-500/20 scale-90">
+                      <span className="absolute -top-1 -right-1.5 bg-gradient-to-r from-mark to-mark text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-20 shadow-sm shadow-mark-ink/20 scale-90">
                         NEW
                       </span>
                     )}
                   </motion.div>
                   <span
                     className={`text-[9px] font-bold tracking-tight transition-all duration-300 truncate w-full text-center ${
-                      active ? 'text-purple-700 drop-shadow-sm scale-105' : 'text-slate-400 group-hover:text-slate-600'
+                      active ? 'text-brand-primary drop-shadow-sm scale-105' : 'text-slate-400 group-hover:text-slate-600'
                     }`}
                   >
                     {label}

@@ -46,7 +46,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
 
   const typeConfig: Record<string, { bg: string; text: string; border: string; iconBg: string }> = {
     Note:     { bg: 'bg-violet-50',  text: 'text-violet-600',  border: 'border-violet-100', iconBg: 'bg-violet-100' },
-    PYQ:      { bg: 'bg-pink-50',    text: 'text-pink-600',    border: 'border-pink-100',   iconBg: 'bg-pink-100' },
+    PYQ:      { bg: 'bg-mark-soft',    text: 'text-mark-ink',    border: 'border-mark-soft',   iconBg: 'bg-mark-soft' },
     Book:     { bg: 'bg-amber-50',   text: 'text-amber-600',   border: 'border-amber-100',  iconBg: 'bg-amber-100' },
     Playlist: { bg: 'bg-red-50',     text: 'text-red-500',     border: 'border-red-100',    iconBg: 'bg-red-100' },
     Syllabus: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', iconBg: 'bg-emerald-100' },
@@ -86,12 +86,12 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         animate={{ opacity: 1, x: 0 }}
         whileHover={{ x: 4, boxShadow: '0 8px 30px -8px rgba(139,92,246,0.12)' }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="bg-white border border-gray-100 rounded-2xl px-4 py-3.5 flex items-center gap-4 cursor-pointer group hover:border-purple-100 transition-all"
+        className="bg-white border border-gray-100 rounded-2xl px-4 py-3.5 flex items-center gap-4 cursor-pointer group hover:border-brand-primary/20 transition-all"
         onClick={() => onClick(resource)}
       >
         {/* Icon or Thumbnail */}
         {youtubeThumbnail ? (
-          <div className="w-16 h-11 rounded-xl overflow-hidden shrink-0 relative border border-gray-100 group-hover:border-purple-200 transition-colors shadow-sm">
+          <div className="w-16 h-11 rounded-xl overflow-hidden shrink-0 relative border border-gray-100 group-hover:border-brand-primary/20 transition-colors shadow-sm">
             <img src={youtubeThumbnail} alt="Thumbnail" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/10 transition-colors">
               <Youtube className="w-4 h-4 text-white" />
@@ -106,7 +106,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         {/* Main Info */}
         <div className="flex-1 min-w-0">
           {/* Row 1: Title */}
-          <h3 className="font-bold text-sm text-gray-900 truncate group-hover:text-purple-600 transition-colors mb-1">
+          <h3 className="font-bold text-sm text-gray-900 truncate group-hover:text-brand-primary transition-colors mb-1">
             {resource.title}
           </h3>
           {/* Row 2: Sem · Course · Uploader */}
@@ -151,11 +151,11 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
           )}
 
           <button onClick={(e) => { e.stopPropagation(); onSave(resource.id); }}
-            className={`p-2 rounded-xl transition-all hover:scale-105 ${isSaved ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:bg-gray-50'}`}
+            className={`p-2 rounded-xl transition-all hover:scale-105 ${isSaved ? 'text-brand-primary bg-brand-surface' : 'text-gray-400 hover:bg-gray-50'}`}
             aria-label={isSaved ? 'Remove from saved' : 'Save resource'}>
             <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
           </button>
-          <div className="p-2 bg-gray-50 text-gray-400 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-all group-hover:-rotate-45 hidden sm:flex">
+          <div className="p-2 bg-gray-50 text-gray-400 rounded-xl group-hover:bg-brand-primary group-hover:text-white transition-all group-hover:-rotate-45 hidden sm:flex">
             <ChevronRight className="w-4 h-4" />
           </div>
         </div>
@@ -171,7 +171,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -6, boxShadow: '0 24px 48px -12px rgba(139,92,246,0.18)' }}
       transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-      className="bg-white border border-gray-100 rounded-3xl flex flex-col cursor-pointer group hover:border-purple-100 transition-all overflow-hidden h-full"
+      className="bg-white border border-gray-100 rounded-3xl flex flex-col cursor-pointer group hover:border-brand-primary/20 transition-all overflow-hidden h-full"
       onClick={() => onClick(resource)}
     >
       {/* ── Thumbnail (only for Playlist with valid YouTube link) ── */}
@@ -202,7 +202,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
             <span className="text-[10px] font-bold text-amber-600">{rating.toFixed(1)}</span>
           </div>
           <button onClick={(e) => { e.stopPropagation(); onSave(resource.id); }}
-            className={`p-1.5 rounded-full border transition-all hover:scale-110 ${isSaved ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'}`}
+            className={`p-1.5 rounded-full border transition-all hover:scale-110 ${isSaved ? 'bg-brand-surface text-brand-primary border-brand-primary/20' : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'}`}
             aria-label={isSaved ? 'Remove from saved' : 'Save resource'}>
             <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
           </button>
@@ -212,7 +212,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       {/* ── Zone 2: Title — clamps to 2 lines, min-height ensures uniform card height ── */}
       <div className="px-5 pt-4 pb-0 shrink-0">
         <h3
-          className="font-extrabold text-base text-gray-900 group-hover:text-purple-700 transition-colors duration-300 leading-snug"
+          className="font-extrabold text-base text-gray-900 group-hover:text-brand-primary transition-colors duration-300 leading-snug"
           style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '2.75rem' }}
         >
           {resource.title}
@@ -259,8 +259,8 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       <div className="flex items-center justify-between mx-5 mt-4 pb-4 pt-4 border-t border-gray-100 shrink-0">
         {/* Uploader */}
         <div className="flex items-center gap-2 min-w-0">
-          <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${resource.uploaderRole === 'faculty' ? 'bg-gradient-to-br from-amber-100 to-yellow-100 border-amber-200' : 'bg-gradient-to-br from-purple-100 to-pink-100 border-purple-100'}`}>
-            {resource.uploaderRole === 'faculty' ? <GraduationCap className="w-3.5 h-3.5 text-amber-600" /> : <User className="w-3.5 h-3.5 text-purple-600" />}
+          <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${resource.uploaderRole === 'faculty' ? 'bg-gradient-to-br from-amber-100 to-yellow-100 border-amber-200' : 'bg-gradient-to-br from-brand-primary/20 to-pink-100 border-brand-primary/20'}`}>
+            {resource.uploaderRole === 'faculty' ? <GraduationCap className="w-3.5 h-3.5 text-amber-600" /> : <User className="w-3.5 h-3.5 text-brand-primary" />}
           </div>
           <div className="min-w-0">
             <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none mb-0.5">{resource.uploaderRole === 'faculty' ? 'Faculty Member' : 'Shared by'}</p>
@@ -277,7 +277,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
             aria-label={`Share ${resource.title}`}>
             <Share2 className="w-3.5 h-3.5" />
           </button>
-          <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-purple-600 group-hover:text-white border border-gray-100 group-hover:border-purple-600 transition-all group-hover:-rotate-45 shadow-sm">
+          <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-brand-primary group-hover:text-white border border-gray-100 group-hover:border-brand-primary transition-all group-hover:-rotate-45 shadow-sm">
             <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </div>

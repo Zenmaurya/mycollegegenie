@@ -63,16 +63,16 @@ export const ForumService = {
   },
 
   createPost: async (post: Omit<ForumPost, 'id' | 'createdAt' | 'commentCount' | 'upvotes' | 'downvotes'>) => {
-    const data = await fetchWithAuth('/api/forum/posts', {
-      method: 'POST',
-      body: JSON.stringify({
-        title: post.title,
-        content: post.content,
-        course: post.course,
-        topic: post.topic
-      })
-    });
-    return data.id;
+    try {
+      const data = await fetchWithAuth('/api/forum/posts', {
+        method: 'POST',
+        body: JSON.stringify(post)
+      });
+      return data.id;
+    } catch (error) {
+      console.error('[forumService] createPost error:', error);
+      throw error;
+    }
   },
 
   updatePost: async (_postId: string, _updates: Partial<ForumPost>) => {
@@ -81,23 +81,38 @@ export const ForumService = {
   },
 
   deletePost: async (postId: string) => {
-    await fetchWithAuth(`/api/forum/posts/${postId}`, {
-      method: 'DELETE'
-    });
+    try {
+      await fetchWithAuth(`/api/forum/posts/${postId}`, {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      console.error('[forumService] deletePost error:', error);
+      throw error;
+    }
   },
 
   toggleUpvote: async (postId: string, _userId: string, _isUpvoted: boolean) => {
-    return fetchWithAuth(`/api/forum/posts/${postId}/vote`, {
-      method: 'PATCH',
-      body: JSON.stringify({ type: 'up' })
-    });
+    try {
+      return await fetchWithAuth(`/api/forum/posts/${postId}/vote`, {
+        method: 'PATCH',
+        body: JSON.stringify({ type: 'up' })
+      });
+    } catch (error) {
+      console.error('[forumService] toggleUpvote error:', error);
+      throw error;
+    }
   },
 
   toggleDownvote: async (postId: string, _userId: string, _isDownvoted: boolean) => {
-    return fetchWithAuth(`/api/forum/posts/${postId}/vote`, {
-      method: 'PATCH',
-      body: JSON.stringify({ type: 'down' })
-    });
+    try {
+      return await fetchWithAuth(`/api/forum/posts/${postId}/vote`, {
+        method: 'PATCH',
+        body: JSON.stringify({ type: 'down' })
+      });
+    } catch (error) {
+      console.error('[forumService] toggleDownvote error:', error);
+      throw error;
+    }
   },
 
   // Comments
@@ -124,30 +139,72 @@ export const ForumService = {
   },
 
   addComment: async (postId: string, comment: Omit<Comment, 'id' | 'createdAt' | 'upvotes' | 'downvotes'>) => {
-    const data = await fetchWithAuth(`/api/forum/posts/${postId}/comments`, {
-      method: 'POST',
-      body: JSON.stringify({ content: comment.content })
-    });
-    return data.id;
+    try {
+      const data = await fetchWithAuth(`/api/forum/posts/${postId}/comments`, {
+        method: 'POST',
+        body: JSON.stringify(comment)
+      });
+      return data.id;
+    } catch (error) {
+      console.error('[forumService] addComment error:', error);
+      throw error;
+    }
   },
 
-  toggleCommentUpvote: async (postId: string, commentId: string, userId: string, isUpvoted: boolean) => {
-    return fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}/vote`, {
-      method: 'PATCH',
-      body: JSON.stringify({ type: 'up' }),
-    });
+  toggleCommentUpvote: async (postId: string, commentId: string, _userId: string, _isUpvoted: boolean) => {
+    try {
+      return await fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}/vote`, {
+        method: 'PATCH',
+        body: JSON.stringify({ type: 'up' })
+      });
+    } catch (error) {
+      console.error('[forumService] toggleCommentUpvote error:', error);
+      throw error;
+    }
   },
 
-  toggleCommentDownvote: async (postId: string, commentId: string, userId: string, isDownvoted: boolean) => {
-    return fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}/vote`, {
-      method: 'PATCH',
-      body: JSON.stringify({ type: 'down' }),
-    });
+  toggleCommentDownvote: async (postId: string, commentId: string, _userId: string, _isDownvoted: boolean) => {
+    try {
+      return await fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}/vote`, {
+        method: 'PATCH',
+        body: JSON.stringify({ type: 'down' })
+      });
+    } catch (error) {
+      console.error('[forumService] toggleCommentDownvote error:', error);
+      throw error;
+    }
   },
 
   deleteComment: async (postId: string, commentId: string) => {
-    await fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}`, {
-      method: 'DELETE'
-    });
+    try {
+      await fetchWithAuth(`/api/forum/posts/${postId}/comments/${commentId}`, {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      console.error('[forumService] deleteComment error:', error);
+      throw error;
+    }
+  },
+
+  // Guilds
+  getGuilds: async () => {
+    try {
+      return await fetchWithAuth('/api/forum/guilds');
+    } catch (error) {
+      console.error('[forumService] getGuilds error:', error);
+      return [];
+    }
+  },
+
+  createGuild: async (name: string, description: string) => {
+    try {
+      return await fetchWithAuth('/api/forum/guilds', {
+        method: 'POST',
+        body: JSON.stringify({ name, description })
+      });
+    } catch (error) {
+      console.error('[forumService] createGuild error:', error);
+      throw error;
+    }
   }
 };

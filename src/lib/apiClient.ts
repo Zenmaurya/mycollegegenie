@@ -53,6 +53,11 @@ function getSessionFromLocalStorageFallback(): any {
 }
 
 export async function getFreshToken(): Promise<string | undefined> {
+  /*
+  const bypassToken = import.meta.env.VITE_DEV_BYPASS_TOKEN;
+  if (bypassToken) return bypassToken;
+  */
+
   try {
     // Fast path: get cached session from localStorage (generous 15s timeout for mobile/slow networks)
     const { data: { session: cached }, error: sessionErr } = await authTimeout(

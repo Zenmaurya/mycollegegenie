@@ -22,12 +22,12 @@ interface UpcomingEventsCarouselProps {
    Gradient fallbacks (when no image)
 ───────────────────────────────────────────────────────────────── */
 const GRADIENTS = [
-  'from-purple-700 via-indigo-700 to-blue-800',
-  'from-slate-800 via-blue-900 to-indigo-900',
+  'from-brand-primary via-indigo-700 to-blue-800',
+  'from-slate-800 via-blue-900 to-brand-dark',
   'from-emerald-600 via-teal-700 to-cyan-800',
-  'from-rose-600 via-pink-700 to-orange-600',
+  'from-mark via-mark to-orange-600',
   'from-amber-600 via-orange-700 to-red-700',
-  'from-violet-700 via-purple-800 to-fuchsia-800',
+  'from-brand-ink via-brand-dark to-mark',
 ];
 
 const GLOW_COLORS = [
@@ -145,7 +145,7 @@ export const UpcomingEventsCarousel: React.FC<UpcomingEventsCarouselProps> = ({
                   exit={{ opacity: 0, x: 10 }}
                   onClick={() => scroll('left')}
                   aria-label="Scroll events left"
-                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center justify-center text-gray-700 hover:text-purple-600 hover:scale-110 active:scale-95 transition-all hidden sm:flex"
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center justify-center text-gray-700 hover:text-brand-primary hover:scale-110 active:scale-95 transition-all hidden sm:flex"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </motion.button>
@@ -160,7 +160,7 @@ export const UpcomingEventsCarousel: React.FC<UpcomingEventsCarouselProps> = ({
                   exit={{ opacity: 0, x: -10 }}
                   onClick={() => scroll('right')}
                   aria-label="Scroll events right"
-                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center justify-center text-gray-700 hover:text-purple-600 hover:scale-110 active:scale-95 transition-all hidden sm:flex"
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center justify-center text-gray-700 hover:text-brand-primary hover:scale-110 active:scale-95 transition-all hidden sm:flex"
                 >
                   <ChevronRight className="w-6 h-6" />
                 </motion.button>
@@ -259,7 +259,7 @@ export const UpcomingEventsCarousel: React.FC<UpcomingEventsCarouselProps> = ({
                     {/* Header Info */}
                     <div>
                       <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                        <span className="bg-brand-primary/20 text-brand-primary px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
                           {selectedEvent.college || 'University'}
                         </span>
                         {selectedEvent.eligibility && selectedEvent.eligibility !== 'All' && (
@@ -276,7 +276,7 @@ export const UpcomingEventsCarousel: React.FC<UpcomingEventsCarouselProps> = ({
                     {/* Info tiles */}
                     <div className="grid grid-cols-2 gap-3 sm:gap-4">
                       {[
-                        { icon: Calendar, color: 'text-pink-600', bg: 'bg-pink-50', border: 'border-pink-100', label: 'Date', value: selectedEvent.date || 'TBD' },
+                        { icon: Calendar, color: 'text-mark-ink', bg: 'bg-mark-soft', border: 'border-mark-soft', label: 'Date', value: selectedEvent.date || 'TBD' },
                         { icon: MapPin, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', label: 'Venue', value: selectedEvent.venue || selectedEvent.college || 'Campus' },
                       ].map(({ icon: Icon, color, bg, border, label, value }) => (
                         <div key={label} className={`flex flex-col gap-2 p-4 sm:p-5 ${bg} rounded-2xl border ${border} hover:shadow-md transition-shadow`}>
@@ -295,7 +295,7 @@ export const UpcomingEventsCarousel: React.FC<UpcomingEventsCarouselProps> = ({
                     {selectedEvent.summary && (
                       <div>
                         <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] mb-3 flex items-center gap-2">
-                          <Info className="w-4 h-4 text-purple-500" /> About this Event
+                          <Info className="w-4 h-4 text-brand-primary" /> About this Event
                         </h4>
                         <p className="text-gray-600 text-sm sm:text-base leading-relaxed font-medium">
                           {selectedEvent.summary || selectedEvent.description || 'Join us for this amazing event!'}
