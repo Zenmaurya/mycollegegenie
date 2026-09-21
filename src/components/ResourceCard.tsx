@@ -169,7 +169,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -6, boxShadow: '0 24px 48px -12px rgba(139,92,246,0.18)' }}
       transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-      className="bg-white border border-gray-100 rounded-3xl flex flex-col cursor-pointer group hover:border-purple-100 transition-all overflow-hidden h-full"
+      className="bg-white border border-gray-100 hover:border-purple-200/80 rounded-3xl flex flex-col cursor-pointer group transition-all duration-300 overflow-hidden h-full shadow-sm hover:shadow-[0_16px_36px_-10px_rgba(139,92,246,0.14)]"
       onClick={() => onClick(resource)}
     >
       {/* ── Thumbnail (only for Playlist with valid YouTube link) ── */}
@@ -189,7 +189,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       )}
 
       {/* ── Zone 1: Header (type badge + rating + save) ── */}
-      <div className={`flex items-center justify-between px-5 ${youtubeThumbnail ? 'pt-4' : 'pt-5'} pb-0 shrink-0`}>
+      <div className={`flex items-center justify-between px-4 sm:px-5 ${youtubeThumbnail ? 'pt-3.5 sm:pt-4' : 'pt-4 sm:pt-5'} pb-0 shrink-0`}>
         <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
           <TypeIcon className="w-3 h-3" />
           {resource.type}
@@ -208,7 +208,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       </div>
 
       {/* ── Zone 2: Title — clamps to 2 lines, min-height ensures uniform card height ── */}
-      <div className="px-5 pt-4 pb-0 shrink-0">
+      <div className="px-4 sm:px-5 pt-3 sm:pt-4 pb-0 shrink-0">
         <h3
           className="font-extrabold text-base text-gray-900 group-hover:text-purple-700 transition-colors duration-300 leading-snug"
           style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '2.75rem' }}
@@ -218,7 +218,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       </div>
 
       {/* ── Zone 3: Metadata — Sem pill + Course truncated — always one line ── */}
-      <div className="px-5 pt-3 pb-0 flex items-center gap-2 min-w-0 shrink-0">
+      <div className="px-4 sm:px-5 pt-2.5 sm:pt-3 pb-0 flex items-center gap-2 min-w-0 shrink-0">
         <span className={`shrink-0 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${cfg.bg} ${cfg.text} border ${cfg.border}`}>
           Sem {resource.semester}
         </span>
@@ -239,7 +239,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       <div className="flex-grow" />
 
       {/* ── Zone 4: Action buttons ── */}
-      <div className="flex items-center gap-2 px-5 pt-4 pb-0 flex-wrap shrink-0">
+      <div className="flex items-center gap-2 px-4 sm:px-5 pt-3 sm:pt-4 pb-0 flex-wrap shrink-0">
         <button onClick={(e) => handleTabClick(e, 'comments')}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl text-xs font-bold border border-gray-100 hover:border-blue-200 transition-colors shrink-0">
           <MessageCircle className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       </div>
 
       {/* ── Zone 5: Footer — uploader + share + arrow — always at bottom ── */}
-      <div className="flex items-center justify-between mx-5 mt-4 pb-4 pt-4 border-t border-gray-100 shrink-0">
+      <div className="flex items-center justify-between mx-4 sm:mx-5 mt-3.5 sm:mt-4 pb-3.5 sm:pb-4 pt-3.5 sm:pt-4 border-t border-gray-100 shrink-0">
         {/* Uploader */}
         <div className="flex items-center gap-2 min-w-0">
           <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${resource.uploaderRole === 'faculty' ? 'bg-gradient-to-br from-amber-100 to-yellow-100 border-amber-200' : 'bg-gradient-to-br from-purple-100 to-pink-100 border-purple-100'}`}>

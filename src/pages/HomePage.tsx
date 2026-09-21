@@ -134,6 +134,10 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
+  searchQuery,
+  setSearchQuery,
+  activeFilter,
+  setActiveFilter,
   isNewsLoading,
   newsItems,
   resources,
@@ -303,6 +307,70 @@ export const HomePage: React.FC<HomePageProps> = ({
               >
                 <span className="font-['Caveat',cursive] italic text-2xl sm:text-3xl text-gray-800 border-b-2 border-pink-500 pb-1 px-1">Notes Se Naukri Takk.</span>
               </motion.div>
+
+              {/* Interactive Hero Search Bar */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.25 }}
+                className="mb-6 max-w-xl mx-auto lg:mx-0"
+              >
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (searchQuery && searchQuery.trim()) {
+                      navigate(`/browse?search=${encodeURIComponent(searchQuery)}`);
+                    } else {
+                      navigate('/browse');
+                    }
+                  }}
+                  className="relative flex items-center bg-white/95 backdrop-blur-xl border-2 border-purple-200/90 hover:border-purple-400 focus-within:border-[#4400FF] focus-within:shadow-[0_8px_30px_rgba(68,0,255,0.18)] rounded-2xl p-1.5 shadow-[0_8px_24px_-4px_rgba(68,0,255,0.1)] transition-all duration-300"
+                >
+                  <div className="pl-3.5 pr-2 text-purple-600 shrink-0">
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search notes, PYQs, subjects, courses..."
+                    className="w-full bg-transparent border-none outline-none text-sm sm:text-base font-semibold text-gray-900 placeholder-gray-400 py-2 pr-2"
+                  />
+                  <button
+                    type="submit"
+                    className="shrink-0 bg-gradient-to-r from-[#4400FF] to-[#7c3aed] text-white px-4 sm:px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm hover:opacity-95 active:scale-95 transition-all shadow-md shadow-purple-600/25 flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>Search</span>
+                    <ArrowRight className="w-4 h-4 hidden sm:inline-block" />
+                  </button>
+                </form>
+
+                {/* Popular Tags */}
+                <div className="flex items-center gap-1.5 sm:gap-2 mt-3 flex-wrap justify-center lg:justify-start">
+                  <span className="text-[11px] font-black text-gray-400 uppercase tracking-wider mr-0.5">Quick:</span>
+                  {[
+                    { label: 'Notes', filter: 'Note' },
+                    { label: 'PYQs', filter: 'PYQ' },
+                    { label: 'B.Com', query: 'B.Com' },
+                    { label: 'BBA', query: 'BBA' },
+                    { label: 'Eco', query: 'Economics' },
+                    { label: 'DU SOL', query: 'SOL' }
+                  ].map((chip, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        if (chip.filter) setActiveFilter(chip.filter);
+                        if (chip.query) setSearchQuery(chip.query);
+                        navigate(`/browse?${chip.filter ? `type=${chip.filter}` : ''}${chip.query ? `&search=${encodeURIComponent(chip.query)}` : ''}`);
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-100/70 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
   
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
@@ -334,6 +402,30 @@ export const HomePage: React.FC<HomePageProps> = ({
                   Join Our Team
                 </a>
               </motion.div>
+
+              {/* Mobile Quick Feature Cards (Shown under lg) */}
+              <div className="grid grid-cols-2 gap-2.5 mt-6 sm:mt-8 lg:hidden">
+                {[
+                  { title: 'Study Materials', desc: 'Notes & PYQs', to: '/browse', icon: FileText, color: 'text-purple-600 bg-purple-50 border-purple-100' },
+                  { title: 'Find PGs & Flats', desc: 'Verified Listings', to: '/find-pg', icon: Building, color: 'text-amber-600 bg-amber-50 border-amber-100' },
+                  { title: 'Campus Exchange', desc: 'Buy, Sell & Donate', to: '/campus-exchange', icon: Sparkles, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
+                  { title: 'Student Forum', desc: 'Ask Doubts & Connect', to: '/forum', icon: MessageSquare, color: 'text-blue-600 bg-blue-50 border-blue-100' }
+                ].map((item, idx) => (
+                  <Link
+                    key={idx}
+                    to={item.to}
+                    className="p-3 rounded-2xl bg-white/90 backdrop-blur-sm border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-2.5 text-left active:scale-98"
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${item.color}`}>
+                      <item.icon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-gray-900 truncate">{item.title}</p>
+                      <p className="text-[10px] text-gray-400 font-medium truncate">{item.desc}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
 
           {/* Hero Visual */}
@@ -491,7 +583,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
       {/* Latest Updates Section */}
       <div className="mb-2 sm:mb-4 w-full relative z-50 hidden sm:block">
-        <WavePath className="text-black" />
+        <WavePath className="text-purple-300/40" />
       </div>
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 sm:pt-8 sm:pb-16">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-10 gap-3">
@@ -650,7 +742,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </Link>
         </div>
         
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 px-2 sm:px-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-2 sm:px-6">
           {resources.filter(r => r.isApproved !== false).slice(0, 4).map((resource) => (
             <ResourceCard 
               key={resource.id}
