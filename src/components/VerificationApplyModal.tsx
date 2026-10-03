@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, X, CreditCard, Phone, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../supabase';
 import { toast } from 'sonner';
-import { useAuth } from '../context/AuthContext';
 
 interface VerificationApplyModalProps {
   isOpen: boolean;
@@ -27,7 +26,6 @@ export const VerificationApplyModal: React.FC<VerificationApplyModalProps> = ({
   listingId,
   listingTitle,
 }) => {
-  const { openAuthModal } = useAuth();
   const [step, setStep] = useState<'info' | 'payment' | 'success'>('info');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -46,7 +44,7 @@ export const VerificationApplyModal: React.FC<VerificationApplyModalProps> = ({
     setIsSubmitting(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { openAuthModal('Please sign in first'); return; }
+      if (!session) { toast.error('Please sign in first'); return; }
 
       const res = await fetch(`${API_URL}/api/verification/apply`, {
         method: 'POST',

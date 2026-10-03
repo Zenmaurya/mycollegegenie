@@ -37,7 +37,6 @@ import { Toaster, toast } from 'sonner';
 // ── Contexts ──────────────────────────────────────────────────────
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ResourceProvider, useResources } from './context/ResourceContext';
-import { FilterProvider } from './context/FilterContext';
 
 // ── Lazy pages ────────────────────────────────────────────────────
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
@@ -63,18 +62,14 @@ const BlogPage = lazy(() => import('./pages/BlogPage').then(m => ({ default: m.B
 
 // ── Components ────────────────────────────────────────────────────
 import { PageTransition } from './components/PageTransition';
-import { Sidebar } from './components/Sidebar';
-import { Topbar } from './components/Topbar';
+import { NavBar } from './components/NavBar';
+import { AppFooter } from './components/AppFooter';
 import { AnnouncementBanner } from './components/AnnouncementBanner';
 import { ResourceUploadModal } from './components/ResourceUploadModal';
 import { ResourceDetailModal } from './components/ResourceDetailModal';
 import { ReportModal } from './components/ReportModal';
 import { EventRequestModal } from './components/EventRequestModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { AuthModal } from './components/AuthModal';
-import { ChatInbox } from './components/ChatInbox';
-import { ChatWindow } from './components/ChatWindow';
-import { ChatService } from './services/chatService';
 
 // ── Constants & Types ─────────────────────────────────────────────
 import { College_COURSES, SUB_CATEGORIES, COURSE_METADATA } from './constants';
@@ -90,36 +85,28 @@ import { config } from './lib/config';
 // AppContent — uses AuthProvider + ResourceProvider from parent App
 // ─────────────────────────────────────────────────────────────────
 function AppContent() {
-  const { user, appUser, isAuthLoading, isAuthModalOpen, closeAuthModal, openAuthModal, authModalMessage } = useAuth();
+  const { user, appUser, isAuthLoading } = useAuth();
   const { resources, setResources } = useResources();
 
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // ── Filter / search state ──────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'All' | 'Note' | 'PYQ' | 'Book' | 'Syllabus'>('All');
+  const [selectedCourse, setSelectedCourse] = useState('All Courses');
+  const [selectedSemester, setSelectedSemester] = useState('All Semesters');
+  const [selectedSubCategory, setSelectedSubCategory] = useState('All');
+  const [sortBy, setSortBy] = useState<'Title' | 'Date' | 'Rating' | 'Course'>('Date');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [visibleCount, setVisibleCount] = useState(12);
+
   // ── Modal state ────────────────────────────────────────────────
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isEventRequestModalOpen, setIsEventRequestModalOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // ── Chat State ──────────────────────────────────────────────────
-  const [isChatInboxOpen, setIsChatInboxOpen] = useState(false);
-  const [activeChatSession, setActiveChatSession] = useState<{ id: string; name: string } | null>(null);
-
-  const openChatForListing = async (type: 'pg' | 'exchange', id: string, sellerId: string) => {
-    if (!user) {
-      openAuthModal('Please sign in to chat with the seller.');
-      return;
-    }
-    try {
-      const { sessionId } = await ChatService.createSession(type, id, sellerId);
-      setActiveChatSession({ id: sessionId, name: 'Connecting...' });
-    } catch (err) {
-      toast.error('Could not start chat. Please try again.');
-    }
-  };
 
   // ── News + Settings ────────────────────────────────────────────
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
@@ -185,17 +172,84 @@ function AppContent() {
   // ── Reset filters on navigation (except flipbook transitions) ──
   const previousPathRef = useRef(location.pathname);
   useEffect(() => {
+    const isFromFlipbook = previousPathRef.current.startsWith('/flipbook');
+    const isToFlipbook = location.pathname.startsWith('/flipbook');
     previousPathRef.current = location.pathname;
+
+    if (!isFromFlipbook && !isToFlipbook) {
+      setSearchQuery('');
+      setActiveFilter('All');
+      setSelectedCourse('All Courses');
+      setSelectedSemester('All Semesters');
+      setSelectedSubCategory('All');
+      setSortBy('Date');
+      setVisibleCount(12);
+      window.scrollTo(0, 0);
+    }
   }, [location.pathname]);
+
+  // ── Reset semester/subCategory when course changes ─────────────
+  const availableSemesters = useMemo(() => {
+    if (selectedCourse === 'All Courses') return ['All Semesters', '1', '2', '3', '4', '5', '6', '7', '8'];
+    const maxSem = COURSE_METADATA[selectedCourse]?.semesters || 8;
+    return ['All Semesters', ...Array.from({ length: maxSem }, (_, i) => String(i + 1))];
+  }, [selectedCourse]);
+
+  const availableSubCategories = useMemo(() => {
+    if (selectedCourse === 'All Courses') return ['All', ...SUB_CATEGORIES];
+    const meta = COURSE_METADATA[selectedCourse];
+    return ['All', ...(meta?.subCategories || SUB_CATEGORIES)];
+  }, [selectedCourse]);
+
+  useEffect(() => {
+    if (selectedCourse !== 'All Courses') {
+      if (!availableSemesters.includes(selectedSemester)) setSelectedSemester('All Semesters');
+      if (!availableSubCategories.includes(selectedSubCategory)) setSelectedSubCategory('All');
+    }
+  }, [selectedCourse, availableSemesters, availableSubCategories, selectedSemester, selectedSubCategory]);
+
+  const courses = useMemo(() => {
+    const unique = Array.from(new Set([...resources.map(r => r.course), ...College_COURSES]));
+    return ['All Courses', ...unique.sort()];
+  }, [resources]);
+
+  // ── Debounced filter computation ───────────────────────────────
+  const debouncedSearch = useDebounce(searchQuery, 350);
 
   const getAverageRating = useCallback((ratings?: number[]) => {
     if (!ratings || ratings.length === 0) return 0;
     return parseFloat((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1));
   }, []);
 
+  const filteredResources = useMemo(() => {
+    const filtered = resources.filter(resource => {
+      if (resource.type === 'Playlist') return false;
+      const isVisible = resource.isApproved || (user && resource.uploaderId === user.id);
+      if (!isVisible) return false;
+      const q = debouncedSearch.toLowerCase();
+      return (
+        (!q || resource.title.toLowerCase().includes(q) || resource.course.toLowerCase().includes(q) ||
+          ((resource as any).subjectCode || '').toLowerCase().includes(q) ||
+          resource.tags.some(tag => tag.toLowerCase().includes(q))) &&
+        (activeFilter === 'All' || resource.type === activeFilter) &&
+        (selectedSubCategory === 'All' || (resource as any).subCategory === selectedSubCategory) &&
+        (selectedCourse === 'All Courses' || resource.course === selectedCourse) &&
+        (selectedSemester === 'All Semesters' || resource.semester.toString() === selectedSemester)
+      );
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'Title') return a.title.localeCompare(b.title);
+      if (sortBy === 'Date') return (b.uploadTimestamp || 0) - (a.uploadTimestamp || 0);
+      if (sortBy === 'Rating') return (b.averageRating || 0) - (a.averageRating || 0);
+      if (sortBy === 'Course') return a.course.localeCompare(b.course);
+      return 0;
+    });
+  }, [debouncedSearch, activeFilter, selectedSubCategory, selectedCourse, selectedSemester, resources, sortBy, user]);
+
   // ── Rating handler (needs both resources + selectedResource) ───
   const handleRate = useCallback(async (resourceId: string, rating: number) => {
-    if (!user) { openAuthModal('Please sign in to rate resources.'); return; }
+    if (!user) { toast.error('Please sign in to rate resources.'); return; }
     try {
       await rateResource(resourceId, rating);
       setResources(prev => prev.map(r => {
@@ -213,23 +267,9 @@ function AppContent() {
     }
   }, [user, setResources]);
 
-  // ── Modals & Drawers ───────────────────────────────────────────
-  const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) => {
-    if (isAuthLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-brand-primary" /></div>;
-    if (!user) return <Navigate to="/login" replace />;
-    if (requireAdmin && appUser?.role !== 'admin' && appUser?.role !== 'moderator') return <Navigate to="/" replace />;
-    return <>{children}</>;
-  };
-
-  const GuestRoute = ({ children }: { children: React.ReactNode }) => {
-    if (isAuthLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-brand-primary" /></div>;
-    if (user) return <Navigate to="/" replace />;
-    return <>{children}</>;
-  };
-
   // ── Share handler ───────────────────────────────────────────────
   const handleShare = useCallback(async (resource: Resource) => {
-    const shareUrl = `${window.location.origin}/resource/${resource.id}`;
+    const shareUrl = `${config.apiUrl}/api/resources/share/${resource.id}`;
     const shareData = {
       title: resource.title,
       text: `Check out this resource: ${resource.title} for ${resource.course} via MyCollegeGenie`,
@@ -254,8 +294,8 @@ function AppContent() {
   // ── Page suspense fallback ──────────────────────────────────────
   const PageFallback = (
     <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4">
-      <div className="w-16 h-16 rounded-2xl bg-brand-primary/20 flex items-center justify-center shadow-inner relative overflow-hidden">
-        <Loader2 className="w-8 h-8 text-brand-primary animate-spin relative z-10" />
+      <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center shadow-inner relative overflow-hidden">
+        <Loader2 className="w-8 h-8 text-purple-600 animate-spin relative z-10" />
       </div>
       <div className="text-center">
         <h3 className="font-bold text-gray-900 text-lg">Loading Experience…</h3>
@@ -267,8 +307,14 @@ function AppContent() {
   // ── Home page element (reused on /login and /signup routes) ────
   const HomePageElement = (
     <HomePage
+      searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+      activeFilter={activeFilter} setActiveFilter={setActiveFilter}
+      sortBy={sortBy} setSortBy={setSortBy}
+      College_COURSES={College_COURSES}
       isNewsLoading={isNewsLoading} newsItems={newsItems}
       resources={resources}
+      savedResourceIds={[]} // ResourceContext exposes this — pages that need it use useResources()
+      onSave={async () => {}}    // pages use useResources().toggleSave directly
       getAverageRating={getAverageRating}
       setSelectedResource={setSelectedResource}
       handleShare={handleShare}
@@ -276,111 +322,135 @@ function AppContent() {
     />
   );
 
-  const isPlainLayout = isFlipbookView || isAuthPage || isLoginSignupPage;
-
-  const renderRoutes = () => (
-    <main className={isPlainLayout ? 'h-full w-full' : 'content'}>
-      <PageTransition className={isPlainLayout ? 'h-full w-full' : undefined}>
-        <Suspense fallback={PageFallback}>
-          <Routes location={location}>
-            <Route path="/" element={HomePageElement} />
-            <Route path="/browse" element={
-              <BrowsePage
-                getAverageRating={getAverageRating}
-                selectedResource={selectedResource}
-                setSelectedResource={setSelectedResource}
-                handleShare={handleShare}
-                setIsUploadModalOpen={openUploadModal}
-                user={user}
-              />
-            } />
-            <Route path="/playlists" element={
-              <PlaylistPage
-                setSelectedResource={setSelectedResource}
-                setIsUploadModalOpen={openUploadModal}
-                handleShare={handleShare}
-                getAverageRating={getAverageRating}
-                resultsRef={resultsRef}
-              />
-            } />
-            <Route path="/forum" element={<ForumPage user={user} />} />
-            <Route path="/forum/:postId" element={<PostDetailPage />} />
-            <Route path="/find-pg" element={<FindPGPage user={appUser} onOpenChat={(id, sellerId) => openChatForListing('pg', id, sellerId)} />} />
-            <Route path="/campus-exchange" element={<CampusExchangePage user={appUser} onOpenChat={(id, sellerId) => openChatForListing('exchange', id, sellerId)} />} />
-            <Route path="/exchange" element={<CampusExchangePage user={appUser} onOpenChat={(id, sellerId) => openChatForListing('exchange', id, sellerId)} />} />
-            <Route path="/admin" element={
-              <ProtectedRoute requireAdmin={true}>
-                <AdminPanel user={user} appUser={appUser} isAuthLoading={isAuthLoading} />
-              </ProtectedRoute>
-            } />
-            <Route path="/login" element={<GuestRoute><LoginPage user={appUser} /></GuestRoute>} />
-            <Route path="/signup" element={<GuestRoute><LoginPage user={appUser} /></GuestRoute>} />
-            <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
-            <Route path="/reset-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/flipbook/:id" element={<FlipbookPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/news" element={<OfficialNewsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
-            <Route path="/events" element={<CollegeEventsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
-            <Route path="/otp-verify" element={<OTPVerificationPage />} />
-            <Route path="/contributors" element={<ContributorsPage />} />
-            <Route path="/blog" element={<BlogPage />} />
-            <Route path="*" element={
-              <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 px-4 text-center">
-                <div className="text-8xl font-black text-brand">404</div>
-                <div>
-                  <h1 className="text-2xl font-black text-ink mb-2">Page Not Found</h1>
-                  <p className="text-ink-soft font-medium">The page you're looking for doesn't exist or has been moved.</p>
-                </div>
-                <Link to="/" className="btn btn-primary">Go Home</Link>
-              </div>
-            } />
-          </Routes>
-        </Suspense>
-      </PageTransition>
-    </main>
-  );
-
   return (
-    <>
+    <div className="min-h-screen bg-ethereal-mesh text-gray-900 font-sans selection:bg-purple-100 selection:text-purple-900 flex flex-col">
       <Toaster position="top-center" expand={false} richColors />
-      
-      {isPlainLayout ? (
-        <div className="main min-w-0 min-h-screen">
-          {renderRoutes()}
-        </div>
-      ) : (
-        <div className="app">
-          {/* Desktop Sidebar OR Mobile Sidebar Wrapper */}
-          <div className={`fixed inset-y-0 left-0 z-50 transform lg:relative lg:translate-x-0 transition-transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:!translate-x-0`}>
-            <Sidebar onClose={() => setIsMobileMenuOpen(false)} />
-          </div>
 
-          {/* Mobile overlay */}
-          {isMobileMenuOpen && (
-            <div 
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-          )}
+      {/* Announcement banner */}
+      {!isFlipbookView && !isAuthPage && (
+        <AnnouncementBanner
+          siteSettings={siteSettings}
+          dismissed={announcementDismissed}
+          onDismiss={() => {
+            setAnnouncementDismissed(true);
+            sessionStorage.setItem('announcementDismissed', 'true');
+          }}
+        />
+      )}
 
-          <div className="main min-w-0">
-            <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} onInboxClick={() => setIsChatInboxOpen(true)} />
-            
-            <AnnouncementBanner
-              siteSettings={siteSettings}
-              dismissed={announcementDismissed}
-              onDismiss={() => {
-                setAnnouncementDismissed(true);
-                sessionStorage.setItem('announcementDismissed', 'true');
-              }}
-            />
-            
-            {renderRoutes()}
-          </div>
-        </div>
+      {/* Navigation */}
+      <NavBar />
+
+      {/* Main routes */}
+      <main className="flex-grow flex flex-col">
+        <PageTransition>
+          <Suspense fallback={PageFallback}>
+            <Routes location={location}>
+              <Route path="/" element={HomePageElement} />
+
+              <Route path="/browse" element={
+                <BrowsePage
+                  resources={resources}
+                  searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                  activeFilter={activeFilter} setActiveFilter={setActiveFilter}
+                  selectedCourse={selectedCourse} setSelectedCourse={setSelectedCourse}
+                  selectedSemester={selectedSemester} setSelectedSemester={setSelectedSemester}
+                  selectedSubCategory={selectedSubCategory} setSelectedSubCategory={setSelectedSubCategory}
+                  sortBy={sortBy} setSortBy={setSortBy}
+                  courses={courses}
+                  availableSemesters={availableSemesters}
+                  availableSubCategories={availableSubCategories}
+                  viewMode={viewMode} setViewMode={setViewMode}
+                  visibleCount={visibleCount} setVisibleCount={setVisibleCount}
+                  filteredResources={filteredResources}
+                  savedResourceIds={[]}
+                  onSave={async () => {}}
+                  getAverageRating={getAverageRating}
+                  selectedResource={selectedResource}
+                  setSelectedResource={setSelectedResource}
+                  handleShare={handleShare}
+                  setIsUploadModalOpen={openUploadModal}
+                  user={user}
+                />
+              } />
+
+              <Route path="/playlists" element={
+                <PlaylistPage
+                  resources={resources}
+                  savedResourceIds={[]}
+                  onSave={async () => {}}
+                  searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                  selectedCourse={selectedCourse} setSelectedCourse={setSelectedCourse}
+                  selectedSemester={selectedSemester} setSelectedSemester={setSelectedSemester}
+                  sortBy={sortBy} setSortBy={setSortBy}
+                  visibleCount={visibleCount} setVisibleCount={setVisibleCount}
+                  setSelectedResource={setSelectedResource}
+                  setIsUploadModalOpen={openUploadModal}
+                  handleShare={handleShare}
+                  courses={courses}
+                  semesters={availableSemesters}
+                  getAverageRating={getAverageRating}
+                  resultsRef={resultsRef}
+                />
+              } />
+
+              <Route path="/forum" element={<ForumPage user={user} />} />
+              <Route path="/forum/:postId" element={<PostDetailPage />} />
+              <Route path="/find-pg" element={<FindPGPage user={user} />} />
+              <Route path="/campus-exchange" element={<CampusExchangePage user={user} />} />
+
+              <Route path="/admin" element={
+                (isAuthLoading || (user && !appUser)) ? (
+                  <div className="min-h-screen flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                  </div>
+                ) : (appUser?.role === 'admin' || appUser?.role === 'moderator') ? (
+                  <AdminPanel user={user} appUser={appUser} isAuthLoading={isAuthLoading} />
+                ) : user ? (
+                  <Navigate to="/" replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              } />
+
+              {/* Login/signup routes */}
+              <Route path="/login" element={<LoginPage user={appUser} />} />
+              <Route path="/signup" element={<LoginPage user={appUser} />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ForgotPasswordPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/flipbook/:id" element={<FlipbookPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/news" element={<OfficialNewsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
+              <Route path="/events" element={<CollegeEventsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
+              <Route path="/otp-verify" element={<OTPVerificationPage />} />
+              <Route path="/contributors" element={<ContributorsPage />} />
+              <Route path="/blog" element={<BlogPage />} />
+
+              <Route path="*" element={
+                <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 px-4 text-center">
+                  <div className="text-8xl font-black bg-gradient-to-br from-purple-500 to-pink-500 bg-clip-text text-transparent">404</div>
+                  <div>
+                    <h1 className="text-2xl font-black text-gray-900 mb-2">Page Not Found</h1>
+                    <p className="text-gray-500 font-medium">The page you're looking for doesn't exist or has been moved.</p>
+                  </div>
+                  <Link to="/" className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-purple-600/20">
+                    Go Home
+                  </Link>
+                </div>
+              } />
+            </Routes>
+          </Suspense>
+        </PageTransition>
+      </main>
+
+
+
+      {/* Footer */}
+      {!isAuthPage && !isLoginSignupPage && !isFlipbookView && (
+        <AppFooter onOpenUpload={openUploadModal} />
       )}
 
       {/* ── Portalled modals ── */}
@@ -412,31 +482,7 @@ function AppContent() {
         isOpen={isEventRequestModalOpen}
         onClose={() => setIsEventRequestModalOpen(false)}
       />
-
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={closeAuthModal}
-        message={authModalMessage}
-      />
-
-      {isChatInboxOpen && (
-        <ChatInbox 
-          onClose={() => setIsChatInboxOpen(false)}
-          onOpenSession={(id, name) => {
-            setIsChatInboxOpen(false);
-            setActiveChatSession({ id, name });
-          }}
-        />
-      )}
-
-      {activeChatSession && (
-        <ChatWindow
-          sessionId={activeChatSession.id}
-          otherUserName={activeChatSession.name}
-          onClose={() => setActiveChatSession(null)}
-        />
-      )}
-    </>
+    </div>
   );
 }
 
@@ -448,9 +494,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ResourceProvider>
-          <FilterProvider>
-            <AppContent />
-          </FilterProvider>
+          <AppContent />
         </ResourceProvider>
       </AuthProvider>
     </BrowserRouter>

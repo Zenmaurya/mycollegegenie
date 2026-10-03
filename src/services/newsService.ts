@@ -3,14 +3,14 @@
  */
 import { fetchWithAuth, getFreshToken } from '../lib/apiClient';
 import { supabase } from '../supabase';
-import { NewsItem } from '../types';
+import { News } from '../types';
 
 // ── GET /api/news ───────────────────────────────────────────
 export const getNews = async (
   category?: 'News' | 'Event',
   college?: string,
   includeUnapproved = false
-): Promise<NewsItem[]> => {
+): Promise<News[]> => {
   try {
     const params = new URLSearchParams({ limit: '200' });
     if (category) params.set('category', category);
@@ -35,7 +35,7 @@ export const getNews = async (
       isApproved: Boolean(item.is_approved),
       submitted_by_name: item.submitted_by_name || null,
       submitted_by_id:   item.submitted_by_id   || null,
-    } as NewsItem));
+    } as News));
   } catch (error) {
     const isConnRefused = error instanceof TypeError && error.message.includes('fetch');
     if (isConnRefused) {
@@ -48,7 +48,7 @@ export const getNews = async (
 };
 
 // ── POST /api/news ──────────────────────────────────────────
-export const addNews = async (newsData: Omit<NewsItem, 'id' | 'createdAt'>) => {
+export const addNews = async (newsData: Omit<News, 'id' | 'createdAt'>) => {
   try {
     return await fetchWithAuth('/api/news', {
       method: 'POST',
@@ -72,7 +72,7 @@ export const addNews = async (newsData: Omit<NewsItem, 'id' | 'createdAt'>) => {
 };
 
 // ── PATCH /api/news/:id ─────────────────────────────────────
-export const updateNews = async (id: string, newsData: Partial<NewsItem>) => {
+export const updateNews = async (id: string, newsData: Partial<News>) => {
   try {
     const { id: _id, createdAt, ...data } = newsData as any;
     return await fetchWithAuth(`/api/news/${id}`, {
@@ -131,26 +131,21 @@ export const submitEvent = async (
     }
   }
 
-  try {
-    return await fetchWithAuth('/api/news', {
-      method: 'POST',
-      body: JSON.stringify({
-        title: formData.title,
-        college: formData.college,
-        date: formData.date,
-        venue: formData.venue,
-        eligibility: formData.eligibility,
-        summary: formData.description,
-        description: formData.description,
-        category: 'Event',
-        image_url: imageUrl,
-        is_approved: false,
-      }),
-    });
-  } catch (error) {
-    console.error('[newsService] submitEvent error:', error);
-    throw error;
-  }
+  return await fetchWithAuth('/api/news', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: formData.title,
+      college: formData.college,
+      date: formData.date,
+      venue: formData.venue,
+      eligibility: formData.eligibility,
+      summary: formData.description,
+      description: formData.description,
+      category: 'Event',
+      image_url: imageUrl,
+      is_approved: false,
+    }),
+  });
 };
 
 // ── POST /api/news (News submission by student) ─────────────
@@ -161,22 +156,17 @@ export const submitNews = async (
   const token = await getFreshToken();
   if (!token) throw new Error('Not authenticated.');
 
-  try {
-    return await fetchWithAuth('/api/news', {
-      method: 'POST',
-      body: JSON.stringify({
-        title: formData.title,
-        college: formData.college,
-        date: formData.date,
-        summary: formData.summary,
-        description: formData.summary,
-        url: formData.url || '',
-        category: formData.category || 'News',
-        is_approved: false,
-      }),
-    });
-  } catch (error) {
-    console.error('[newsService] submitNews error:', error);
-    throw error;
-  }
+  return await fetchWithAuth('/api/news', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: formData.title,
+      college: formData.college,
+      date: formData.date,
+      summary: formData.summary,
+      description: formData.summary,
+      url: formData.url || '',
+      category: formData.category || 'News',
+      is_approved: false,
+    }),
+  });
 };

@@ -4,27 +4,87 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft, ThumbsUp, ThumbsDown, MessageCircle,
-  Clock, Send, Trash2, AlertCircle, ChevronRight,
-  ChevronUp, ChevronDown, Check
+  Clock, Send, Trash2, AlertCircle, ChevronRight
 } from 'lucide-react';
 import { ForumPost, Comment } from '../types';
 import type { SupabaseAuthUser } from '../types';
 import { ForumService } from '../services/forumService';
-import { ForumPostSkeleton } from '../components/ui/Skeletons';
 import { supabase } from '../supabase';
 import { toast } from 'sonner';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { UploaderProfilePopover } from '../components/UploaderProfilePopover';
 
-import { cn, TOPIC_COLORS, timeAgo, shortenCourse } from '../lib/utils';
-import { useAuth } from '../context/AuthContext';
+const TOPIC_COLORS: Record<string, string> = {
+  'Exam Tips': 'bg-amber-50 text-amber-700 border-amber-200',
+  'Doubt': 'bg-blue-50 text-blue-700 border-blue-200',
+  'Notes': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'General': 'bg-gray-50 text-gray-600 border-gray-200',
+  'Placement': 'bg-purple-50 text-purple-700 border-purple-200',
+  'Events': 'bg-pink-50 text-pink-700 border-pink-200',
+};
+
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+export function shortenCourse(courseName: string): string {
+  if (!courseName) return 'General';
+  const bracketMatch = courseName.match(/\[([^\]]+)\]/);
+  if (bracketMatch) return bracketMatch[1];
+  const parenMatch = courseName.match(/\(([^)]+)\)/);
+  if (parenMatch) {
+    const content = parenMatch[1];
+    if (content.length <= 10) return content;
+  }
+  const courseLower = courseName.toLowerCase();
+  if (courseLower.includes('economics')) return courseLower.includes('hons') ? 'B.A. Econ (H)' : 'B.A. Econ';
+  if (courseLower.includes('computer science')) return courseLower.includes('hons') ? 'B.Sc. CS (H)' : 'B.Sc. CS';
+  if (courseLower.includes('political science')) return courseLower.includes('hons') ? 'B.A. Pol Sci (H)' : 'B.A. Pol Sci';
+  if (courseLower.includes('information technology')) return 'B.Tech IT';
+  if (courseLower.includes('business economics')) return 'B.A. BBE';
+  if (courseLower.includes('elementary education')) return 'B.El.Ed';
+  if (courseLower.includes('mathematical sciences')) return 'B.Sc. Math Sci';
+  if (courseLower.includes('physical sciences')) return 'B.Sc. Phys Sci';
+  if (courseLower.includes('life sciences')) return 'B.Sc. Life Sci';
+  if (courseLower.includes('english')) return courseLower.includes('hons') ? 'B.A. Eng (H)' : 'B.A. Eng';
+  if (courseLower.includes('history')) return courseLower.includes('hons') ? 'B.A. Hist (H)' : 'B.A. Hist';
+  if (courseLower.includes('philosophy')) return courseLower.includes('hons') ? 'B.A. Phil (H)' : 'B.A. Phil';
+  if (courseLower.includes('geography')) return courseLower.includes('hons') ? 'B.A. Geog (H)' : 'B.A. Geog';
+  if (courseLower.includes('psychology')) return courseLower.includes('hons') ? 'B.A. Psych (H)' : 'B.A. Psych';
+  if (courseLower.includes('sociology')) return courseLower.includes('hons') ? 'B.A. Soc (H)' : 'B.A. Soc';
+  if (courseLower.includes('sanskrit')) return courseLower.includes('hons') ? 'B.A. Skt (H)' : 'B.A. Skt';
+  if (courseLower.includes('hindi')) return courseLower.includes('hons') ? 'B.A. Hindi (H)' : 'B.A. Hindi';
+  if (courseLower.includes('botany')) return courseLower.includes('hons') ? 'B.Sc. Bot (H)' : 'B.Sc. Bot';
+  if (courseLower.includes('chemistry')) return courseLower.includes('hons') ? 'B.Sc. Chem (H)' : 'B.Sc. Chem';
+  if (courseLower.includes('physics')) return courseLower.includes('hons') ? 'B.Sc. Phys (H)' : 'B.Sc. Phys';
+  if (courseLower.includes('zoology')) return courseLower.includes('hons') ? 'B.Sc. Zool (H)' : 'B.Sc. Zool';
+  if (courseLower.includes('mathematics')) return courseLower.includes('hons') ? 'B.Sc. Math (H)' : 'B.Sc. Math';
+  if (courseLower.includes('statistics')) return courseLower.includes('hons') ? 'B.Sc. Stats (H)' : 'B.Sc. Stats';
+  if (courseLower.includes('microbiology')) return courseLower.includes('hons') ? 'B.Sc. Micro (H)' : 'B.Sc. Micro';
+  if (courseLower.includes('biomedical science')) return courseLower.includes('hons') ? 'B.Sc. BioMed (H)' : 'B.Sc. BioMed';
+  if (courseLower.includes('electronics')) return courseLower.includes('hons') ? 'B.Sc. Elec (H)' : 'B.Sc. Elec';
+  if (courseLower.includes('instrumentation')) return courseLower.includes('hons') ? 'B.Sc. Inst (H)' : 'B.Sc. Inst';
+  if (courseLower.includes('geology')) return courseLower.includes('hons') ? 'B.Sc. Geol (H)' : 'B.Sc. Geol';
+  if (courseLower.includes('anthropology')) return courseLower.includes('hons') ? 'B.Sc. Anthro (H)' : 'B.Sc. Anthro';
+  if (courseLower.includes('food technology')) return courseLower.includes('hons') ? 'B.Sc. Food Tech (H)' : 'B.Sc. Food Tech';
+  if (courseLower.includes('polymer science')) return courseLower.includes('hons') ? 'B.Sc. Poly Sci (H)' : 'B.Sc. Poly Sci';
+  if (courseLower.includes('b.com. (hons.)')) return 'B.Com (H)';
+  if (courseLower.includes('b.com. programme')) return 'B.Com Prog';
+  if (courseLower.includes('b.a. programme')) return 'B.A. Prog';
+  return courseName.length > 22 ? courseName.substring(0, 20) + '…' : courseName;
+}
 
 function Avatar({ name, size = 8 }: { name: string; size?: number }) {
-  const colors = ['from-brand-primary to-mark', 'from-blue-400 to-cyan-400', 'from-emerald-400 to-teal-400', 'from-orange-400 to-amber-400'];
-  const color = name ? colors[name.charCodeAt(0) % colors.length] : colors[0];
-  const sizeClass = size === 7 ? 'w-7 h-7' : size === 8 ? 'w-8 h-8' : size === 10 ? 'w-10 h-10' : 'w-8 h-8';
+  const colors = ['from-purple-400 to-pink-400', 'from-blue-400 to-cyan-400', 'from-emerald-400 to-teal-400', 'from-orange-400 to-amber-400'];
+  const color = colors[name.charCodeAt(0) % colors.length];
   return (
-    <div className={`${sizeClass} rounded-full bg-gradient-to-br ${color} flex items-center justify-center text-white font-black shrink-0`}
+    <div className={`w-${size} h-${size} rounded-full bg-gradient-to-br ${color} flex items-center justify-center text-white font-black shrink-0`}
       style={{ fontSize: size <= 7 ? 10 : 12 }}>
       {name?.[0]?.toUpperCase() || 'U'}
     </div>
@@ -34,9 +94,9 @@ function Avatar({ name, size = 8 }: { name: string; size?: number }) {
 export const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
-  const { user: currentUser, openAuthModal } = useAuth();
   const [post, setPost] = useState<ForumPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser | null>(null);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,29 +104,29 @@ export const PostDetailPage: React.FC = () => {
   const [isDeleteCommentModalOpen, setIsDeleteCommentModalOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setCurrentUser(session?.user ?? null));
+  }, []);
+
   const fetchData = useCallback(async () => {
     if (!postId) return;
     setIsLoading(true);
     try {
       const fetchedPost = await ForumService.getPost(postId);
-      if (fetchedPost) {
-        setPost(fetchedPost);
-        setComments(await ForumService.getComments(postId));
-      } else {
-        toast.error('Post not found');
-        navigate('/forum');
-      }
+      if (fetchedPost) setPost(fetchedPost);
+      else { navigate('/forum'); return; }
+      setComments(await ForumService.getComments(postId));
     } catch (err) {
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, [postId]);
+  }, [postId, navigate]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleUpvotePost = async () => {
-    if (!post || !currentUser) { openAuthModal('Sign in to vote.'); return; }
+  const handleUpvote = async () => {
+    if (!post || !currentUser) { toast.error('Sign in to vote.'); return; }
     const upvotes = Array.isArray(post.upvotes) ? post.upvotes : [];
     try {
       const res = await ForumService.toggleUpvote(post.id, currentUser.id, upvotes.includes(currentUser.id));
@@ -82,8 +142,8 @@ export const PostDetailPage: React.FC = () => {
     }
   };
 
-  const handleDownvotePost = async () => {
-    if (!post || !currentUser) { openAuthModal('Sign in to vote.'); return; }
+  const handleDownvote = async () => {
+    if (!post || !currentUser) { toast.error('Sign in to vote.'); return; }
     const downvotes = Array.isArray(post.downvotes) ? post.downvotes : [];
     try {
       const res = await ForumService.toggleDownvote(post.id, currentUser.id, downvotes.includes(currentUser.id));
@@ -142,17 +202,9 @@ export const PostDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="w-full">
-        <div className="layout-2col">
-          <div>
-            <ForumPostSkeleton />
-            <div className="mt-8">
-              <ForumPostSkeleton />
-              <ForumPostSkeleton />
-            </div>
-          </div>
-          <div className="hidden lg:block"></div>
-        </div>
+      <div className="flex flex-col items-center justify-center py-40 gap-3">
+        <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-gray-400 font-medium text-sm">Loading discussion...</p>
       </div>
     );
   }
@@ -164,203 +216,299 @@ export const PostDetailPage: React.FC = () => {
   const isUpvoted = currentUser && upvotes.includes(currentUser.id);
   const isDownvoted = currentUser && downvotes.includes(currentUser.id);
   const score = upvotes.length - downvotes.length;
-
-  const GUILDS = [
-    { id: 'GossipGenie', name: 'Gossip Nest', bgColor: '#7C3AED' },
-    { id: 'ScholarSphere', name: 'Scholar Spot', bgColor: '#0D9488' },
-    { id: 'CareerCrucible', name: 'Career Hub', bgColor: '#475569' },
-    { id: 'FestFrenzy', name: 'Fest Arena', bgColor: '#F59E0B' },
-    { id: 'CodeCave', name: 'Code Cave', bgColor: '#10B981' }
-  ];
-  const postGuild = GUILDS.find(g => g.id === post.topic);
+  const topicColor = TOPIC_COLORS[post.topic] || 'bg-gray-50 text-gray-600 border-gray-200';
 
   return (
-    <>
+    <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-8 sm:pt-10 pb-16">
       <Helmet>
-        <title>{post.title} | My College Genie</title>
+        <title>{post.title} | MyCollegeGenie Forum</title>
         <meta name="description" content={post.content.substring(0, 150)} />
+        <meta property="og:title" content={`${post.title} | MyCollegeGenie Forum`} />
+        <meta property="og:description" content={post.content.substring(0, 150)} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "DiscussionForumPosting",
+            "headline": post.title,
+            "text": post.content,
+            "datePublished": post.createdAt,
+            "author": {
+              "@type": "Person",
+              "name": post.authorName
+            },
+            "interactionStatistic": {
+              "@type": "InteractionCounter",
+              "interactionType": "https://schema.org/CommentAction",
+              "userInteractionCount": comments.length
+            }
+          })}
+        </script>
       </Helmet>
 
-      <div className="w-full">
-        <div className="layout-2col">
-          {/* Main Thread Content */}
-          <div>
-            <div className="crumbs">
-              <Link to="/forum" className="hover:text-brand transition-colors">Forum</Link> / <b>{shortenCourse(post.course)}</b> / Question
-            </div>
+      {/* Back Button */}
+      <button onClick={() => navigate(-1 as any)}
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-purple-600 mb-5 transition-colors group">
+        <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+        Back to Forums
+      </button>
 
-            <div className="thread-q">
-              <div className="qcard-top flex items-center gap-2 mb-3 flex-wrap">
-                {postGuild && (
-                  <span 
-                    style={{ backgroundColor: `${postGuild.bgColor}15`, color: postGuild.bgColor }}
-                    className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-current font-mono"
-                  >
-                    g/{postGuild.name.replace(/\s+/g, '')}
+      {/* Post Card */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+        className="bg-white border border-gray-100 rounded-2xl sm:rounded-[1.8rem] overflow-hidden shadow-sm mb-6">
+        <div className="flex flex-col sm:flex-row">
+          {/* Vote Column - Hidden on Mobile */}
+          <div className="hidden sm:flex flex-col items-center gap-1.5 px-3 py-5 bg-gray-50/50 border-r border-gray-100/60 w-14 shrink-0 justify-start">
+            <button onClick={handleUpvote}
+              className={`p-1.5 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 ${isUpvoted ? 'text-purple-600 bg-purple-100/60 shadow-sm' : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'}`}>
+              <ThumbsUp className="w-4 h-4" />
+            </button>
+            <span className={`text-xs font-black tabular-nums ${score > 0 ? 'text-purple-600' : score < 0 ? 'text-rose-500' : 'text-gray-400'}`}>
+              {score}
+            </span>
+            <button onClick={handleDownvote}
+              className={`p-1.5 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 ${isDownvoted ? 'text-rose-500 bg-rose-100/60 shadow-sm' : 'text-gray-400 hover:text-rose-500 hover:bg-rose-50'}`}>
+              <ThumbsDown className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 p-4 sm:p-6 min-w-0 flex flex-col">
+            
+            {/* Premium Header: Author Profile + Tags + Delete */}
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <UploaderProfilePopover uploaderName={post.authorName} uploaderId={post.authorId}>
+                  <div className="flex items-center gap-2.5 cursor-pointer group">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-[11px] font-black shrink-0 shadow-md shadow-purple-500/10 group-hover:scale-105 transition-transform duration-300">
+                      {post.authorName?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block text-xs font-black text-gray-800 leading-none mb-1 group-hover:text-purple-600 transition-colors truncate">
+                        {post.authorName}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[9px] text-gray-400 font-bold uppercase tracking-wider leading-none">
+                        <Clock className="w-2.5 h-2.5" /> {timeAgo(post.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                </UploaderProfilePopover>
+              </div>
+
+              {/* Tags + Delete */}
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 max-w-[150px] overflow-hidden">
+                  <span className="px-2 py-0.5 bg-purple-50/80 text-purple-600 text-[9px] font-black uppercase tracking-wider rounded-full border border-purple-100/60 truncate" title={post.course}>
+                    {shortenCourse(post.course)}
                   </span>
-                )}
-                {post.course && <span className="subj-tag">{shortenCourse(post.course)}</span>}
-                <span className={`stamp ${comments.length > 0 ? 'solved' : 'open'}`}>
-                  {comments.length > 0 ? 'Answered' : 'Open'}
-                </span>
+                  <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full border truncate ${topicColor}`}>
+                    {post.topic}
+                  </span>
+                </div>
                 
                 {(currentUser?.role === 'admin' || currentUser?.id === post.authorId) && (
                   <button onClick={() => setIsDeletePostModalOpen(true)}
-                    className="ml-auto text-ink-faint hover:text-red-500 transition-colors" title="Delete Post">
+                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shrink-0" title="Delete Post">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* Title */}
+            <h1 className="text-lg sm:text-2xl font-black text-gray-900 leading-snug tracking-tight mb-3">
+              {post.title}
+            </h1>
+
+            {/* Body */}
+            <p className="text-[14px] sm:text-[15px] text-gray-600 leading-relaxed whitespace-pre-wrap font-medium mb-6">
+              {post.content}
+            </p>
+
+            {/* Interactivity Row (Footer) */}
+            <div className="flex items-center justify-between border-t border-gray-50 pt-4 mt-auto gap-3">
               
-              <h1>{post.title}</h1>
-              
-              <div className="body-text whitespace-pre-wrap">
-                {post.content}
+              {/* Mobile Vote Pill - Only Visible on Mobile */}
+              <div className="sm:hidden flex items-center bg-gray-50/90 rounded-xl p-0.5 border border-gray-100/80">
+                <button onClick={handleUpvote}
+                  className={`p-1.5 rounded-lg transition-all duration-200 ${isUpvoted ? 'text-purple-600 bg-purple-100/50 shadow-sm' : 'text-gray-400'}`}>
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                </button>
+                <span className={`text-[11px] font-black px-2 tabular-nums min-w-[20px] text-center ${score > 0 ? 'text-purple-600' : score < 0 ? 'text-rose-500' : 'text-gray-500'}`}>
+                  {score}
+                </span>
+                <button onClick={handleDownvote}
+                  className={`p-1.5 rounded-lg transition-all duration-200 ${isDownvoted ? 'text-rose-500 bg-rose-100/50 shadow-sm' : 'text-gray-400'}`}>
+                  <ThumbsDown className="w-3.5 h-3.5" />
+                </button>
               </div>
-              
-              <div className="qcard-meta mt-4 flex justify-between items-center">
-                <div className="flex gap-4">
-                  <span className="item">
-                    <span className="avatar w-5 h-5">{post.authorName?.[0]?.toUpperCase() || 'U'}</span> 
-                    {post.authorName}
-                  </span>
-                  <span className="item"><Clock className="w-[14px] h-[14px]"/> Posted {timeAgo(post.createdAt)}</span>
-                </div>
-                
-                <div className="flex items-center bg-surface-sunk rounded-md border border-line">
-                  <button onClick={handleUpvotePost} className={`px-2 py-1 hover:text-brand ${isUpvoted ? 'text-brand' : 'text-ink-soft'}`}>
-                    <ThumbsUp className="w-4 h-4" />
-                  </button>
-                  <span className="text-sm font-bold w-6 text-center">{score}</span>
-                  <button onClick={handleDownvotePost} className={`px-2 py-1 hover:text-brand ${isDownvoted ? 'text-brand' : 'text-ink-soft'}`}>
-                    <ThumbsDown className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+
+              {/* Comments Count Pill */}
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50/80 text-gray-500 border border-gray-100/50 rounded-xl font-bold text-[11px] ml-auto sm:ml-0">
+                <MessageCircle className="w-4 h-4 shrink-0 text-gray-400" />
+                <span>{comments.length} comments</span>
+              </span>
             </div>
 
-            <div className="mt-6 flex items-center justify-between mb-4">
-              <h3 className="text-[15px] font-bold font-['Inter']">{comments.length} answers</h3>
-              <select className="btn btn-sm font-inherit bg-surface border border-line rounded px-2 py-1 text-xs text-ink">
-                <option>Top voted</option>
-                <option>Newest</option>
-              </select>
-            </div>
+          </div>
+        </div>
+      </motion.div>
 
-            {/* Answers */}
-            <div className="mt-4">
-              {comments.length > 0 ? (
-                comments.map((comment, index) => {
-                  const cUpvotes = Array.isArray(comment.upvotes) ? comment.upvotes : [];
-                  const cDownvotes = Array.isArray(comment.downvotes) ? comment.downvotes : [];
-                  const cScore = cUpvotes.length - cDownvotes.length;
-                  const cUpvoted = currentUser && cUpvotes.includes(currentUser.id);
-                  const cDownvoted = currentUser && cDownvotes.includes(currentUser.id);
-                  
-                  const isBest = index === 0 && cScore > 0;
-                  
-                  return (
-                    <div key={comment.id} className={`answer ${isBest ? 'best' : ''}`}>
-                      <div className="vote flex flex-col items-center gap-1">
-                        <button onClick={async () => {
-                          if (!postId || !currentUser) { openAuthModal('Sign in to vote.'); return; }
-                          try {
-                            const res = await ForumService.toggleCommentUpvote(postId, comment.id, currentUser.id, !!cUpvoted);
-                            if (res && res.upvotes) setComments(prev => prev.map(c => c.id === comment.id ? { ...c, upvotes: res.upvotes as string[], downvotes: res.downvotes as string[] } : c));
-                          } catch(e) {}
-                        }} className={`hover:text-brand ${cUpvoted ? 'text-brand' : 'text-ink-faint'}`}>
-                          <ChevronUp className="w-5 h-5" strokeWidth={2.5}/>
-                        </button>
-                        <span className="n font-bold text-sm">{cScore}</span>
-                        <button onClick={async () => {
-                          if (!postId || !currentUser) { openAuthModal('Sign in to vote.'); return; }
-                          try {
-                            const res = await ForumService.toggleCommentDownvote(postId, comment.id, currentUser.id, !!cDownvoted);
-                            if (res && res.downvotes) setComments(prev => prev.map(c => c.id === comment.id ? { ...c, upvotes: res.upvotes as string[], downvotes: res.downvotes as string[] } : c));
-                          } catch(e) {}
-                        }} className={`hover:text-brand ${cDownvoted ? 'text-brand' : 'text-ink-faint'}`}>
-                          <ChevronDown className="w-5 h-5" strokeWidth={2.5}/>
-                        </button>
-                      </div>
-                      
-                      <div className="answer-body">
-                        {isBest && (
-                          <div className="best-flag">
-                            <Check className="w-[14px] h-[14px]"/> Marked as best answer
-                          </div>
-                        )}
-                        <div className="answer-author flex justify-between">
-                          <span className="flex items-center gap-2">
-                            <span className="avatar w-5 h-5 bg-ink text-white rounded-full flex items-center justify-center text-[10px]">{comment.authorName?.[0]?.toUpperCase()}</span>
-                            {comment.authorName} · Answered {timeAgo(comment.createdAt)}
-                          </span>
-                          
-                          {(currentUser?.id === comment.authorId || currentUser?.role === 'admin') && comment.authorId !== 'deleted' && (
-                            <button onClick={() => { setCommentToDelete(comment.id); setIsDeleteCommentModalOpen(true); }}
-                              className="text-ink-faint hover:text-red-500 transition-colors">
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                        <div className="body-text whitespace-pre-wrap">
-                          {comment.content}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="answer justify-center text-ink-soft py-8">
-                  No answers yet. Be the first to answer!
-                </div>
-              )}
-            </div>
+      {/* Comments Section */}
+      <div className="space-y-3">
+        {/* Section Header */}
+        <div className="flex items-center gap-2 mb-1">
+          <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">Comments</h2>
+          <span className="px-2 py-0.5 bg-purple-50 text-purple-600 text-xs font-black rounded-full border border-purple-100">
+            {comments.length}
+          </span>
+        </div>
 
-            {/* Composer */}
-            {currentUser ? (
-              <form className="composer" onSubmit={handleAddComment}>
-                <textarea 
-                  placeholder="Write your answer — include the steps, not just the result."
+        {/* Comment Input */}
+        {currentUser ? (
+          <form onSubmit={handleAddComment}>
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-400/10 transition-all">
+              <div className="flex items-start gap-3 p-3">
+                <Avatar name={currentUser.user_metadata?.full_name || currentUser.email || 'U'} size={7} />
+                <textarea
+                  rows={2}
+                  placeholder="Write a comment..."
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
-                  disabled={isSubmitting}
+                  className="flex-1 bg-transparent outline-none resize-none text-sm font-medium text-gray-700 placeholder-gray-400 mt-1"
                 />
-                <div className="flex justify-end mt-2">
-                  <button type="submit" disabled={!newComment.trim() || isSubmitting} className="btn btn-primary disabled:opacity-50">
-                    {isSubmitting ? 'Posting...' : 'Post answer'}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl p-6">
-                <span className="text-ink-soft text-sm">Sign in to post an answer.</span>
-                <button onClick={() => openAuthModal('Sign in to post an answer.')} className="btn btn-primary">Sign in</button>
               </div>
-            )}
+              <div className="flex justify-end px-3 pb-2.5 border-t border-gray-50 pt-2">
+                <button type="submit"
+                  disabled={!newComment.trim() || isSubmitting}
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-black text-xs uppercase tracking-wider transition-all shadow-sm shadow-purple-600/20">
+                  {isSubmitting
+                    ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    : <Send className="w-3 h-3" />
+                  }
+                  Comment
+                </button>
+              </div>
+            </div>
+          </form>
+        ) : (
+          <div className="bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-amber-50 border border-amber-100 rounded-full flex items-center justify-center shrink-0">
+                <AlertCircle className="w-4 h-4 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-800">Sign in to comment</p>
+                <p className="text-xs text-gray-400 font-medium">Join the Student Community discussion</p>
+              </div>
+            </div>
+            <Link to="/login"
+              className="flex items-center gap-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-black text-xs uppercase tracking-wider transition-all shrink-0">
+              Sign In <ChevronRight className="w-3 h-3" />
+            </Link>
           </div>
+        )}
 
-          {/* Right Rail */}
-          <div className="hidden lg:block">
-            <div className="rail-card">
-              <h4>About this question</h4>
-              <ul className="rail-list">
-                <li>Asked <b>{timeAgo(post.createdAt)}</b></li>
-                <li>Score <b>{score}</b></li>
-                <li>Answers <b>{comments.length}</b></li>
-              </ul>
+        {/* Comments List */}
+        <AnimatePresence>
+          {comments.length > 0 ? (
+            comments.map((comment, i) => {
+              const cUpvotes = Array.isArray(comment.upvotes) ? comment.upvotes : [];
+              const cDownvotes = Array.isArray(comment.downvotes) ? comment.downvotes : [];
+              const cScore = cUpvotes.length - cDownvotes.length;
+              const cUpvoted = currentUser && cUpvotes.includes(currentUser.id);
+              const cDownvoted = currentUser && cDownvotes.includes(currentUser.id);
+              return (
+                <motion.div key={comment.id} layout
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="bg-white border border-gray-100 rounded-xl p-3.5 sm:p-4 shadow-sm group hover:border-gray-200 transition-colors"
+                >
+                  {/* Comment Header */}
+                  <div className="flex items-center gap-2.5 mb-2">
+                    {comment.authorId === 'deleted' ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar name={comment.authorName} size={7} />
+                        <span className="text-sm font-black text-gray-400 italic">{comment.authorName}</span>
+                      </div>
+                    ) : (
+                      <UploaderProfilePopover uploaderName={comment.authorName} uploaderId={comment.authorId}>
+                        <div className="flex items-center gap-2">
+                          <Avatar name={comment.authorName} size={7} />
+                          <span className="text-sm font-black text-gray-800 hover:text-purple-600 transition-colors">{comment.authorName}</span>
+                        </div>
+                      </UploaderProfilePopover>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-gray-400 font-medium flex items-center gap-0.5">
+                          <Clock className="w-3 h-3" /> {timeAgo(comment.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                    {(currentUser?.id === comment.authorId || currentUser?.role === 'admin') && comment.authorId !== 'deleted' && (
+                      <button onClick={() => { setCommentToDelete(comment.id); setIsDeleteCommentModalOpen(true); }}
+                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Comment Content */}
+                  <p className={`text-sm leading-relaxed font-medium mb-2.5 pl-9 ${comment.authorId === 'deleted' ? 'text-gray-400 italic' : 'text-gray-600'}`}>
+                    {comment.content}
+                  </p>
+
+                  {/* Comment Votes */}
+                  <div className="flex items-center gap-1.5 pl-9">
+                    <button onClick={async () => {
+                      if (!postId || !currentUser) { toast.error('Sign in to vote.'); return; }
+                      try {
+                        const res = await ForumService.toggleCommentUpvote(postId, comment.id, currentUser.id, !!cUpvoted);
+                        if (res && res.upvotes) {
+                          setComments(prev => prev.map(c => c.id === comment.id ? {
+                            ...c,
+                            upvotes: Array.isArray(res.upvotes) ? res.upvotes : [],
+                            downvotes: Array.isArray(res.downvotes) ? res.downvotes : []
+                          } : c));
+                        }
+                      } catch(e) { toast.error('Failed to vote'); }
+                    }}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-black transition-all ${cUpvoted ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'}`}>
+                      <ThumbsUp className="w-3 h-3" />
+                      <span>{cUpvotes.length}</span>
+                    </button>
+                    <button onClick={async () => {
+                      if (!postId || !currentUser) { toast.error('Sign in to vote.'); return; }
+                      try {
+                        const res = await ForumService.toggleCommentDownvote(postId, comment.id, currentUser.id, !!cDownvoted);
+                        if (res && res.downvotes) {
+                          setComments(prev => prev.map(c => c.id === comment.id ? {
+                            ...c,
+                            upvotes: Array.isArray(res.upvotes) ? res.upvotes : [],
+                            downvotes: Array.isArray(res.downvotes) ? res.downvotes : []
+                          } : c));
+                        }
+                      } catch(e) { toast.error('Failed to vote'); }
+                    }}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-black transition-all ${cDownvoted ? 'text-rose-500 bg-rose-50' : 'text-gray-400 hover:text-rose-500 hover:bg-rose-50'}`}>
+                      <ThumbsDown className="w-3 h-3" />
+                      <span>{cDownvotes.length}</span>
+                    </button>
+                    <span className={`ml-1 text-xs font-black tabular-nums ${cScore > 0 ? 'text-purple-600' : cScore < 0 ? 'text-rose-500' : 'text-gray-400'}`}>
+                      {cScore > 0 ? `+${cScore}` : cScore}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })
+          ) : (
+            <div className="text-center py-10 bg-gray-50/50 border border-dashed border-gray-200 rounded-xl">
+              <MessageCircle className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">No comments yet. Be first!</p>
             </div>
-            
-            <div className="rail-card">
-              <h4>Related threads</h4>
-              <ul className="rail-list flex flex-col items-start gap-3">
-                <li className="block"><a href="#" className="hover:text-brand font-bold text-sm">Difference between fiscal and monetary multiplier effects</a></li>
-                <li className="block"><a href="#" className="hover:text-brand font-bold text-sm">IS-LM with open economy assumptions</a></li>
-                <li className="block"><a href="#" className="hover:text-brand font-bold text-sm">2022 end-sem Q4 full solution</a></li>
-              </ul>
-            </div>
-          </div>
-          
-        </div>
+          )}
+        </AnimatePresence>
       </div>
 
       <ConfirmationModal isOpen={isDeletePostModalOpen} onClose={() => setIsDeletePostModalOpen(false)}
@@ -369,6 +517,6 @@ export const PostDetailPage: React.FC = () => {
       <ConfirmationModal isOpen={isDeleteCommentModalOpen} onClose={() => setIsDeleteCommentModalOpen(false)}
         onConfirm={confirmDeleteComment} title="Delete Comment"
         message="Are you sure you want to delete this comment?" confirmText="Delete" type="danger" />
-    </>
+    </div>
   );
 };

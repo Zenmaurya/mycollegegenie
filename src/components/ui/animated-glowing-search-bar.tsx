@@ -17,12 +17,12 @@ const AnimatedGlowingSearchBar = React.forwardRef<HTMLInputElement, AnimatedGlow
 
         <div id="main" className="relative group w-full h-full flex items-center bg-gray-50 rounded-2xl border border-gray-200">
           <div className="absolute inset-y-0 left-0 pl-3 sm:pl-5 flex items-center pointer-events-none z-10">
-            <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 group-focus-within:text-brand-primary transition-colors" />
+            <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 group-focus-within:text-purple-600 transition-colors" />
           </div>
           <input 
             ref={ref} 
             {...props} 
-            className={`block w-full pl-9 sm:pl-14 pr-10 sm:pr-12 py-2 sm:py-4 bg-transparent border-none rounded-2xl text-xs sm:text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-brand-primary/10 focus:border-brand-primary transition-all font-medium ${className || ''}`} 
+            className={`block w-full pl-9 sm:pl-14 pr-10 sm:pr-12 py-2 sm:py-4 bg-transparent border-none rounded-2xl text-xs sm:text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-600 transition-all font-medium ${className || ''}`} 
           />
           <div id="input-mask" className="pointer-events-none w-[100px] h-[20px] absolute bg-gradient-to-r from-transparent to-gray-50 top-1/2 -translate-y-1/2 right-[70px] group-focus-within:hidden"></div>
           

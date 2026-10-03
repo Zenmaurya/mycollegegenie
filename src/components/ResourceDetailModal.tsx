@@ -42,7 +42,7 @@ export function ResourceDetailModal({
   onReport,
   getAverageRating,
 }: ResourceDetailModalProps) {
-  const { user, appUser, openAuthModal } = useAuth();
+  const { user, appUser } = useAuth();
   const { resources } = useResources();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -142,7 +142,7 @@ export function ResourceDetailModal({
           <a href={resource.link} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
             className="absolute inset-0 flex items-center justify-center">
             <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform">
-              <PlayCircle className="w-7 h-7 sm:w-8 sm:h-8 text-mark-ink" />
+              <PlayCircle className="w-7 h-7 sm:w-8 sm:h-8 text-rose-600" />
             </div>
           </a>
         </div>
@@ -170,16 +170,16 @@ export function ResourceDetailModal({
             <div className="flex items-center gap-2 sm:gap-3">
               <button onClick={e => { e.stopPropagation(); setModalView('main'); }}
                 className={`px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors ${
-                  resource.type === 'Note' ? 'bg-brand-primary/20 text-brand-primary hover:bg-brand-primary/20' :
+                  resource.type === 'Note' ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' :
                   resource.type === 'PYQ' ? 'bg-violet-100 text-violet-600 hover:bg-violet-200' :
                   resource.type === 'Syllabus' ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' :
-                  'bg-mark-soft text-mark-ink hover:bg-mark-soft'
+                  'bg-rose-100 text-rose-600 hover:bg-rose-200'
                 }`}>
                 {resource.type}
               </button>
               <span className="text-xs text-gray-500 font-bold shrink-0 bg-gray-100 px-2 py-1 rounded-md">Sem {resource.semester}</span>
               <button onClick={e => { e.stopPropagation(); setModalView('comments'); }}
-                className={`hidden sm:flex items-center gap-1 text-[11px] sm:text-xs font-bold transition-colors ml-2 ${modalView === 'comments' ? 'text-brand-primary' : 'text-gray-400 hover:text-brand-primary'}`}>
+                className={`hidden sm:flex items-center gap-1 text-[11px] sm:text-xs font-bold transition-colors ml-2 ${modalView === 'comments' ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}>
                 <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Comments</span>
               </button>
               <button onClick={e => { e.stopPropagation(); setModalView('tips'); }}
@@ -189,7 +189,7 @@ export function ResourceDetailModal({
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
               <button onClick={e => { e.stopPropagation(); setModalView('comments'); }}
-                className={`sm:hidden p-1.5 rounded-md transition-colors ${modalView === 'comments' ? 'bg-brand-primary/20 text-brand-primary' : 'text-gray-400 hover:text-brand-primary hover:bg-gray-50'}`}>
+                className={`sm:hidden p-1.5 rounded-md transition-colors ${modalView === 'comments' ? 'bg-purple-100 text-purple-600' : 'text-gray-400 hover:text-purple-600 hover:bg-gray-50'}`}>
                 <MessageCircle className="w-4 h-4" />
               </button>
               <button onClick={e => { e.stopPropagation(); setModalView('tips'); }}
@@ -197,7 +197,7 @@ export function ResourceDetailModal({
                 <Lightbulb className="w-4 h-4" />
               </button>
               <button onClick={onReport}
-                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-mark-soft hover:bg-mark-soft text-mark-ink rounded-lg text-[10px] sm:text-xs font-bold transition-colors">
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[10px] sm:text-xs font-bold transition-colors">
                 <Flag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span className="hidden sm:inline">Report</span>
               </button>
@@ -212,7 +212,7 @@ export function ResourceDetailModal({
             {renderYouTubeThumbnail()}
 
             <h2 className="text-lg sm:text-2xl font-bold mb-0.5 sm:mb-1 text-gray-900 leading-tight break-words">{resource.title}</h2>
-            <p className="text-xs sm:text-sm text-brand-primary font-medium mb-2.5 sm:mb-5 break-words">
+            <p className="text-xs sm:text-sm text-purple-600 font-medium mb-2.5 sm:mb-5 break-words">
               {resource.course}
               {r.subjectCode && <span className="ml-1 sm:ml-2 text-gray-400">({r.subjectCode})</span>}
             </p>
@@ -220,8 +220,8 @@ export function ResourceDetailModal({
             {modalView === 'main' && (
               <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-5">
                 <div className="flex items-center gap-2 sm:gap-3 bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-100">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-brand-primary/20 flex items-center justify-center shrink-0">
-                    <User className="w-3 h-3 sm:w-4 sm:h-4 text-brand-primary" />
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                    <User className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] sm:text-[9px] uppercase tracking-wider text-gray-500 font-bold truncate">Uploaded By</p>
@@ -229,8 +229,8 @@ export function ResourceDetailModal({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-100">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-brand-primary/20 flex items-center justify-center shrink-0">
-                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-brand-primary" />
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] sm:text-[9px] uppercase tracking-wider text-gray-500 font-bold truncate">Upload Date</p>
@@ -266,7 +266,7 @@ export function ResourceDetailModal({
                   <div className="pt-4 border-t border-gray-100">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Rate this resource</h4>
-                      <div className="flex items-center gap-1 text-mark-ink">
+                      <div className="flex items-center gap-1 text-pink-600">
                         <Star className="w-3.5 h-3.5 fill-current" />
                         <span className="text-xs font-bold">{getAverageRating(r.ratings)}</span>
                         <span className="text-[10px] text-gray-500 font-medium ml-1">({r.ratings?.length || 0} ratings)</span>
@@ -275,7 +275,7 @@ export function ResourceDetailModal({
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map(star => (
                         <button key={star} onClick={() => onRate(resource.id, star)} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all group">
-                          <Star className={`w-5 h-5 transition-colors ${star <= Math.round(getAverageRating(r.ratings)) ? 'text-mark-ink fill-current' : 'text-gray-300 group-hover:text-mark-ink'}`} />
+                          <Star className={`w-5 h-5 transition-colors ${star <= Math.round(getAverageRating(r.ratings)) ? 'text-pink-600 fill-current' : 'text-gray-300 group-hover:text-pink-600'}`} />
                         </button>
                       ))}
                     </div>
@@ -284,10 +284,10 @@ export function ResourceDetailModal({
               ) : modalView === 'comments' ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setModalView('main')} className="p-1 hover:bg-brand-primary/20 rounded-lg text-brand-primary transition-colors">
+                    <button onClick={() => setModalView('main')} className="p-1 hover:bg-purple-100 rounded-lg text-purple-600 transition-colors">
                       <ChevronLeft className="w-5 h-5" />
                     </button>
-                    <h4 className="text-[10px] sm:text-xs font-bold text-brand-primary uppercase tracking-wider flex items-center gap-2">
+                    <h4 className="text-[10px] sm:text-xs font-bold text-purple-600 uppercase tracking-wider flex items-center gap-2">
                       <MessageCircle className="w-4 h-4" /> Student Comments ({resourceComments.length})
                     </h4>
                   </div>
@@ -296,18 +296,15 @@ export function ResourceDetailModal({
                       <input value={newComment} onChange={e => setNewComment(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handlePostComment()}
                         placeholder="Write a comment…" maxLength={1000}
-                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                       />
                       <button onClick={handlePostComment} disabled={isPostingComment || !newComment.trim()}
-                        className="px-3 py-2 bg-brand-primary hover:bg-brand-primary text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50">
+                        className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50">
                         {isPostingComment ? '…' : 'Post'}
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl p-4">
-                      <p className="text-xs text-gray-400 font-medium">Sign in to leave a comment</p>
-                      <button type="button" onClick={() => openAuthModal('Please sign in to leave a comment.')} className="bg-brand-primary hover:bg-brand-primary text-white px-4 py-1.5 rounded-lg text-xs font-bold ml-auto">Sign In</button>
-                    </div>
+                    <p className="text-xs text-gray-400 font-medium">Sign in to leave a comment</p>
                   )}
                   <div className="flex flex-col gap-3 min-h-[150px] max-h-[300px] overflow-y-auto pr-2">
                     {resourceComments.length === 0 ? (
@@ -351,10 +348,7 @@ export function ResourceDetailModal({
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl p-4">
-                      <p className="text-xs text-amber-600/70 font-medium">Sign in to share exam tips</p>
-                      <button type="button" onClick={() => openAuthModal('Please sign in to share an exam tip.')} className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold ml-auto">Sign In</button>
-                    </div>
+                    <p className="text-xs text-gray-400 font-medium">Sign in to share exam tips</p>
                   )}
                   <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4 sm:p-5 shadow-sm min-h-[150px] max-h-[280px] overflow-y-auto">
                     {resourceTips.length === 0 ? (
@@ -378,13 +372,13 @@ export function ResourceDetailModal({
                 {(resource.type === 'Note' || resource.type === 'PYQ' || resource.type === 'Syllabus') && (
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={() => { handleClose(); navigate(`/flipbook/${resource.id}`); }}
-                    className="btn btn-primary flex-1 min-w-[140px] flex items-center justify-center gap-2 h-11 rounded-xl text-sm shadow-lg shadow-brand/20">
+                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 h-11 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20">
                     <BookOpen className="w-4 h-4 shrink-0" /> <span>Read Flipbook</span>
                   </motion.button>
                 )}
                 <motion.a whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   href={resource.link || '#'} target="_blank" rel="noopener noreferrer"
-                  className="btn flex-1 min-w-[140px] flex items-center justify-center gap-2 h-11 rounded-xl text-sm">
+                  className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 h-11 rounded-xl text-sm font-bold transition-all shadow-lg shadow-purple-600/20">
                   {resource.type === 'Playlist' ? <Youtube className="w-4 h-4 shrink-0" /> : <Globe className="w-4 h-4 shrink-0" />}
                   <span className="truncate">{resource.type === 'Playlist' ? 'Watch Playlist' : 'View Source'}</span>
                   <ExternalLink className="w-3.5 h-3.5 shrink-0" />
@@ -392,13 +386,13 @@ export function ResourceDetailModal({
                 {r.directDownloadLink && (
                   <motion.a whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     href={`${config.apiUrl}/api/resources/download/${resource.id}`} target="_blank" rel="noopener noreferrer"
-                    className="btn btn-mark flex-1 min-w-[140px] flex items-center justify-center gap-2 h-11 rounded-xl text-sm shadow-lg shadow-mark/20">
+                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 h-11 rounded-xl text-sm font-bold transition-all shadow-lg shadow-green-600/20">
                     <Download className="w-4 h-4 shrink-0" /> <span>Download</span>
                   </motion.a>
                 )}
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   onClick={() => onShare(resource)}
-                  className="btn flex-1 sm:flex-none flex items-center justify-center gap-2 h-11 rounded-xl text-sm">
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-4 py-2 h-11 rounded-xl text-sm font-bold transition-all">
                   <Share2 className="w-4 h-4 shrink-0" /> <span className="sm:hidden md:inline">Share</span>
                 </motion.button>
               </div>
@@ -406,12 +400,12 @@ export function ResourceDetailModal({
               {/* Admin reports section */}
               {appUser?.role === 'admin' && r.reports && r.reports.length > 0 && (
                 <div className="mt-8 pt-8 border-t border-gray-100">
-                  <h4 className="text-sm font-bold text-mark-ink uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <h4 className="text-sm font-bold text-rose-600 uppercase tracking-wider mb-4 flex items-center gap-2">
                     Active Reports ({r.reports.length})
                   </h4>
                   <div className="space-y-3">
                     {r.reports.map((report: any, idx: number) => (
-                      <div key={idx} className="bg-mark-soft border border-mark-soft rounded-xl p-4">
+                      <div key={idx} className="bg-rose-50 border border-rose-100 rounded-xl p-4">
                         <p className="text-sm text-gray-700 mb-2">{report.reason}</p>
                         <p className="text-[10px] text-gray-500 font-mono">
                           {new Date(report.date).toLocaleString('en-IN')}

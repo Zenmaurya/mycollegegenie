@@ -5,16 +5,13 @@ import { X, Send, Star, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { addTestimonial } from '../services/testimonialService';
-import { useAuth } from '../context/AuthContext';
 
 interface TestimonialModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
 }
 
-export const TestimonialModal: React.FC<TestimonialModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const { user, openAuthModal } = useAuth();
+export const TestimonialModal: React.FC<TestimonialModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [text, setText] = useState('');
@@ -22,13 +19,20 @@ export const TestimonialModal: React.FC<TestimonialModalProps> = ({ isOpen, onCl
   const [hoveredStar, setHoveredStar] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   React.useEffect(() => {
-    if (isOpen && user) {
-      const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || '';
-      setName(fullName);
-    }
-  }, [isOpen, user]);
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+      // Pre-fill name from session
+      if (session?.user) {
+        const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '';
+        setName(fullName);
+      }
+    };
+    if (isOpen) checkUser();
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +49,6 @@ export const TestimonialModal: React.FC<TestimonialModalProps> = ({ isOpen, onCl
       setSubmitted(true);
       setTimeout(() => {
         onClose();
-        if (onSuccess) onSuccess();
         setSubmitted(false);
         setName('');
         setHandle('');
@@ -88,8 +91,8 @@ export const TestimonialModal: React.FC<TestimonialModalProps> = ({ isOpen, onCl
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-brand-primary/20 flex items-center justify-center">
-                  <Star className="w-4 h-4 text-brand-primary fill-brand-primary/20" />
+                <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center">
+                  <Star className="w-4 h-4 text-purple-600 fill-purple-300" />
                 </div>
                 <div>
                   <h2 className="text-sm font-black text-gray-900 tracking-tight">Share Your Experience</h2>
@@ -120,18 +123,24 @@ export const TestimonialModal: React.FC<TestimonialModalProps> = ({ isOpen, onCl
                     <p className="text-sm text-gray-500 font-medium">Your testimonial has been submitted for review.</p>
                   </div>
                 </motion.div>
-              ) : !user ? (
-                <div className="flex flex-col items-center justify-center py-8 px-4 text-center h-[250px]">
-                  <div className="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center mb-4">
-                    <AlertCircle className="w-8 h-8 text-brand-primary" />
+              ) : isLoggedIn === false ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center gap-4">
+                  <div className="w-14 h-14 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center">
+                    <AlertCircle className="w-7 h-7 text-amber-500" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Sign in Required</h3>
-                  <p className="text-gray-500 mb-6 max-w-sm">
-                    You must be signed in to submit a testimonial.
-                  </p>
-                  <button type="button" onClick={() => { onClose(); openAuthModal('Please sign in to submit a testimonial.'); }} className="w-full py-3 bg-brand-primary hover:bg-indigo-600 text-white rounded-xl font-black text-sm shadow-md shadow-brand-primary/20 transition-all text-center">
+                  <div>
+                    <h3 className="text-base font-black text-gray-900 mb-1">Sign in Required</h3>
+                    <p className="text-sm text-gray-500 font-medium max-w-xs mx-auto">
+                      You need to be signed in to submit a testimonial.
+                    </p>
+                  </div>
+                  <Link
+                    to="/login"
+                    onClick={onClose}
+                    className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm shadow-md shadow-purple-600/20 transition-all text-center"
+                  >
                     Sign In to Continue
-                  </button>
+                  </Link>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -175,7 +184,7 @@ export const TestimonialModal: React.FC<TestimonialModalProps> = ({ isOpen, onCl
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Rahul Kumar"
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium text-gray-800 transition-all"
+                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm font-medium text-gray-800 transition-all"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -187,7 +196,7 @@ export const TestimonialModal: React.FC<TestimonialModalProps> = ({ isOpen, onCl
                         value={handle}
                         onChange={(e) => setHandle(e.target.value)}
                         placeholder="@rahul_123"
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium text-gray-800 transition-all"
+                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm font-medium text-gray-800 transition-all"
                       />
                     </div>
                   </div>
@@ -209,7 +218,7 @@ export const TestimonialModal: React.FC<TestimonialModalProps> = ({ isOpen, onCl
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                       placeholder="How has MyCollegeGenie helped you? Be specific — your story inspires others!"
-                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium text-gray-800 resize-none transition-all leading-relaxed"
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm font-medium text-gray-800 resize-none transition-all leading-relaxed"
                     />
                   </div>
 
@@ -217,7 +226,7 @@ export const TestimonialModal: React.FC<TestimonialModalProps> = ({ isOpen, onCl
                   <button
                     type="submit"
                     disabled={!name.trim() || !text.trim() || isSubmitting}
-                    className="w-full py-3.5 bg-gradient-to-r from-brand-primary to-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-brand-primary/25 hover:shadow-brand-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-purple-600/25 hover:shadow-purple-600/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -51,7 +51,7 @@ const INITIAL_FORM = {
 };
 
 export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: ResourceUploadModalProps) {
-  const { user, openAuthModal } = useAuth();
+  const { user } = useAuth();
   const { resources, setResources } = useResources();
 
   const [formData, setFormData] = useState(INITIAL_FORM);
@@ -120,7 +120,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (uploadStatus === 'uploading') return; // Safety lock: prevent duplicate clicks instantly!
-    if (!user) { openAuthModal('Please sign in to upload resources.'); return; }
+    if (!user) { toast.error('Please sign in to upload resources.'); return; }
 
     let currentType = formData.type;
 
@@ -158,7 +158,10 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
       const freshToken = await getFreshToken();
       if (!freshToken) {
         setUploadStatus('idle');
-        openAuthModal('Session expired. Please sign in again.');
+        toast.error('Session expired. Please refresh the page and sign in again.', {
+          duration: 10000,
+          action: { label: 'Refresh', onClick: () => window.location.reload() },
+        });
         return;
       }
 
@@ -249,14 +252,27 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
       } else if (msg.toLowerCase().includes('network') || msg.toLowerCase().includes('fetch')) {
         toast.error('Network error. Make sure you are connected to the internet.', { duration: 8000 });
       } else if (
-        (msg.toLowerCase().includes('sign in') && !msg.toLowerCase().includes('storage')) ||
-        msg.includes('Not authenticated')
+        msg.toLowerCase().includes('not authenticated') ||
+        (msg.toLowerCase().includes('sign in') && !msg.toLowerCase().includes('storage'))
       ) {
-        openAuthModal('Session expired. Please sign in again.');
+        // Session expired — give user a reload option
+        toast.error(
+          'Session expired. Please refresh the page and sign in again.',
+          {
+            duration: 10000,
+            action: { label: 'Refresh', onClick: () => window.location.reload() },
+          }
+        );
       } else if (msg.toLowerCase().includes('r2 not configured') || msg.toLowerCase().includes('storage not configured')) {
         toast.error('File storage not set up on the server. Please use a Google Drive link instead or contact admin.', { duration: 10000 });
       } else if (msg.toLowerCase().includes('invalid token') || msg.toLowerCase().includes('expired token') || msg.includes('401')) {
-        openAuthModal('Session expired. Please sign in again.');
+        toast.error(
+          'Authentication error. Please refresh the page.',
+          {
+            duration: 10000,
+            action: { label: 'Refresh', onClick: () => window.location.reload() },
+          }
+        );
       } else {
         toast.error(msg || 'Upload failed. Please try again.', { duration: 8000 });
       }
@@ -286,8 +302,8 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
             {/* Header */}
             <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-brand-primary/20 flex items-center justify-center">
-                  <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                  <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                 </div>
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-gray-900">Upload Material</h2>
@@ -310,17 +326,17 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                   <p className="text-gray-600">Your resource has been added to the community library.</p>
                 </motion.div>
               ) : !user ? (
-                <div className="flex flex-col items-center justify-center p-8 text-center h-[300px]">
-                  <div className="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center mb-4">
-                    <AlertCircle className="w-8 h-8 text-brand-primary" />
+                <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-6">
+                  <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-8 h-8 text-amber-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Sign in Required</h3>
-                  <p className="text-gray-500 mb-6 max-w-sm">
-                    You must be signed in to upload resources.
-                  </p>
-                  <button type="button" onClick={() => openAuthModal('Please sign in to upload resources.')} className="w-full sm:w-auto px-8 bg-brand-primary hover:bg-brand-primary text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-brand-primary/20 block text-center">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Sign in Required</h3>
+                    <p className="text-gray-500 font-medium">You need to be signed in to upload a resource.</p>
+                  </div>
+                  <Link to="/login" className="w-full sm:w-auto px-8 bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-purple-600/20 block text-center">
                     Sign In to Continue
-                  </button>
+                  </Link>
                 </div>
               ) : (
                 <>
@@ -330,7 +346,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Title <span className="text-red-400">*</span></label>
                       <input
                         required type="text" placeholder="e.g. Microeconomics Unit 1 Notes"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
                         value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
                       />
                     </div>
@@ -340,7 +356,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                         <button
                           type="button"
                           onClick={() => { setUploadCourseOpen(p => !p); setUploadCourseSearch(''); }}
-                          className={`w-full flex items-center justify-between px-3.5 py-2.5 bg-gray-50 border rounded-xl text-sm font-medium transition-all text-left ${uploadCourseOpen ? 'border-brand-primary ring-2 ring-brand-primary/20 bg-white' : 'border-gray-200'} ${!formData.course ? 'text-gray-300' : 'text-gray-800'}`}
+                          className={`w-full flex items-center justify-between px-3.5 py-2.5 bg-gray-50 border rounded-xl text-sm font-medium transition-all text-left ${uploadCourseOpen ? 'border-purple-500 ring-2 ring-purple-500/20 bg-white' : 'border-gray-200'} ${!formData.course ? 'text-gray-300' : 'text-gray-800'}`}
                         >
                           <span className="truncate">{formData.course || 'Select Course'}</span>
                           <ChevronDown className={`w-4 h-4 text-gray-300 shrink-0 transition-transform ${uploadCourseOpen ? 'rotate-180' : ''}`} />
@@ -359,7 +375,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                                   <input
                                     autoFocus type="text" placeholder="Search course…"
                                     value={uploadCourseSearch} onChange={e => setUploadCourseSearch(e.target.value)}
-                                    className="w-full pl-7 pr-3 py-1.5 text-xs font-medium bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-brand-primary text-gray-800 placeholder:text-gray-300"
+                                    className="w-full pl-7 pr-3 py-1.5 text-xs font-medium bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-purple-400 text-gray-800 placeholder:text-gray-300"
                                   />
                                 </div>
                               </div>
@@ -367,10 +383,10 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                                 {College_COURSES.filter(c => c.toLowerCase().includes(uploadCourseSearch.toLowerCase())).map(course => (
                                   <button key={course} type="button"
                                     onClick={() => { setFormData(d => ({ ...d, course })); setUploadCourseOpen(false); setUploadCourseSearch(''); }}
-                                    className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center justify-between gap-2 transition-colors ${formData.course === course ? 'bg-brand-surface text-brand-primary font-bold' : 'text-gray-700 hover:bg-gray-50'}`}
+                                    className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center justify-between gap-2 transition-colors ${formData.course === course ? 'bg-purple-50 text-purple-700 font-bold' : 'text-gray-700 hover:bg-gray-50'}`}
                                   >
                                     <span className="truncate">{course}</span>
-                                    {formData.course === course && <CheckCircle2 className="w-3 h-3 text-brand-primary shrink-0" />}
+                                    {formData.course === course && <CheckCircle2 className="w-3 h-3 text-purple-600 shrink-0" />}
                                   </button>
                                 ))}
                                 {College_COURSES.filter(c => c.toLowerCase().includes(uploadCourseSearch.toLowerCase())).length === 0 && (
@@ -393,7 +409,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                           {(['Note', 'PYQ', 'Book', 'Playlist', 'Syllabus'] as const).map(t => (
                             <button key={t} type="button"
                               onClick={() => setFormData(d => ({ ...d, type: t }))}
-                              className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${formData.type === t ? 'bg-brand-primary text-white border-brand-primary shadow-md shadow-brand-primary/20' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-brand-primary/20 hover:text-brand-primary'}`}
+                              className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${formData.type === t ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-purple-300 hover:text-purple-700'}`}
                             >
                               {t}
                             </button>
@@ -404,7 +420,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                       <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Subject Code <span className="text-gray-300">(optional)</span></label>
                         <input type="text" placeholder="e.g. 11017502"
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
                           value={formData.subjectCode} onChange={e => setFormData({ ...formData, subjectCode: e.target.value })}
                         />
                       </div>
@@ -418,7 +434,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                       {Array.from({ length: COURSE_METADATA[formData.course]?.semesters || 8 }, (_, i) => i + 1).map(sem => (
                         <button key={sem} type="button"
                           onClick={() => setFormData(d => ({ ...d, semester: String(sem) }))}
-                          className={`w-10 h-9 rounded-xl text-xs font-black border transition-all ${formData.semester === String(sem) ? 'bg-brand-primary text-white border-brand-primary shadow-md shadow-brand-primary/20' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-brand-primary/20 hover:text-brand-primary'}`}
+                          className={`w-10 h-9 rounded-xl text-xs font-black border transition-all ${formData.semester === String(sem) ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-purple-300 hover:text-purple-700'}`}
                         >
                           {sem}
                         </button>
@@ -433,7 +449,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                       <div className="relative">
                         <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
                         <input required type="url" placeholder="https://youtube.com/playlist?list=…"
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
                           value={formData.link} onChange={e => setFormData({ ...formData, link: e.target.value })}
                         />
                       </div>
@@ -445,7 +461,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                         <div className="relative">
                           <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
                           <input required={!formData.file} type="url" placeholder="https://drive.google.com/…"
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
                             value={formData.link} onChange={e => setFormData({ ...formData, link: e.target.value })}
                           />
                         </div>
@@ -454,7 +470,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Upload File</label>
                         <div
                           {...getRootProps()}
-                          className={`relative border-2 border-dashed rounded-xl p-3 text-center transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2 ${isDragActive ? 'border-brand-primary bg-brand-surface' : 'border-gray-200 hover:border-brand-primary hover:bg-gray-50'}`}
+                          className={`relative border-2 border-dashed rounded-xl p-3 text-center transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2 ${isDragActive ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-400 hover:bg-gray-50'}`}
                         >
                           <input {...getInputProps()} />
                           {formData.file ? (
@@ -465,7 +481,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                             </div>
                           ) : (
                             <div className="flex items-center gap-2 text-gray-400">
-                              <Upload className="w-4 h-4 text-brand-primary" />
+                              <Upload className="w-4 h-4 text-purple-400" />
                               <span className="text-xs font-medium">PDF, JPG · Max 15MB</span>
                             </div>
                           )}
@@ -478,14 +494,14 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tags <span className="text-gray-300">(comma separated)</span></label>
                     <input type="text" placeholder="e.g. economics, micro, unit1"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
                       value={formData.tags} onChange={e => setFormData({ ...formData, tags: e.target.value })}
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Description <span className="text-gray-300">(optional)</span></label>
                     <textarea rows={3} placeholder="Tell students what this resource covers…"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium resize-none"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium resize-none"
                       value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
                     />
                   </div>
@@ -516,7 +532,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
 
                   {/* Submit / Progress State */}
                   {uploadStatus === 'uploading' ? (
-                    <div className="w-full bg-brand-surface/50 border border-brand-primary/20 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-sm">
+                    <div className="w-full bg-purple-50/50 border border-purple-100 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-sm">
                       <style dangerouslySetInnerHTML={{__html: `
                         @keyframes progress-bar-stripes {
                           0% { background-position: 1rem 0; }
@@ -538,29 +554,29 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                         }
                       `}} />
                       <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-brand-primary uppercase tracking-widest flex items-center gap-2">
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-brand-primary" />
+                        <span className="text-purple-700 uppercase tracking-widest flex items-center gap-2">
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-purple-600" />
                           {uploadProgress < 100 ? (
                             <>Uploading material…</>
                           ) : (
                             <>Processing database entry…</>
                           )}
                         </span>
-                        <span className="text-brand-dark font-extrabold bg-brand-primary/20 px-2 py-0.5 rounded-md text-[10px] tabular-nums shadow-sm">{uploadProgress}%</span>
+                        <span className="text-purple-800 font-extrabold bg-purple-100 px-2 py-0.5 rounded-md text-[10px] tabular-nums shadow-sm">{uploadProgress}%</span>
                       </div>
                       
                       {/* Gorgeous Progress Bar Container */}
-                      <div className="w-full h-3 bg-brand-primary/20/50 rounded-full overflow-hidden relative border border-brand-primary/20/50">
+                      <div className="w-full h-3 bg-purple-100/50 rounded-full overflow-hidden relative border border-purple-200/50">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${uploadProgress}%` }}
                           transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
-                          className="h-full bg-gradient-to-r from-brand-primary via-indigo-500 to-brand-primary rounded-full relative animate-stripes shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)]"
+                          className="h-full bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-600 rounded-full relative animate-stripes shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)]"
                         />
                       </div>
 
                       {/* Sub-step helper text */}
-                      <div className="text-[10px] text-brand-primary/70 font-bold tracking-wide text-center h-4 flex items-center justify-center">
+                      <div className="text-[10px] text-purple-600/70 font-bold tracking-wide text-center h-4 flex items-center justify-center">
                         {uploadProgress === 0 && 'Initialising secure connection & verifying token…'}
                         {uploadProgress > 0 && uploadProgress < 20 && 'Compressing assets for fast delivery…'}
                         {uploadProgress >= 20 && uploadProgress < 85 && 'Uploading study material stream to Cloudflare R2 bucket…'}
@@ -573,7 +589,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                     <motion.button
                       whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       type="submit"
-                      className="w-full bg-brand-primary hover:bg-brand-primary text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-brand-primary/20 flex items-center justify-center gap-2 transition-all"
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-purple-600/20 flex items-center justify-center gap-2 transition-all"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Publish Resource
                     </motion.button>

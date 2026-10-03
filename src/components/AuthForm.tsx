@@ -3,13 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Eye, EyeOff, Loader2, User, GraduationCap, BookOpen,
-  Mail, Lock, Building, ChevronRight, ChevronLeft, Calendar, AlertCircle
+  Mail, Lock, Building, ChevronRight, ChevronLeft, Check, Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase, signInWithGoogle, signInWithGithub, signInWithEmail, signUpWithEmail } from '../supabase';
 import { OTPVerificationPage } from '../pages/OTPVerificationPage';
 
-/* ── College list ── */
+/* ── College colleges list ── */
 const College_COLLEGES = [
   'Hindu College', 'St. Stephen\'s College', 'Miranda House',
   'Lady Shri Ram College', 'Hansraj College', 'Kirori Mal College',
@@ -27,20 +27,61 @@ const College_COLLEGES = [
 
 /* ── shared input style ── */
 const inputCls =
-  'w-full h-11 pl-10 pr-4 bg-[#E7E9E3] border border-transparent rounded-lg text-[14.5px] ' +
-  'text-[#1C1F1A] placeholder-[#8C9087] ' +
-  'focus:outline-none focus:bg-white focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)] ' +
+  'w-full pl-9 pr-4 h-10 bg-gray-50 border border-gray-200 rounded-xl text-sm ' +
+  'text-gray-900 placeholder-gray-400 ' +
+  'focus:outline-none focus:bg-white focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 ' +
   'transition-all';
+
+const selectCls =
+  'w-full pl-9 pr-8 h-10 bg-gray-50 border border-gray-200 rounded-xl text-sm ' +
+  'text-gray-900 ' +
+  'focus:outline-none focus:bg-white focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 ' +
+  'transition-all appearance-none cursor-pointer';
 
 /* ── Google SVG ── */
 const GoogleIcon = () => (
-  <svg viewBox="0 0 48 48" className="w-[18px] h-[18px]"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8 3l5.7-5.7C34.6 6.5 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 18.9 13 24 13c3.1 0 5.9 1.1 8 3l5.7-5.7C34.6 6.5 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.7 13.6-4.7l-6.3-5.3c-2 1.4-4.5 2.2-7.3 2.2-5.3 0-9.7-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.1-3.4 5.6-6.3 7l6.3 5.3C39.5 36.9 44 31 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+  <svg className="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
 );
 
 /* ── GitHub SVG ── */
 const GithubIcon = () => (
-  <svg viewBox="0 0 24 24" fill="#fff" className="w-[18px] h-[18px]"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.7.1-.7 1.3.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.3-3.2-.1-.3-.6-1.6.1-3.2 0 0 1.1-.3 3.4 1.3a12 12 0 0 1 6.2 0c2.3-1.6 3.4-1.3 3.4-1.3.7 1.7.2 2.9.1 3.2.8.9 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3z"/></svg>
+  <svg className="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="white">
+    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+  </svg>
 );
+
+/* ── Password strength indicator ── */
+const PasswordStrength: React.FC<{ password: string }> = ({ password }) => {
+  const checks = [
+    password.length >= 6,
+    /[A-Z]/.test(password),
+    /[0-9]/.test(password),
+  ];
+  const score = checks.filter(Boolean).length;
+  const colors = ['bg-red-400', 'bg-yellow-400', 'bg-green-500'];
+  const labels = ['Weak', 'Fair', 'Strong'];
+  if (!password) return null;
+  return (
+    <div className="mt-1.5 space-y-1">
+      <div className="flex gap-1">
+        {[0, 1, 2].map(i => (
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < score ? colors[score - 1] : 'bg-gray-200'}`}
+          />
+        ))}
+      </div>
+      <p className={`text-[10px] font-semibold ${score === 1 ? 'text-red-500' : score === 2 ? 'text-yellow-600' : 'text-green-600'}`}>
+        {labels[score - 1] ?? ''}
+      </p>
+    </div>
+  );
+};
 
 /* ── Searchable Dropdown ── */
 const SearchableDropdown = ({ options, value, onChange, placeholder, icon: Icon }: { options: string[], value: string, onChange: (v: string) => void, placeholder: string, icon?: React.ElementType }) => {
@@ -63,29 +104,25 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, icon: Icon 
   const filtered = baseOptions.filter(o => o.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="relative mb-4" ref={wrapperRef}>
-      <div className="flex flex-col gap-1.5">
-        <div className="relative flex items-center">
-          {Icon && <Icon className="absolute left-3.5 w-4 h-4 text-[#8C9087] z-10" />}
-          <div 
-            className={`${inputCls} flex items-center justify-between cursor-text pr-8 ${!value && !search && !isOpen ? '!text-[#8C9087]' : ''}`}
-            onClick={() => setIsOpen(true)}
-          >
-            <input 
-               type="text"
-               placeholder={isOpen && value ? value : placeholder}
-               className={`w-full h-full bg-transparent outline-none border-none text-[14.5px] p-0 m-0 ${!value && !search && !isOpen ? 'text-[#8C9087] placeholder-[#8C9087]' : 'text-[#1C1F1A]'}`}
-               value={isOpen ? search : value || ''}
-               onChange={(e) => {
-                 setSearch(e.target.value);
-                 setIsOpen(true);
-               }}
-               onFocus={() => setIsOpen(true)}
-            />
-          </div>
-          <ChevronRight className={`absolute right-3.5 w-4 h-4 text-[#8C9087] pointer-events-none transition-transform ${isOpen ? '-rotate-90' : 'rotate-90'}`} />
-        </div>
+    <div className="relative" ref={wrapperRef}>
+      {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />}
+      <div 
+        className={`${inputCls} flex items-center justify-between cursor-text ${Icon ? 'pl-9' : 'pl-4'} pr-8 bg-white border-gray-200 hover:border-purple-300 focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/10`}
+        onClick={() => setIsOpen(true)}
+      >
+        <input 
+           type="text"
+           placeholder={isOpen && value ? value : placeholder}
+           className={`w-full h-full bg-transparent outline-none border-none text-sm p-0 m-0 ${!value && !search && !isOpen ? 'text-gray-400 placeholder-gray-400' : 'text-gray-900'}`}
+           value={isOpen ? search : value || ''}
+           onChange={(e) => {
+             setSearch(e.target.value);
+             setIsOpen(true);
+           }}
+           onFocus={() => setIsOpen(true)}
+        />
       </div>
+      <ChevronRight className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none transition-transform ${isOpen ? '-rotate-90' : 'rotate-90'}`} />
       
       <AnimatePresence>
         {isOpen && (
@@ -94,7 +131,7 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, icon: Icon 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto py-1 scrollbar-none"
+            className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] max-h-48 overflow-y-auto py-1 scrollbar-none"
           >
             {filtered.length > 0 ? (
               filtered.map((opt) => (
@@ -102,7 +139,7 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, icon: Icon 
                   key={opt}
                   type="button"
                   onClick={() => { onChange(opt); setSearch(''); setIsOpen(false); }}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${value === opt ? 'bg-[var(--brand-soft)] text-[var(--brand)] font-medium' : 'text-[#1C1F1A] hover:bg-gray-50'}`}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${value === opt ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                 >
                   {opt}
                 </button>
@@ -115,7 +152,7 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, icon: Icon 
               <button
                 type="button"
                 onClick={() => { onChange('Other'); setSearch(''); setIsOpen(false); }}
-                 className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-t border-gray-100 mt-1 ${value === 'Other' ? 'bg-[var(--brand-soft)] text-[var(--brand)] font-medium' : 'text-[#1C1F1A] hover:bg-gray-50 font-medium'}`}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-t border-gray-100 mt-1 ${value === 'Other' ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-50 font-medium'}`}
               >
                 Other
               </button>
@@ -136,9 +173,6 @@ interface AuthFormProps {
   onPasswordChange?: (p: string) => void;
   onShowPasswordChange?: (s: boolean) => void;
   onTypingChange?: (t: boolean) => void;
-  isModal?: boolean;
-  authMessage?: string;
-  onModeChange?: (mode: 'login' | 'signup') => void;
 }
 
 /* ─────────────────────────────────────────────── */
@@ -150,9 +184,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   onPasswordChange,
   onShowPasswordChange,
   onTypingChange,
-  isModal = false,
-  authMessage,
-  onModeChange,
 }) => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
@@ -180,6 +211,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const firstFieldRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    /* auto-focus first visible field on mode/step change (only on larger screens to prevent mobile keyboard jumping) */
     if (window.innerWidth > 768) {
       const t = setTimeout(() => firstFieldRef.current?.focus(), 120);
       return () => clearTimeout(t);
@@ -188,11 +220,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
   /* ── Reset on mode switch ── */
   const switchMode = (next: 'login' | 'signup') => {
-    if (!isModal) {
-      navigate(next === 'login' ? '/login' : '/signup', { replace: true });
-    }
+    navigate(next === 'login' ? '/login' : '/signup', { replace: true });
     setMode(next);
-    onModeChange?.(next);
     setSignupStep(1);
     setEmail(''); setPassword(''); setConfirmPassword('');
     setName(''); setCollege(''); setOtherCollege(''); setCourse(''); setRole('user'); setBatchYear(''); setOtherBatchYear('');
@@ -218,11 +247,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({
     e.preventDefault();
     if (isLoading) return;
 
+    /* Signup Step 1 → just move to Step 2 */
     if (mode === 'signup' && signupStep === 1) {
       if (validateStep1()) setSignupStep(2);
       return;
     }
 
+    /* Signup Step 2 validation */
     if (mode === 'signup') {
       if (!name.trim()) { toast.error('Please enter your full name.'); return; }
       if (!college)     { toast.error('Please select your college.');  return; }
@@ -252,7 +283,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         }
         toast.success(`Account created! Welcome, ${name}! 🎉 Check your email to verify.`);
         setShowOTP(true);
-        return; 
+        return; // Don't call onSuccess yet! Wait for OTP verification.
       }
       onSuccess?.();
     } catch (err: any) {
@@ -290,13 +321,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({
     catch (err: any) { toast.error(err.message || 'GitHub login failed.'); setIsLoading(false); }
   };
 
+  /* ─── Render ─── */
   if (showOTP) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full flex flex-col max-w-[400px] mx-auto"
+        className="w-full"
       >
         <OTPVerificationPage email={email} onVerified={onSuccess} />
       </motion.div>
@@ -304,310 +336,51 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-full max-w-[400px] mx-auto text-left relative z-10">
-      
-      {authMessage && (
-        <div className="mb-6 bg-[#F6E2DB] text-[#B5482E] px-4 py-3 rounded-lg text-[13.5px] font-medium border border-[#B5482E]/20 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          {authMessage}
-        </div>
-      )}
+    <div className="w-full">
 
-      <div className="mb-8">
-        <h2 className="font-['Fraunces'] text-[28px] font-semibold text-[#1C1F1A] tracking-[-0.01em] mb-1">
+      {/* ── Header ── */}
+      <div className="mb-8 text-center flex flex-col items-center">
+        {/* Step progress for signup */}
+        {mode === 'signup' && (
+          <div className="flex items-center justify-center gap-2 mb-6">
+            {[1, 2].map(s => (
+              <div key={s} className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black transition-all ${
+                  signupStep > s
+                    ? 'bg-[#5636A7] text-white'
+                    : signupStep === s
+                      ? 'bg-[#5636A7] text-white ring-4 ring-[#5636A7]/20'
+                      : 'bg-gray-100 text-gray-400'
+                }`}>
+                  {signupStep > s ? <Check className="w-4 h-4" strokeWidth={3} /> : s}
+                </div>
+                <span className={`text-[11px] font-black uppercase tracking-widest ${signupStep === s ? 'text-[#5636A7]' : 'text-gray-400'}`}>
+                  {s === 1 ? 'Account' : 'Profile'}
+                </span>
+                {s < 2 && <div className={`h-1 w-8 rounded-full ${signupStep > 1 ? 'bg-[#5636A7]' : 'bg-gray-100'}`} />}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Removed logo from here as it's now displayed on the left panel ── */}
+        <h2 className="text-2xl sm:text-3xl font-black text-[#2B2859] tracking-tight leading-tight mb-2">
           {mode === 'login'
-            ? 'Welcome back'
+            ? 'Welcome Back!'
             : signupStep === 1
               ? 'Create Account'
               : 'Your Profile'}
         </h2>
-        <p className="text-[15px] text-[#5B5F56]">
+        <p className="text-sm text-gray-500 font-medium">
           {mode === 'login'
-            ? 'Log in to continue where you left off.'
+            ? 'Login to continue your learning journey'
             : signupStep === 1
-              ? 'Join My College Genie and get access to all resources.'
-              : 'Tell us a bit about yourself to continue.'}
+              ? 'Step 1 of 2 — Set your login credentials'
+              : 'Step 2 of 2 — Tell us a bit about yourself'}
         </p>
       </div>
 
-
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.form
-          key={`${mode}-${signupStep}`}
-          initial={{ opacity: 0, x: 12 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -12 }}
-          transition={{ duration: 0.18, ease: 'easeInOut' }}
-          onSubmit={handleSubmit}
-          className="flex flex-col"
-        >
-          {mode === 'login' && (
-            <>
-              <div className="flex flex-col gap-1.5 mb-4">
-                <label className="text-[13.5px] font-medium text-[#1C1F1A]">Email address</label>
-                <div className="relative flex items-center">
-                  <Mail className="absolute left-3.5 w-4 h-4 text-[#8C9087]" />
-                  <input
-                    ref={firstFieldRef}
-                    id="login-email"
-                    name="email"
-                    type="email"
-                    placeholder="you@college.edu"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    className={inputCls}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5 mb-6">
-                <label className="text-[13.5px] font-medium text-[#1C1F1A]">Password</label>
-                <div className="relative flex items-center">
-                  <Lock className="absolute left-3.5 w-4 h-4 text-[#8C9087]" />
-                  <input
-                    id="login-password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    className={`${inputCls} pr-11`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 text-[#8C9087] hover:text-[#5B5F56] transition-colors p-1"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center mb-6">
-                <div />
-                <Link to="/forgot-password" className="text-[13px] font-semibold text-[var(--brand)] hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
-            </>
-          )}
-
-          {mode === 'signup' && signupStep === 1 && (
-            <>
-              <div className="flex flex-col gap-1.5 mb-4">
-                <label className="text-[13.5px] font-medium text-[#1C1F1A]">Email address</label>
-                <div className="relative flex items-center">
-                  <Mail className="absolute left-3.5 w-4 h-4 text-[#8C9087]" />
-                  <input
-                    ref={firstFieldRef}
-                    id="signup-email"
-                    name="email"
-                    type="email"
-                    placeholder="you@college.edu"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    className={inputCls}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5 mb-4">
-                <label className="text-[13.5px] font-medium text-[#1C1F1A]">Create password</label>
-                <div className="relative flex items-center">
-                  <Lock className="absolute left-3.5 w-4 h-4 text-[#8C9087]" />
-                  <input
-                    id="signup-password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    className={`${inputCls} pr-11`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 text-[#8C9087] hover:text-[#5B5F56] transition-colors p-1"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5 mb-6">
-                <label className="text-[13.5px] font-medium text-[#1C1F1A]">Confirm password</label>
-                <div className="relative flex items-center">
-                  <Lock className="absolute left-3.5 w-4 h-4 text-[#8C9087]" />
-                  <input
-                    id="signup-confirm-password"
-                    name="confirm-password"
-                    type={showConfirm ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    className={`${inputCls} pr-11`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3.5 text-[#8C9087] hover:text-[#5B5F56] transition-colors p-1"
-                  >
-                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {mode === 'signup' && signupStep === 2 && (
-            <>
-              <div className="flex gap-2 mb-4">
-                <button
-                  type="button"
-                  onClick={() => setRole('user')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 h-11 rounded-lg text-[13.5px] font-semibold transition-all border ${
-                    role === 'user' 
-                      ? 'border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]' 
-                      : 'border-transparent bg-[#E7E9E3] text-[#5B5F56] hover:bg-[#E2E4DE]'
-                  }`}
-                >
-                  <User className="w-4 h-4" /> Student
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('faculty')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 h-11 rounded-lg text-[13.5px] font-semibold transition-all border ${
-                    role === 'faculty' 
-                      ? 'border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]' 
-                      : 'border-transparent bg-[#E7E9E3] text-[#5B5F56] hover:bg-[#E2E4DE]'
-                  }`}
-                >
-                  <GraduationCap className="w-4 h-4" /> Faculty
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-1.5 mb-4">
-                <label className="text-[13.5px] font-medium text-[#1C1F1A]">Full name</label>
-                <div className="relative flex items-center">
-                  <User className="absolute left-3.5 w-4 h-4 text-[#8C9087]" />
-                  <input
-                    ref={firstFieldRef}
-                    name="full-name"
-                    type="text"
-                    placeholder="Your name"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    className={inputCls}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13.5px] font-medium text-[#1C1F1A]">College</label>
-                <SearchableDropdown
-                  options={College_COLLEGES}
-                  value={college}
-                  onChange={(v) => { setCollege(v); if (v !== 'Other') setOtherCollege(''); }}
-                  placeholder="Select college"
-                  icon={Building}
-                />
-              </div>
-
-              {college === 'Other' && (
-                <div className="flex flex-col gap-1.5 mb-4 -mt-2">
-                  <div className="relative flex items-center">
-                    <Building className="absolute left-3.5 w-4 h-4 text-[#8C9087]" />
-                    <input
-                      type="text"
-                      placeholder="Enter college name"
-                      value={otherCollege}
-                      onChange={e => setOtherCollege(e.target.value)}
-                      className={inputCls}
-                      required
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-1.5 mb-4">
-                <label className="text-[13.5px] font-medium text-[#1C1F1A]">Course</label>
-                <div className="relative flex items-center">
-                  <BookOpen className="absolute left-3.5 w-4 h-4 text-[#8C9087]" />
-                  <input
-                    type="text"
-                    placeholder="e.g. B.A. Economics"
-                    value={course}
-                    onChange={e => setCourse(e.target.value)}
-                    className={inputCls}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5 mb-6">
-                <label className="text-[13.5px] font-medium text-[#1C1F1A]">Batch Year</label>
-                <SearchableDropdown
-                  options={[...Array.from({ length: 26 }, (_, i) => (2010 + i).toString()), 'Other']}
-                  value={batchYear}
-                  onChange={(v) => { setBatchYear(v); if (v !== 'Other') setOtherBatchYear(''); }}
-                  placeholder="Graduation year"
-                  icon={Calendar}
-                />
-              </div>
-
-              {batchYear === 'Other' && (
-                <div className="flex flex-col gap-1.5 mb-6 -mt-2">
-                  <div className="relative flex items-center">
-                    <Calendar className="absolute left-3.5 w-4 h-4 text-[#8C9087]" />
-                    <input
-                      type="text"
-                      placeholder="Enter year"
-                      value={otherBatchYear}
-                      onChange={e => setOtherBatchYear(e.target.value)}
-                      className={inputCls}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          <div className="flex gap-3">
-            {mode === 'signup' && signupStep === 2 && (
-              <button
-                type="button"
-                onClick={() => setSignupStep(1)}
-                className="flex items-center justify-center w-12 h-11 bg-white border border-[#D8DBD3] rounded-lg text-[#5B5F56] hover:bg-gray-50 transition-colors shrink-0"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 flex items-center justify-center h-11 bg-[#E2A33B] text-[#6B4509] font-semibold text-[14.5px] rounded-lg hover:brightness-95 transition-all disabled:opacity-60"
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : mode === 'login' ? (
-                'Log in'
-              ) : signupStep === 1 ? (
-                'Continue'
-              ) : (
-                'Create account'
-              )}
-            </button>
-          </div>
-        </motion.form>
-      </AnimatePresence>
-
+      {/* ── OAuth buttons (login mode and signup step 1 only) ── */}
       <AnimatePresence mode="popLayout">
         {(mode === 'login' || signupStep === 1) && (
           <motion.div
@@ -616,51 +389,356 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
+            className="flex flex-col gap-3 mb-6"
           >
-            <div className="flex items-center gap-3 mt-6 mb-5">
-              <div className="flex-1 h-px bg-[#D8DBD3]" />
-              <span className="text-[12.5px] font-medium text-[#8C9087] uppercase tracking-wide">
-                or continue with
-              </span>
-              <div className="flex-1 h-px bg-[#D8DBD3]" />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleGoogle}
-                disabled={isLoading}
-                className="flex-1 flex items-center justify-center h-11 rounded-lg border border-[#D8DBD3] bg-white hover:bg-gray-50 transition-colors disabled:opacity-60"
-              >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-gray-500" /> : <GoogleIcon />}
-              </button>
-              <button
-                type="button"
-                onClick={handleGithub}
-                disabled={isLoading}
-                className="flex-1 flex items-center justify-center h-11 rounded-lg border border-[#16191B] bg-[#16191B] text-white hover:bg-black transition-colors disabled:opacity-60"
-              >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <GithubIcon />}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleGoogle}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 h-12 rounded-xl font-bold text-sm hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm disabled:opacity-50 active:scale-[0.99]"
+            >
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />} Continue with Google
+            </button>
+            <button
+              type="button"
+              onClick={handleGithub}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-3 bg-gray-900 border border-gray-800 text-white h-12 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-sm disabled:opacity-50 active:scale-[0.99]"
+            >
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <GithubIcon />} Continue with GitHub
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <p className="text-[12.5px] text-[#5B5F56] text-center mt-6">
-        By {mode === 'login' ? 'logging in' : 'signing up'}, you agree to our{' '}
-        <Link to="/terms" className="text-[#1C1F1A] font-semibold hover:underline">Terms</Link> and{' '}
-        <Link to="/privacy" className="text-[#1C1F1A] font-semibold hover:underline">Privacy Policy</Link>.
-      </p>
-      
-      <p className="text-[14px] text-[#5B5F56] text-center mt-3">
-        {mode === 'signup' ? "Already have an account?" : "Don't have an account?"}{' '}
+      {/* ── Divider (login & signup step 1) ── */}
+      {(mode === 'login' || signupStep === 1) && (
+        <div className="relative flex items-center mb-6">
+          <div className="flex-1 border-t border-gray-200" />
+          <span className="px-4 text-[12px] text-gray-400 font-bold uppercase tracking-wider bg-white relative z-10">
+            or with email
+          </span>
+          <div className="flex-1 border-t border-gray-200" />
+        </div>
+      )}
+
+      {/* ── Form ── */}
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.form
+          key={`${mode}-${signupStep}`}
+          initial={{ opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -12 }}
+          transition={{ duration: 0.18, ease: 'easeInOut' }}
+          onSubmit={handleSubmit}
+          className="space-y-3"
+        >
+          {/* ── LOGIN fields ── */}
+          {mode === 'login' && (
+            <>
+              {/* Email */}
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  ref={firstFieldRef}
+                  id="login-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onFocus={() => onTypingChange?.(true)}
+                  onBlur={() => onTypingChange?.(false)}
+                  className={inputCls}
+                  required
+                />
+              </div>
+
+              {/* Password */}
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  id="login-password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={e => { setPassword(e.target.value); onPasswordChange?.(e.target.value); }}
+                  onFocus={() => onTypingChange?.(true)}
+                  onBlur={() => onTypingChange?.(false)}
+                  className={`${inputCls} pr-11`}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => { setShowPassword(!showPassword); onShowPasswordChange?.(!showPassword); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-0.5"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {/* Forgot password */}
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-[11px] text-purple-700 hover:text-purple-800 font-semibold hover:underline transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+            </>
+          )}
+
+          {/* ── SIGNUP STEP 1: Email + Password ── */}
+          {mode === 'signup' && signupStep === 1 && (
+            <>
+              {/* Email */}
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  ref={firstFieldRef}
+                  id="signup-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onFocus={() => onTypingChange?.(true)}
+                  onBlur={() => onTypingChange?.(false)}
+                  className={inputCls}
+                  required
+                />
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    id="signup-password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    placeholder="Create password (min. 6 chars)"
+                    value={password}
+                    onChange={e => { setPassword(e.target.value); onPasswordChange?.(e.target.value); }}
+                    onFocus={() => onTypingChange?.(true)}
+                    onBlur={() => onTypingChange?.(false)}
+                    className={`${inputCls} pr-11`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setShowPassword(!showPassword); onShowPasswordChange?.(!showPassword); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-0.5"
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <PasswordStrength password={password} />
+              </div>
+
+              {/* Confirm password */}
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  id="signup-confirm-password"
+                  name="confirm-password"
+                  type={showConfirm ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className={`${inputCls} pr-11 ${confirmPassword && confirmPassword.length >= password.length && password !== confirmPassword ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-0.5"
+                  aria-label="Toggle confirm password visibility"
+                >
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {confirmPassword && confirmPassword.length >= password.length && password !== confirmPassword && (
+                <p className="text-[11px] text-red-500 font-medium -mt-1 ml-1">Passwords don't match</p>
+              )}
+            </>
+          )}
+
+          {/* ── SIGNUP STEP 2: Profile ── */}
+          {mode === 'signup' && signupStep === 2 && (
+            <>
+              {/* Role Selection */}
+              <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-200 mb-1">
+                <button
+                  type="button"
+                  onClick={() => setRole('user')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-bold transition-all ${
+                    role === 'user' 
+                      ? 'bg-white text-[#5636A7] shadow-sm ring-1 ring-gray-900/5' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5" /> Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('faculty')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-bold transition-all ${
+                    role === 'faculty' 
+                      ? 'bg-white text-[#5636A7] shadow-sm ring-1 ring-gray-900/5' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <GraduationCap className="w-3.5 h-3.5" /> Professor / Faculty
+                </button>
+              </div>
+
+              {/* Full name */}
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  ref={firstFieldRef}
+                  id="signup-name"
+                  name="full-name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Full name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  className={inputCls}
+                  required
+                />
+              </div>
+
+              {/* College (dropdown) */}
+              <SearchableDropdown
+                options={College_COLLEGES}
+                value={college}
+                onChange={(v) => { setCollege(v); if (v !== 'Other') setOtherCollege(''); }}
+                placeholder="Select your college"
+                icon={Building}
+              />
+
+              {/* Other College Input */}
+              {college === 'Other' && (
+                <div className="relative">
+                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    id="signup-other-college"
+                    name="other-college"
+                    type="text"
+                    placeholder="Enter your college name"
+                    value={otherCollege}
+                    onChange={e => setOtherCollege(e.target.value)}
+                    className={inputCls}
+                    autoFocus
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Course */}
+              <div className="relative">
+                <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  id="signup-course"
+                  name="course"
+                  type="text"
+                  placeholder="Course (e.g. B.Com, B.A. English)"
+                  value={course}
+                  onChange={e => setCourse(e.target.value)}
+                  className={`${inputCls} pr-6`}
+                  required
+                />
+              </div>
+
+              {/* Batch Year */}
+              <SearchableDropdown
+                options={[...Array.from({ length: 26 }, (_, i) => (2010 + i).toString()), 'Other']}
+                value={batchYear}
+                onChange={(v) => { setBatchYear(v); if (v !== 'Other') setOtherBatchYear(''); }}
+                placeholder="Batch Year (optional)"
+                icon={Calendar}
+              />
+
+              {/* Other Batch Input */}
+              {batchYear === 'Other' && (
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    name="other-batch-year"
+                    type="text"
+                    placeholder="Enter your batch year"
+                    value={otherBatchYear}
+                    onChange={e => setOtherBatchYear(e.target.value)}
+                    className={inputCls}
+                    autoFocus
+                  />
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Terms notice ── */}
+          <p className="text-[11px] text-gray-400 leading-relaxed text-center mt-1 mb-2">
+            By {mode === 'login' ? 'logging in' : 'signing up'}, you agree to our{' '}
+            <Link to="/terms" className="text-[#5636A7] hover:underline font-bold">Terms</Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="text-[#5636A7] hover:underline font-bold">Privacy Policy</Link>.
+          </p>
+
+          {/* ── CTA buttons ── */}
+          <div className={`flex gap-3 pt-2 ${mode === 'signup' && signupStep === 2 ? 'flex-row' : 'flex-col'}`}>
+            {/* Back button on step 2 */}
+            {mode === 'signup' && signupStep === 2 && (
+              <button
+                type="button"
+                onClick={() => setSignupStep(1)}
+                className="flex items-center justify-center gap-1.5 h-12 px-6 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.99] flex-shrink-0"
+              >
+                <ChevronLeft className="w-5 h-5" /> Back
+              </button>
+            )}
+
+            {/* Main CTA */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-3 bg-[#5636A7] hover:bg-[#4a2e92] text-white h-12 rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-60 active:scale-[0.99]"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : mode === 'login' ? (
+                'Login'
+              ) : signupStep === 1 ? (
+                <>Next <ChevronRight className="w-5 h-5" /></>
+              ) : (
+                'Create Account 🎉'
+              )}
+            </button>
+          </div>
+        </motion.form>
+      </AnimatePresence>
+
+      {/* ── Switch mode ── */}
+      <p className="mt-8 text-center text-[13px] font-medium text-gray-500">
+        {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}
+        {' '}
         <button
           type="button"
           onClick={() => switchMode(mode === 'signup' ? 'login' : 'signup')}
-          className="text-[var(--brand)] font-semibold hover:underline focus:outline-none"
+          className="text-[#5636A7] font-black hover:underline focus:outline-none ml-1"
         >
-          {mode === 'signup' ? 'Log in' : 'Sign up'}
+          {mode === 'signup' ? 'Login' : 'Sign Up'}
         </button>
       </p>
     </div>

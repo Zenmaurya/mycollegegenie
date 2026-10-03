@@ -141,7 +141,7 @@ export const ExchangeTab: React.FC = () => {
                     <button 
                       onClick={() => handleDelete(ad.id)}
                       disabled={deletingId === ad.id}
-                      className="p-2 text-gray-400 hover:text-mark-ink hover:bg-mark-soft rounded-lg transition-colors disabled:opacity-50" 
+                      className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50" 
                       title="Delete Ad"
                     >
                       {deletingId === ad.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}

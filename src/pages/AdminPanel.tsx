@@ -47,7 +47,7 @@ import {
   Settings,
   Globe
 } from 'lucide-react';
-import { Resource, User, NewsItem, ForumPost, PGListing, Testimonial, User as AppUser, Ad, SiteSettings } from '../types';
+import { Resource, User, News, ForumPost, PGListing, Testimonial, User as AppUser, Ad, SiteSettings } from '../types';
 import { getResources, approveResource, deleteResource, uploadResource, updateResource, uploadFile } from '../services/resourceService';
 import { getNews, addNews, updateNews, deleteNews, approveNews } from '../services/newsService';
 import { ForumService } from '../services/forumService';
@@ -73,7 +73,7 @@ interface AdminPanelProps {
 export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoading }) => {
   const navigate = useNavigate();
   const [resources, setResources] = useState<Resource[]>([]);
-  const [news, setNews] = useState<NewsItem[]>([]);
+  const [news, setNews] = useState<News[]>([]);
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [listings, setListings] = useState<PGListing[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -95,7 +95,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   const [pgToDelete, setPgToDelete] = useState<string | null>(null);
   const [testimonialToDelete, setTestimonialToDelete] = useState<string | null>(null);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
-  const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
+  const [editingNews, setEditingNews] = useState<News | null>(null);
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
   const [carouselEditingItem, setCarouselEditingItem] = useState<any | null>(null);
   const [carouselImageInput, setCarouselImageInput] = useState('');
@@ -528,7 +528,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
-      const res = await fetch(`${API_URL}/api/admin/campus-exchange`, {
+      const res = await fetch(`${API_URL}/api/admin/exchange`, {
         headers: { Authorization: `Bearer ${session?.access_token}` }
       });
       if (res.ok) {
@@ -889,7 +889,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     setResourceSubTab('upload');
   };
 
-  const startEditingNews = (n: NewsItem) => {
+  const startEditingNews = (n: News) => {
     setEditingNews(n);
     setNewsFormData({
       title: n.title,
@@ -933,15 +933,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-md bg-white/40 backdrop-blur-md p-12 rounded-[3rem] shadow-xl border border-gray-100"
         >
-          <div className="w-24 h-24 bg-brand-primary/20 rounded-full flex items-center justify-center mx-auto mb-8">
-            <UserIcon className="w-12 h-12 text-brand-primary" />
+          <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-8">
+            <UserIcon className="w-12 h-12 text-purple-600" />
           </div>
           <h1 className="text-3xl font-black text-gray-900 mb-4 tracking-tighter uppercase">Admin Access</h1>
           <p className="text-gray-500 font-medium mb-10 leading-relaxed">Please sign in with an administrator account to access the management dashboard.</p>
           <Link 
             to="/login" 
             state={{ from: { pathname: '/admin' } }}
-            className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-brand-primary text-white rounded-2xl font-black uppercase tracking-tighter hover:bg-brand-primary transition-all shadow-lg shadow-brand-primary/20 active:scale-95"
+            className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-purple-600 text-white rounded-2xl font-black uppercase tracking-tighter hover:bg-purple-700 transition-all shadow-lg shadow-purple-600/20 active:scale-95"
           >
             <LogIn className="w-5 h-5" />
             Sign In to Admin
@@ -959,8 +959,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-md bg-white/40 backdrop-blur-md p-12 rounded-[3rem] shadow-xl border border-gray-100"
         >
-          <div className="w-24 h-24 bg-mark-soft rounded-full flex items-center justify-center mx-auto mb-8">
-            <AlertCircle className="w-12 h-12 text-mark-ink" />
+          <div className="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-8">
+            <AlertCircle className="w-12 h-12 text-rose-600" />
           </div>
           <h1 className="text-3xl font-black text-gray-900 mb-4 tracking-tighter uppercase">Access Denied</h1>
           <p className="text-gray-500 font-medium mb-10 leading-relaxed">You do not have the required permissions to view the administrator panel. If you believe this is an error, please contact support.</p>
@@ -977,7 +977,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   }
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-gray-50 to-brand-surface/30 flex flex-col md:flex-row">
+    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-gray-50 to-purple-50/30 flex flex-col md:flex-row">
       <Helmet>
         <title>Admin Panel | MyCollegeGenie</title>
         <meta name="description" content="Manage MyCollegeGenie resources, users, and settings." />
@@ -999,7 +999,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
         {activeTab === 'overview' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
             <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-              <LayoutDashboard className="w-8 h-8 text-brand-primary" />
+              <LayoutDashboard className="w-8 h-8 text-purple-600" />
               Platform Overview
             </h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1007,8 +1007,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                 { label: 'Total Users', value: totalUsers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
                 { label: 'Pending Resources', value: resources.filter(r => !r.isApproved).length, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
                 { label: 'Active PG Listings', value: listings.length, icon: Home, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-100' },
-                { label: 'Pending Verifications', value: verifications.filter(v => v.status === 'pending').length, icon: ShieldCheck, color: 'text-brand-primary', bg: 'bg-brand-surface', border: 'border-brand-primary/20' },
-                { label: 'Active Playlists', value: resources.filter(r => r.type === 'Playlist').length, icon: Youtube, color: 'text-mark-ink', bg: 'bg-mark-soft', border: 'border-mark-soft' },
+                { label: 'Pending Verifications', value: verifications.filter(v => v.status === 'pending').length, icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
+                { label: 'Active Playlists', value: resources.filter(r => r.type === 'Playlist').length, icon: Youtube, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' },
                 { label: 'Active Ads', value: ads.filter(a => a.is_active).length, icon: Megaphone, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
               ].map((stat, i) => (
                 <motion.div 
@@ -1032,11 +1032,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             
             <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
               <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-                <LayoutDashboard className="w-5 h-5 text-brand-primary" />
+                <LayoutDashboard className="w-5 h-5 text-purple-500" />
                 Quick Actions
               </h2>
               <div className="flex flex-wrap gap-4">
-                <button onClick={() => setActiveTab('resources')} className="px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-primary transition-all">Moderate Resources</button>
+                <button onClick={() => setActiveTab('resources')} className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all">Moderate Resources</button>
                 <button onClick={() => setActiveTab('verification')} className="px-6 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all">Verify Users</button>
               </div>
             </div>
@@ -1051,7 +1051,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
-                  <Youtube className="w-8 h-8 text-brand-primary animate-pulse" />
+                  <Youtube className="w-8 h-8 text-purple-600 animate-pulse" />
                   Playlists Curation
                 </h2>
                 <p className="text-sm text-gray-400 font-medium mt-1">Curate and manage YouTube course playlists and video lectures for students.</p>
@@ -1071,7 +1071,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       tags: '',
                     });
                   }}
-                  className="flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-brand-primary transition-all shadow-lg shadow-brand-primary/20 self-start sm:self-auto"
+                  className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-purple-700 transition-all shadow-lg shadow-purple-600/20 self-start sm:self-auto"
                 >
                   <Plus className="w-4 h-4" /> Add Playlist
                 </button>
@@ -1080,14 +1080,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
 
             {/* Stats Overview */}
             {!isAddingPlaylist && !editingPlaylist && (
-              <div className="bg-brand-surface/50 border border-brand-primary/20 rounded-3xl p-6 flex items-center justify-between gap-6 max-w-sm">
+              <div className="bg-purple-50/50 border border-purple-100 rounded-3xl p-6 flex items-center justify-between gap-6 max-w-sm">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-brand-primary/20 text-brand-primary flex items-center justify-center shadow-inner">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center shadow-inner">
                     <Youtube className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary">Total Playlists</p>
-                    <p className="text-2xl font-black text-brand-dark leading-none mt-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-purple-400">Total Playlists</p>
+                    <p className="text-2xl font-black text-purple-900 leading-none mt-1">
                       {resources.filter(r => r.type === 'Playlist').length}
                     </p>
                   </div>
@@ -1104,7 +1104,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               >
                 <div className="flex items-center justify-between mb-8">
                   <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
-                    {editingPlaylist ? <Edit3 className="w-5 h-5 text-brand-primary" /> : <Plus className="w-5 h-5 text-brand-primary" />}
+                    {editingPlaylist ? <Edit3 className="w-5 h-5 text-purple-600" /> : <Plus className="w-5 h-5 text-purple-600" />}
                     {editingPlaylist ? 'Edit Playlist' : 'Add New Playlist'}
                   </h3>
                   <button 
@@ -1128,7 +1128,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         placeholder="e.g. Data Structures & Algorithms Lectures"
                         value={playlistFormData.title}
                         onChange={e => setPlaylistFormData({...playlistFormData, title: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                       />
                     </div>
 
@@ -1140,7 +1140,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         placeholder="https://www.youtube.com/playlist?list=..."
                         value={playlistFormData.link}
                         onChange={e => setPlaylistFormData({...playlistFormData, link: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                       />
                       <p className="text-[10px] text-gray-400 mt-1 leading-normal">
                         💡 <strong>Pro-Tip:</strong> Standard playlist links (<code>.../playlist?list=...</code>) don't have video IDs, so they show a default icon. To show the first video's thumbnail as the cover, enter a link that includes the first video (e.g., <code>.../watch?v=VIDEO_ID&list=PLAYLIST_ID</code>)!
@@ -1152,7 +1152,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       <select 
                         value={playlistFormData.course}
                         onChange={e => setPlaylistFormData({...playlistFormData, course: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all cursor-pointer"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer"
                       >
                         <option value="">Select Course</option>
                         {College_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -1164,7 +1164,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       <select 
                         value={playlistFormData.semester}
                         onChange={e => setPlaylistFormData({...playlistFormData, semester: Number(e.target.value)})}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all cursor-pointer"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer"
                       >
                         {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
                       </select>
@@ -1178,7 +1178,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       placeholder="dsa, algorithms, computer science, programming"
                       value={playlistFormData.tags}
                       onChange={e => setPlaylistFormData({...playlistFormData, tags: e.target.value})}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                     />
                   </div>
 
@@ -1190,7 +1190,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       placeholder="Provide a description detailing what this playlist covers..."
                       value={playlistFormData.description}
                       onChange={e => setPlaylistFormData({...playlistFormData, description: e.target.value})}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium resize-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium resize-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                     />
                   </div>
 
@@ -1218,7 +1218,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     <button 
                       type="submit" 
                       disabled={isUploading}
-                      className="flex-1 py-3.5 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-primary transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {isUploading && <RefreshCw className="w-4 h-4 animate-spin" />}
                       {editingPlaylist ? 'Update Playlist' : 'Publish Playlist'}
@@ -1259,8 +1259,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
                             </>
                           ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/10 to-indigo-500/10 flex items-center justify-center">
-                              <Youtube className="w-12 h-12 text-brand-primary" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 flex items-center justify-center">
+                              <Youtube className="w-12 h-12 text-purple-400" />
                             </div>
                           )}
                           <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-black text-white flex items-center gap-1 uppercase tracking-wider">
@@ -1271,7 +1271,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
 
                         {/* Badges */}
                         <div className="flex items-center gap-2 px-5 pt-4 shrink-0">
-                          <span className="text-[9px] font-black px-2.5 py-1 rounded-lg bg-brand-surface text-brand-primary uppercase tracking-widest">
+                          <span className="text-[9px] font-black px-2.5 py-1 rounded-lg bg-purple-50 text-purple-600 uppercase tracking-widest">
                             Sem {playlist.semester}
                           </span>
                           <span className="text-[9px] font-bold text-gray-400 truncate">
@@ -1281,7 +1281,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
 
                         {/* Title */}
                         <div className="px-5 pt-3 shrink-0">
-                          <h4 className="text-base font-black text-gray-900 group-hover:text-brand-primary transition-colors tracking-tight line-clamp-1">
+                          <h4 className="text-base font-black text-gray-900 group-hover:text-purple-600 transition-colors tracking-tight line-clamp-1">
                             {playlist.title}
                           </h4>
                         </div>
@@ -1318,7 +1318,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                   tags: playlist.tags.join(', '),
                                 });
                               }}
-                              className="p-2 bg-gray-50 text-gray-500 hover:text-brand-primary hover:bg-brand-surface rounded-xl transition-all"
+                              className="p-2 bg-gray-50 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
                               title="Edit Playlist"
                             >
                               <Edit3 className="w-4 h-4" />
@@ -1328,7 +1328,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                 setResourceToDelete(playlist.id);
                                 setIsDeleteModalOpen(true);
                               }}
-                              className="p-2 bg-mark-soft text-mark-ink hover:bg-mark hover:text-white rounded-xl transition-all"
+                              className="p-2 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-all"
                               title="Delete Playlist"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1342,8 +1342,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
 
                 {resources.filter(r => r.type === 'Playlist').length === 0 && (
                   <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-gray-200">
-                    <div className="w-16 h-16 bg-brand-surface rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Youtube className="w-8 h-8 text-brand-primary" />
+                    <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Youtube className="w-8 h-8 text-purple-400" />
                     </div>
                     <h3 className="text-lg font-black text-gray-900 mb-1">No playlists curated yet</h3>
                     <p className="text-sm text-gray-500 max-w-sm mx-auto font-medium mb-6">
@@ -1362,7 +1362,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                           tags: '',
                         });
                       }}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-brand-primary/20 hover:bg-brand-primary transition-colors"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-purple-600/20 hover:bg-purple-700 transition-colors"
                     >
                       <Plus className="w-4 h-4" /> Curate First Playlist
                     </button>
@@ -1379,7 +1379,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-black text-gray-900 capitalize flex items-center gap-2">
-                  <FileText className="w-8 h-8 text-brand-primary" />
+                  <FileText className="w-8 h-8 text-purple-600" />
                   Resources Management
                 </h2>
                 <p className="text-xs text-gray-400 font-medium">Manage uploaded PDF books, PYQs, lecture notes and playlists.</p>
@@ -1387,24 +1387,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               <div className="flex bg-white p-1 rounded-2xl border border-gray-200 shadow-sm w-fit shrink-0">
                 <button 
                   onClick={() => { setResourceSubTab('approved'); setEditingResource(null); }}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${resourceSubTab === 'approved' ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'text-gray-500 hover:bg-gray-50'}`}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${resourceSubTab === 'approved' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
                 >
                   View Approved
                 </button>
                 <button 
                   onClick={() => { setResourceSubTab('pending'); setEditingResource(null); }}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative ${resourceSubTab === 'pending' ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'text-gray-500 hover:bg-gray-50'}`}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative ${resourceSubTab === 'pending' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
                 >
                   View Pending
                   {resources.filter(r => !r.isApproved).length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-mark text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                    <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                       {resources.filter(r => !r.isApproved).length}
                     </span>
                   )}
                 </button>
                 <button 
                   onClick={() => { setResourceSubTab('upload'); setEditingResource(null); }}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${resourceSubTab === 'upload' ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'text-gray-500 hover:bg-gray-50'}`}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${resourceSubTab === 'upload' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:bg-gray-50'}`}
                 >
                   {editingResource ? 'Edit Resource' : 'Upload New'}
                 </button>
@@ -1416,11 +1416,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white p-6 sm:p-12 rounded-[2.5rem] sm:rounded-[3rem] border border-gray-100 shadow-2xl shadow-brand-dark/5 max-w-3xl mx-auto"
+                className="bg-white p-6 sm:p-12 rounded-[2.5rem] sm:rounded-[3rem] border border-gray-100 shadow-2xl shadow-purple-900/5 max-w-3xl mx-auto"
               >
                 <div className="flex items-center justify-between mb-8 sm:mb-12">
                   <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-4 tracking-tight">
-                    {editingResource ? <Edit3 className="w-6 h-6 sm:w-8 sm:h-8 text-brand-primary" /> : <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-brand-primary" />}
+                    {editingResource ? <Edit3 className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" /> : <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />}
                     {editingResource ? 'Edit Resource Details' : 'Upload New Content'}
                   </h2>
                   {editingResource && (
@@ -1458,7 +1458,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         placeholder="e.g. Microeconomics Unit 1 Notes"
                         value={formData.title}
                         onChange={(e) => setFormData({...formData, title: e.target.value})}
-                        className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm sm:text-base font-medium"
+                        className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
                       />
                     </div>
                     <div className="space-y-2.5">
@@ -1526,7 +1526,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       placeholder="https://..."
                       value={formData.link}
                       onChange={(e) => setFormData({...formData, link: e.target.value})}
-                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm sm:text-base font-medium"
+                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
                     />
                   </div>
 
@@ -1535,7 +1535,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     <div 
                       {...getRootProps()} 
                       className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all cursor-pointer ${
-                        isDragActive ? 'border-brand-primary bg-brand-surface' : 'border-gray-100 hover:border-brand-primary hover:bg-gray-50'
+                        isDragActive ? 'border-purple-500 bg-purple-50' : 'border-gray-100 hover:border-purple-400 hover:bg-gray-50'
                       }`}
                     >
                       <input {...getInputProps()} />
@@ -1559,8 +1559,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                           </>
                         ) : (
                           <>
-                            <div className="w-12 h-12 bg-brand-primary/20 rounded-full flex items-center justify-center">
-                              <Upload className="w-6 h-6 text-brand-primary" />
+                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                              <Upload className="w-6 h-6 text-purple-600" />
                             </div>
                             <p className="text-sm font-medium text-gray-900">Drag & drop a file here, or click to select</p>
                             <p className="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
@@ -1577,7 +1577,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       placeholder="Direct PDF link"
                       value={formData.directDownloadLink}
                       onChange={(e) => setFormData({...formData, directDownloadLink: e.target.value})}
-                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm sm:text-base font-medium"
+                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
                     />
                   </div>
 
@@ -1588,7 +1588,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       placeholder="Briefly describe the resource..."
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand-primary/20 outline-none resize-none text-sm sm:text-base font-medium"
+                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none resize-none text-sm sm:text-base font-medium"
                     />
                   </div>
 
@@ -1599,14 +1599,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       placeholder="economics, notes, sem1"
                       value={formData.tags}
                       onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm sm:text-base font-medium"
+                      className="w-full px-5 py-3 sm:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm sm:text-base font-medium"
                     />
                   </div>
 
                   <button 
                     type="submit"
                     disabled={isUploading}
-                    className="w-full py-4 sm:py-5 bg-brand-primary text-white rounded-2xl font-black text-sm sm:text-lg uppercase tracking-widest shadow-2xl shadow-brand-primary/20 hover:bg-brand-primary hover:scale-[1.02] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                    className="w-full py-4 sm:py-5 bg-purple-600 text-white rounded-2xl font-black text-sm sm:text-lg uppercase tracking-widest shadow-2xl shadow-purple-600/20 hover:bg-purple-700 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                   >
                     {isUploading ? (
                       <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
@@ -1630,13 +1630,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       placeholder="Search resources..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none transition-all text-sm font-medium"
+                      className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-sm font-medium"
                     />
                   </div>
                   <select 
                     value={selectedCourse}
                     onChange={(e) => setSelectedCourse(e.target.value)}
-                    className="w-full md:w-64 text-ellipsis overflow-hidden px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 text-xs font-black uppercase tracking-widest"
+                    className="w-full md:w-64 text-ellipsis overflow-hidden px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500/20 text-xs font-black uppercase tracking-widest"
                   >
                     <option>All Courses</option>
                     {College_COURSES.map(c => <option key={c}>{c}</option>)}
@@ -1651,7 +1651,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     filteredResources.map(resource => (
                       <div key={resource.id} className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
                         <div className="flex items-start gap-4 sm:gap-6 min-w-0 flex-1">
-                          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${resource.type === 'Playlist' ? 'bg-mark-soft text-mark-ink' : 'bg-brand-surface text-brand-primary'}`}>
+                          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${resource.type === 'Playlist' ? 'bg-rose-50 text-rose-600' : 'bg-purple-50 text-purple-600'}`}>
                             {resource.type === 'Playlist' ? <Youtube className="w-5 h-5 sm:w-6 sm:h-6" /> : <FileText className="w-5 h-5 sm:w-6 sm:h-6" />}
                           </div>
                           <div className="min-w-0 flex-1">
@@ -1668,7 +1668,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                           {resource.type !== 'Playlist' && (
                             <button 
                               onClick={() => navigate(`/flipbook/${resource.id}`)}
-                              className="p-2 sm:p-2.5 bg-brand-surface text-brand-primary hover:bg-brand-primary hover:text-white rounded-xl transition-all shadow-sm"
+                              className="p-2 sm:p-2.5 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white rounded-xl transition-all shadow-sm"
                               title="View Flipbook"
                             >
                               <Eye className="w-4 h-4" />
@@ -1676,7 +1676,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                           )}
                           <button 
                             onClick={() => window.open(resource.link, '_blank')}
-                            className="p-2 sm:p-2.5 bg-gray-50 text-gray-400 hover:text-brand-primary rounded-xl transition-colors"
+                            className="p-2 sm:p-2.5 bg-gray-50 text-gray-400 hover:text-purple-600 rounded-xl transition-colors"
                             title="View Resource"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -1714,7 +1714,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
 
                           <button 
                             onClick={() => handleDelete(resource.id)}
-                            className="p-2 sm:p-2.5 bg-mark-soft text-mark-ink hover:bg-mark hover:text-white rounded-xl transition-colors"
+                            className="p-2 sm:p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-colors"
                             title="Delete Resource"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1746,7 +1746,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             >
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-xl sm:text-2xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
-                  {editingNews ? <Edit3 className="w-6 h-6 text-brand-primary" /> : <Plus className="w-6 h-6 text-brand-primary" />}
+                  {editingNews ? <Edit3 className="w-6 h-6 text-purple-600" /> : <Plus className="w-6 h-6 text-purple-600" />}
                   {editingNews ? 'Edit News/Event' : 'Add News/Event'}
                 </h2>
                 {editingNews && (
@@ -1781,7 +1781,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     type="text"
                     value={newsFormData.title}
                     onChange={(e) => setNewsFormData({...newsFormData, title: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
                   />
                 </div>
 
@@ -1804,7 +1804,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       type="text"
                       value={newsFormData.date}
                       onChange={(e) => setNewsFormData({...newsFormData, date: e.target.value})}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
                     />
                   </div>
                 </div>
@@ -1816,7 +1816,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     type="text"
                     value={newsFormData.college}
                     onChange={(e) => setNewsFormData({...newsFormData, college: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
                   />
                 </div>
 
@@ -1827,7 +1827,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     rows={3}
                     value={newsFormData.summary}
                     onChange={(e) => setNewsFormData({...newsFormData, summary: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none resize-none text-sm font-medium"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none resize-none text-sm font-medium"
                   />
                 </div>
 
@@ -1841,7 +1841,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         placeholder="e.g. Auditorium, Block-A"
                         value={newsFormData.venue}
                         onChange={(e) => setNewsFormData({...newsFormData, venue: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1851,7 +1851,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         placeholder="e.g. 10:00 AM – 4:00 PM"
                         value={newsFormData.time}
                         onChange={(e) => setNewsFormData({...newsFormData, time: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
                       />
                     </div>
                     <div className="space-y-2 col-span-2">
@@ -1881,9 +1881,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       placeholder="Paste image URL or upload..."
                       value={newsFormData.imageUrl}
                       onChange={(e) => setNewsFormData({...newsFormData, imageUrl: e.target.value})}
-                      className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
+                      className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
                     />
-                    <label className={`cursor-pointer flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all shrink-0 ${isUploadingNewsImage ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-brand-surface border-brand-primary/20 text-brand-primary hover:bg-brand-primary/20'}`}>
+                    <label className={`cursor-pointer flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all shrink-0 ${isUploadingNewsImage ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100'}`}>
                       {isUploadingNewsImage ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                       {isUploadingNewsImage ? '...' : 'Upload'}
                       <input
@@ -1925,14 +1925,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     type="url"
                     value={newsFormData.url}
                     onChange={(e) => setNewsFormData({...newsFormData, url: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
                   />
                 </div>
 
                 <button 
                   type="submit"
                   disabled={isUploadingNewsImage}
-                  className="w-full py-4 bg-brand-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-brand-primary/20 hover:bg-brand-primary transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full py-4 bg-purple-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {editingNews ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                   {editingNews ? 'Update' : 'Publish'}
@@ -1947,7 +1947,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               className="space-y-4"
             >
               <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3 tracking-tight">
-                <Clock className="w-6 h-6 text-brand-primary" />
+                <Clock className="w-6 h-6 text-purple-600" />
                 Recent Updates
               </h2>
               
@@ -1959,13 +1959,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       {n.imageUrl ? (
                         <img src={n.imageUrl} alt={n.title} className="w-16 h-16 rounded-2xl object-cover flex-shrink-0 border border-gray-100" />
                       ) : (
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-primary/20 to-indigo-100 flex items-center justify-center flex-shrink-0">
-                          <ImageIcon className="w-6 h-6 text-brand-primary" />
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center flex-shrink-0">
+                          <ImageIcon className="w-6 h-6 text-purple-400" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${n.category === 'Event' ? 'bg-mark-soft text-mark-ink' : 'bg-blue-50 text-blue-600'}`}>
+                          <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${n.category === 'Event' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'}`}>
                             {n.category}
                           </span>
                           <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{n.date}</span>
@@ -1987,7 +1987,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                           )}
                           <button 
                             onClick={() => startEditingNews(n)}
-                            className="text-[10px] font-black text-brand-primary uppercase tracking-widest hover:underline flex items-center gap-1"
+                            className="text-[10px] font-black text-purple-600 uppercase tracking-widest hover:underline flex items-center gap-1"
                           >
                             <Edit3 className="w-3 h-3" /> Edit
                           </button>
@@ -2008,7 +2008,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                               }}
                               className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:underline ${
                                 (JSON.parse(siteSettings?.carousel_config || '{}')[n.id]?.show ?? true)
-                                  ? 'text-brand-primary font-bold'
+                                  ? 'text-purple-600 font-bold'
                                   : 'text-gray-400 font-medium'
                               }`}
                             >
@@ -2020,7 +2020,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                           )}
                           <button 
                             onClick={() => handleNewsDelete(n.id)}
-                            className="text-[10px] font-black text-mark-ink uppercase tracking-widest hover:underline flex items-center gap-1"
+                            className="text-[10px] font-black text-rose-600 uppercase tracking-widest hover:underline flex items-center gap-1"
                           >
                             <Trash2 className="w-3 h-3" /> Delete
                           </button>
@@ -2044,7 +2044,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           >
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-4 tracking-tight">
-                <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-brand-primary" />
+                <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
                 Manage Forum Posts
               </h2>
             </div>
@@ -2055,7 +2055,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                   <div key={post.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between gap-4 group hover:shadow-md transition-all">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2 py-0.5 bg-brand-surface text-brand-primary rounded-lg text-[8px] font-black uppercase tracking-widest">
+                        <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-lg text-[8px] font-black uppercase tracking-widest">
                           {post.course}
                         </span>
                         <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{new Date(post.createdAt).toLocaleDateString()}</span>
@@ -2067,7 +2067,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     </div>
                     <button 
                       onClick={() => handlePostDelete(post.id)}
-                      className="p-3 bg-mark-soft text-mark-ink hover:bg-mark hover:text-white rounded-2xl transition-all shadow-sm"
+                      className="p-3 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-2xl transition-all shadow-sm"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -2091,7 +2091,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           >
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-4 tracking-tight">
-                <Home className="w-6 h-6 sm:w-8 sm:h-8 text-brand-primary" />
+                <Home className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
                 Manage PG Listings
               </h2>
             </div>
@@ -2106,7 +2106,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                   className="relative w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
                 >
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900 flex items-center gap-3"><Edit3 className="w-5 h-5 text-brand-primary" /> Edit PG Listing</h3>
+                    <h3 className="text-xl font-black text-gray-900 flex items-center gap-3"><Edit3 className="w-5 h-5 text-purple-600" /> Edit PG Listing</h3>
                     <button onClick={() => setEditingPG(null)} className="p-2 hover:bg-gray-100 rounded-full"><X className="w-5 h-5 text-gray-400" /></button>
                   </div>
                   <form onSubmit={handlePGEditSubmit} className="space-y-4">
@@ -2148,8 +2148,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                             </button>
                           </div>
                         ))}
-                        <label className={`w-20 h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${isUploadingPGImage ? 'border-gray-200 bg-gray-50 opacity-60' : 'border-brand-primary/20 hover:bg-brand-surface'}`}>
-                          {isUploadingPGImage ? <RefreshCw className="w-5 h-5 text-gray-400 animate-spin" /> : <Plus className="w-5 h-5 text-brand-primary" />}
+                        <label className={`w-20 h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${isUploadingPGImage ? 'border-gray-200 bg-gray-50 opacity-60' : 'border-purple-200 hover:bg-purple-50'}`}>
+                          {isUploadingPGImage ? <RefreshCw className="w-5 h-5 text-gray-400 animate-spin" /> : <Plus className="w-5 h-5 text-purple-400" />}
                           <span className="text-[9px] font-bold text-gray-400 mt-1">{isUploadingPGImage ? 'Uploading' : 'Add'}</span>
                           <input type="file" accept="image/*" className="hidden" disabled={isUploadingPGImage} onChange={async (e) => {
                             const file = e.target.files?.[0];
@@ -2167,7 +2167,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     </div>
                     <div className="flex gap-3 pt-2">
                       <button type="button" onClick={() => setEditingPG(null)} className="flex-1 py-3 bg-gray-100 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 transition-colors">Cancel</button>
-                      <button type="submit" className="flex-1 py-3 bg-brand-primary text-white rounded-xl text-sm font-bold hover:bg-brand-primary transition-colors flex items-center justify-center gap-2"><Save className="w-4 h-4" /> Save Changes</button>
+                      <button type="submit" className="flex-1 py-3 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"><Save className="w-4 h-4" /> Save Changes</button>
                     </div>
                   </form>
                 </motion.div>
@@ -2183,13 +2183,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       {listing.images?.[0] ? (
                         <img src={listing.images[0]} alt="" className="w-16 h-16 rounded-2xl object-cover flex-shrink-0" />
                       ) : (
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-primary/20 to-blue-100 flex items-center justify-center flex-shrink-0">
-                          <Home className="w-7 h-7 text-brand-primary" />
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center flex-shrink-0">
+                          <Home className="w-7 h-7 text-purple-400" />
                         </div>
                       )}
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2 py-0.5 bg-brand-surface text-brand-primary rounded-lg text-[8px] font-black uppercase tracking-widest">{listing.budget}</span>
+                          <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-lg text-[8px] font-black uppercase tracking-widest">{listing.budget}</span>
                           <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{listing.gender}</span>
                         </div>
                         <h3 className="font-bold text-gray-900 truncate">{listing.college}</h3>
@@ -2212,7 +2212,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       </button>
                       <button 
                         onClick={() => handlePGDelete(listing.id)}
-                        className="p-3 bg-mark-soft text-mark-ink hover:bg-mark hover:text-white rounded-2xl transition-all shadow-sm"
+                        className="p-3 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-2xl transition-all shadow-sm"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
@@ -2237,7 +2237,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           >
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-4 tracking-tight">
-                <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-brand-primary" />
+                <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
                 Manage Testimonials
               </h2>
             </div>
@@ -2254,7 +2254,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         placeholder="Name (e.g. Aarav Saini)"
                         value={testimonialFormData.name}
                         onChange={e => setTestimonialFormData({...testimonialFormData, name: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
                       />
                       <input
                         type="text"
@@ -2262,7 +2262,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         placeholder="Handle (e.g. @aarav_du)"
                         value={testimonialFormData.handle}
                         onChange={e => setTestimonialFormData({...testimonialFormData, handle: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
                       />
                     </div>
                     <input
@@ -2271,7 +2271,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       placeholder="Image URL (Unsplash or direct image link)"
                       value={testimonialFormData.image}
                       onChange={e => setTestimonialFormData({...testimonialFormData, image: e.target.value})}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium"
                     />
                     <textarea
                       required
@@ -2279,10 +2279,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       placeholder="Testimonial text..."
                       value={testimonialFormData.text}
                       onChange={e => setTestimonialFormData({...testimonialFormData, text: e.target.value})}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-medium resize-none"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-medium resize-none"
                     />
                     <div className="flex gap-4">
-                      <button type="submit" className="px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-primary transition-colors">
+                      <button type="submit" className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors">
                         {editingTestimonial ? 'Update Testimonial' : 'Add Testimonial'}
                       </button>
                       {editingTestimonial && (
@@ -2332,13 +2332,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                   <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-gray-50">
                     <button 
                       onClick={() => startEditingTestimonial(t)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-surface text-brand-primary hover:bg-brand-primary hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
                     >
                       <Edit3 className="w-3.5 h-3.5" /> Edit
                     </button>
                     <button 
                       onClick={() => handleTestimonialDelete(t.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-mark-soft text-mark-ink hover:bg-mark hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
                     >
                       <Trash2 className="w-3.5 h-3.5" /> Delete
                     </button>
@@ -2378,7 +2378,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                   <div className="space-y-2 mb-6">
                     <p className="text-xs text-gray-600"><span className="font-bold">User:</span> {req.user_name} ({req.user_email})</p>
                     <p className="text-xs text-gray-600"><span className="font-bold">Phone:</span> {req.user_phone}</p>
-                    <p className="text-xs text-gray-600"><span className="font-bold">UTR/Ref:</span> <span className="font-mono text-brand-primary">{req.payment_ref}</span></p>
+                    <p className="text-xs text-gray-600"><span className="font-bold">UTR/Ref:</span> <span className="font-mono text-purple-600">{req.payment_ref}</span></p>
                     {req.notes && <p className="text-xs text-gray-600"><span className="font-bold">Notes:</span> {req.notes}</p>}
                     <p className="text-xs text-gray-600">
                       <span className="font-bold">Status:</span> 
@@ -2422,7 +2422,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
             <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] border border-white/50 p-6 overflow-x-auto shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
               <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2 px-2">
-                <Users className="w-5 h-5 text-brand-primary" />
+                <Users className="w-5 h-5 text-purple-500" />
                 User Directory
               </h2>
               <table className="w-full text-left border-collapse">
@@ -2442,7 +2442,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                         {u.avatarUrl ? (
                           <img src={u.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover shadow-sm" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-primary/20 to-blue-100 flex items-center justify-center text-brand-primary font-bold text-xs shadow-sm">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center text-purple-700 font-bold text-xs shadow-sm">
                             {u.displayName?.charAt(0).toUpperCase() || '?'}
                           </div>
                         )}
@@ -2452,7 +2452,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       <td className="py-4 px-4 text-gray-500 text-xs">{u.college || '-'}</td>
                       <td className="py-4 px-4">
                         <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                          u.role === 'admin' ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/20' : 
+                          u.role === 'admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 
                           u.role === 'moderator' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 
                           'bg-gray-100 text-gray-600 border border-gray-200'
                         }`}>
@@ -2461,7 +2461,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       </td>
                       <td className="py-4 px-4 text-right">
                         <select
-                          className="bg-white border border-gray-200 text-xs font-bold rounded-xl px-3 py-1.5 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 transition-all cursor-pointer shadow-sm"
+                          className="bg-white border border-gray-200 text-xs font-bold rounded-xl px-3 py-1.5 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all cursor-pointer shadow-sm"
                           value={u.role || 'user'}
                           onChange={(e) => {
                             const newRole = e.target.value as 'user' | 'moderator' | 'admin';
@@ -2529,7 +2529,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                             onClick={() => {
                               const API_URL = import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in';
                               supabase.auth.getSession().then(({ data: { session } }) => {
-                                fetch(`${API_URL}/api/campus-exchange/${item.id}`, {
+                                fetch(`${API_URL}/api/exchange/${item.id}`, {
                                   method: 'DELETE',
                                   headers: { Authorization: `Bearer ${session?.access_token}` }
                                 }).then(res => {
@@ -2540,7 +2540,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                 });
                               });
                             }}
-                            className="px-3 py-1.5 bg-mark-soft text-mark-ink rounded-lg text-xs font-bold hover:bg-mark-soft transition-colors"
+                            className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors"
                           >
                             Deactivate
                           </button>
@@ -2569,7 +2569,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
-                  <MonitorPlay className="w-7 h-7 text-brand-primary" />
+                  <MonitorPlay className="w-7 h-7 text-purple-600" />
                   Homepage Carousel
                 </h2>
                 <p className="text-sm text-gray-400 font-medium mt-1">Control which events appear in the auto-scrolling carousel on the homepage.</p>
@@ -2577,18 +2577,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             </div>
 
             {/* Info banner */}
-            <div className="bg-brand-surface border border-brand-primary/20 rounded-2xl p-4 flex gap-3">
-              <MonitorPlay className="w-5 h-5 text-brand-primary shrink-0 mt-0.5" />
+            <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex gap-3">
+              <MonitorPlay className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-brand-primary">Auto-scrolling Carousel</p>
-                <p className="text-xs text-brand-primary mt-0.5">The carousel loops infinitely and pauses on hover. When no real events exist, sample events are shown automatically. Toggle visibility and update poster images below.</p>
+                <p className="text-sm font-bold text-purple-700">Auto-scrolling Carousel</p>
+                <p className="text-xs text-purple-500 mt-0.5">The carousel loops infinitely and pauses on hover. When no real events exist, sample events are shown automatically. Toggle visibility and update poster images below.</p>
               </div>
             </div>
 
             {/* Real Events from DB */}
             <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6">
               <h3 className="text-base font-black text-gray-800 mb-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-mark-ink" />
+                <Calendar className="w-4 h-4 text-pink-500" />
                 Real Events (from News &amp; Events)
               </h3>
               <p className="text-xs text-gray-400 font-medium mb-5">Toggle which events show in the carousel. Edit their poster image URL.</p>
@@ -2599,7 +2599,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                   <p className="text-gray-300 text-xs mt-1">Add events from the News &amp; Events tab.</p>
                   <button
                     onClick={() => setActiveTab('news')}
-                    className="mt-4 text-xs bg-brand-primary text-white px-4 py-2 rounded-xl font-bold hover:bg-brand-primary transition-colors"
+                    className="mt-4 text-xs bg-purple-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-purple-700 transition-colors"
                   >Go to News &amp; Events →</button>
                 </div>
               ) : (
@@ -2610,13 +2610,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     const customImg = stored[ev.id]?.imageUrl ?? ev.imageUrl;
                     const isEditing = carouselEditingItem?.id === ev.id && carouselEditingItem?.type === 'real';
                     return (
-                      <div key={ev.id} className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${isEnabled ? 'border-brand-primary/20 bg-brand-surface/40' : 'border-gray-100 bg-gray-50 opacity-60'}`}>
+                      <div key={ev.id} className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${isEnabled ? 'border-purple-100 bg-purple-50/40' : 'border-gray-100 bg-gray-50 opacity-60'}`}>
                         {/* Poster thumb */}
                         <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200">
                           {customImg ? (
                             <img src={customImg} alt={ev.title} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-brand-primary to-indigo-700 flex items-center justify-center">
+                            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center">
                               <ImageIcon className="w-5 h-5 text-white/60" />
                             </div>
                           )}
@@ -2636,7 +2636,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                     type="text"
                                     value={carouselEditForm.title}
                                     onChange={e => setCarouselEditForm({ ...carouselEditForm, title: e.target.value })}
-                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-brand-primary transition-colors"
+                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-purple-500 transition-colors"
                                   />
                                 </div>
                                 <div className="space-y-1">
@@ -2645,7 +2645,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                     type="text"
                                     value={carouselEditForm.college}
                                     onChange={e => setCarouselEditForm({ ...carouselEditForm, college: e.target.value })}
-                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-brand-primary transition-colors"
+                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-purple-500 transition-colors"
                                   />
                                 </div>
                               </div>
@@ -2657,7 +2657,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                     type="text"
                                     value={carouselEditForm.date}
                                     onChange={e => setCarouselEditForm({ ...carouselEditForm, date: e.target.value })}
-                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-brand-primary transition-colors"
+                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-purple-500 transition-colors"
                                   />
                                 </div>
                                 <div className="space-y-1">
@@ -2666,7 +2666,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                     type="text"
                                     value={carouselEditForm.url}
                                     onChange={e => setCarouselEditForm({ ...carouselEditForm, url: e.target.value })}
-                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-brand-primary transition-colors"
+                                    className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-purple-500 transition-colors"
                                   />
                                 </div>
                               </div>
@@ -2677,7 +2677,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                   value={carouselEditForm.summary}
                                   onChange={e => setCarouselEditForm({ ...carouselEditForm, summary: e.target.value })}
                                   rows={2}
-                                  className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white resize-none outline-none focus:border-brand-primary transition-colors"
+                                  className="w-full text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white resize-none outline-none focus:border-purple-500 transition-colors"
                                 />
                               </div>
 
@@ -2689,7 +2689,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                     value={carouselEditForm.imageUrl}
                                     onChange={e => setCarouselEditForm({ ...carouselEditForm, imageUrl: e.target.value })}
                                     placeholder="Paste image URL..."
-                                    className="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-brand-primary transition-colors"
+                                    className="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white outline-none focus:border-purple-500 transition-colors"
                                   />
                                   <div className="relative">
                                     <input
@@ -2754,7 +2754,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                     setCarouselEditingItem(null);
                                     toast.success('Event details and poster saved!');
                                   }}
-                                  className="text-xs bg-brand-primary hover:bg-brand-primary text-white px-4 py-2 rounded-lg font-bold shadow-md shadow-brand-primary/10 transition-colors"
+                                  className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold shadow-md shadow-purple-600/10 transition-colors"
                                 >
                                   Save Event
                                 </button>
@@ -2779,7 +2779,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                                   imageUrl: customImg || '',
                                 });
                               }}
-                              className="mt-1 text-[10px] text-brand-primary hover:text-brand-primary font-bold flex items-center gap-1"
+                              className="mt-1 text-[10px] text-purple-500 hover:text-purple-700 font-bold flex items-center gap-1"
                             >
                               <Edit3 className="w-3 h-3" /> Edit details & poster
                             </button>
@@ -2794,7 +2794,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                             toast.success(isEnabled ? 'Hidden from carousel' : 'Shown in carousel');
                             setCarouselEditingItem(null);
                           }}
-                          className={`flex-shrink-0 transition-all ${isEnabled ? 'text-brand-primary' : 'text-gray-300'}`}
+                          className={`flex-shrink-0 transition-all ${isEnabled ? 'text-purple-600' : 'text-gray-300'}`}
                           title={isEnabled ? 'Hide from carousel' : 'Show in carousel'}
                         >
                           {isEnabled
@@ -2814,7 +2814,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
-                  <Megaphone className="w-7 h-7 text-brand-primary" />
+                  <Megaphone className="w-7 h-7 text-purple-600" />
                   Ads & Banners
                 </h2>
                 <p className="text-sm text-gray-400 font-medium mt-1">Manage promotional banners shown across the platform.</p>
@@ -2824,7 +2824,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             {/* Ad Form */}
             <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
               <h3 className="text-lg font-black text-gray-900 mb-5 flex items-center gap-3">
-                {editingAd ? <Edit3 className="w-5 h-5 text-brand-primary" /> : <Plus className="w-5 h-5 text-brand-primary" />}
+                {editingAd ? <Edit3 className="w-5 h-5 text-purple-600" /> : <Plus className="w-5 h-5 text-purple-600" />}
                 {editingAd ? 'Edit Ad' : 'Create New Ad'}
               </h3>
               <form onSubmit={handleAdSubmit} className="space-y-4">
@@ -2848,7 +2848,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active</label>
                     <div className="flex items-center gap-3 py-3">
-                      <button type="button" onClick={() => setAdFormData(p => ({...p, is_active: !p.is_active}))} className={`relative w-12 h-6 rounded-full transition-colors ${adFormData.is_active ? 'bg-brand-primary' : 'bg-gray-300'}`}>
+                      <button type="button" onClick={() => setAdFormData(p => ({...p, is_active: !p.is_active}))} className={`relative w-12 h-6 rounded-full transition-colors ${adFormData.is_active ? 'bg-purple-600' : 'bg-gray-300'}`}>
                         <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${adFormData.is_active ? 'left-7' : 'left-1'}`} />
                       </button>
                       <span className="text-sm font-medium text-gray-600">{adFormData.is_active ? 'Active' : 'Inactive'}</span>
@@ -2861,7 +2861,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Banner Image</label>
                   <div className="flex gap-2">
                     <input type="url" placeholder="Paste image URL or upload..." value={adFormData.image_url} onChange={e => setAdFormData({...adFormData, image_url: e.target.value})} className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm font-medium" />
-                    <label className={`cursor-pointer shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${isUploadingAdImage ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-brand-surface border-brand-primary/20 text-brand-primary hover:bg-brand-primary/20'}`}>
+                    <label className={`cursor-pointer shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${isUploadingAdImage ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100'}`}>
                       {isUploadingAdImage ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                       {isUploadingAdImage ? '...' : 'Upload'}
                       <input type="file" accept="image/*" className="hidden" disabled={isUploadingAdImage}
@@ -2897,7 +2897,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     </button>
                   )}
                   <button type="submit" disabled={isUploadingAdImage || !adFormData.image_url}
-                    className="flex-1 py-3 bg-brand-primary text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-brand-primary transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                    className="flex-1 py-3 bg-purple-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                     {editingAd ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                     {editingAd ? 'Update Ad' : 'Create Ad'}
                   </button>
@@ -2919,14 +2919,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                       </span>
                     </div>
                     <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">{ad.position.replace(/_/g, ' ')}</p>
-                    {ad.link_url && <p className="text-xs text-brand-primary truncate mt-0.5">{ad.link_url}</p>}
+                    {ad.link_url && <p className="text-xs text-purple-500 truncate mt-0.5">{ad.link_url}</p>}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button onClick={() => { setEditingAd(ad); setAdFormData({ title: ad.title, image_url: ad.image_url, link_url: ad.link_url, position: ad.position, is_active: Boolean(ad.is_active) }); }}
                       className="p-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-xl transition-all">
                       <Edit3 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleAdDelete(ad.id)} className="p-2.5 bg-mark-soft text-mark-ink hover:bg-mark hover:text-white rounded-xl transition-all">
+                    <button onClick={() => handleAdDelete(ad.id)} className="p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-all">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -2944,7 +2944,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl sm:text-3xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
-                  <Settings className="w-7 h-7 text-brand-primary" />
+                  <Settings className="w-7 h-7 text-purple-600" />
                   Homepage Settings
                 </h2>
                 <p className="text-sm text-gray-400 font-medium mt-1">Control the hero section, stats, and announcement banner without touching code.</p>
@@ -2952,7 +2952,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               <button
                 onClick={handleSaveSettings}
                 disabled={isSavingSettings}
-                className="flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-brand-primary transition-all disabled:opacity-50 shadow-lg shadow-brand-primary/20"
+                className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-purple-700 transition-all disabled:opacity-50 shadow-lg shadow-purple-600/20"
               >
                 {isSavingSettings ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {isSavingSettings ? 'Saving...' : 'Save All'}
@@ -3014,13 +3014,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             {/* Announcement Banner */}
             <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
               <h3 className="text-base font-black text-gray-800 mb-5 flex items-center gap-2">
-                <Bell className="w-4 h-4 text-mark-ink" /> Announcement Banner
+                <Bell className="w-4 h-4 text-rose-500" /> Announcement Banner
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">(Shows at top of homepage)</span>
               </h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <button type="button" onClick={() => setSettingsForm(p => ({...p, announcement_active: p.announcement_active === 'true' ? 'false' : 'true'}))}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${settingsForm.announcement_active === 'true' ? 'bg-mark' : 'bg-gray-300'}`}>
+                    className={`relative w-12 h-6 rounded-full transition-colors ${settingsForm.announcement_active === 'true' ? 'bg-rose-500' : 'bg-gray-300'}`}>
                     <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${settingsForm.announcement_active === 'true' ? 'left-7' : 'left-1'}`} />
                   </button>
                   <span className="text-sm font-medium text-gray-600">{settingsForm.announcement_active === 'true' ? 'Banner is visible' : 'Banner is hidden'}</span>
@@ -3049,7 +3049,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
             <button
               onClick={handleSaveSettings}
               disabled={isSavingSettings}
-              className="w-full py-4 bg-brand-primary text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-brand-primary transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+              className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {isSavingSettings ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
               {isSavingSettings ? 'Saving Settings...' : 'Save All Homepage Settings'}
@@ -3113,7 +3113,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               />
               <div className="flex gap-3">
                 <button onClick={() => setEmailModal(null)} className="flex-1 py-3 bg-gray-100 rounded-xl text-sm font-bold text-gray-600">Cancel</button>
-                <button onClick={handleSendEmail} className="flex-1 py-3 bg-brand-primary text-white rounded-xl text-sm font-bold">Send Email</button>
+                <button onClick={handleSendEmail} className="flex-1 py-3 bg-purple-600 text-white rounded-xl text-sm font-bold">Send Email</button>
               </div>
             </div>
           </div>

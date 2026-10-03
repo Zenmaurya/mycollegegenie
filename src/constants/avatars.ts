@@ -35,24 +35,24 @@ export const AVATARS: Avatar[] = [
   { id: 'cat',      emoji: '😺', label: 'Cat',      bg: 'bg-orange-50',   color: 'text-orange-600' },
   { id: 'dog',      emoji: '🐶', label: 'Dog',      bg: 'bg-yellow-50',   color: 'text-yellow-700' },
   { id: 'frog',     emoji: '🐸', label: 'Frog',     bg: 'bg-green-100',   color: 'text-green-700' },
-  { id: 'bunny',    emoji: '🐰', label: 'Bunny',    bg: 'bg-mark-soft',     color: 'text-mark-ink' },
+  { id: 'bunny',    emoji: '🐰', label: 'Bunny',    bg: 'bg-pink-50',     color: 'text-pink-500' },
 
   // Space / Fantasy
   { id: 'astronaut',emoji: '👨‍🚀', label: 'Astronaut',bg:'bg-indigo-100', color: 'text-indigo-700' },
   { id: 'robot',    emoji: '🤖', label: 'Robot',    bg: 'bg-cyan-100',    color: 'text-cyan-700' },
-  { id: 'wizard',   emoji: '🧙', label: 'Wizard',   bg: 'bg-brand-primary/20',  color: 'text-brand-primary' },
+  { id: 'wizard',   emoji: '🧙', label: 'Wizard',   bg: 'bg-purple-100',  color: 'text-purple-700' },
   { id: 'ninja',    emoji: '🥷', label: 'Ninja',    bg: 'bg-gray-900',    color: 'text-white' },
   { id: 'alien',    emoji: '👽', label: 'Alien',    bg: 'bg-green-50',    color: 'text-green-600' },
   { id: 'genie',    emoji: '🧞', label: 'Genie',    bg: 'bg-violet-100',  color: 'text-violet-700' },
 
   // Student / Academic
-  { id: 'student',  emoji: '🎓', label: 'Graduate', bg: 'bg-brand-primary/20',  color: 'text-brand-primary' },
+  { id: 'student',  emoji: '🎓', label: 'Graduate', bg: 'bg-purple-100',  color: 'text-purple-700' },
   { id: 'bookworm', emoji: '📚', label: 'Bookworm', bg: 'bg-blue-100',    color: 'text-blue-700' },
   { id: 'nerd',     emoji: '🤓', label: 'Nerd',     bg: 'bg-green-100',   color: 'text-green-700' },
-  { id: 'artist',   emoji: '🎨', label: 'Artist',   bg: 'bg-mark-soft',    color: 'text-mark-ink' },
+  { id: 'artist',   emoji: '🎨', label: 'Artist',   bg: 'bg-pink-100',    color: 'text-pink-700' },
   { id: 'coder',    emoji: '💻', label: 'Coder',    bg: 'bg-gray-100',    color: 'text-gray-700' },
   { id: 'scientist',emoji: '🔬', label: 'Scientist',bg: 'bg-teal-100',    color: 'text-teal-700' },
-  { id: 'musician', emoji: '🎵', label: 'Musician', bg: 'bg-mark-soft',    color: 'text-mark-ink' },
+  { id: 'musician', emoji: '🎵', label: 'Musician', bg: 'bg-rose-100',    color: 'text-rose-700' },
   { id: 'chef',     emoji: '👨‍🍳', label: 'Chef',   bg: 'bg-orange-100',  color: 'text-orange-700' },
 
   // Fun

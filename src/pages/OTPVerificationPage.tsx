@@ -141,8 +141,8 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
   return (
     <div className="w-full flex flex-col items-center justify-center pt-4">
       {/* Icon */}
-      <div className="w-16 h-16 bg-brand-surface rounded-2xl flex items-center justify-center mx-auto mb-6">
-        <Mail className="w-8 h-8 text-brand-primary" />
+      <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <Mail className="w-8 h-8 text-purple-600" />
       </div>
 
       <div className="text-center mb-8">
@@ -152,7 +152,7 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
         <p className="text-sm text-gray-500 font-medium leading-relaxed">
           We sent a 6-digit verification code to
         </p>
-        <p className="text-sm font-black text-brand-primary mt-1 break-all">
+        <p className="text-sm font-black text-purple-600 mt-1 break-all">
           {email || 'your email'}
         </p>
       </div>
@@ -172,8 +172,8 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
             disabled={isLoading}
             className={`w-11 h-14 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-black rounded-2xl border-2 transition-all outline-none
               ${digit
-                ? 'border-brand-primary bg-brand-surface text-brand-primary shadow-md shadow-brand-primary/10'
-                : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-brand-primary focus:bg-white focus:ring-4 focus:ring-brand-primary/10'
+                ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-md shadow-purple-500/10'
+                : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/10'
               }
               disabled:opacity-50 disabled:cursor-not-allowed`}
             aria-label={`OTP digit ${index + 1}`}
@@ -202,7 +202,7 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
         <button
           onClick={handleResend}
           disabled={resendCooldown > 0 || isLoading}
-          className="inline-flex items-center gap-2 text-xs font-black text-brand-primary hover:text-brand-dark disabled:text-gray-400 disabled:cursor-not-allowed transition-colors uppercase tracking-widest"
+          className="inline-flex items-center gap-2 text-xs font-black text-purple-600 hover:text-purple-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors uppercase tracking-widest"
         >
           <RefreshCw className={`w-3 h-3 ${resendCooldown > 0 ? '' : 'hover:rotate-180 transition-transform'}`} />
           {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
@@ -212,7 +212,7 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
       {/* Help text */}
       <p className="text-center text-xs text-gray-400 font-medium mt-6 border-t border-gray-100 pt-6 w-full">
         Having trouble?{' '}
-        <a href="mailto:support@mycollegegenie.in" className="text-brand-primary hover:underline font-bold">
+        <a href="mailto:support@mycollegegenie.in" className="text-purple-600 hover:underline font-bold">
           Email Support
         </a>
       </p>

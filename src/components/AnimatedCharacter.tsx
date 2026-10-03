@@ -235,7 +235,7 @@ export const GenieMascot: React.FC<{
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.7, y: 10 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white rounded-2xl px-3 py-1.5 text-xs font-bold text-brand-primary shadow-lg border border-brand-primary/20"
+            className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white rounded-2xl px-3 py-1.5 text-xs font-bold text-purple-700 shadow-lg border border-purple-100"
             style={{ transformOrigin: 'bottom center' }}
           >
             {message}

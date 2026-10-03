@@ -44,21 +44,21 @@ export function ForgotPasswordPage() {
         {/* Back link */}
         <Link
           to="/login"
-          className="inline-flex items-center gap-2 text-brand-primary font-black uppercase tracking-widest mb-8 hover:gap-3 transition-all text-[10px] sm:text-xs group"
+          className="inline-flex items-center gap-2 text-purple-600 font-black uppercase tracking-widest mb-8 hover:gap-3 transition-all text-[10px] sm:text-xs group"
         >
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
           Back to Login
         </Link>
 
-        <div className="bg-white/60 backdrop-blur-md rounded-[2rem] shadow-xl shadow-brand-dark/8 border border-gray-100 overflow-hidden">
+        <div className="bg-white/60 backdrop-blur-md rounded-[2rem] shadow-xl shadow-purple-900/8 border border-gray-100 overflow-hidden">
           {/* Gradient top bar */}
-          <div className="h-1.5 bg-gradient-to-r from-brand-primary via-indigo-500 to-violet-600" />
+          <div className="h-1.5 bg-gradient-to-r from-purple-600 via-indigo-500 to-violet-600" />
 
           <div className="p-7 sm:p-9">
             {/* Icon + Heading */}
             <div className="flex items-center gap-4 mb-7">
-              <div className="w-12 h-12 rounded-2xl bg-brand-primary/20 flex items-center justify-center shrink-0">
-                <KeyRound className="w-6 h-6 text-brand-primary" />
+              <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center shrink-0">
+                <KeyRound className="w-6 h-6 text-purple-600" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">Reset Password</h1>
@@ -114,7 +114,7 @@ export function ForgotPasswordPage() {
                       placeholder="name@example.com"
                       autoComplete="email"
                       required
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15 outline-none transition-all font-medium text-sm text-gray-800 placeholder:text-gray-300"
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/15 outline-none transition-all font-medium text-sm text-gray-800 placeholder:text-gray-300"
                     />
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-brand-primary text-white rounded-xl font-black shadow-lg shadow-brand-primary/25 hover:bg-brand-primary hover:shadow-brand-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest text-xs disabled:opacity-70 disabled:transform-none"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-purple-600 text-white rounded-xl font-black shadow-lg shadow-purple-600/25 hover:bg-purple-700 hover:shadow-purple-600/40 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest text-xs disabled:opacity-70 disabled:transform-none"
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -136,7 +136,7 @@ export function ForgotPasswordPage() {
 
                 <p className="text-center text-[10px] text-gray-400 font-medium">
                   Remember your password?{' '}
-                  <Link to="/login" className="text-brand-primary font-black hover:underline">
+                  <Link to="/login" className="text-purple-600 font-black hover:underline">
                     Sign in
                   </Link>
                 </p>
