@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Filter, ArrowUpDown, LayoutGrid, List, ChevronRight, BookOpen, FileText, PlayCircle, Star, Share2, Download, Clock, MapPin, RefreshCw, ChevronDown, ChevronUp, Plus, X, AlertCircle, Check } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, LayoutGrid, List, ChevronRight, BookOpen, FileText, PlayCircle, Star, Share2, Download, Clock, MapPin, RefreshCw, ChevronDown, ChevronUp, Plus, X, AlertCircle, Check, GraduationCap } from 'lucide-react';
 import { Resource } from '../types';
 import type { SupabaseAuthUser } from '../types';
 import { ResourceCard } from '../components/ResourceCard';
@@ -221,6 +221,83 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
             </div>
           </div>
 
+          {/* Quick Material Type Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none mt-3 sm:mt-4">
+            {[
+              { id: 'All', label: 'All Resources', icon: LayoutGrid },
+              { id: 'Note', label: 'Notes', icon: FileText },
+              { id: 'PYQ', label: 'PYQs', icon: Clock },
+              { id: 'Book', label: 'Books', icon: BookOpen },
+              { id: 'Syllabus', label: 'Syllabus', icon: GraduationCap },
+            ].map(tab => {
+              const TabIcon = tab.icon;
+              const isActive = activeFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveFilter(tab.id as any)}
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+                      : 'bg-white/80 text-gray-600 hover:bg-white hover:text-purple-600 border border-gray-100'
+                  }`}
+                >
+                  <TabIcon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Filter Chips Bar */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+              <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">Active:</span>
+              {searchQuery && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-medium border border-purple-100">
+                  <span>"{searchQuery}"</span>
+                  <button onClick={() => setSearchQuery('')} className="hover:text-purple-900 ml-0.5" aria-label="Clear query"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+              {activeFilter !== 'All' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-medium border border-purple-100">
+                  <span>Type: {activeFilter}</span>
+                  <button onClick={() => setActiveFilter('All')} className="hover:text-purple-900 ml-0.5" aria-label="Clear type filter"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+              {selectedCourse !== 'All Courses' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-medium border border-purple-100">
+                  <span>Course: {selectedCourse}</span>
+                  <button onClick={() => setSelectedCourse('All Courses')} className="hover:text-purple-900 ml-0.5" aria-label="Clear course filter"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+              {selectedSemester !== 'All Semesters' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-medium border border-purple-100">
+                  <span>Sem: {selectedSemester}</span>
+                  <button onClick={() => setSelectedSemester('All Semesters')} className="hover:text-purple-900 ml-0.5" aria-label="Clear semester filter"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+              {selectedSubCategory !== 'All' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-medium border border-purple-100">
+                  <span>Category: {selectedSubCategory}</span>
+                  <button onClick={() => setSelectedSubCategory('All')} className="hover:text-purple-900 ml-0.5" aria-label="Clear category filter"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setActiveFilter('All');
+                  setSelectedCourse('All Courses');
+                  setSelectedSemester('All Semesters');
+                  setSelectedSubCategory('All');
+                }}
+                className="text-xs text-red-500 hover:text-red-700 font-semibold underline underline-offset-2 ml-1 cursor-pointer"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+
           {/* Advanced Filters (Collapsible) */}
           <AnimatePresence>
             {showAdvancedFilters && (
@@ -232,16 +309,30 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 p-4 sm:p-6 mt-4 sm:mt-6 bg-gray-50 rounded-2xl border border-gray-200">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-gray-500 px-1">
-                      <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Course</span>
+                    <div className="flex items-center justify-between text-gray-500 px-1">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Course</span>
+                      </div>
+                      {courseSearch && (
+                        <button onClick={() => setCourseSearch('')} className="text-[10px] text-gray-400 hover:text-gray-600">Clear</button>
+                      )}
                     </div>
+                    <input
+                      type="text"
+                      placeholder="Quick filter courses..."
+                      value={courseSearch}
+                      onChange={(e) => setCourseSearch(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
                     <select 
                       value={selectedCourse}
                       onChange={(e) => setSelectedCourse(e.target.value)}
                       className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-700 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-600 transition-all cursor-pointer"
                     >
-                      {courses.map(course => <option key={course} value={course}>{course}</option>)}
+                      {courses
+                        .filter(c => !courseSearch || c.toLowerCase().includes(courseSearch.toLowerCase()) || c === 'All Courses')
+                        .map(course => <option key={course} value={course}>{course}</option>)}
                     </select>
                   </div>
                   <div className="space-y-2">

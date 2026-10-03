@@ -17,6 +17,8 @@ import { College_COURSES, SUB_CATEGORIES } from '../constants';
 import { toast } from 'sonner';
 import { Skeleton } from '../components/ui/skeleton';
 
+export const FORUM_TOPICS = ['General', 'Doubt', 'Exam Tips', 'Notes', 'Placement', 'Events'] as const;
+
 const TOPIC_COLORS: Record<string, string> = {
   'Exam Tips': 'bg-amber-50 text-amber-700 border-amber-200',
   'Doubt': 'bg-blue-50 text-blue-700 border-blue-200',
@@ -94,7 +96,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   const [limitCount, setLimitCount] = useState(10);
   const [hasMore, setHasMore] = useState(true);
   const [activeTab, setActiveTab] = useState<'hot' | 'new' | 'top'>('new');
-  const [newPost, setNewPost] = useState({ title: '', content: '', course: '', topic: SUB_CATEGORIES[0] });
+  const [newPost, setNewPost] = useState({ title: '', content: '', course: '', topic: 'General' });
 
   useEffect(() => { setLimitCount(10); }, [selectedCourse, selectedTopic, activeTab]);
 
@@ -132,7 +134,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
       await ForumService.createPost({ ...newPost, authorId: user.id, authorName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous' });
       toast.success('Discussion posted!');
       setIsCreateModalOpen(false);
-      setNewPost({ title: '', content: '', course: '', topic: SUB_CATEGORIES[0] });
+      setNewPost({ title: '', content: '', course: '', topic: 'General' });
       fetchPosts();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to post.');
@@ -226,7 +228,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
             <select value={selectedTopic} onChange={e => setSelectedTopic(e.target.value)}
               className="w-full text-ellipsis overflow-hidden pl-8 sm:pl-9 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-[9px] sm:text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
               <option value="All">All Topics</option>
-              {SUB_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {FORUM_TOPICS.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </div>
@@ -535,7 +537,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                               onChange={e => setNewPost({ ...newPost, topic: e.target.value })}
                               className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm font-medium text-gray-800 cursor-pointer transition-all appearance-none pr-8"
                             >
-                              {SUB_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                              {FORUM_TOPICS.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                             <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>

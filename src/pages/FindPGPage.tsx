@@ -25,6 +25,8 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   const currentUser = propUser ?? null;
   const [searchQuery, setSearchQuery] = useState('');
   const [genderFilter, setGenderFilter] = useState<'All' | 'Male' | 'Female'>('All');
+  const [budgetFilter, setBudgetFilter] = useState<string>('All');
+  const [zoneFilter, setZoneFilter] = useState<string>('All');
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [listingToDelete, setListingToDelete] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
 
   useEffect(() => {
     setVisibleCount(12);
-  }, [searchQuery, genderFilter]);
+  }, [searchQuery, genderFilter, budgetFilter, zoneFilter]);
 
 
   useEffect(() => {
@@ -67,11 +69,32 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   }, []);
 
   const filteredListings = listings.filter(l => {
-    const matchesSearch = l.college.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          l.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          l.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !q || 
+                          l.college.toLowerCase().includes(q) || 
+                          l.location.toLowerCase().includes(q) ||
+                          l.description.toLowerCase().includes(q);
     const matchesGender = genderFilter === 'All' || l.gender === genderFilter;
-    return matchesSearch && matchesGender;
+
+    let matchesBudget = true;
+    if (budgetFilter !== 'All') {
+      const numBudget = parseInt((l.budget || '').replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(numBudget)) {
+        if (budgetFilter === 'under8k') matchesBudget = numBudget <= 8000;
+        else if (budgetFilter === '8k-12k') matchesBudget = numBudget >= 8000 && numBudget <= 12000;
+        else if (budgetFilter === 'above12k') matchesBudget = numBudget > 12000;
+      }
+    }
+
+    let matchesZone = true;
+    if (zoneFilter !== 'All') {
+      const loc = (l.college + ' ' + l.location).toLowerCase();
+      if (zoneFilter === 'North Campus') matchesZone = loc.includes('north') || loc.includes('du') || loc.includes('kamla') || loc.includes('malka') || loc.includes('vijay nagar') || loc.includes('hudson');
+      else if (zoneFilter === 'South Campus') matchesZone = loc.includes('south') || loc.includes('satya') || loc.includes('anand niketan') || loc.includes('moti bagh') || loc.includes('venky');
+      else if (zoneFilter === 'Off Campus') matchesZone = loc.includes('off') || loc.includes('dtu') || loc.includes('nsut') || loc.includes('noida') || loc.includes('gurgaon');
+    }
+
+    return matchesSearch && matchesGender && matchesBudget && matchesZone;
   });
 
   const handlePostListing = async (e: React.FormEvent) => {
@@ -252,46 +275,95 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="max-w-4xl mx-auto flex flex-col md:flex-row gap-2 p-1.5 bg-white rounded-xl sm:rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100"
+            className="max-w-4xl mx-auto flex flex-col gap-2 p-2 sm:p-2.5 bg-white rounded-xl sm:rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100"
           >
-            {/* Search Input */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input 
-                type="text"
-                placeholder="Search by college or location..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8.5 pr-3 py-2 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none text-xs sm:text-sm font-medium"
-              />
-            </div>
-            
-            {/* Filter pills and CTA button */}
-            <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
-              <div className="flex gap-0.5 p-0.5 bg-gray-50 rounded-lg sm:rounded-xl overflow-x-auto no-scrollbar shrink-0 w-full md:w-auto">
-                {(['All', 'Male', 'Female'] as const).map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => setGenderFilter(g)}
-                    className={`flex-1 md:flex-initial px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-md sm:rounded-lg font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
-                      genderFilter === g 
-                        ? 'bg-white text-purple-600 shadow-sm border border-gray-100/50' 
-                        : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    {g}
-                  </button>
-                ))}
+            <div className="flex flex-col md:flex-row gap-2">
+              {/* Search Input */}
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input 
+                  type="text"
+                  placeholder="Search by college or location..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-8.5 pr-3 py-2 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none text-xs sm:text-sm font-medium"
+                />
               </div>
               
-              {/* Post Listing Button inside search box - Desktop Only */}
-              <button 
-                onClick={() => setIsPostModalOpen(true)}
-                className="hidden md:flex items-center gap-1.5 bg-purple-600 text-white px-5 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-black uppercase tracking-widest text-[9px] sm:text-xs shadow-lg shadow-purple-600/10 hover:bg-purple-700 active:scale-98 transition-all shrink-0 whitespace-nowrap"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Post Listing
-              </button>
+              {/* Filter pills and CTA button */}
+              <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
+                <div className="flex gap-0.5 p-0.5 bg-gray-50 rounded-lg sm:rounded-xl overflow-x-auto no-scrollbar shrink-0 w-full md:w-auto">
+                  {(['All', 'Male', 'Female'] as const).map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => setGenderFilter(g)}
+                      className={`flex-1 md:flex-initial px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-md sm:rounded-lg font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
+                        genderFilter === g 
+                          ? 'bg-white text-purple-600 shadow-sm border border-gray-100/50' 
+                          : 'text-gray-500 hover:text-gray-900'
+                      }`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Post Listing Button inside search box - Desktop Only */}
+                <button 
+                  onClick={() => setIsPostModalOpen(true)}
+                  className="hidden md:flex items-center gap-1.5 bg-purple-600 text-white px-5 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-black uppercase tracking-widest text-[9px] sm:text-xs shadow-lg shadow-purple-600/10 hover:bg-purple-700 active:scale-98 transition-all shrink-0 whitespace-nowrap"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Post Listing
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Filter Row: Zone & Budget Selectors */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100 text-xs text-gray-600">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-purple-600" />
+                <span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider text-gray-500">Zone:</span>
+                <select
+                  value={zoneFilter}
+                  onChange={(e) => setZoneFilter(e.target.value)}
+                  className="px-2.5 py-1 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 outline-none cursor-pointer"
+                >
+                  <option value="All">All Campuses</option>
+                  <option value="North Campus">North Campus</option>
+                  <option value="South Campus">South Campus</option>
+                  <option value="Off Campus">Off Campus</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1.5 ml-1">
+                <IndianRupee className="w-3.5 h-3.5 text-purple-600" />
+                <span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider text-gray-500">Budget:</span>
+                <select
+                  value={budgetFilter}
+                  onChange={(e) => setBudgetFilter(e.target.value)}
+                  className="px-2.5 py-1 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 outline-none cursor-pointer"
+                >
+                  <option value="All">Any Budget</option>
+                  <option value="under8k">Under ₹8,000 / mo</option>
+                  <option value="8k-12k">₹8,000 – ₹12,000 / mo</option>
+                  <option value="above12k">₹12,000+ / mo</option>
+                </select>
+              </div>
+
+              {(searchQuery || genderFilter !== 'All' || budgetFilter !== 'All' || zoneFilter !== 'All') && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setGenderFilter('All');
+                    setBudgetFilter('All');
+                    setZoneFilter('All');
+                  }}
+                  className="text-[11px] text-red-500 hover:text-red-700 font-bold underline underline-offset-2 ml-auto cursor-pointer"
+                >
+                  Reset filters
+                </button>
+              )}
             </div>
           </motion.div>
         </div>

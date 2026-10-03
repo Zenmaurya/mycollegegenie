@@ -178,19 +178,25 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
     // Always exclude 'Buy' type — campus exchange is for Sell, Exchange, Donate only
     let result = items.filter((item: any) => item.type !== 'Buy');
     
-    // Category filter mapping (basic mapping for dummy data)
+    // Category filter matching item.category as well as title keywords
     if (activeCategory !== 'all') {
       const catMap: Record<string, string[]> = {
-        'books': ['Book', 'Notes'],
-        'electronics': ['MacBook', 'Headset', 'Calculator'],
-        'hostel': ['Lamp'],
-        'furniture': ['Chair', 'Table'],
-        'cycles': ['Cycle']
+        'books': ['book', 'notes', 'novel', 'ncert', 'textbook'],
+        'electronics': ['macbook', 'headset', 'calculator', 'laptop', 'phone', 'ipad', 'tablet', 'charger', 'mouse', 'keyboard', 'earphone', 'airpod', 'watch'],
+        'hostel': ['lamp', 'bed', 'mattress', 'kettle', 'curtain', 'mirror', 'bucket', 'cooler', 'fan'],
+        'furniture': ['chair', 'table', 'desk', 'shelf', 'wardrobe'],
+        'cycles': ['cycle', 'bicycle', 'bike'],
+        'fashion': ['hoodie', 'jacket', 'tshirt', 'shoes', 'dress', 'shirt'],
+        'sports': ['cricket', 'badminton', 'racket', 'football', 'gym', 'dumbbell'],
       };
       const keywords = catMap[activeCategory] || [];
-      if (keywords.length > 0) {
-        result = result.filter(item => keywords.some(k => item.title.includes(k)));
-      }
+      result = result.filter(item => {
+        const itemCat = (item.category || '').toLowerCase();
+        const activeCat = activeCategory.toLowerCase();
+        if (itemCat === activeCat || itemCat.includes(activeCat)) return true;
+        const itemTitle = (item.title || '').toLowerCase();
+        return keywords.some(k => itemTitle.includes(k));
+      });
     }
     
     if (searchQuery) {

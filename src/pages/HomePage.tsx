@@ -186,25 +186,26 @@ export const HomePage: React.FC<HomePageProps> = ({
 
      const renderHeadline = () => {
         return (
-          <div className="mb-4 sm:mb-5 font-black leading-[1.1] tracking-tighter text-gray-900 text-center lg:text-left">
-            <h1 className="text-[2.6rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block mb-2">
+          <h1 className="mb-4 sm:mb-5 font-black leading-[1.1] tracking-tighter text-gray-900 text-center lg:text-left">
+            <span className="text-[2.6rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] block mb-1">
               <span className="block md:inline">Every College</span>
               <span className="hidden md:inline"> </span>
               <span className="block md:inline">Student Deserves</span>
-            </h1>
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-4 mt-0.5">
+            </span>
+            <span className="inline-flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-4 mt-0.5">
               <span className="text-[2.6rem] sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.5rem] text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600 leading-[1.1]">
                 a Genie.
               </span>
               <motion.span 
-                className="text-[#D8B4FE] font-normal text-4xl sm:text-5xl inline-block -rotate-12"
+                className="text-[#D8B4FE] font-normal text-4xl sm:text-5xl inline-block -rotate-12 select-none"
                 animate={{ rotate: [-12, 12, -12], scale: [1, 1.2, 1] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                aria-hidden="true"
               >
                 ♡
               </motion.span>
-            </div>
-          </div>
+            </span>
+          </h1>
         );
     };
 
@@ -361,7 +362,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
             {/* Floating Cards */}
             {/* Notes & Study Material — floats up -10px, 4s */}
-            <DraggableCard className="top-[10%] left-[0%] hidden lg:block z-20" floatY={-10} floatDuration={4} floatDelay={0}>
+            <DraggableCard className="top-[8%] left-[2%] hidden lg:block z-20" floatY={-10} floatDuration={4} floatDelay={0}>
               <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
                   <FileText className="w-4 h-4 text-indigo-600" />
@@ -371,7 +372,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </DraggableCard>
 
             {/* PYQs — floats down 15px, 5s */}
-            <DraggableCard className="top-[5%] right-[20%] hidden lg:block z-20" floatY={15} floatDuration={5} floatDelay={1}>
+            <DraggableCard className="top-[4%] right-[18%] hidden lg:block z-20" floatY={15} floatDuration={5} floatDelay={1}>
               <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center">
                   <FileText className="w-4 h-4 text-pink-600" />
@@ -381,7 +382,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </DraggableCard>
 
             {/* Curated Playlists — floats up -12px, 4.5s */}
-            <DraggableCard className="top-[20%] -right-[5%] hidden lg:block z-20" floatY={-12} floatDuration={4.5} floatDelay={2}>
+            <DraggableCard className="top-[20%] right-[0%] hidden lg:block z-20" floatY={-12} floatDuration={4.5} floatDelay={2}>
               <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center">
                   <PlayCircle className="w-5 h-5 text-rose-600" />
@@ -391,7 +392,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </DraggableCard>
 
             {/* Communities & Forums — floats down 10px, 4.2s */}
-            <DraggableCard className="top-[45%] -right-[15%] hidden lg:block z-20" floatY={10} floatDuration={4.2} floatDelay={1.5}>
+            <DraggableCard className="top-[45%] right-[-2%] xl:right-0 hidden lg:block z-20" floatY={10} floatDuration={4.2} floatDelay={1.5}>
               <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
                   <Users className="w-4 h-4 text-blue-600" />
@@ -401,7 +402,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </DraggableCard>
 
             {/* Find PGs — floats up -8px, 3.8s */}
-            <DraggableCard className="top-[40%] -left-[10%] hidden lg:block z-20" floatY={-8} floatDuration={3.8} floatDelay={0.5}>
+            <DraggableCard className="top-[38%] left-[-2%] xl:left-0 hidden lg:block z-20" floatY={-8} floatDuration={3.8} floatDelay={0.5}>
               <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
                   <Building className="w-4 h-4 text-orange-600" />
@@ -411,7 +412,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </DraggableCard>
 
             {/* Campus Exchange — floats down 12px, 5.5s */}
-            <DraggableCard className="bottom-[10%] -left-[15%] z-20 hidden lg:block" floatY={12} floatDuration={5.5} floatDelay={2.5}>
+            <DraggableCard className="bottom-[8%] left-[-2%] xl:left-0 z-20 hidden lg:block" floatY={12} floatDuration={5.5} floatDelay={2.5}>
               <div className="bg-white px-5 py-4 rounded-2xl shadow-lg border border-gray-100 max-w-[220px]">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
@@ -427,7 +428,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </DraggableCard>
 
             {/* Jobs & Internships — floats up -15px, 4.8s */}
-            <DraggableCard className="bottom-[15%] -right-[15%] hidden lg:block z-20" floatY={-15} floatDuration={4.8} floatDelay={1.2}>
+            <DraggableCard className="bottom-[12%] right-[-2%] xl:right-0 hidden lg:block z-20" floatY={-15} floatDuration={4.8} floatDelay={1.2}>
               <div className="bg-white px-4 py-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
                   <Award className="w-4 h-4 text-purple-600" />
@@ -491,8 +492,8 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* Latest Updates Section */}
-      <div className="mb-2 sm:mb-4 w-full relative z-50 hidden sm:block">
-        <WavePath className="text-black" />
+      <div className="mb-2 sm:mb-4 w-full relative z-10 hidden sm:block opacity-75">
+        <WavePath className="text-purple-200" />
       </div>
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 sm:pt-8 sm:pb-16">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-10 gap-3">

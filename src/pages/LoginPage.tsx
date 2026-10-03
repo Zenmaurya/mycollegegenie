@@ -457,7 +457,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
             </div>
 
             {/* Form */}
-            <div className="flex-1 flex flex-col justify-center px-8 sm:px-10 py-8">
+            <div className="flex-1 flex flex-col justify-start sm:justify-center px-5 sm:px-10 py-4 sm:py-8">
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
