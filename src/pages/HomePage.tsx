@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, useAnimation } from 'motion/react';
-import { GraduationCap, FileText, PlayCircle, Search, Newspaper, ChevronRight, Users, Globe, Award, MessageSquare, ArrowRight, Sparkles, Building, Calendar, Zap } from 'lucide-react';
+import { GraduationCap, FileText, PlayCircle, Search, Newspaper, ChevronRight, ChevronDown, Users, Globe, Award, MessageSquare, ArrowRight, Sparkles, Building, Calendar, Zap } from 'lucide-react';
 import { Resource, NewsItem } from '../types';
 import { useNavigate, Link } from 'react-router-dom';
 import { ResourceCard } from '../components/ResourceCard';
@@ -143,9 +143,12 @@ export const HomePage: React.FC<HomePageProps> = ({
   setSelectedResource,
   handleShare,
   resultsRef,
-  siteSettings
+  siteSettings,
+  College_COURSES = []
 }) => {
   const navigate = useNavigate();
+  const [quickCourse, setQuickCourse] = useState('B.Com. (Hons.)');
+  const [quickSem, setQuickSem] = useState('1');
   
   const getFeatureColors = (color: string) => {
     switch (color) {
@@ -335,6 +338,56 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <Users className="w-5 h-5" />
                   Join Our Team
                 </a>
+              </motion.div>
+
+              {/* Quick Study Finder Widget — 1-Click Access to Course & Sem Notes */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                className="mt-6 sm:mt-8 p-3 sm:p-4 bg-white/70 backdrop-blur-md border border-purple-100/90 rounded-2xl shadow-xl shadow-purple-900/5 text-left max-w-xl mx-auto lg:mx-0"
+              >
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                  <span className="text-[11px] font-black uppercase tracking-wider text-purple-700">
+                    Quick Access — Jump directly to your notes
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                  <div className="sm:col-span-6 relative">
+                    <select
+                      value={quickCourse}
+                      onChange={e => setQuickCourse(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-gray-50 hover:bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 cursor-pointer appearance-none pr-8 transition-colors"
+                      aria-label="Select course"
+                    >
+                      {College_COURSES.slice(0, 35).map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                  </div>
+                  <div className="sm:col-span-3 relative">
+                    <select
+                      value={quickSem}
+                      onChange={e => setQuickSem(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-gray-50 hover:bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 cursor-pointer appearance-none pr-7 transition-colors"
+                      aria-label="Select semester"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
+                        <option key={s} value={String(s)}>Sem {s}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                  </div>
+                  <button
+                    onClick={() => navigate(`/browse?course=${encodeURIComponent(quickCourse)}&sem=${quickSem}`)}
+                    className="sm:col-span-3 px-3 py-2.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer"
+                  >
+                    <span>Get Notes</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </motion.div>
             </div>
 

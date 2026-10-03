@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import { User } from '../types';
 import { AuthForm } from '../components/AuthForm';
 import { motion, AnimatePresence } from 'motion/react';
@@ -346,9 +346,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
   const [isTyping,     setIsTyping]     = useState(false);
 
   /* redirect if already logged in */
+  const handleClose = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
   useEffect(() => {
-    if (user) navigate(from, { replace: true });
-  }, [user, navigate, from]);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const isSignup = location.pathname === '/signup';
 
@@ -445,14 +459,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
             style={{ pointerEvents: 'auto' }}
           >
             {/* Top bar inside panel */}
-            <div className="flex items-center justify-end px-8 pt-7 pb-2 shrink-0">
-              {/* Close → go back */}
+            <div className="flex items-center justify-between px-5 sm:px-8 pt-5 sm:pt-7 pb-2 shrink-0 border-b border-gray-100 sm:border-none">
+              {/* Mobile Brand */}
+              <div className="flex items-center gap-2 lg:hidden">
+                <img src="/logo.webp" alt="MyCollegeGenie" className="h-7 w-auto object-contain" />
+                <span className="font-extrabold text-sm text-gray-900 tracking-tight">MyCollegeGenie</span>
+              </div>
+              <div className="hidden lg:block" />
+
+              {/* Close Button */}
               <button
-                onClick={() => navigate(-1)}
-                className="text-[11px] font-black uppercase tracking-widest text-gray-400 hover:text-[#5636A7] transition-colors flex items-center gap-1"
+                onClick={handleClose}
+                className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900 transition-all flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
                 aria-label="Close auth panel"
+                title="Press Esc to close"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -484,7 +506,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[199] bg-black/20 backdrop-blur-[2px]"
-        onClick={() => navigate(-1)}
+        onClick={handleClose}
         style={{ pointerEvents: 'auto' }}
       />
     </>,

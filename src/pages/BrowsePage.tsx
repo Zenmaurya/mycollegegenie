@@ -102,6 +102,26 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, resources, setSelectedResource]);
 
+  // Synchronize URL query params (course, sem, type, q) for deep linking and seamless navigation
+  useEffect(() => {
+    const courseParam = searchParams.get('course');
+    const semParam = searchParams.get('sem');
+    const typeParam = searchParams.get('type');
+    const qParam = searchParams.get('q');
+    if (courseParam && courses.includes(courseParam)) {
+      setSelectedCourse(courseParam);
+    }
+    if (semParam) {
+      setSelectedSemester(semParam);
+    }
+    if (typeParam && ['All', 'Note', 'PYQ', 'Book', 'Syllabus'].includes(typeParam)) {
+      setActiveFilter(typeParam as any);
+    }
+    if (qParam) {
+      setSearchQuery(qParam);
+    }
+  }, [searchParams, courses, setSelectedCourse, setSelectedSemester, setActiveFilter, setSearchQuery]);
+
   const handleOpenResource = (resource: Resource) => {
     setSelectedResource(resource);
     setTimeout(() => {

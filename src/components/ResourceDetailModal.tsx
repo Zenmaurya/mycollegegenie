@@ -75,6 +75,17 @@ export function ResourceDetailModal({
     return () => window.removeEventListener('openResourceTab', handleOpenTab);
   }, []);
 
+  // Listen for Escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleClose = () => {
     setModalView('main');
     setResourceComments([]);
