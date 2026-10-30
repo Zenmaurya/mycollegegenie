@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import { useLocation } from 'react-router-dom';
+import type { Variants } from 'motion/react';
 
 // ── Scroll progress bar ──────────────────────────────────────────
 export const ScrollProgressBar: React.FC = () => {
@@ -21,15 +22,15 @@ interface PageTransitionProps {
   className?: string;
 }
 
-const pageVariants = {
+const pageVariants: Variants = {
   initial: { opacity: 0, y: 14, scale: 0.99, filter: 'blur(2px)' },
   animate: {
     opacity: 1, y: 0, scale: 1, filter: 'blur(0px)',
-    transition: { duration: 0.42, ease: [0.19, 1, 0.22, 1] }
+    transition: { duration: 0.42, ease: [0.19, 1, 0.22, 1] as [number, number, number, number] },
   },
   exit: {
     opacity: 0, y: -8, scale: 1.005, filter: 'blur(1px)',
-    transition: { duration: 0.2, ease: [0.4, 0, 1, 1] }
+    transition: { duration: 0.2, ease: [0.4, 0, 1, 1] as [number, number, number, number] }
   }
 };
 

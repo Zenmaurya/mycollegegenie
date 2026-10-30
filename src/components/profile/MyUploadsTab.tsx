@@ -26,8 +26,8 @@ export const MyUploadsTab: React.FC = () => {
     }
   };
 
-  const notesCount = resources.filter(r => r.type === 'notes' || r.type === 'pyqs').length;
-  const playlistsCount = resources.filter(r => r.type === 'books').length; // or another logic for playlists
+  const notesCount = resources.filter(r => r.type === 'Note' || r.type === 'PYQ').length;
+  const playlistsCount = resources.filter(r => r.type === 'Playlist').length; // or another logic for playlists
 
   return (
     <motion.div 

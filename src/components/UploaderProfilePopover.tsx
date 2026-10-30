@@ -1,4 +1,3 @@
-﻿import type { SupabaseAuthUser } from '../types';
 import React, { useState, useEffect, useRef } from 'react';
 import { User as UserIcon, X, Loader2, GraduationCap, MapPin, Calendar, FileText, BadgeCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -16,7 +15,7 @@ interface UploaderProfilePopoverProps {
 
 export function UploaderProfilePopover({ uploaderName, uploaderId, resources = [], children }: UploaderProfilePopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [uploaderProfile, setUploaderProfile] = useState<SupabaseAuthUser | null>(null);
+  const [uploaderProfile, setUploaderProfile] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -57,8 +56,8 @@ export function UploaderProfilePopover({ uploaderName, uploaderId, resources = [
     setIsOpen(!isOpen);
   };
 
-  const displayName = uploaderProfile?.display_name || uploaderProfile?.displayName || uploaderName || 'Anonymous';
-  const avatarValue = uploaderProfile?.photo_url || uploaderProfile?.photoUrl;
+  const displayName = uploaderProfile?.displayName || uploaderName || 'Anonymous';
+  const avatarValue = uploaderProfile?.photoURL;
   const av = resolveAvatar(avatarValue);
 
   return (
@@ -142,10 +141,10 @@ export function UploaderProfilePopover({ uploaderName, uploaderId, resources = [
                       <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                       <span className="truncate">{uploaderProfile?.college || 'University Student'}</span>
                     </p>
-                    {uploaderProfile?.created_at && (
+                    {uploaderProfile?.createdAt && (
                       <p className="text-xs text-gray-400 flex items-center gap-1.5 mt-0.5">
                         <Calendar className="w-3 h-3 shrink-0" />
-                        Joined {new Date(uploaderProfile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        Joined {new Date(uploaderProfile.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                       </p>
                     )}
                   </div>
@@ -160,7 +159,7 @@ export function UploaderProfilePopover({ uploaderName, uploaderId, resources = [
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Contributions</span>
-                    <span className="text-sm font-black text-gray-900">{uploaderProfile?.uploads_count || totalContributions}</span>
+                    <span className="text-sm font-black text-gray-900">{uploaderProfile?.resource_count || totalContributions}</span>
                   </div>
                 </div>
                 {/* <button className="px-3 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-800 transition-colors">

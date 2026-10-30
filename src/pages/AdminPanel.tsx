@@ -345,7 +345,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     }
     if (activeTab === 'users') {
       getUsers(500, 0).then(res => {
-        setAllUsers(res.users);
+        const users = Array.isArray(res) ? res : res?.users;
+        setAllUsers(Array.isArray(users) ? users : []);
       }).catch(console.error);
       return undefined;
     }
@@ -2437,10 +2438,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                 </thead>
                 <tbody className="text-sm">
                   {allUsers.map((u) => (
-                    <tr key={u.id} className="border-b border-gray-50 last:border-0 hover:bg-white/50 transition-colors">
+                    <tr key={u.uid} className="border-b border-gray-50 last:border-0 hover:bg-white/50 transition-colors">
                       <td className="py-4 px-4 font-bold text-gray-900 flex items-center gap-3">
-                        {u.avatarUrl ? (
-                          <img src={u.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover shadow-sm" />
+                        {u.photoURL ? (
+                          <img src={u.photoURL} alt="Avatar" className="w-8 h-8 rounded-full object-cover shadow-sm" />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center text-purple-700 font-bold text-xs shadow-sm">
                             {u.displayName?.charAt(0).toUpperCase() || '?'}
@@ -2465,10 +2466,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                           value={u.role || 'user'}
                           onChange={(e) => {
                             const newRole = e.target.value as 'user' | 'moderator' | 'admin';
-                            updateUserRole(u.id, newRole)
+                            updateUserRole(u.uid, newRole)
                               .then(() => {
                                 toast.success('Role updated successfully');
-                                setAllUsers(prev => prev.map(user => user.id === u.id ? { ...user, role: newRole } : user));
+                                setAllUsers(prev => prev.map(user => user.uid === u.uid ? { ...user, role: newRole } : user));
                               })
                               .catch(err => toast.error(err.message || 'Failed to update role'));
                           }}

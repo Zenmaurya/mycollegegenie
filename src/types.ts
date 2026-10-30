@@ -63,6 +63,7 @@ export interface User {
   createdAt: string;
   college?: string;
   course?: string;
+  resource_count?: number;
 }
 
 export interface News {
