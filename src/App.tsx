@@ -86,7 +86,7 @@ import { config } from './lib/config';
 // ─────────────────────────────────────────────────────────────────
 function AppContent() {
   const { user, appUser, isAuthLoading } = useAuth();
-  const { resources, setResources } = useResources();
+  const { resources, setResources, savedResourceIds, toggleSave } = useResources();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -116,7 +116,6 @@ function AppContent() {
     sessionStorage.getItem('announcementDismissed') === 'true',
   );
 
-  const resultsRef = useRef<HTMLElement>(null);
   const isPlaylistContext = location.pathname === '/playlists';
 
   // ── Open upload modal (also clears selected resource to avoid overlap) ──
@@ -313,8 +312,8 @@ function AppContent() {
       College_COURSES={College_COURSES}
       isNewsLoading={isNewsLoading} newsItems={newsItems}
       resources={resources}
-      savedResourceIds={[]} // ResourceContext exposes this — pages that need it use useResources()
-      onSave={async () => {}}    // pages use useResources().toggleSave directly
+      savedResourceIds={savedResourceIds}
+      onSave={toggleSave}
       getAverageRating={getAverageRating}
       setSelectedResource={setSelectedResource}
       handleShare={handleShare}
@@ -363,8 +362,8 @@ function AppContent() {
                   viewMode={viewMode} setViewMode={setViewMode}
                   visibleCount={visibleCount} setVisibleCount={setVisibleCount}
                   filteredResources={filteredResources}
-                  savedResourceIds={[]}
-                  onSave={async () => {}}
+                  savedResourceIds={savedResourceIds}
+                  onSave={toggleSave}
                   getAverageRating={getAverageRating}
                   selectedResource={selectedResource}
                   setSelectedResource={setSelectedResource}
@@ -377,8 +376,8 @@ function AppContent() {
               <Route path="/playlists" element={
                 <PlaylistPage
                   resources={resources}
-                  savedResourceIds={[]}
-                  onSave={async () => {}}
+                  savedResourceIds={savedResourceIds}
+                  onSave={toggleSave}
                   searchQuery={searchQuery} setSearchQuery={setSearchQuery}
                   selectedCourse={selectedCourse} setSelectedCourse={setSelectedCourse}
                   selectedSemester={selectedSemester} setSelectedSemester={setSelectedSemester}
@@ -390,7 +389,6 @@ function AppContent() {
                   courses={courses}
                   semesters={availableSemesters}
                   getAverageRating={getAverageRating}
-                  resultsRef={resultsRef}
                 />
               } />
 
@@ -425,7 +423,18 @@ function AppContent() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/news" element={<OfficialNewsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
               <Route path="/events" element={<CollegeEventsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
-              <Route path="/otp-verify" element={<OTPVerificationPage />} />
+              <Route
+                path="/otp-verify"
+                element={
+                  <OTPVerificationPage
+                    email={
+                      (location.state as { email?: string } | null)?.email ??
+                      user?.email ??
+                      ''
+                    }
+                  />
+                }
+              />
               <Route path="/contributors" element={<ContributorsPage />} />
               <Route path="/blog" element={<BlogPage />} />
 
