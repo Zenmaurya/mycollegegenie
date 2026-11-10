@@ -10,6 +10,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, logout as supabaseLogout } from '../supabase';
 import { createUserProfile } from '../services/userService';
+import { clearAuthTokenCache } from '../lib/apiClient';
 import type { User as AppUser, SupabaseAuthUser } from '../types';
 
 interface AuthContextValue {
@@ -54,6 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Safety timeout — ensures loading spinner never hangs forever
     const safetyTimer = setTimeout(() => setIsAuthLoading(false), 8000);
+    let currentUserId: string | null = null;
+    let profileRequest = 0;
 
     // Helper: fetch profile with retry for Supabase lock contention (AbortError)
     const fetchProfileWithRetry = async (
@@ -82,19 +85,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Unified single auth initialization listener (handles both initial load and updates)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (_event, session) => {
+        const requestId = ++profileRequest;
+        const nextUserId = session?.user?.id ?? null;
+        if (nextUserId !== currentUserId) {
+          currentUserId = nextUserId;
+          clearAuthTokenCache();
+          setAppUser(null);
+        }
         setIsAuthLoading(true);
         if (session?.user) {
           // Downcast to our minimal interface
           setUser(session.user as unknown as SupabaseAuthUser);
-          const profile = await fetchProfileWithRetry();
-          if (profile) setAppUser(profile);
+          // Do not call Supabase APIs while its auth-state callback is holding its
+          // internal lock. Defer the profile request until the callback returns.
+          queueMicrotask(async () => {
+            const profile = await fetchProfileWithRetry();
+            if (requestId === profileRequest && currentUserId === session.user.id) {
+              // Keep the current role during transient profile API failures for the
+              // same session. A user switch cleared it above, and backend checks
+              // remain authoritative for every privileged action.
+              if (profile) setAppUser(profile);
+              clearTimeout(safetyTimer);
+              setIsAuthLoading(false);
+            }
+          });
         } else {
           setUser(null);
           setAppUser(null);
+          clearTimeout(safetyTimer);
+          setIsAuthLoading(false);
         }
-        clearTimeout(safetyTimer);
-        setIsAuthLoading(false);
       },
     );
 
@@ -110,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.error('[Auth] logout error:', e);
     } finally {
+        clearAuthTokenCache();
       window.location.href = '/login';
     }
   }, []);

@@ -24,33 +24,6 @@ const authTimeout = <T>(promise: Promise<T>, ms: number = 5000): Promise<T> => {
 
 // Global cache to deduplicate concurrent Supabase session refresh requests
 let activeRefreshPromise: Promise<string | undefined> | null = null;
-let lastKnownToken: string | undefined = undefined;
-
-/**
- * Helper to directly inspect localStorage for a cached Supabase session token.
- * Provides a highly-resilient offline/low-connectivity fallback.
- */
-function getSessionFromLocalStorageFallback(): any {
-  if (typeof window === 'undefined' || !window.localStorage) return null;
-  try {
-    const storage = window.localStorage;
-    for (let i = 0; i < storage.length; i++) {
-      const key = storage.key(i);
-      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
-        const val = storage.getItem(key);
-        if (val) {
-          const parsed = JSON.parse(val);
-          if (parsed && typeof parsed === 'object') {
-            return parsed;
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('[apiClient] Error reading localStorage fallback:', err);
-  }
-  return null;
-}
 
 export async function getFreshToken(): Promise<string | undefined> {
   /*
@@ -71,7 +44,6 @@ export async function getFreshToken(): Promise<string | undefined> {
       const secondsLeft = expiresAt ? expiresAt - nowSecs : 0;
 
       if (secondsLeft > 120) {
-        lastKnownToken = cached.access_token;
         return cached.access_token;
       }
 
@@ -79,7 +51,6 @@ export async function getFreshToken(): Promise<string | undefined> {
       if (activeRefreshPromise) {
         console.log('[apiClient] Refresh already in progress, sharing active promise…');
         return activeRefreshPromise.then(tok => {
-          if (tok) lastKnownToken = tok;
           return tok;
         });
       }
@@ -91,17 +62,15 @@ export async function getFreshToken(): Promise<string | undefined> {
             supabase.auth.refreshSession(), 25000
           );
           if (!refreshErr && refreshed?.access_token) {
-            lastKnownToken = refreshed.access_token;
             return refreshed.access_token;
           }
-          console.warn('[apiClient] Refresh failed, using cached token:', refreshErr?.message);
+          console.warn('[apiClient] Refresh failed:', refreshErr?.message);
         } catch (refreshEx) {
           console.warn('[apiClient] Refresh threw, using cached token:', refreshEx);
         } finally {
           activeRefreshPromise = null;
         }
-        lastKnownToken = cached.access_token;
-        return cached.access_token;
+        return undefined;
       })();
 
       return activeRefreshPromise;
@@ -110,30 +79,7 @@ export async function getFreshToken(): Promise<string | undefined> {
     console.warn('[apiClient] getFreshToken failed or timed out:', err);
   }
 
-  // ── Fail-Safe Fallback 1: Direct LocalStorage parsing ──
-  // If getSession/refreshSession timed out or threw (common on slow mobile connections when
-  // returning from system gallery app suspension), try to directly retrieve the token
-  // from localStorage. The backend's DB-fallback allows a 30-day grace period for expired tokens.
-  try {
-    console.log('[apiClient] Attempting direct localStorage fallback…');
-    const localSession = getSessionFromLocalStorageFallback();
-    if (localSession?.access_token) {
-      console.log('[apiClient] Direct localStorage fallback succeeded!');
-      lastKnownToken = localSession.access_token;
-      return localSession.access_token;
-    }
-  } catch (fallbackErr) {
-    console.warn('[apiClient] LocalStorage fallback failed:', fallbackErr);
-  }
-
-  // ── Fail-Safe Fallback 2: Global In-Memory Cache ──
-  // If the sandbox blocks localStorage access (e.g. Safari Private Browsing) or Supabase fails,
-  // we return our ultimate in-memory fallback to avoid triggering false session expirations on uploads.
-  if (lastKnownToken) {
-    console.log('[apiClient] Returning module-cached lastKnownToken as ultimate fail-safe!');
-    return lastKnownToken;
-  }
-
+  // Do not send a stale token when session lookup or refresh fails.
   return undefined;
 }
 
@@ -151,6 +97,12 @@ export function clearApiCache(): void {
   getCache.clear();
   inFlightRequests.clear();
   console.log('[apiClient] Cleared entire global API cache.');
+}
+
+/** Drop credential state and all user-scoped responses when auth changes. */
+export function clearAuthTokenCache(): void {
+  activeRefreshPromise = null;
+  clearApiCache();
 }
 
 /**
@@ -173,8 +125,10 @@ export async function fetchWithAuth(
     clearApiCache();
   }
 
-  // Create a unique key for the endpoint + options headers/body
-  const cacheKey = `${endpoint}:${restOptions.method || 'GET'}:${JSON.stringify(restOptions.headers || {})}`;
+  const token = await getFreshToken();
+
+  // Partition private response/in-flight caches by the exact authenticated session.
+  const cacheKey = `${endpoint}:${restOptions.method || 'GET'}:${JSON.stringify(restOptions.headers || {})}:${token || 'anonymous'}`;
 
   if (isGet) {
     // 1. Check if we have a valid cache entry (valid for 30 seconds)
@@ -195,8 +149,6 @@ export async function fetchWithAuth(
 
   // Define the actual fetch operation
   const fetchPromise = (async () => {
-    const token = await getFreshToken();
-
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(restOptions.headers || {}),
@@ -210,13 +162,11 @@ export async function fetchWithAuth(
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(`${config.apiUrl}${endpoint}`, {
+      let response = await fetch(`${config.apiUrl}${endpoint}`, {
         ...restOptions,
         headers,
         signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       // ── 401 Auto-retry with force-refreshed token ──
       if (response.status === 401 && !_isRetry) {
@@ -226,8 +176,19 @@ export async function fetchWithAuth(
             supabase.auth.refreshSession(), 25000
           );
           if (fresh?.access_token) {
-            // Retry the same request with the new token
-            return fetchWithAuth(endpoint, { ...options, _isRetry: true });
+            // Retry directly; recursively calling fetchWithAuth here would return
+            // this same in-flight GET promise and create a promise cycle.
+            const retryController = new AbortController();
+            const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutMs);
+            try {
+              response = await fetch(`${config.apiUrl}${endpoint}`, {
+                ...restOptions,
+                headers: { ...headers, Authorization: `Bearer ${fresh.access_token}` },
+                signal: retryController.signal,
+              });
+            } finally {
+              clearTimeout(retryTimeoutId);
+            }
           }
         } catch (retryErr) {
           console.warn('[apiClient] Force refresh failed on retry:', retryErr);
@@ -259,6 +220,7 @@ export async function fetchWithAuth(
 
       throw err;
     } finally {
+      clearTimeout(timeoutId);
       if (isGet) {
         inFlightRequests.delete(cacheKey);
       }

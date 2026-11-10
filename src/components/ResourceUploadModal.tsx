@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 8587)
+Total output lines: 609
+
 /**
  * ResourceUploadModal.tsx
  * ─────────────────────────────────────────────────────────────────
@@ -154,15 +157,18 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
     setUploadProgress(0);
 
     try {
-      // Safety check: ensure active session token is present before starting upload
-      const freshToken = await getFreshToken();
-      if (!freshToken) {
-        setUploadStatus('idle');
-        toast.error('Session expired. Please refresh the page and sign in again.', {
-          duration: 10000,
-          action: { label: 'Refresh', onClick: () => window.location.reload() },
-        });
-        return;
+      // File uploads validate the token in uploadFile itself; only link-only
+      // submissions need this check here, avoiding duplicate session lookups.
+      if (!formData.file) {
+        const freshToken = await getFreshToken();
+        if (!freshToken) {
+          setUploadStatus('idle');
+          toast.error('Session expired. Please refresh the page and sign in again.', {
+            duration: 10000,
+            action: { label: 'Refresh', onClick: () => window.location.reload() },
+          });
+          return;
+        }
       }
 
       let finalLink = formData.link;
@@ -352,34 +358,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Course <span className="text-red-400">*</span></label>
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => { setUploadCourseOpen(p => !p); setUploadCourseSearch(''); }}
-                          className={`w-full flex items-center justify-between px-3.5 py-2.5 bg-gray-50 border rounded-xl text-sm font-medium transition-all text-left ${uploadCourseOpen ? 'border-purple-500 ring-2 ring-purple-500/20 bg-white' : 'border-gray-200'} ${!formData.course ? 'text-gray-300' : 'text-gray-800'}`}
-                        >
-                          <span className="truncate">{formData.course || 'Select Course'}</span>
-                          <ChevronDown className={`w-4 h-4 text-gray-300 shrink-0 transition-transform ${uploadCourseOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        <input type="text" required readOnly value={formData.course} tabIndex={-1} className="absolute inset-0 opacity-0 pointer-events-none" />
-                        <AnimatePresence>
-                          {uploadCourseOpen && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                              transition={{ duration: 0.15 }}
-                              className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
-                            >
-                              <div className="p-2 border-b border-gray-100">
-                                <div className="relative">
-                                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
-                                  <input
-                                    autoFocus type="text" placeholder="Search course…"
-                                    value={uploadCourseSearch} onChange={e => setUploadCourseSearch(e.target.value)}
-                                    className="w-full pl-7 pr-3 py-1.5 text-xs font-medium bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-purple-400 text-gray-800 placeholder:text-gray-300"
-                                  />
-                                </div>
-                              </div>
-                              <div className="overflow-y-auto max-h-40">
+         …587 tokens truncated…                       <div className="overflow-y-auto max-h-40">
                                 {College_COURSES.filter(c => c.toLowerCase().includes(uploadCourseSearch.toLowerCase())).map(course => (
                                   <button key={course} type="button"
                                     onClick={() => { setFormData(d => ({ ...d, course })); setUploadCourseOpen(false); setUploadCourseSearch(''); }}

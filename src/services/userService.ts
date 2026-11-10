@@ -80,7 +80,7 @@ export const createUserProfile = async (
     return await fetchWithAuth('/api/users/me');
   } catch (error) {
     console.error('[userService] createUserProfile error:', error);
-    return null;
+    throw error;
   }
 };
 

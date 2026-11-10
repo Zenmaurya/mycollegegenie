@@ -122,29 +122,43 @@ export const uploadFile = async (
     throw new Error('Not authenticated. Please sign in to upload files.');
   }
 
+  // Compress images before choosing their upload route so the signed size matches
+  // the bytes sent to storage and users do not wait for an oversized transfer.
+  let fileToUpload = file;
+  if (file.type.startsWith('image/') && file.type !== 'image/gif') {
+    try {
+      fileToUpload = await compressImage(file, folder);
+    } catch (e) {
+      console.warn('[uploadFile] Client image compression failed, uploading original:', e);
+    }
+  }
+
   // ── High Performance direct-to-R2 upload using Presigned PUT URLs ──
-  // Bypasses backend server bytes hop, enabling massive speed improvement on mobile & WiFi.
-  if (file.type === 'application/pdf') {
+  // Bypass the backend bytes hop for PDFs and compressed images.
+  const isDirectUploadType = fileToUpload.type === 'application/pdf' ||
+    ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(fileToUpload.type);
+  if (isDirectUploadType && ['pyqs', 'notes', 'books', 'resources'].includes(folder)) {
     try {
       const presignResponse = await fetchWithAuth('/api/resources/presign-upload', {
         method: 'POST',
         body: JSON.stringify({
           filename: file.name,
-          mimeType: file.type,
+          mimeType: fileToUpload.type,
           folder,
           course: meta.course,
           subject: meta.subject,
           subjectCode: meta.subjectCode,
+          size: fileToUpload.size,
         }),
       });
 
       if (presignResponse && presignResponse.uploadUrl && presignResponse.fileUrl) {
         const { uploadUrl, fileUrl } = presignResponse;
         
-        return new Promise<string>((resolve, reject) => {
+        return await new Promise<string>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open('PUT', uploadUrl, true);
-          xhr.setRequestHeader('Content-Type', file.type);
+          xhr.setRequestHeader('Content-Type', fileToUpload.type);
 
           if (onProgress && xhr.upload) {
             xhr.upload.onprogress = (event) => {
@@ -167,22 +181,12 @@ export const uploadFile = async (
           xhr.ontimeout = () => reject(new Error('Direct storage upload timed out. Please check your network connection.'));
           xhr.timeout = 300_000; // Generous 5-minute timeout window
           
-          xhr.send(file);
+          xhr.send(fileToUpload);
         });
       }
     } catch (presignErr) {
       console.warn('[uploadFile] Direct presigned upload failed, falling back to multi-hop backend upload:', presignErr);
       // Continuous uptime guarantee: fall back seamlessly to legacy multi-hop upload if presigning endpoint fails
-    }
-  }
-
-  // Optimize and compress images locally before upload to make it 10x faster
-  let fileToUpload = file;
-  if (file.type.startsWith('image/') && file.type !== 'image/gif') {
-    try {
-      fileToUpload = await compressImage(file, folder);
-    } catch (e) {
-      console.warn('[uploadFile] Client image compression failed, uploading original:', e);
     }
   }
 
