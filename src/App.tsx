@@ -86,7 +86,7 @@ import { config } from './lib/config';
 // ─────────────────────────────────────────────────────────────────
 function AppContent() {
   const { user, appUser, isAuthLoading } = useAuth();
-  const { resources, setResources } = useResources();
+  const { resources, setResources, savedResourceIds, toggleSave } = useResources();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -313,8 +313,8 @@ function AppContent() {
       College_COURSES={College_COURSES}
       isNewsLoading={isNewsLoading} newsItems={newsItems}
       resources={resources}
-      savedResourceIds={[]} // ResourceContext exposes this — pages that need it use useResources()
-      onSave={async () => {}}    // pages use useResources().toggleSave directly
+      savedResourceIds={savedResourceIds}
+      onSave={toggleSave}
       getAverageRating={getAverageRating}
       setSelectedResource={setSelectedResource}
       handleShare={handleShare}
@@ -363,8 +363,8 @@ function AppContent() {
                   viewMode={viewMode} setViewMode={setViewMode}
                   visibleCount={visibleCount} setVisibleCount={setVisibleCount}
                   filteredResources={filteredResources}
-                  savedResourceIds={[]}
-                  onSave={async () => {}}
+                  savedResourceIds={savedResourceIds}
+                  onSave={toggleSave}
                   getAverageRating={getAverageRating}
                   selectedResource={selectedResource}
                   setSelectedResource={setSelectedResource}
@@ -377,8 +377,8 @@ function AppContent() {
               <Route path="/playlists" element={
                 <PlaylistPage
                   resources={resources}
-                  savedResourceIds={[]}
-                  onSave={async () => {}}
+                  savedResourceIds={savedResourceIds}
+                  onSave={toggleSave}
                   searchQuery={searchQuery} setSearchQuery={setSearchQuery}
                   selectedCourse={selectedCourse} setSelectedCourse={setSelectedCourse}
                   selectedSemester={selectedSemester} setSelectedSemester={setSelectedSemester}
