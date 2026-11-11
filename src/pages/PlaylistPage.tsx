@@ -424,15 +424,21 @@ export const PlaylistPage: React.FC<PlaylistPageProps> = ({
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={e => { e.stopPropagation(); onSave(playlist.id); }}
-                        className={`p-1.5 hover:bg-gray-50 rounded-lg transition-colors ${savedResourceIds.includes(playlist.id) ? 'text-rose-600' : 'text-gray-400'}`}
+                        className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all active:scale-95 hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 cursor-pointer ${
+                          savedResourceIds.includes(playlist.id)
+                            ? 'text-rose-600 bg-rose-50 border-rose-200 shadow-sm'
+                            : 'text-gray-500 bg-gray-50 border-gray-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'
+                        }`}
+                        aria-label={savedResourceIds.includes(playlist.id) ? 'Remove playlist from saved' : 'Save playlist'}
                       >
-                        <Bookmark className={`w-3.5 h-3.5 ${savedResourceIds.includes(playlist.id) ? 'fill-current' : ''}`} />
+                        <Bookmark className={`w-4 h-4 ${savedResourceIds.includes(playlist.id) ? 'fill-current' : ''}`} />
                       </button>
                       <button
                         onClick={e => { e.stopPropagation(); handleShare(playlist); }}
-                        className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-rose-600 transition-colors"
+                        className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                        aria-label={`Share ${playlist.title}`}
                       >
-                        <Share2 className="w-3.5 h-3.5" />
+                        <Share2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

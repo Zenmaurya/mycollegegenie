@@ -165,9 +165,13 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
           )}
 
           <button onClick={(e) => { e.stopPropagation(); onSave(resource.id); }}
-            className={`p-2 rounded-xl transition-all hover:scale-105 ${isSaved ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:bg-gray-50'}`}
+            className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all active:scale-95 hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 cursor-pointer ${
+              isSaved
+                ? 'text-purple-600 bg-purple-50 border-purple-200 shadow-sm shadow-purple-600/10'
+                : 'text-gray-500 bg-gray-50 border-gray-200 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200'
+            }`}
             aria-label={isSaved ? 'Remove from saved' : 'Save resource'}>
-            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current text-purple-600' : ''}`} />
           </button>
           <div className="p-2 bg-gray-50 text-gray-400 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-all group-hover:-rotate-45 hidden sm:flex">
             <ChevronRight className="w-4 h-4" />
@@ -216,9 +220,13 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
             <span className="text-[10px] font-bold text-amber-600">{rating.toFixed(1)}</span>
           </div>
           <button onClick={(e) => { e.stopPropagation(); onSave(resource.id); }}
-            className={`p-1.5 rounded-full border transition-all hover:scale-110 ${isSaved ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'}`}
+            className={`w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-full border transition-all active:scale-95 hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 cursor-pointer ${
+              isSaved
+                ? 'bg-purple-50 text-purple-600 border-purple-200 shadow-sm shadow-purple-600/10'
+                : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200'
+            }`}
             aria-label={isSaved ? 'Remove from saved' : 'Save resource'}>
-            <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
+            <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current text-purple-600' : ''}`} />
           </button>
         </div>
       </div>

@@ -71,17 +71,24 @@ export const ContactPage: React.FC = () => {
       toast.success(data?.message || 'Message sent! Our support team will get back to you shortly.');
       setFormData({ name: '', email: '', subject: 'General Inquiry', message: '' });
     } catch (err: any) {
-      console.warn('[ContactPage] API submit failed, offering mailto fallback:', err?.message);
+      console.warn('[ContactPage] API submit failed:', err?.message);
       setStatus('idle');
-      toast.error(err?.message || 'Server unavailable. Opening your default mail app...');
-      const mailto = `mailto:support@mycollegegenie.in?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\n${formData.message}`)}`;
-      window.location.href = mailto;
+      toast.error('Unable to send message right now. Please email us directly at support@mycollegegenie.in', {
+        action: {
+          label: 'Copy Email',
+          onClick: () => {
+            navigator.clipboard.writeText('support@mycollegegenie.in');
+            toast.success('support@mycollegegenie.in copied to clipboard!');
+          },
+        },
+        duration: 8000,
+      });
     }
   };
 
   const inputClass =
     'w-full bg-gray-50/80 border border-gray-200 rounded-2xl px-5 py-3.5 sm:py-4 text-sm focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-medium placeholder:text-gray-400';
-  const labelClass = 'block text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1';
+  const labelClass = 'block text-xs font-bold text-gray-700 tracking-wide mb-2 ml-1';
 
   return (
     <div className="min-h-screen bg-transparent pt-6 sm:pt-8 pb-24 md:pb-8">

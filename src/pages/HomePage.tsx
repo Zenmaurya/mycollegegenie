@@ -77,6 +77,14 @@ interface DraggableCardProps {
 function DraggableCard({ children, className, floatY = 10, floatDuration = 4, floatDelay = 0 }: DraggableCardProps) {
   const controls = useAnimation();
   const [dragging, setDragging] = useState(false);
+  const [canDrag, setCanDrag] = useState(false);
+
+  useEffect(() => {
+    // Only allow drag on fine-pointer (mouse) devices to prevent mobile scroll hijacking
+    if (typeof window !== 'undefined') {
+      setCanDrag(window.matchMedia('(pointer: fine)').matches);
+    }
+  }, []);
 
   const startFloat = () => {
     controls.start({
@@ -90,7 +98,7 @@ function DraggableCard({ children, className, floatY = 10, floatDuration = 4, fl
   return (
     <div className={`absolute ${className ?? ''}`} style={{ width: 'fit-content' }}>
       <motion.div
-        drag
+        drag={canDrag}
         dragConstraints={{ left: -40, right: 40, top: -40, bottom: 40 }}
         dragElastic={0.15}
         dragMomentum={false}
@@ -104,7 +112,7 @@ function DraggableCard({ children, className, floatY = 10, floatDuration = 4, fl
             transition: { type: 'spring', stiffness: 280, damping: 18 }
           }).then(() => startFloat());
         }}
-        style={{ cursor: dragging ? 'grabbing' : 'grab' }}
+        style={{ cursor: canDrag ? (dragging ? 'grabbing' : 'grab') : 'default' }}
         className="will-change-transform select-none"
       >
         {children}

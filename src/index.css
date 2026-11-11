@@ -150,8 +150,7 @@ a, button {
   transition: color var(--duration-fast) var(--ease-smooth),
               background-color var(--duration-fast) var(--ease-smooth),
               border-color var(--duration-fast) var(--ease-smooth),
-              box-shadow var(--duration-base) var(--ease-smooth),
-              transform var(--duration-base) var(--ease-spring);
+              box-shadow var(--duration-base) var(--ease-smooth);
 }
 
 /* ── Card Hover System ─────────────────────────────────────────── */

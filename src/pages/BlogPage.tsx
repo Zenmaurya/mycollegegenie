@@ -98,11 +98,18 @@ export function BlogPage() {
       return;
     }
     setIsSubscribing(true);
+    try {
+      const stored = JSON.parse(localStorage.getItem('mcg_newsletter_subs') || '[]');
+      if (!stored.includes(newsletterEmail)) {
+        stored.push(newsletterEmail);
+        localStorage.setItem('mcg_newsletter_subs', JSON.stringify(stored));
+      }
+    } catch {}
     setTimeout(() => {
       setIsSubscribing(false);
       setNewsletterEmail('');
-      toast.success('Welcome aboard! You are now subscribed to the student digest.');
-    }, 600);
+      toast.success('Subscribed! You will receive our weekly student digest.');
+    }, 400);
   };
 
   // ─────────────────────────────────────────────────────────────────────────────

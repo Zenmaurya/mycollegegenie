@@ -27,6 +27,13 @@ const NAV_LINKS = [
   { to: '/forum', icon: MessagesSquare, label: 'Forum' },
 ] as const;
 
+const MOBILE_BOTTOM_NAV_LINKS = [
+  { to: '/', icon: Home, label: 'Home' },
+  { to: '/browse', icon: LibraryBig, label: 'Browse' },
+  { to: '/campus-exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
+  { to: '/forum', icon: MessagesSquare, label: 'Forum' },
+] as const;
+
 const MOBILE_NAV_LINKS = [
   ...NAV_LINKS,
   { to: '/news', icon: Newspaper, label: 'News & Updates' },
@@ -508,7 +515,7 @@ export function NavBar() {
       {!isLoginSignupPage && (
         <div className="xl:hidden fixed bottom-0 left-0 right-0 z-[110] bg-white/95 backdrop-blur-2xl border-t border-gray-100 pb-[env(safe-area-inset-bottom,8px)] shadow-[0_-12px_40px_rgba(0,0,0,0.06)]">
           <div className="flex items-center justify-around px-1 pt-2 pb-1.5 relative">
-            {NAV_LINKS.map((navItem) => {
+            {MOBILE_BOTTOM_NAV_LINKS.map((navItem) => {
               const { to, icon: Icon, label } = navItem;
               const isNew = 'isNew' in navItem ? (navItem as any).isNew as boolean : false;
               const active = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
@@ -552,6 +559,41 @@ export function NavBar() {
                 </Link>
               );
             })}
+
+            {/* 5th Tab: More Menu trigger */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="flex flex-col items-center gap-1 flex-1 min-w-0 px-0.5 py-1 group relative min-h-[48px] justify-center focus:outline-none cursor-pointer"
+              aria-label="Open navigation menu"
+            >
+              <motion.div
+                whileTap={{ scale: 0.85 }}
+                className={`relative flex items-center justify-center w-11 h-9 rounded-2xl transition-all duration-300 ${
+                  isMobileMenuOpen || location.pathname === '/playlists' || location.pathname === '/find-pg' || location.pathname === '/news' || location.pathname === '/events'
+                    ? 'bg-gradient-to-br from-purple-100 to-indigo-50 shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_2px_6px_rgba(147,51,234,0.12)] border border-purple-200/50'
+                    : 'group-active:bg-gray-50'
+                }`}
+              >
+                <Menu
+                  strokeWidth={2}
+                  className={`w-[20px] h-[20px] transition-all duration-300 ${
+                    isMobileMenuOpen || location.pathname === '/playlists' || location.pathname === '/find-pg' || location.pathname === '/news' || location.pathname === '/events'
+                      ? 'text-purple-700 drop-shadow-[0_2px_4px_rgba(147,51,234,0.2)] scale-110'
+                      : 'text-slate-400 group-hover:text-slate-600'
+                  }`}
+                />
+              </motion.div>
+              <span
+                className={`text-[9px] font-bold tracking-tight transition-all duration-300 truncate w-full text-center ${
+                  isMobileMenuOpen || location.pathname === '/playlists' || location.pathname === '/find-pg' || location.pathname === '/news' || location.pathname === '/events'
+                    ? 'text-purple-700 drop-shadow-sm scale-105'
+                    : 'text-slate-400 group-hover:text-slate-600'
+                }`}
+              >
+                More
+              </span>
+            </button>
           </div>
         </div>
       )}
