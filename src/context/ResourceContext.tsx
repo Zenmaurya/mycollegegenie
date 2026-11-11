@@ -85,7 +85,7 @@ export function ResourceProvider({ children }: { children: React.ReactNode }) {
             console.warn('[ResourceContext] fetch saved error (non-critical):', err?.message);
           }
         });
-    }, 1500); // 1.5s delay — gives token time to settle after auth state change
+    }, 200); // 200ms settles token without causing noticeable bookmark state flash
     return () => clearTimeout(timer);
   }, [user]);
 

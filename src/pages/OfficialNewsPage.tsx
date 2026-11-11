@@ -260,7 +260,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                 placeholder="Search news, college, keywords..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-10 pr-4 py-3 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all placeholder:text-gray-300"
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-10 pr-4 py-3 text-base sm:text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all placeholder:text-gray-300"
               />
             </div>
             {/* Filter toggle */}
@@ -344,10 +344,10 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                 transition={{ delay: Math.min(idx * 0.05, 0.3) }}
                 key={(item.id || item.title) + idx}
                 onClick={() => handleOpenNews(item)}
-                className="group bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-purple-500/8 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer flex"
+                className="group bg-white border border-gray-100 rounded-2xl sm:rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-purple-500/8 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer flex"
               >
                 {/* Thumbnail */}
-                <div className="relative w-36 sm:w-44 shrink-0 bg-gradient-to-br from-purple-50 to-indigo-100 overflow-hidden">
+                <div className="relative w-28 sm:w-44 shrink-0 bg-gradient-to-br from-purple-50 to-indigo-100 overflow-hidden">
                   <img
                     src={item.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(item.title)}/300/400`}
                     alt={item.title}
@@ -445,7 +445,9 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
               className="relative z-10 w-full max-w-lg sm:max-w-2xl bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] overflow-hidden"
             >
               {/* Hero image */}
-              <div className="relative h-52 sm:h-64 bg-gradient-to-br from-purple-900 to-indigo-800 shrink-0 overflow-hidden">
+              <div className="relative h-48 sm:h-64 bg-gradient-to-br from-purple-900 to-indigo-800 shrink-0 overflow-hidden">
+                {/* Mobile Drag Handle Overlay */}
+                <div className="sm:hidden absolute top-2.5 left-1/2 -translate-x-1/2 z-30 w-10 h-1 bg-white/40 rounded-full" />
                 <img
                   src={selectedNews.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(selectedNews.title)}/1200/600`}
                   className="w-full h-full object-cover opacity-60"
@@ -455,6 +457,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                 <button onClick={handleCloseNews}
+                  aria-label="Close news detail"
                   className="absolute top-4 right-4 p-2.5 bg-black/30 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-20">
                   <X className="w-5 h-5" />
                 </button>
@@ -470,7 +473,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
               </div>
 
               {/* Scrollable body */}
-              <div className="overflow-y-auto flex-1 p-5 sm:p-7 space-y-5 bg-white">
+              <div className="overflow-y-auto flex-1 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:p-7 space-y-5 bg-white">
                 {/* Info tiles */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex items-center gap-3 p-3.5 bg-purple-50 rounded-2xl border border-purple-100">
@@ -550,7 +553,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
       {createPortal(
         <AnimatePresence>
           {isSubmitModalOpen && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -559,14 +562,19 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                 className="absolute inset-0 bg-black/80 backdrop-blur-md"
               />
               <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 40 }}
+                transition={{ type: 'spring', damping: 28, stiffness: 320 }}
                 onClick={e => e.stopPropagation()}
-                className="relative w-full max-w-2xl bg-white rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+                className="relative w-full max-w-2xl bg-white rounded-t-[1.75rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[92dvh] sm:max-h-[90vh]"
               >
+                {/* Mobile Drag Handle */}
+                <div className="sm:hidden flex justify-center pt-2.5 pb-1 bg-purple-50/70 shrink-0">
+                  <div className="w-10 h-1 bg-purple-200 rounded-full" />
+                </div>
                 {/* Modal Header */}
-                <div className="p-6 sm:p-7 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 shrink-0">
+                <div className="px-5 py-4 sm:p-7 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 shrink-0">
                   <div className="flex items-center gap-3 sm:gap-4">
                     <div className="w-11 h-11 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
                       <Newspaper className="w-5 h-5" />
@@ -643,7 +651,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                             required
                             type="text"
                             placeholder="e.g. DU Admission 2026 Schedule Released"
-                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-sm"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-base sm:text-sm"
                             value={submitForm.title}
                             onChange={e => setSubmitForm({ ...submitForm, title: e.target.value })}
                             maxLength={255}
@@ -651,14 +659,14 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                         </div>
 
                         {/* College + Category row */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
                               College / University <span className="text-red-400">*</span>
                             </label>
                             <select
                               required
-                              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-sm appearance-none cursor-pointer"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-base sm:text-sm appearance-none cursor-pointer"
                               value={submitForm.college}
                               onChange={e => setSubmitForm({ ...submitForm, college: e.target.value })}
                             >
@@ -671,7 +679,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Category</label>
                             <select
-                              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-sm appearance-none cursor-pointer"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-base sm:text-sm appearance-none cursor-pointer"
                               value={submitForm.category}
                               onChange={e => setSubmitForm({ ...submitForm, category: e.target.value as any })}
                             >
@@ -690,7 +698,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                               required
                               type="text"
                               placeholder="Type your college name..."
-                              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-sm"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-base sm:text-sm"
                               value={submitForm.customCollege}
                               onChange={e => setSubmitForm({ ...submitForm, customCollege: e.target.value })}
                             />
@@ -698,7 +706,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                         )}
 
                         {/* Date + URL row */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                               <Calendar className="w-3 h-3" />News Date <span className="text-red-400">*</span>
@@ -706,7 +714,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                             <input
                               required
                               type="date"
-                              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-sm cursor-pointer"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-base sm:text-sm cursor-pointer"
                               value={submitForm.date}
                               onChange={e => setSubmitForm({ ...submitForm, date: e.target.value })}
                             />
@@ -718,7 +726,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                             <input
                               type="url"
                               placeholder="https://..."
-                              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-sm"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-base sm:text-sm"
                               value={submitForm.url}
                               onChange={e => setSubmitForm({ ...submitForm, url: e.target.value })}
                             />
@@ -734,7 +742,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                             required
                             rows={5}
                             placeholder="Write the news details here... What happened? What should students know?"
-                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-sm resize-none"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-base sm:text-sm resize-none"
                             value={submitForm.summary}
                             onChange={e => setSubmitForm({ ...submitForm, summary: e.target.value })}
                             maxLength={3000}
@@ -756,7 +764,7 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
 
                 {/* Modal Footer — submit button */}
                 {submitStatus !== 'success' && currentUser && (
-                  <div className="p-5 sm:p-6 border-t border-gray-100 bg-white shrink-0">
+                  <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:p-6 border-t border-gray-100 bg-white shrink-0">
                     <button
                       type="submit"
                       form="submit-news-form"

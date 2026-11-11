@@ -219,7 +219,7 @@ export const PostDetailPage: React.FC = () => {
   const topicColor = TOPIC_COLORS[post.topic] || 'bg-gray-50 text-gray-600 border-gray-200';
 
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-8 sm:pt-10 pb-16">
+    <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-5 sm:pt-10 pb-28 md:pb-16">
       <Helmet>
         <title>{post.title} | MyCollegeGenie Forum</title>
         <meta name="description" content={post.content.substring(0, 150)} />
@@ -374,7 +374,7 @@ export const PostDetailPage: React.FC = () => {
                   placeholder="Write a comment..."
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
-                  className="flex-1 bg-transparent outline-none resize-none text-sm font-medium text-gray-700 placeholder-gray-400 mt-1"
+                  className="flex-1 bg-transparent outline-none resize-none text-base sm:text-sm font-medium text-gray-700 placeholder-gray-400 mt-1"
                 />
               </div>
               <div className="flex justify-end px-3 pb-2.5 border-t border-gray-50 pt-2">
@@ -448,7 +448,8 @@ export const PostDetailPage: React.FC = () => {
                     </div>
                     {(currentUser?.id === comment.authorId || currentUser?.role === 'admin') && comment.authorId !== 'deleted' && (
                       <button onClick={() => { setCommentToDelete(comment.id); setIsDeleteCommentModalOpen(true); }}
-                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                        aria-label="Delete comment"
+                        className="p-2 text-gray-400 sm:text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}

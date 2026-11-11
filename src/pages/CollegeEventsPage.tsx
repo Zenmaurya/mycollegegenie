@@ -256,7 +256,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                 placeholder="Search by event name, college or keywords..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all placeholder:text-gray-300"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-base sm:text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all placeholder:text-gray-300"
               />
             </div>
           </div>
@@ -281,7 +281,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                         id="college-filter"
                         value={collegeFilter}
                         onChange={(e) => setCollegeFilter(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all appearance-none cursor-pointer"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-base sm:text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all appearance-none cursor-pointer"
                       >
                         <option value="all">All Colleges</option>
                         {colleges.map(college => (
@@ -303,7 +303,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                         id="eligibility-filter"
                         value={eligibilityFilter}
                         onChange={(e) => setEligibilityFilter(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all appearance-none cursor-pointer"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-base sm:text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all appearance-none cursor-pointer"
                       >
                         <option value="all">All Students</option>
                         <option value="All">All Colleges</option>
@@ -329,7 +329,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all cursor-pointer"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-base sm:text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all cursor-pointer"
                     />
                   </div>
 
@@ -344,7 +344,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all cursor-pointer"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-base sm:text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all cursor-pointer"
                     />
                   </div>
 
@@ -359,7 +359,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                         id="sort-order"
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as any)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all appearance-none cursor-pointer"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-base sm:text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all appearance-none cursor-pointer"
                       >
                         <option value="date-desc">Newest First</option>
                         <option value="date-asc">Oldest First</option>
@@ -581,6 +581,8 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
             >
               {/* ── Image Slider (modal hero) ── */}
               <div className="relative w-full bg-gradient-to-br from-pink-900 via-rose-800 to-pink-700 shrink-0 h-[35dvh] sm:h-[45vh]">
+                {/* Mobile Drag Handle Overlay */}
+                <div className="sm:hidden absolute top-2.5 left-1/2 -translate-x-1/2 z-20 w-10 h-1 bg-white/40 rounded-full" />
                 <ImageSlider
                   images={[
                     selectedEvent.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(selectedEvent.title)}/800/600`
@@ -663,7 +665,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
               </div>
 
               {/* Sticky Action Buttons */}
-              <div className="p-4 sm:p-6 bg-white border-t border-gray-100 flex gap-3 shrink-0 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
+              <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:p-6 bg-white border-t border-gray-100 flex gap-3 shrink-0 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
                 <a
                   href={selectedEvent.url || '#'}
                   target="_blank"
@@ -700,7 +702,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
       {createPortal(
         <AnimatePresence>
           {isSubmitModalOpen && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">  
+            <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">  
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -709,13 +711,18 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
               className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-2xl bg-white rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+              className="relative w-full max-w-2xl bg-white rounded-t-[1.75rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[92dvh] sm:max-h-[90vh]"
             >
-              <div className="p-6 sm:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              {/* Mobile Drag Handle */}
+              <div className="sm:hidden flex justify-center pt-2.5 pb-1 bg-gray-50/50 shrink-0">
+                <div className="w-10 h-1 bg-gray-200 rounded-full" />
+              </div>
+              <div className="px-5 py-4 sm:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                 <div className="flex items-center gap-3 sm:gap-4">
                   <div className="w-10 h-10 sm:w-12 h-12 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600 shrink-0">
                     <Plus className="w-5 h-5 sm:w-6 h-6" />
@@ -776,7 +783,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                           name="title"
                           type="text"
                           placeholder="e.g. Crossroads 2026"
-                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-base sm:text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
                           value={submitForm.title}
                           onChange={e => setSubmitForm({...submitForm, title: e.target.value})}
                         />
@@ -789,14 +796,14 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                           name="college"
                           type="text"
                           placeholder="e.g. SRCC"
-                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-base sm:text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
                           value={submitForm.college}
                           onChange={e => setSubmitForm({...submitForm, college: e.target.value})}
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Event Date</label>
                         <input 
@@ -805,7 +812,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                           name="date"
                           type="text"
                           placeholder="e.g. March 25, 2026"
-                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-base sm:text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
                           value={submitForm.date}
                           onChange={e => setSubmitForm({...submitForm, date: e.target.value})}
                         />
@@ -818,7 +825,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                           name="venue"
                           type="text"
                           placeholder="e.g. College Auditorium"
-                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-base sm:text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold"
                           value={submitForm.venue}
                           onChange={e => setSubmitForm({...submitForm, venue: e.target.value})}
                         />
@@ -830,7 +837,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                       <div className="relative">
                         <select 
                           required
-                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold appearance-none cursor-pointer"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-base sm:text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold appearance-none cursor-pointer"
                           value={submitForm.eligibility}
                           onChange={e => setSubmitForm({...submitForm, eligibility: e.target.value as any})}
                         >
@@ -852,7 +859,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
                         required
                         rows={3}
                         placeholder="Tell us what makes this event special..."
-                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold resize-none"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 text-base sm:text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all font-bold resize-none"
                         value={submitForm.description}
                         onChange={e => setSubmitForm({...submitForm, description: e.target.value})}
                       />
@@ -892,7 +899,7 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
 
               {/* ── Sticky Submit Footer ── */}
               {currentUser && submitStatus !== 'success' && (
-                <div className="px-6 sm:px-8 py-4 border-t border-gray-100 bg-white flex-shrink-0">
+                <div className="px-5 sm:px-8 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4 border-t border-gray-100 bg-white flex-shrink-0">
                   <button
                     type="submit"
                     form="submit-event-form"

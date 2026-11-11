@@ -16,6 +16,7 @@ import { Camera, Loader2, X as XIcon } from 'lucide-react';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { VerificationApplyModal } from '../components/VerificationApplyModal';
 import { Skeleton } from '../components/ui/skeleton';
+import { openSafeExternalUrl } from '../lib/security';
 
 export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   const [listings, setListings] = useState<PGListing[]>([]);
@@ -201,7 +202,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24 md:pb-8">
+    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-28 md:pb-8">
       <Helmet>
         <title>Find PG, Flats & Roommates Near Your College | MyCollegeGenie</title>
         <meta name="description" content="Find paying guest accommodations, flats, and roommates near your college campus. Browse verified student housing listings by area and budget." />
@@ -286,18 +287,18 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                   placeholder="Search by college or location..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8.5 pr-3 py-2 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none text-xs sm:text-sm font-medium"
+                  className="w-full pl-9 pr-3 py-2.5 sm:py-3.5 rounded-xl bg-gray-50 border-transparent focus:bg-white focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all outline-none text-base sm:text-sm font-medium"
                 />
               </div>
               
               {/* Filter pills and CTA button */}
               <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
-                <div className="flex gap-0.5 p-0.5 bg-gray-50 rounded-lg sm:rounded-xl overflow-x-auto no-scrollbar shrink-0 w-full md:w-auto">
+                <div className="flex gap-1 p-1 bg-gray-50 rounded-xl overflow-x-auto no-scrollbar shrink-0 w-full md:w-auto">
                   {(['All', 'Male', 'Female'] as const).map((g) => (
                     <button
                       key={g}
                       onClick={() => setGenderFilter(g)}
-                      className={`flex-1 md:flex-initial px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-md sm:rounded-lg font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
+                      className={`flex-1 md:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-black text-[11px] sm:text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
                         genderFilter === g 
                           ? 'bg-white text-purple-600 shadow-sm border border-gray-100/50' 
                           : 'text-gray-500 hover:text-gray-900'
@@ -320,14 +321,14 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
             </div>
 
             {/* Quick Filter Row: Zone & Budget Selectors */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100 text-xs text-gray-600">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-purple-600" />
-                <span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider text-gray-500">Zone:</span>
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pt-2 border-t border-gray-100 text-xs text-gray-600">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <MapPin className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                <span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider text-gray-500 shrink-0 hidden sm:inline">Zone:</span>
                 <select
                   value={zoneFilter}
                   onChange={(e) => setZoneFilter(e.target.value)}
-                  className="px-2.5 py-1 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 outline-none cursor-pointer"
+                  className="w-full sm:w-auto px-2.5 py-2 sm:py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 outline-none cursor-pointer truncate"
                 >
                   <option value="All">All Campuses</option>
                   <option value="North Campus">North Campus</option>
@@ -336,13 +337,13 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                 </select>
               </div>
 
-              <div className="flex items-center gap-1.5 ml-1">
-                <IndianRupee className="w-3.5 h-3.5 text-purple-600" />
-                <span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider text-gray-500">Budget:</span>
+              <div className="flex items-center gap-1.5 sm:ml-1 min-w-0">
+                <IndianRupee className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                <span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider text-gray-500 shrink-0 hidden sm:inline">Budget:</span>
                 <select
                   value={budgetFilter}
                   onChange={(e) => setBudgetFilter(e.target.value)}
-                  className="px-2.5 py-1 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 outline-none cursor-pointer"
+                  className="w-full sm:w-auto px-2.5 py-2 sm:py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 outline-none cursor-pointer truncate"
                 >
                   <option value="All">Any Budget</option>
                   <option value="under8k">Under ₹8,000 / mo</option>
@@ -754,17 +755,18 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
       {createPortal(
         <AnimatePresence>
           {selectedListing && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm" style={{ position: 'fixed', inset: 0 }}>
+            <div onClick={() => setSelectedListing(null)} className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/60 backdrop-blur-sm" style={{ position: 'fixed', inset: 0 }}>
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, y: 40, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.98 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative"
+              className="bg-white rounded-t-[1.75rem] sm:rounded-3xl w-full max-w-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl relative pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
             >
               <button 
                 onClick={() => setSelectedListing(null)}
-                className="absolute top-4 right-4 z-10 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-all backdrop-blur-md"
+                aria-label="Close listing details"
+                className="absolute top-4 right-4 z-10 p-2.5 bg-black/35 hover:bg-black/55 text-white rounded-full transition-all backdrop-blur-md"
               >
                 <XIcon className="w-5 h-5" />
               </button>
@@ -857,10 +859,8 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                           {social && (
                             <button
                               onClick={() => {
-                                try {
-                                  const url = social.startsWith('http') ? social : `https://${social}`;
-                                  window.open(url, '_blank');
-                                } catch {
+                                const opened = openSafeExternalUrl(social);
+                                if (!opened) {
                                   toast.error('Invalid link format.');
                                 }
                               }}
@@ -890,19 +890,12 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                         return (
                           <button
                             onClick={() => {
-                              try {
-                                const url = new URL(rawContact);
-                                if (url.protocol === 'http:' || url.protocol === 'https:') {
-                                  window.open(url.href, '_blank');
-                                } else {
-                                  window.open(`https://${rawContact}`, '_blank');
-                                }
-                              } catch {
-                                if (rawContact.includes('.') || rawContact.includes('/') || rawContact.startsWith('@')) {
-                                  window.open(rawContact.startsWith('@') ? `https://instagram.com/${rawContact.replace('@', '')}` : `https://${rawContact}`, '_blank');
-                                } else {
-                                  toast.error('Invalid link format.');
-                                }
+                              const targetUrl = rawContact.startsWith('@')
+                                ? `https://instagram.com/${rawContact.replace('@', '')}`
+                                : rawContact;
+                              const opened = openSafeExternalUrl(targetUrl);
+                              if (!opened) {
+                                toast.error('Invalid link format.');
                               }
                             }}
                             className="w-full py-4 rounded-2xl bg-purple-600 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-purple-600/20 hover:bg-purple-700 transition-all flex items-center justify-center gap-2"

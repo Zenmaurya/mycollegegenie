@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertCircle, X } from 'lucide-react';
+import { isImeKeyEvent } from '../lib/security';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -23,10 +24,11 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   cancelText = 'Cancel',
   type = 'info'
 }) => {
-  // Safe keyboard dismissal on Escape
+  // Safe keyboard dismissal on Escape with Astryx IME composition guard
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isImeKeyEvent(e)) return;
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);

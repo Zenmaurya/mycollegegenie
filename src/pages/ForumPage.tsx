@@ -174,7 +174,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-12">
+    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-28 md:pb-12">
       <Helmet>
         <title>Student Forum - Ask Questions & Discuss | MyCollegeGenie</title>
         <meta name="description" content="Join college students across India in discussions about exams, courses, fests, placements, and campus life." />
@@ -200,7 +200,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
             <motion.button
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center justify-center gap-2.5 px-5 sm:px-8 py-2.5 sm:py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-[10px] sm:text-xs shadow-xl shadow-purple-600/25 transition-all w-full md:w-auto shrink-0"
+              className="flex items-center justify-center gap-2.5 px-5 sm:px-8 py-3 sm:py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-purple-600/25 transition-all w-full md:w-auto shrink-0"
             >
               <Plus className="w-4 h-4" /> Start Discussion
             </motion.button>
@@ -208,28 +208,30 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
         </div>
 
         {/* Search + Filters */}
-        <div className="bg-white/60 backdrop-blur-md border border-gray-100 rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-sm mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
+        <div className="bg-white/60 backdrop-blur-md border border-gray-100 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-sm mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" placeholder="Search discussions..." value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-[11px] sm:text-sm font-medium transition-all" />
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-base sm:text-sm font-medium transition-all" />
           </div>
-          <div className="w-full sm:w-auto relative">
-            <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)}
-              className="w-full text-ellipsis overflow-hidden pl-8 sm:pl-9 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-[9px] sm:text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
-              <option value="All">All Courses</option>
-              {College_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div className="w-full sm:w-auto relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select value={selectedTopic} onChange={e => setSelectedTopic(e.target.value)}
-              className="w-full text-ellipsis overflow-hidden pl-8 sm:pl-9 pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-[9px] sm:text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
-              <option value="All">All Topics</option>
-              {FORUM_TOPICS.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+          <div className="grid grid-cols-2 sm:flex gap-2">
+            <div className="w-full sm:w-auto relative">
+              <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)}
+                className="w-full text-ellipsis overflow-hidden pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
+                <option value="All">All Courses</option>
+                {College_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="w-full sm:w-auto relative">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <select value={selectedTopic} onChange={e => setSelectedTopic(e.target.value)}
+                className="w-full text-ellipsis overflow-hidden pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
+                <option value="All">All Topics</option>
+                {FORUM_TOPICS.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -237,7 +239,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
         <div className="flex gap-2 mb-6">
           {(['hot', 'new', 'top'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all border ${activeTab === tab ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-600/20' : 'bg-white text-gray-500 border-gray-200 hover:border-purple-200 hover:text-purple-600'}`}>
+              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${activeTab === tab ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-600/20' : 'bg-white text-gray-500 border-gray-200 hover:border-purple-200 hover:text-purple-600'}`}>
               {tab === 'hot' && <Flame className="w-3.5 h-3.5" />}
               {tab === 'new' && <Sparkles className="w-3.5 h-3.5" />}
               {tab === 'top' && <TrendingUp className="w-3.5 h-3.5" />}
@@ -503,7 +505,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                           placeholder="What's your question or topic?"
                           value={newPost.title}
                           onChange={e => setNewPost({ ...newPost, title: e.target.value })}
-                          className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm font-medium text-gray-800 placeholder-gray-400 transition-all"
+                          className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-base sm:text-sm font-medium text-gray-800 placeholder-gray-400 transition-all"
                         />
                         <p className="text-[10px] text-gray-400 font-medium text-right">{newPost.title.length}/120</p>
                       </div>
@@ -519,7 +521,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                               required
                               value={newPost.course}
                               onChange={e => setNewPost({ ...newPost, course: e.target.value })}
-                              className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm font-medium text-gray-800 cursor-pointer transition-all appearance-none pr-8"
+                              className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-base sm:text-sm font-medium text-gray-800 cursor-pointer transition-all appearance-none pr-8"
                             >
                               <option value="" disabled>Pick course</option>
                               {College_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -535,7 +537,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                             <select
                               value={newPost.topic}
                               onChange={e => setNewPost({ ...newPost, topic: e.target.value })}
-                              className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm font-medium text-gray-800 cursor-pointer transition-all appearance-none pr-8"
+                              className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-base sm:text-sm font-medium text-gray-800 cursor-pointer transition-all appearance-none pr-8"
                             >
                               {FORUM_TOPICS.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -573,7 +575,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                           placeholder="Describe your question in detail. Include what you've tried, what you need help with, etc."
                           value={newPost.content}
                           onChange={e => setNewPost({ ...newPost, content: e.target.value })}
-                          className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm font-medium text-gray-800 placeholder-gray-400 resize-none transition-all leading-relaxed"
+                          className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-base sm:text-sm font-medium text-gray-800 placeholder-gray-400 resize-none transition-all leading-relaxed"
                         />
                         <div className="flex justify-between items-center">
                           <p className="text-[10px] text-gray-400 font-medium">Be specific — better questions get better answers!</p>
@@ -592,7 +594,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
 
               {/* Sticky Footer Submit */}
               {currentUser && (
-                <div className="px-5 py-3.5 border-t border-gray-100 bg-white shrink-0">
+                <div className="px-5 py-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] sm:pb-3.5 border-t border-gray-100 bg-white shrink-0">
                   <button
                     type="submit"
                     form="forum-create-form"

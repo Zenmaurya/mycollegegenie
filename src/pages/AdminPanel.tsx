@@ -61,7 +61,9 @@ import { toast } from 'sonner';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { AdminSidebar, AdminTab } from './admin/AdminSidebar';
 import { AdminContributors } from './admin/AdminContributors';
+import { AdminBlogs } from './admin/AdminBlogs';
 import { CollegeMMY_EVENTS } from '../components/UpcomingEventsCarousel';
+import { openSafeExternalUrl } from '../lib/security';
 
 
 interface AdminPanelProps {
@@ -1037,6 +1039,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               </h2>
               <div className="flex flex-wrap gap-4">
                 <button onClick={() => setActiveTab('resources')} className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all">Moderate Resources</button>
+                <button onClick={() => setActiveTab('blogs')} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all">Publish Blog Article</button>
                 <button onClick={() => setActiveTab('verification')} className="px-6 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all">Verify Users</button>
               </div>
             </div>
@@ -1675,7 +1678,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                             </button>
                           )}
                           <button 
-                            onClick={() => window.open(resource.link, '_blank')}
+                            onClick={() => {
+                              const opened = openSafeExternalUrl(resource.link);
+                              if (!opened) toast.error('Invalid resource link');
+                            }}
                             className="p-2 sm:p-2.5 bg-gray-50 text-gray-400 hover:text-purple-600 rounded-xl transition-colors"
                             title="View Resource"
                           >
@@ -3055,6 +3061,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
               {isSavingSettings ? 'Saving Settings...' : 'Save All Homepage Settings'}
             </button>
           </motion.div>
+        ) : activeTab === 'blogs' ? (
+          <AdminBlogs defaultAuthorName={appUser?.displayName || 'MyCollegeGenie Editorial'} />
         ) : activeTab === 'contributors' ? (
           <AdminContributors />
         ) : null}

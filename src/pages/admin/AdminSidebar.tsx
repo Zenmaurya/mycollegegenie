@@ -12,11 +12,12 @@ import {
   Settings,
   MonitorPlay,
   Megaphone,
-  Globe
+  Globe,
+  BookOpen
 } from 'lucide-react';
 
 
-export type AdminTab = 'overview' | 'resources' | 'news' | 'forum' | 'pg' | 'exchange' | 'playlists' | 'verification' | 'testimonials' | 'users' | 'carousel' | 'ads' | 'homepage-settings' | 'contributors';
+export type AdminTab = 'overview' | 'resources' | 'news' | 'forum' | 'pg' | 'exchange' | 'playlists' | 'verification' | 'testimonials' | 'users' | 'carousel' | 'ads' | 'homepage-settings' | 'contributors' | 'blogs';
 
 interface SidebarProps {
   activeTab: AdminTab;
@@ -56,6 +57,7 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, 
     {
       title: 'CMS & Marketing',
       items: [
+        { id: 'blogs', label: 'Blog Publishing', icon: BookOpen },
         { id: 'ads', label: 'Ads & Banners', icon: Megaphone },
         { id: 'homepage-settings', label: 'Homepage Settings', icon: Globe }
       ]

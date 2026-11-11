@@ -27,13 +27,13 @@ const College_COLLEGES = [
 
 /* ── shared input style ── */
 const inputCls =
-  'w-full pl-9 pr-4 h-10 bg-gray-50 border border-gray-200 rounded-xl text-sm ' +
+  'w-full pl-9 pr-4 h-11 sm:h-10 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm ' +
   'text-gray-900 placeholder-gray-400 ' +
   'focus:outline-none focus:bg-white focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 ' +
   'transition-all';
 
 const selectCls =
-  'w-full pl-9 pr-8 h-10 bg-gray-50 border border-gray-200 rounded-xl text-sm ' +
+  'w-full pl-9 pr-8 h-11 sm:h-10 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm ' +
   'text-gray-900 ' +
   'focus:outline-none focus:bg-white focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 ' +
   'transition-all appearance-none cursor-pointer';
@@ -113,7 +113,7 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, icon: Icon 
         <input 
            type="text"
            placeholder={isOpen && value ? value : placeholder}
-           className={`w-full h-full bg-transparent outline-none border-none text-sm p-0 m-0 ${!value && !search && !isOpen ? 'text-gray-400 placeholder-gray-400' : 'text-gray-900'}`}
+           className={`w-full h-full bg-transparent outline-none border-none text-base sm:text-sm p-0 m-0 ${!value && !search && !isOpen ? 'text-gray-400 placeholder-gray-400' : 'text-gray-900'}`}
            value={isOpen ? search : value || ''}
            onChange={(e) => {
              setSearch(e.target.value);
@@ -474,7 +474,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 <button
                   type="button"
                   onClick={() => { setShowPassword(!showPassword); onShowPasswordChange?.(!showPassword); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-0.5"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-2"
                   aria-label="Toggle password visibility"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -561,7 +561,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-0.5"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-2"
                   aria-label="Toggle confirm password visibility"
                 >
                   {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

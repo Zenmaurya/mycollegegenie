@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ScrollProgressBar } from './PageTransition';
+import { isImeKeyEvent } from '../lib/security';
 
 const NAV_LINKS = [
   { to: '/', icon: Home, label: 'Home' },
@@ -78,9 +79,10 @@ export function NavBar() {
     return () => { document.body.style.overflow = ''; };
   }, [isMobileMenuOpen]);
 
-  // ESC key closes mobile menu
+  // ESC key closes mobile menu with Astryx IME guard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isImeKeyEvent(e)) return;
       if (e.key === 'Escape' && isMobileMenuOpen) setIsMobileMenuOpen(false);
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -296,8 +298,36 @@ export function NavBar() {
               </div>
             )}
 
-            {/* Mobile hamburger */}
-            <div className="xl:hidden flex items-center gap-3">
+            {/* Mobile header actions: quick profile/sign-in + hamburger */}
+            <div className="xl:hidden flex items-center gap-2.5">
+              {user ? (
+                <Link
+                  to="/profile"
+                  aria-label="View my profile"
+                  className="w-10 h-10 rounded-2xl overflow-hidden border border-purple-200/80 bg-purple-50 flex items-center justify-center shrink-0 shadow-sm active:scale-95 transition-transform"
+                >
+                  {user.user_metadata?.avatar_url || (appUser as any)?.photo_url ? (
+                    <img
+                      src={user.user_metadata?.avatar_url || (appUser as any)?.photo_url}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <User className="w-4 h-4 text-purple-600" />
+                  )}
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className="bg-purple-600 text-white px-3.5 py-2 rounded-xl font-bold text-xs shadow-sm shadow-purple-600/20 hover:bg-purple-700 active:scale-95 transition-all flex items-center gap-1.5"
+                >
+                  <User className="w-3.5 h-3.5 fill-white" />
+                  <span>Sign In</span>
+                </Link>
+              )}
+
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -405,12 +435,12 @@ export function NavBar() {
                         key={to}
                         to={to}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-[13px] ${
+                        className={`flex items-center gap-3 px-3.5 py-3 min-h-[48px] rounded-xl transition-all font-semibold text-sm ${
                           isActive ? 'bg-purple-50 text-purple-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                       >
                         <span
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
                             isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'bg-gray-100 text-gray-500'
                           }`}
                         >
@@ -418,7 +448,7 @@ export function NavBar() {
                         </span>
                         <span className="flex-1 leading-none">{label}</span>
                         {isNew && showNewBadge && (
-                          <span className="text-[8px] font-black bg-gradient-to-r from-pink-500 to-rose-500 text-white px-1.5 py-0.5 rounded-full">
+                          <span className="text-[9px] font-black bg-gradient-to-r from-pink-500 to-rose-500 text-white px-2 py-0.5 rounded-full">
                             NEW
                           </span>
                         )}
@@ -433,12 +463,12 @@ export function NavBar() {
                       <Link
                         to="/admin"
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold text-[13px] ${
+                        className={`flex items-center gap-3 px-3.5 py-3 min-h-[48px] rounded-xl transition-all font-semibold text-sm ${
                           location.pathname === '/admin' ? 'bg-purple-50 text-purple-700' : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
                         <span
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                             location.pathname === '/admin' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' : 'bg-gray-800 text-white'
                           }`}
                         >
@@ -451,16 +481,16 @@ export function NavBar() {
                 </div>
 
                 {/* Auth actions */}
-                <div className="px-3 pb-6 space-y-2">
+                <div className="px-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] space-y-2">
                   <div className="border-t border-gray-100 mb-3" />
                   {user ? (
                     <>
                       <Link
                         to="/profile"
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 font-semibold text-[13px] transition-all"
+                        className="flex items-center gap-3 px-3.5 py-3 min-h-[48px] rounded-xl text-gray-600 hover:bg-gray-50 font-semibold text-sm transition-all"
                       >
-                        <span className="w-8 h-8 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center shrink-0">
+                        <span className="w-9 h-9 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center shrink-0">
                           <User className="w-4 h-4" />
                         </span>
                         View Profile
@@ -468,9 +498,9 @@ export function NavBar() {
                       <button
                         onClick={handleLogout}
                         disabled={isSigningOut}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 font-semibold text-[13px] transition-all disabled:opacity-60"
+                        className="w-full flex items-center gap-3 px-3.5 py-3 min-h-[48px] rounded-xl text-red-500 hover:bg-red-50 font-semibold text-sm transition-all disabled:opacity-60"
                       >
-                        <span className="w-8 h-8 rounded-xl bg-red-50 text-red-400 flex items-center justify-center shrink-0">
+                        <span className="w-9 h-9 rounded-xl bg-red-50 text-red-400 flex items-center justify-center shrink-0">
                           {isSigningOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
                         </span>
                         {isSigningOut ? 'Signing Out…' : 'Sign Out'}
@@ -480,7 +510,7 @@ export function NavBar() {
                     <Link
                       to="/signup"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-[#5636A7] to-[#7c3aed] text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-600/20 hover:opacity-90 transition-all"
+                      className="flex items-center justify-center gap-2 w-full py-3.5 min-h-[48px] bg-gradient-to-r from-[#5636A7] to-[#7c3aed] text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-600/20 hover:opacity-90 transition-all"
                     >
                       <User className="w-4 h-4" />
                       Sign In / Sign Up
@@ -503,7 +533,7 @@ export function NavBar() {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             whileHover={{ scale: 1.1, y: -2 }}
             whileTap={{ scale: 0.95 }}
-            className="fixed bottom-24 xl:bottom-8 right-4 sm:right-8 z-[120] p-3.5 sm:p-4 bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-2xl shadow-2xl shadow-purple-600/40 hover:shadow-purple-600/60 transition-shadow"
+            className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] xl:bottom-8 right-4 sm:right-8 z-[120] p-3.5 sm:p-4 bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-2xl shadow-2xl shadow-purple-600/40 hover:shadow-purple-600/60 transition-shadow"
             aria-label="Back to top"
           >
             <ArrowUp className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -520,7 +550,7 @@ export function NavBar() {
               const isNew = 'isNew' in navItem ? (navItem as any).isNew as boolean : false;
               const active = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
               return (
-                <Link key={to} to={to} className="flex flex-col items-center gap-1 flex-1 min-w-0 px-0.5 py-1 group relative min-h-[48px] justify-center" aria-label={label}>
+                <Link key={to} to={to} className="flex flex-col items-center gap-1 flex-1 min-w-0 px-0.5 py-1 group relative min-h-[50px] justify-center" aria-label={label}>
                   {active && (
                     <motion.div
                       layoutId="mobileNavActiveIndicator"
@@ -529,7 +559,7 @@ export function NavBar() {
                   )}
                   <motion.div
                     whileTap={{ scale: 0.85 }}
-                    className={`relative flex items-center justify-center w-11 h-9 rounded-2xl transition-all duration-300 ${
+                    className={`relative flex items-center justify-center w-11 h-8 rounded-2xl transition-all duration-300 ${
                       active
                         ? 'bg-gradient-to-br from-purple-100 to-indigo-50 shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_2px_6px_rgba(147,51,234,0.12)] border border-purple-200/50'
                         : 'group-active:bg-gray-50'
@@ -539,8 +569,8 @@ export function NavBar() {
                       strokeWidth={active ? 2.5 : 2}
                       className={`w-[20px] h-[20px] transition-all duration-300 ${
                         active
-                          ? 'text-purple-700 drop-shadow-[0_2px_4px_rgba(147,51,234,0.2)] scale-110'
-                          : 'text-slate-400 group-hover:text-slate-600'
+                          ? 'text-purple-700 drop-shadow-[0_2px_4px_rgba(147,51,234,0.2)] scale-105'
+                          : 'text-slate-500 group-hover:text-slate-700'
                       }`}
                     />
                     {isNew && showNewBadge && (
@@ -550,8 +580,8 @@ export function NavBar() {
                     )}
                   </motion.div>
                   <span
-                    className={`text-[9px] font-bold tracking-tight transition-all duration-300 truncate w-full text-center ${
-                      active ? 'text-purple-700 drop-shadow-sm scale-105' : 'text-slate-400 group-hover:text-slate-600'
+                    className={`text-[11px] font-semibold tracking-tight transition-all duration-300 truncate w-full text-center ${
+                      active ? 'text-purple-700 drop-shadow-sm' : 'text-slate-500 group-hover:text-slate-700'
                     }`}
                   >
                     {label}
@@ -564,12 +594,12 @@ export function NavBar() {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="flex flex-col items-center gap-1 flex-1 min-w-0 px-0.5 py-1 group relative min-h-[48px] justify-center focus:outline-none cursor-pointer"
+              className="flex flex-col items-center gap-1 flex-1 min-w-0 px-0.5 py-1 group relative min-h-[50px] justify-center focus:outline-none cursor-pointer"
               aria-label="Open navigation menu"
             >
               <motion.div
                 whileTap={{ scale: 0.85 }}
-                className={`relative flex items-center justify-center w-11 h-9 rounded-2xl transition-all duration-300 ${
+                className={`relative flex items-center justify-center w-11 h-8 rounded-2xl transition-all duration-300 ${
                   isMobileMenuOpen || location.pathname === '/playlists' || location.pathname === '/find-pg' || location.pathname === '/news' || location.pathname === '/events'
                     ? 'bg-gradient-to-br from-purple-100 to-indigo-50 shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_2px_6px_rgba(147,51,234,0.12)] border border-purple-200/50'
                     : 'group-active:bg-gray-50'
@@ -579,16 +609,16 @@ export function NavBar() {
                   strokeWidth={2}
                   className={`w-[20px] h-[20px] transition-all duration-300 ${
                     isMobileMenuOpen || location.pathname === '/playlists' || location.pathname === '/find-pg' || location.pathname === '/news' || location.pathname === '/events'
-                      ? 'text-purple-700 drop-shadow-[0_2px_4px_rgba(147,51,234,0.2)] scale-110'
-                      : 'text-slate-400 group-hover:text-slate-600'
+                      ? 'text-purple-700 drop-shadow-[0_2px_4px_rgba(147,51,234,0.2)] scale-105'
+                      : 'text-slate-500 group-hover:text-slate-700'
                   }`}
                 />
               </motion.div>
               <span
-                className={`text-[9px] font-bold tracking-tight transition-all duration-300 truncate w-full text-center ${
+                className={`text-[11px] font-semibold tracking-tight transition-all duration-300 truncate w-full text-center ${
                   isMobileMenuOpen || location.pathname === '/playlists' || location.pathname === '/find-pg' || location.pathname === '/news' || location.pathname === '/events'
-                    ? 'text-purple-700 drop-shadow-sm scale-105'
-                    : 'text-slate-400 group-hover:text-slate-600'
+                    ? 'text-purple-700 drop-shadow-sm'
+                    : 'text-slate-500 group-hover:text-slate-700'
                 }`}
               >
                 More

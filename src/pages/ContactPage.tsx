@@ -87,11 +87,11 @@ export const ContactPage: React.FC = () => {
   };
 
   const inputClass =
-    'w-full bg-gray-50/80 border border-gray-200 rounded-2xl px-5 py-3.5 sm:py-4 text-sm focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-medium placeholder:text-gray-400';
+    'w-full bg-gray-50/80 border border-gray-200 rounded-2xl px-5 py-3.5 sm:py-4 text-base sm:text-sm focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-medium placeholder:text-gray-400';
   const labelClass = 'block text-xs font-bold text-gray-700 tracking-wide mb-2 ml-1';
 
   return (
-    <div className="min-h-screen bg-transparent pt-6 sm:pt-8 pb-24 md:pb-8">
+    <div className="min-h-screen bg-transparent pt-6 sm:pt-8 pb-28 md:pb-8">
             <Helmet>
         <title>Contact Us | MyCollegeGenie</title>
         <meta name="description" content="Get in touch with the MyCollegeGenie team. We are here to help you with any queries, suggestions, or feedback." />

@@ -247,7 +247,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <meta name="twitter:image" content="https://mycollegegenie.in/og-image.png" />
         </Helmet>
         {/* Hero Section */}
-        <main className="relative flex flex-col pt-8 sm:pt-12 lg:pt-16 pb-16 sm:pb-24 lg:pb-32 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
+        <main className="relative flex flex-col pt-5 sm:pt-12 lg:pt-16 pb-12 sm:pb-24 lg:pb-32 px-4 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
           {/* Animated Background Elements */}
           <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none">
             <motion.div 
@@ -361,36 +361,36 @@ export const HomePage: React.FC<HomePageProps> = ({
                     Quick Access — Jump directly to your notes
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                  <div className="sm:col-span-6 relative">
+                <div className="grid grid-cols-12 gap-2.5">
+                  <div className="col-span-8 sm:col-span-6 relative">
                     <select
                       value={quickCourse}
                       onChange={e => setQuickCourse(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-gray-50 hover:bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 cursor-pointer appearance-none pr-8 transition-colors"
+                      className="w-full px-3 py-3 sm:py-2.5 bg-gray-50 hover:bg-white border border-gray-200 rounded-xl text-sm sm:text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 cursor-pointer appearance-none pr-8 transition-colors"
                       aria-label="Select course"
                     >
                       {College_COURSES.slice(0, 35).map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
-                  <div className="sm:col-span-3 relative">
+                  <div className="col-span-4 sm:col-span-3 relative">
                     <select
                       value={quickSem}
                       onChange={e => setQuickSem(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-gray-50 hover:bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 cursor-pointer appearance-none pr-7 transition-colors"
+                      className="w-full px-3 py-3 sm:py-2.5 bg-gray-50 hover:bg-white border border-gray-200 rounded-xl text-sm sm:text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 cursor-pointer appearance-none pr-7 transition-colors"
                       aria-label="Select semester"
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
                         <option key={s} value={String(s)}>Sem {s}</option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
                   <button
                     onClick={() => navigate(`/browse?course=${encodeURIComponent(quickCourse)}&sem=${quickSem}`)}
-                    className="sm:col-span-3 px-3 py-2.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer"
+                    className="col-span-12 sm:col-span-3 px-4 py-3 sm:py-2.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer"
                   >
                     <span>Get Notes</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -610,10 +610,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                 }
                 return true;
               }).slice(0, 3).map((item, idx) => (
-                <motion.div 
+                <motion.button 
                   key={idx}
+                  type="button"
                   whileHover={{ x: 10 }}
-                  className="bg-white border border-gray-100 rounded-2xl p-4 transition-all cursor-pointer flex items-start gap-4 shadow-sm hover:shadow-xl hover:shadow-purple-600/5 group"
+                  className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 transition-all cursor-pointer flex items-start gap-4 shadow-sm hover:shadow-xl hover:shadow-purple-600/5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600"
                   onClick={() => navigate(`/news?news=${encodeURIComponent(item.title)}`)}
                 >
                   <div className="flex-1">
@@ -637,7 +638,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <div className="w-8 h-8 shrink-0 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-purple-600 group-hover:text-white transition-all">
                     <ChevronRight className="w-5 h-5" />
                   </div>
-                </motion.div>
+                </motion.button>
               ))
             ) : (
               <div className="p-12 text-center bg-white/40 backdrop-blur-md rounded-[2rem] border border-dashed border-gray-200">
@@ -654,10 +655,11 @@ export const HomePage: React.FC<HomePageProps> = ({
               ))
             ) : newsItems.filter(n => n.category === 'Event').length > 0 ? (
               newsItems.filter(n => n.category === 'Event').slice(0, 3).map((item, idx) => (
-                <motion.div 
+                <motion.button 
                   key={idx}
+                  type="button"
                   whileHover={{ x: 10 }}
-                  className="bg-white border border-gray-100 rounded-2xl p-4 transition-all cursor-pointer flex items-start gap-4 shadow-sm hover:shadow-xl hover:shadow-pink-600/5 group"
+                  className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 transition-all cursor-pointer flex items-start gap-4 shadow-sm hover:shadow-xl hover:shadow-pink-600/5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
                   onClick={() => navigate(`/events?event=${encodeURIComponent(item.title)}`)}
                 >
                   <div className="flex-1">
@@ -681,7 +683,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <div className="w-8 h-8 shrink-0 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-pink-600 group-hover:text-white transition-all">
                     <ChevronRight className="w-5 h-5" />
                   </div>
-                </motion.div>
+                </motion.button>
               ))
             ) : (
               <div className="p-12 text-center bg-white/40 backdrop-blur-md rounded-[2rem] border border-dashed border-gray-200">
@@ -713,7 +715,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </Link>
         </div>
         
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 px-2 sm:px-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-1 sm:px-6">
           {resources.filter(r => r.isApproved !== false).slice(0, 4).map((resource) => (
             <ResourceCard 
               key={resource.id}

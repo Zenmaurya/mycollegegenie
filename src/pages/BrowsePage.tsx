@@ -12,6 +12,7 @@ import { supabase } from '../supabase';
 import { fetchWithAuth } from '../lib/apiClient';
 import { toast } from 'sonner';
 import { useResources } from '../context/ResourceContext';
+import { isImeKeyEvent } from '../lib/security';
 
 interface BrowsePageProps {
   resources: Resource[];
@@ -131,6 +132,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isImeKeyEvent(e)) return;
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         searchInputRef.current?.focus();
@@ -143,7 +145,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
   const hasActiveFilters = searchQuery || activeFilter !== 'All' || selectedCourse !== 'All Courses' || selectedSemester !== 'All Semesters' || selectedSubCategory !== 'All';
 
   return (
-    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24 md:pb-8">
+    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-28 md:pb-12">
       <Helmet>
         <title>{selectedResource ? `${selectedResource.title} | MyCollegeGenie` : 'Browse Free College Notes & PYQs | MyCollegeGenie'}</title>
         <meta name="description" content={selectedResource ? (selectedResource.description?.replace(/<[^>]*>?/gm, '').substring(0, 150) || `Download ${selectedResource.title} for ${selectedResource.course}`) : "Browse and download free study material for your college. Filter by course, semester, and resource type. Get notes, PYQs, books, and more."} />
@@ -208,41 +210,43 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
             </div>
 
             {/* Filter Controls */}
-            <div className="flex items-center justify-between lg:justify-start gap-3">
+            <div className="flex items-center justify-between lg:justify-start gap-2.5 sm:gap-3">
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className={`flex-1 lg:flex-none px-3 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 font-bold text-[9px] sm:text-xs uppercase tracking-wider border ${
+                className={`flex-1 lg:flex-none px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider border ${
                   showAdvancedFilters 
                     ? 'bg-purple-600 border-purple-600 text-white shadow-lg shadow-purple-600/20' 
-                    : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
+                <Filter className="w-4 h-4" />
                 <span>Filters</span>
-                <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
               </motion.button>
               
-              <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 shadow-inner w-full sm:w-auto justify-center sm:justify-start">
+              <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 shadow-inner w-auto justify-center">
                 <button 
                   onClick={() => setViewMode('grid')}
-                  className={`p-1.5 sm:p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-purple-600 shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
+                  aria-label="Grid view"
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-purple-600 shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
                 >
-                  <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <LayoutGrid className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => setViewMode('list')}
-                  className={`p-1.5 sm:p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-purple-600 shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
+                  aria-label="List view"
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-purple-600 shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
                 >
-                  <List className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <List className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
 
           {/* Quick Material Type Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none mt-3 sm:mt-4">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none mt-3 sm:mt-4 -mx-2.5 px-2.5 sm:mx-0 sm:px-0">
             {[
               { id: 'All', label: 'All Resources', icon: LayoutGrid },
               { id: 'Note', label: 'Notes', icon: FileText },
@@ -256,7 +260,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                 <button
                   key={tab.id}
                   onClick={() => setActiveFilter(tab.id as any)}
-                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     isActive
                       ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
                       : 'bg-white/80 text-gray-600 hover:bg-white hover:text-purple-600 border border-gray-100'
@@ -272,7 +276,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
           {/* Active Filter Chips Bar */}
           {hasActiveFilters && (
             <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-              <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">Active:</span>
+              <span className="text-xs font-bold text-gray-700 tracking-wide">Active:</span>
               {searchQuery && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-medium border border-purple-100">
                   <span>"{searchQuery}"</span>
@@ -343,12 +347,12 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                       placeholder="Quick filter courses..."
                       value={courseSearch}
                       onChange={(e) => setCourseSearch(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="w-full px-3 py-2 sm:py-1.5 bg-white border border-gray-200 rounded-lg text-base sm:text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                     <select 
                       value={selectedCourse}
                       onChange={(e) => setSelectedCourse(e.target.value)}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-700 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-600 transition-all cursor-pointer"
+                      className="w-full px-3 sm:px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-600 transition-all cursor-pointer"
                     >
                       {courses
                         .filter(c => !courseSearch || c.toLowerCase().includes(courseSearch.toLowerCase()) || c === 'All Courses')
@@ -363,7 +367,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                     <select 
                       value={selectedSemester}
                       onChange={(e) => setSelectedSemester(e.target.value)}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-700 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-600 transition-all cursor-pointer"
+                      className="w-full px-3 sm:px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-600 transition-all cursor-pointer"
                     >
                       {availableSemesters.map(sem => <option key={sem} value={sem}>{sem === 'All Semesters' ? sem : `Semester ${sem}`}</option>)}
                     </select>
@@ -376,7 +380,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                     <select 
                       value={selectedSubCategory}
                       onChange={(e) => setSelectedSubCategory(e.target.value)}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-700 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-600 transition-all cursor-pointer"
+                      className="w-full px-3 sm:px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-600 transition-all cursor-pointer"
                     >
                       {availableSubCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                     </select>
@@ -389,7 +393,7 @@ export const BrowsePage: React.FC<BrowsePageProps> = ({
                     <select 
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as any)}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-700 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-600 transition-all cursor-pointer"
+                      className="w-full px-3 sm:px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-600 transition-all cursor-pointer"
                     >
                       <option value="Date">Newest First</option>
                       <option value="Rating">Top Rated</option>

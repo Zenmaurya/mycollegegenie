@@ -17,7 +17,9 @@
     <!-- End Google Tag Manager -->
 
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
 
     <!-- ── Primary SEO ─────────────────────────────────────────── -->
     <title>MyCollegeGenie — India's Biggest Student Platform & Ecosystem</title>
@@ -155,11 +157,21 @@
     }
     </script>
 
-    <!-- ── Performance: Critical CSS inline hint ──────────────────── -->
+    <!-- ── Performance: Critical CSS inline hint (Astryx Smooth Base) ── -->
     <style>
-      /* Critical above-the-fold CSS to prevent FOUC */
-      html { background: #EBF5FB; }
-      body { margin: 0; font-family: 'Inter', system-ui, sans-serif; }
+      /* Critical above-the-fold CSS to prevent FOUC & layout shifts */
+      html {
+        background: #EBF5FB;
+        -webkit-tap-highlight-color: transparent;
+        text-size-adjust: 100%;
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: 'Inter', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
       #root { min-height: 100vh; }
       /* Prevent layout shift from fonts */
       @font-face {

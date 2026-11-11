@@ -27,7 +27,7 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
   const showNewBadge = Date.now() - pageLoadTime < 5000;
 
   return (
-    <footer className="pt-8 lg:pt-16 pb-24 md:pb-8 lg:pb-8 px-4 bg-[#0B0914] border-t border-white/5 shrink-0 relative text-gray-400">
+    <footer className="pt-8 lg:pt-16 pb-[calc(6rem+env(safe-area-inset-bottom,16px))] xl:pb-12 px-4 bg-[#0B0914] border-t border-white/5 shrink-0 relative text-gray-400">
       {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/10 blur-[120px] rounded-full" />

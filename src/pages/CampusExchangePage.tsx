@@ -20,20 +20,21 @@ import { fetchExchangeItems, createExchangeItem } from '../services/exchangeServ
 
 
 const CATEGORIES = [
-  { id: 'all', name: 'All Categories', icon: Grid, count: '120+' },
-  { id: 'books', name: 'Books & Notes', icon: BookOpen, count: '245+' },
-  { id: 'electronics', name: 'Electronics', icon: Monitor, count: '180+' },
-  { id: 'hostel', name: 'Hostel Essentials', icon: Home, count: '160+' },
-  { id: 'furniture', name: 'Furniture', icon: Sofa, count: '120+' },
-  { id: 'cycles', name: 'Cycles', icon: Bike, count: '95+' },
-  { id: 'fashion', name: 'Fashion & Accessories', icon: Shirt, count: '45+' },
-  { id: 'sports', name: 'Sports & Fitness', icon: Dumbbell, count: '30+' },
-  { id: 'others', name: 'Others', icon: MoreHorizontal, count: '60+' },
+  { id: 'all', name: 'All Categories', icon: Grid },
+  { id: 'books', name: 'Books & Notes', icon: BookOpen },
+  { id: 'electronics', name: 'Electronics', icon: Monitor },
+  { id: 'hostel', name: 'Hostel Essentials', icon: Home },
+  { id: 'furniture', name: 'Furniture', icon: Sofa },
+  { id: 'cycles', name: 'Cycles', icon: Bike },
+  { id: 'fashion', name: 'Fashion & Accessories', icon: Shirt },
+  { id: 'sports', name: 'Sports & Fitness', icon: Dumbbell },
+  { id: 'others', name: 'Others', icon: MoreHorizontal },
 ];
 
 export function CampusExchangePage({ user: propUser }: { user?: any }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCampus, setSelectedCampus] = useState('All Campuses');
@@ -242,7 +243,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
   };
 
   return (
-    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-24 md:pb-8">
+    <div className="min-h-screen bg-transparent pt-2 sm:pt-6 pb-28 md:pb-8">
       <Helmet>
         <title>Campus Exchange - Buy & Sell College Essentials | MyCollegeGenie</title>
         <meta name="description" content="Buy, sell, exchange or donate textbooks, electronics, and college essentials directly with other students on your campus." />
@@ -315,7 +316,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex flex-wrap lg:flex-nowrap gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide"
+              className="flex flex-nowrap gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1"
             >
               {[
                 { icon: UserCheck, text: 'Trusted Students', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
@@ -360,36 +361,55 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 xl:px-8 pt-4 pb-12">
         
         {/* Search & Filter Bar */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+            <Search className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
             <input 
               type="text" 
               placeholder="Search for books, gadgets, furniture..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 sm:pl-12 pr-4 py-2.5 sm:py-4 bg-white border border-gray-200 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-[11px] sm:text-base font-medium text-gray-900 shadow-sm"
+              className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-white border border-gray-200 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-base font-medium text-gray-900 shadow-sm"
             />
           </div>
           <div className="flex gap-2 sm:gap-3">
-            <div className="relative">
-              <MapPin className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-5 sm:h-5 text-gray-400" />
+            <div className="relative flex-1 sm:flex-initial">
+              <MapPin className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <select 
                 value={selectedCampus}
                 onChange={(e) => setSelectedCampus(e.target.value)}
-                className="pl-8 sm:pl-11 pr-8 sm:pr-10 py-2.5 sm:py-4 bg-white border border-gray-200 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-[10px] sm:text-base font-bold text-gray-700 shadow-sm appearance-none cursor-pointer"
+                aria-label="Filter by campus zone"
+                className="w-full sm:w-auto pl-9 sm:pl-11 pr-8 sm:pr-10 py-3 sm:py-4 bg-white border border-gray-200 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-base sm:text-sm font-bold text-gray-700 shadow-sm appearance-none cursor-pointer"
               >
                 <option>All Campuses</option>
                 <option>North Zone</option>
                 <option>South Zone</option>
                 <option>Off Campus</option>
               </select>
-              <ChevronDown className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
-            
-            <button className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-4 bg-white border border-gray-200 rounded-xl sm:rounded-2xl text-[10px] sm:text-base font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
-              <Filter className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-purple-600" />
-              <span className="hidden sm:inline">Filters</span>
+
+            <button
+              type="button"
+              onClick={() => setShowMobileFilters(prev => !prev)}
+              aria-expanded={showMobileFilters}
+              className={`lg:hidden flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-wider transition-all shrink-0 shadow-sm ${
+                showMobileFilters || minPrice !== '' || maxPrice !== '' || selectedTypes.length > 0 || sortBy !== 'Latest'
+                  ? 'bg-purple-600 text-white border-purple-600 shadow-purple-600/20'
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>Filters</span>
+              {(selectedTypes.length > 0 || minPrice !== '' || maxPrice !== '' || sortBy !== 'Latest') && (
+                <span className={`w-4 h-4 rounded-full text-[10px] font-black flex items-center justify-center ${
+                  showMobileFilters || minPrice !== '' || maxPrice !== '' || selectedTypes.length > 0 || sortBy !== 'Latest'
+                    ? 'bg-white text-purple-600'
+                    : 'bg-purple-100 text-purple-700'
+                }`}>
+                  {selectedTypes.length + (minPrice !== '' || maxPrice !== '' ? 1 : 0) + (sortBy !== 'Latest' ? 1 : 0)}
+                </span>
+              )}
             </button>
             
             <div className="hidden lg:flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-sm">
@@ -407,30 +427,144 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
           </div>
         </div>
 
+        {/* Mobile Category Quick Pills */}
+        <div className="lg:hidden flex flex-nowrap gap-2 overflow-x-auto pb-3 mb-3 scrollbar-hide -mx-4 px-4">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setActiveCategory(cat.id)}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 border transition-all active:scale-95 ${
+                activeCategory === cat.id
+                  ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-600/20'
+                  : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              <cat.icon className="w-3.5 h-3.5 shrink-0" />
+              <span>{cat.name}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Mobile Expandable Filters Drawer */}
+        <AnimatePresence>
+          {showMobileFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="lg:hidden overflow-hidden mb-4"
+            >
+              <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-gray-500">Refine Items</span>
+                  <button type="button" onClick={handleClearAll} className="text-xs font-bold text-purple-600 hover:underline">
+                    Clear all
+                  </button>
+                </div>
+
+                {/* Sort */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Sort By</label>
+                  <div className="relative">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base font-bold text-gray-800 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    >
+                      <option>Latest</option>
+                      <option>Price: Low to High</option>
+                      <option>Price: High to Low</option>
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Price Range</label>
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex-1 relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        value={minPrice}
+                        onChange={e => setMinPrice(e.target.value)}
+                        className="w-full pl-7 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600"
+                      />
+                    </div>
+                    <span className="text-gray-400 text-xs font-bold">to</span>
+                    <div className="flex-1 relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        value={maxPrice}
+                        onChange={e => setMaxPrice(e.target.value)}
+                        className="w-full pl-7 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ad Type */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Listing Type</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Sell', 'Exchange', 'Donate'].map(type => {
+                      const active = selectedTypes.includes(type);
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => handleTypeToggle(type)}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
+                            active
+                              ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Mobile Post Ad Button */}
         <button 
           onClick={() => {
             setPostAdStep(1);
             setIsPostModalOpen(true);
           }}
-          className="lg:hidden w-full mb-6 flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-4 bg-purple-600 text-white rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-600/20 hover:bg-purple-700 transition-colors"
+          className="lg:hidden w-full mb-4 flex items-center justify-center gap-2 px-6 py-3.5 bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-600/20 hover:bg-purple-700 active:scale-98 transition-all"
         >
-          <Plus className="w-3.5 h-3.5 sm:w-4 h-4" />
+          <Plus className="w-4 h-4" />
           Post Ad
         </button>
 
-        <div className="flex items-center justify-between mb-6 lg:hidden">
+        <div className="flex items-center justify-between mb-5 lg:hidden">
           <span className="text-sm font-medium text-gray-500">Showing {filteredItems.length} items</span>
-          <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+          <div className="flex gap-1.5 bg-gray-100 p-1 rounded-xl">
             <button 
+              type="button"
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500'}`}
+              aria-label="Grid view"
+              className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500'}`}
             >
               <Grid className="w-4 h-4" />
             </button>
             <button 
+              type="button"
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500'}`}
+              aria-label="List view"
+              className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500'}`}
             >
               <ListIcon className="w-4 h-4" />
             </button>
@@ -596,7 +730,11 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
 
                     </div>
                     
-                    <button className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-500 hover:text-rose-500 hover:bg-white transition-all shadow-sm">
+                    <button
+                      type="button"
+                      aria-label={`Favorite ${item.title}`}
+                      className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center bg-white/85 backdrop-blur-sm rounded-full text-gray-500 hover:text-rose-500 hover:bg-white transition-all shadow-sm"
+                    >
                       <Heart className="w-4 h-4" />
                     </button>
                   </div>
@@ -627,8 +765,8 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                     <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-                          <MapPin className="w-3.5 h-3.5" />
-                          <span className="truncate max-w-[120px]">{item.location}</span>
+                          <MapPin className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate max-w-[180px] sm:max-w-[140px]">{item.location}</span>
                         </div>
                         <span className="text-[10px] text-gray-400 font-medium pl-5">{item.timePosted}</span>
                       </div>
@@ -678,21 +816,29 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
         <AnimatePresence>
           {selectedItem && (
             <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-0 md:p-4 lg:p-6"
+              onClick={e => { if (e.target === e.currentTarget) setSelectedItem(null); }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-end md:items-center justify-center p-0 md:p-4 lg:p-6"
               style={{ position: 'fixed', inset: 0 }}
             >
               <motion.div
-                initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                initial={{ opacity: 0, y: 50, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 50, scale: 0.95 }}
-                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                className="bg-white w-full h-full md:h-auto md:max-h-[90vh] md:max-w-5xl md:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative"
+                exit={{ opacity: 0, y: 50, scale: 0.98 }}
+                transition={{ type: "spring", bounce: 0, duration: 0.35 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-white w-full h-[92dvh] md:h-auto md:max-h-[90vh] md:max-w-5xl rounded-t-[1.75rem] md:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative"
               >
+                {/* Mobile Drag Handle */}
+                <div className="md:hidden flex justify-center pt-2.5 pb-1 bg-white shrink-0">
+                  <div className="w-10 h-1 bg-gray-200 rounded-full" />
+                </div>
+
                 <button
                   onClick={() => setSelectedItem(null)}
-                  className="absolute top-4 right-4 md:top-6 md:right-6 p-2 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full z-50 transition-colors text-white"
+                  aria-label="Close item details"
+                  className="absolute top-5 right-4 md:top-6 md:right-6 p-2 bg-black/35 hover:bg-black/55 backdrop-blur-md rounded-full z-50 transition-colors text-white"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 
             {/* Left Column: Image Slider */}
@@ -700,7 +846,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
               {(() => {
                 const imgs = (selectedItem as any).images ?? [(selectedItem as any).image].filter(Boolean);
                 return (
-                  <div className="w-full h-[40vh] md:h-[80vh] relative">
+                  <div className="w-full h-[32dvh] md:h-[80vh] relative">
                     <ImageSlider
                       images={imgs}
                       autoPlay={false}
@@ -708,7 +854,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                       className="w-full h-full object-cover"
                       accentColor="#7c3aed"
                     />
-                    <div className="absolute top-4 left-4 z-10">
+                    <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10">
                       <span className={`px-3 py-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-full shadow-lg ${getTypeStyle(selectedItem.type)}`}>
                         {selectedItem.type}
                       </span>
@@ -719,8 +865,8 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
             </div>
             
             {/* Right Column: Details */}
-            <div className="flex-1 flex flex-col bg-white h-[60vh] md:h-[80vh] relative">
-              <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar pb-32 md:pb-36">
+            <div className="flex-1 min-h-0 flex flex-col bg-white md:h-[80vh] relative">
+              <div className="flex-1 p-5 sm:p-6 md:p-8 overflow-y-auto custom-scrollbar pb-28 sm:pb-32 md:pb-36">
                 <div className="mb-6 border-b border-gray-100 pb-6">
                   {selectedItem.type === 'Exchange' ? (
                     <div className="mb-2">
@@ -779,7 +925,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
               </div>
               
               {/* Sticky Footer for Contact */}
-              <div className="absolute bottom-0 left-0 w-full bg-white/90 backdrop-blur-md p-4 sm:p-6 border-t border-gray-100 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.05)] z-20">
+              <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:p-6 border-t border-gray-100 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.05)] z-20">
                 {currentUser ? (
                   <div className="flex flex-col sm:flex-row gap-3">
                     {selectedItem.phone && (
@@ -820,25 +966,35 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
         <AnimatePresence>
           {isPostModalOpen && (
             <div
-              className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+              onClick={e => { if (e.target === e.currentTarget) setIsPostModalOpen(false); }}
+              className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4"
               style={{ position: 'fixed', inset: 0 }}
             >
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col"
+                exit={{ opacity: 0, y: 40 }}
+                transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-white w-full max-w-2xl rounded-t-[1.75rem] sm:rounded-3xl shadow-2xl overflow-hidden relative max-h-[92dvh] sm:max-h-[90vh] flex flex-col"
               >
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
-              <h2 className="text-xl font-black text-gray-900">Post an Ad</h2>
+            {/* Mobile Drag Handle */}
+            <div className="sm:hidden flex justify-center pt-2.5 pb-1 shrink-0">
+              <div className="w-10 h-1 bg-gray-200 rounded-full" />
+            </div>
+
+            <div className="px-5 sm:px-6 py-3.5 sm:py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+              <h2 className="text-lg sm:text-xl font-black text-gray-900">Post an Ad</h2>
               <button 
                 onClick={() => setIsPostModalOpen(false)}
+                aria-label="Close post ad modal"
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto">
+            <div className="p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:p-6 overflow-y-auto">
               {!currentUser ? (
                 <div className="text-center py-12">
                   <div className="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -869,13 +1025,13 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                         
                         <div className="space-y-2">
                           <label className="text-sm font-bold text-gray-900">Ad Title <span className="text-red-500">*</span></label>
-                          <input name="title" value={postAdForm.title} onChange={handlePostAdChange} type="text" placeholder="e.g. Macbook Air M1, Engineering Notes" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600" />
+                          <input name="title" value={postAdForm.title} onChange={handlePostAdChange} type="text" placeholder="e.g. Macbook Air M1, Engineering Notes" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600" />
                         </div>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <label className="text-sm font-bold text-gray-900">Category <span className="text-red-500">*</span></label>
-                            <select name="category" value={postAdForm.category} onChange={handlePostAdChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 appearance-none cursor-pointer">
+                            <select name="category" value={postAdForm.category} onChange={handlePostAdChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 appearance-none cursor-pointer">
                               <option value="">Select category</option>
                               {CATEGORIES.filter(c => c.id !== 'all').map(c => (
                                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -884,7 +1040,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                           </div>
                           <div className="space-y-2">
                             <label className="text-sm font-bold text-gray-900">Ad Type</label>
-                            <select name="adType" value={postAdForm.adType} onChange={handlePostAdChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 appearance-none cursor-pointer">
+                            <select name="adType" value={postAdForm.adType} onChange={handlePostAdChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 appearance-none cursor-pointer">
                               <option value="Sell">Sell</option>
                               <option value="Exchange">Exchange</option>
                               <option value="Donate">Donate</option>
@@ -895,7 +1051,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                         {postAdForm.adType === 'Sell' && (
                           <div className="space-y-2">
                             <label className="text-sm font-bold text-gray-900">Asking Price (₹) <span className="text-red-500">*</span></label>
-                            <input name="price" value={postAdForm.price} onChange={handlePostAdChange} type="number" placeholder="Enter your asking price" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600" />
+                            <input name="price" value={postAdForm.price} onChange={handlePostAdChange} type="number" placeholder="Enter your asking price" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600" />
                           </div>
                         )}
                       </motion.div>
@@ -929,7 +1085,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                         
                         <div className="space-y-2">
                           <label className="text-sm font-bold text-gray-900">Campus Location</label>
-                          <select name="location" value={postAdForm.location} onChange={handlePostAdChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 appearance-none cursor-pointer">
+                          <select name="location" value={postAdForm.location} onChange={handlePostAdChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 appearance-none cursor-pointer">
                             <option>North Zone</option>
                             <option>South Zone</option>
                             <option>Off Campus</option>
@@ -938,7 +1094,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                         
                         <div className="space-y-2">
                           <label className="text-sm font-bold text-gray-900">Description <span className="text-red-500">*</span></label>
-                          <textarea name="description" value={postAdForm.description} onChange={handlePostAdChange} rows={3} placeholder="Describe the item condition, features, etc." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 resize-none"></textarea>
+                          <textarea name="description" value={postAdForm.description} onChange={handlePostAdChange} rows={3} placeholder="Describe the item condition, features, etc." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 resize-none"></textarea>
                         </div>
                       </motion.div>
                     )}
@@ -960,7 +1116,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                                 <MessageCircle className="w-5 h-5" />
                               </div>
-                              <input name="phone" value={postAdForm.phone} onChange={handlePostAdChange} type="text" placeholder="+91 9876543210" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600" />
+                              <input name="phone" value={postAdForm.phone} onChange={handlePostAdChange} type="text" placeholder="+91 9876543210" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600" />
                             </div>
                           </div>
                           
@@ -970,7 +1126,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                                 <AtSign className="w-5 h-5" />
                               </div>
-                              <input name="instagram" value={postAdForm.instagram} onChange={handlePostAdChange} type="text" placeholder="@username" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600" />
+                              <input name="instagram" value={postAdForm.instagram} onChange={handlePostAdChange} type="text" placeholder="@username" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600" />
                             </div>
                           </div>
                         </div>

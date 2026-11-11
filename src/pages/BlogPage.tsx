@@ -10,10 +10,32 @@ import {
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BLOG_POSTS, BLOG_CATEGORIES, BlogPost } from '../data/blogData';
+import { getAllBlogs, AdminBlogPost } from '../services/blogService';
 
 export function BlogPage() {
   const { slug } = useParams<{ slug?: string }>();
   const navigate = useNavigate();
+
+  // Dynamic blogs hydrated from backend/CMS (initialized with built-in posts for instant paint)
+  const [posts, setPosts] = useState<AdminBlogPost[]>(BLOG_POSTS);
+  const [isHydrating, setIsHydrating] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    getAllBlogs(false)
+      .then((loaded) => {
+        if (mounted && Array.isArray(loaded)) {
+          setPosts(loaded);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) setIsHydrating(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Scroll to top on route/slug change
   useEffect(() => {
@@ -23,8 +45,19 @@ export function BlogPage() {
   // Active post when URL has :slug
   const activePost = useMemo(() => {
     if (!slug) return null;
-    return BLOG_POSTS.find((p) => p.slug === slug) || null;
-  }, [slug]);
+    return posts.find((p) => p.slug === slug || p.id === slug) || null;
+  }, [slug, posts]);
+
+  // Dynamic categories list
+  const categories = useMemo(() => {
+    const base = [...BLOG_CATEGORIES];
+    posts.forEach((p) => {
+      if (p.category && !base.includes(p.category as any)) {
+        base.push(p.category as any);
+      }
+    });
+    return base;
+  }, [posts]);
 
   // Filters for the blog index view
   const [selectedCategory, setSelectedCategory] = useState<string>('All Articles');
@@ -54,7 +87,7 @@ export function BlogPage() {
 
   // Filtered posts for listing
   const filteredPosts = useMemo(() => {
-    return BLOG_POSTS.filter((post) => {
+    return posts.filter((post) => {
       const matchesCategory =
         selectedCategory === 'All Articles' || post.category === selectedCategory;
       const q = searchQuery.toLowerCase().trim();
@@ -68,18 +101,18 @@ export function BlogPage() {
 
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, posts]);
 
   // Featured post for hero
   const featuredPost = useMemo(() => {
-    return BLOG_POSTS.find((p) => p.featured) || BLOG_POSTS[0];
-  }, []);
+    return posts.find((p) => p.featured) || posts[0];
+  }, [posts]);
 
   // Related posts for article view
   const relatedPosts = useMemo(() => {
     if (!activePost) return [];
-    return BLOG_POSTS.filter((p) => p.id !== activePost.id && (p.category === activePost.category || p.trending)).slice(0, 3);
-  }, [activePost]);
+    return posts.filter((p) => p.id !== activePost.id && (p.category === activePost.category || p.trending)).slice(0, 3);
+  }, [activePost, posts]);
 
   const handleCopyLink = (targetSlug?: string) => {
     const url = targetSlug
@@ -116,6 +149,17 @@ export function BlogPage() {
   // SINGLE ARTICLE DETAIL VIEW
   // ─────────────────────────────────────────────────────────────────────────────
   if (slug) {
+    if (!activePost && isHydrating) {
+      return (
+        <div className="min-h-[75vh] flex flex-col items-center justify-center p-6 text-center bg-[#FAFAFB]">
+          <div className="w-12 h-12 rounded-2xl bg-purple-100 animate-pulse flex items-center justify-center mb-4">
+            <BookOpen className="w-6 h-6 text-purple-600" />
+          </div>
+          <p className="text-sm font-semibold text-gray-500 animate-pulse">Loading article...</p>
+        </div>
+      );
+    }
+
     if (!activePost) {
       return (
         <div className="min-h-[75vh] flex flex-col items-center justify-center p-6 text-center bg-[#FAFAFB]">
@@ -583,7 +627,7 @@ export function BlogPage() {
         url: 'https://mycollegegenie.in/logo.webp',
       },
     },
-    blogPost: BLOG_POSTS.map((post) => ({
+    blogPost: posts.map((post) => ({
       '@type': 'BlogPosting',
       headline: post.title,
       description: post.excerpt,
@@ -763,11 +807,11 @@ export function BlogPage() {
         )}
 
         {/* Filter Bar & Minimal Search (Sticky Google/Apple Filter Strip) */}
-        <div className="sticky top-16 z-30 bg-[#FAFAFB]/90 backdrop-blur-xl py-4 mb-8 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 border-b border-gray-200/60">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        <div className="sticky top-[56px] sm:top-16 z-30 bg-[#FAFAFB]/90 backdrop-blur-xl py-3.5 sm:py-4 mb-6 sm:mb-8 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 border-b border-gray-200/60">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
             {/* Category Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {BLOG_CATEGORIES.map((cat) => {
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+              {categories.map((cat) => {
                 const isActive = selectedCategory === cat;
                 return (
                   <button
@@ -775,7 +819,7 @@ export function BlogPage() {
                     onClick={() => {
                       setSelectedCategory(cat);
                     }}
-                    className={`text-xs font-bold px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 ${
+                    className={`text-xs font-bold px-4 py-2 rounded-full whitespace-nowrap shrink-0 transition-all duration-200 ${
                       isActive
                         ? 'bg-gray-900 text-white shadow-sm'
                         : 'bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200/80'
@@ -795,7 +839,7 @@ export function BlogPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search guides, topics, skills..."
-                className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all shadow-sm placeholder:text-gray-400"
+                className="w-full pl-9 pr-8 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all shadow-sm placeholder:text-gray-400"
               />
               {searchQuery && (
                 <button
@@ -943,7 +987,7 @@ export function BlogPage() {
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
                 placeholder="Enter your college or personal email"
-                className="flex-1 px-4 py-3 text-sm bg-white/10 border border-white/15 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all backdrop-blur-md"
+                className="flex-1 px-4 py-3 text-base sm:text-sm bg-white/10 border border-white/15 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all backdrop-blur-md"
               />
               <button
                 type="submit"

@@ -52,24 +52,24 @@ export const ExchangeTab: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
-      className="space-y-6"
+      className="space-y-4 sm:space-y-6"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col items-center justify-center">
-          <h4 className="text-gray-400 font-bold text-xs uppercase tracking-wider mb-1">Active Ads</h4>
-          <span className="text-4xl font-black text-[#5636A7]">
-            {isLoading ? <Loader2 className="w-8 h-8 animate-spin text-gray-300" /> : activeAds}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-sm flex flex-col items-center justify-center">
+          <h4 className="text-gray-400 font-bold text-[10px] sm:text-xs uppercase tracking-wider mb-1">Active Ads</h4>
+          <span className="text-2xl sm:text-4xl font-black text-[#5636A7]">
+            {isLoading ? <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-gray-300" /> : activeAds}
           </span>
         </div>
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col items-center justify-center">
-          <h4 className="text-gray-400 font-bold text-xs uppercase tracking-wider mb-1">Completed / Sold</h4>
-          <span className="text-4xl font-black text-emerald-500">
-            {isLoading ? <Loader2 className="w-8 h-8 animate-spin text-gray-300" /> : soldAds}
+        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-sm flex flex-col items-center justify-center">
+          <h4 className="text-gray-400 font-bold text-[10px] sm:text-xs uppercase tracking-wider mb-1">Completed / Sold</h4>
+          <span className="text-2xl sm:text-4xl font-black text-emerald-500">
+            {isLoading ? <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-gray-300" /> : soldAds}
           </span>
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-black text-gray-900">Your Listings</h2>
           <a href="/campus-exchange/new" className="text-sm font-bold text-[#5636A7] hover:text-[#4a2e92] transition-colors">

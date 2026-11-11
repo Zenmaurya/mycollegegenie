@@ -6,6 +6,7 @@ import { User } from '../types';
 import { AuthForm } from '../components/AuthForm';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
+import { isImeKeyEvent } from '../lib/security';
 
 /* ─────────────────────────────────────────────────────────────────────── */
 /* Animated eye helpers                                                      */
@@ -356,6 +357,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (isImeKeyEvent(e)) return;
       if (e.key === 'Escape') {
         handleClose();
       }
@@ -479,7 +481,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
             </div>
 
             {/* Form */}
-            <div className="flex-1 flex flex-col justify-start sm:justify-center px-5 sm:px-10 py-4 sm:py-8">
+            <div className="flex-1 flex flex-col justify-start sm:justify-center px-5 sm:px-10 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:py-8">
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 // FIX Perf #5: Replaced 'framer-motion' with 'motion' — same library, avoids duplicate bundle code.
 import { motion, AnimatePresence } from 'motion/react';
@@ -106,70 +106,70 @@ export const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen pt-6 pb-12 px-4 sm:px-6 lg:px-8 bg-[#F8F9FD]">
+    <div className="min-h-screen pt-4 sm:pt-6 pb-28 md:pb-12 px-4 sm:px-6 lg:px-8 bg-[#F8F9FD]">
             <Helmet>
         <title>My Profile | MyCollegeGenie</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-5 sm:gap-8">
           
           {/* Left Sidebar */}
-          <div className="w-full lg:w-80 flex-shrink-0 space-y-6">
+          <div className="w-full lg:w-80 flex-shrink-0 space-y-4 sm:space-y-6">
             
             {/* User Mini Card */}
-            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 flex items-center gap-4">
+            <div className="bg-white rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 shadow-sm border border-gray-100 flex items-center gap-3.5 sm:gap-4">
               {/* Avatar Display — emoji or real photo */}
               {(() => {
                 const av = resolveAvatar(selectedAvatar);
                 return av ? (
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0 ${av.bg}`}>
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shrink-0 ${av.bg}`}>
                     {av.emoji}
                   </div>
                 ) : selectedAvatar ? (
-                  <img src={selectedAvatar} alt="Profile" className="w-16 h-16 rounded-2xl object-cover shrink-0" />
+                  <img src={selectedAvatar} alt="Profile" className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover shrink-0" />
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center shrink-0">
-                    <span className="text-xl font-black text-purple-700">{getInitials(displayName || 'S')}</span>
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-purple-100 flex items-center justify-center shrink-0">
+                    <span className="text-lg sm:text-xl font-black text-purple-700">{getInitials(displayName || 'S')}</span>
                   </div>
                 );
               })()}
               <div className="overflow-hidden">
-                <h2 className="font-black text-gray-900 text-lg truncate flex items-center gap-1.5">
+                <h2 className="font-black text-gray-900 text-base sm:text-lg truncate flex items-center gap-1.5">
                   {displayName || 'Student'}
                   {profile?.is_verified && <VerifiedBadge size="sm" showLabel={false} />}
                 </h2>
-                <p className="text-sm font-medium text-gray-500 truncate">{college || 'University'}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 truncate">{college || 'University'}</p>
               </div>
             </div>
 
-            {/* Navigation Menu */}
-            <div className="bg-white rounded-[2rem] p-4 shadow-sm border border-gray-100 flex flex-col gap-1">
+            {/* Navigation Menu (Horizontal pills on mobile, vertical menu on desktop) */}
+            <div className="bg-white rounded-2xl sm:rounded-[2rem] p-2 sm:p-4 shadow-sm border border-gray-100 flex flex-row lg:flex-col gap-1.5 sm:gap-1 overflow-x-auto scrollbar-hide">
               {MENU_ITEMS.map(item => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all ${
+                  className={`lg:w-full flex items-center justify-between px-3.5 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl transition-all whitespace-nowrap shrink-0 text-xs sm:text-sm ${
                     activeTab === item.id 
-                      ? 'bg-[#F4EFFF] text-[#5636A7] font-bold' 
+                      ? 'bg-[#F4EFFF] text-[#5636A7] font-bold shadow-xs lg:shadow-none' 
                       : 'text-gray-600 hover:bg-gray-50 font-medium'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <item.icon className={`w-5 h-5 ${activeTab === item.id ? 'text-[#5636A7]' : 'text-gray-400'}`} />
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <item.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${activeTab === item.id ? 'text-[#5636A7]' : 'text-gray-400'}`} />
                     {item.label}
                   </div>
-                  {activeTab === item.id && <ChevronRight className="w-4 h-4 text-[#5636A7]" />}
+                  {activeTab === item.id && <ChevronRight className="w-4 h-4 text-[#5636A7] hidden lg:block" />}
                 </button>
               ))}
             </div>
 
-            {/* Sign Out */}
+            {/* Sign Out (Desktop Sidebar) */}
             <button 
               onClick={handleLogout}
               disabled={isSigningOut}
-              className="w-full flex items-center justify-center gap-2 p-4 bg-white text-rose-600 rounded-[2rem] font-bold hover:bg-rose-50 transition-all border border-gray-100 hover:border-rose-100 shadow-sm disabled:opacity-70"
+              className="hidden lg:flex w-full items-center justify-center gap-2 p-4 bg-white text-rose-600 rounded-[2rem] font-bold hover:bg-rose-50 transition-all border border-gray-100 hover:border-rose-100 shadow-sm disabled:opacity-70"
             >
               {isSigningOut ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -181,7 +181,7 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           {/* Right Main Area */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <AnimatePresence mode="wait">
               
               {/* PROFILE SETTINGS TAB */}
@@ -192,12 +192,12 @@ export const ProfilePage: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100"
+                  className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-10 shadow-sm border border-gray-100"
                 >
-                  <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center justify-between mb-6 sm:mb-8">
                     <div>
-                      <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Account Settings</h1>
-                      <p className="text-gray-500 font-medium text-sm mt-1">Manage your academic and personal details</p>
+                      <h1 className="text-xl sm:text-3xl font-black text-gray-900 tracking-tight">Account Settings</h1>
+                      <p className="text-gray-500 font-medium text-xs sm:text-sm mt-1">Manage your academic and personal details</p>
                     </div>
                     {profile?.role === 'admin' && (
                       <div className="px-3 py-1 bg-amber-50 text-amber-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-amber-100 flex items-center gap-1.5">
@@ -256,7 +256,7 @@ export const ProfilePage: React.FC = () => {
                       </div>
 
                       {/* Avatar Grid */}
-                      <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                      <div className="grid grid-cols-5 sm:grid-cols-8 gap-2 sm:gap-2.5">
                         {AVATAR_CATEGORIES[avatarTab].ids.map(id => {
                           const av = AVATARS.find(a => a.id === id)!;
                           const dbVal = avatarToDbValue(id);
@@ -285,7 +285,7 @@ export const ProfilePage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-5 sm:space-y-6">
                       <div className="space-y-2">
                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                           <Mail className="w-3.5 h-3.5" /> Email Address
@@ -294,7 +294,7 @@ export const ProfilePage: React.FC = () => {
                           type="text"
                           disabled
                           value={profile?.email}
-                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-400 cursor-not-allowed opacity-70"
+                          className="w-full px-4 sm:px-6 py-3.5 sm:py-4 bg-gray-50 border border-gray-100 rounded-xl sm:rounded-2xl font-bold text-base sm:text-sm text-gray-400 cursor-not-allowed opacity-70"
                         />
                       </div>
 
@@ -308,11 +308,11 @@ export const ProfilePage: React.FC = () => {
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
                           placeholder="Enter your name"
-                          className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-[#5636A7]/10 focus:border-[#5636A7] outline-none transition-all font-bold text-gray-700"
+                          className="w-full px-4 sm:px-6 py-3.5 sm:py-4 bg-white border border-gray-200 rounded-xl sm:rounded-2xl focus:ring-4 focus:ring-[#5636A7]/10 focus:border-[#5636A7] outline-none transition-all font-bold text-base sm:text-sm text-gray-700"
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                         <div className="space-y-2">
                           <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                             <GraduationCap className="w-3.5 h-3.5" /> College
@@ -322,7 +322,7 @@ export const ProfilePage: React.FC = () => {
                             value={college}
                             onChange={(e) => setCollege(e.target.value)}
                             placeholder="Hansraj College"
-                            className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-[#5636A7]/10 focus:border-[#5636A7] outline-none transition-all font-bold text-gray-700"
+                            className="w-full px-4 sm:px-6 py-3.5 sm:py-4 bg-white border border-gray-200 rounded-xl sm:rounded-2xl focus:ring-4 focus:ring-[#5636A7]/10 focus:border-[#5636A7] outline-none transition-all font-bold text-base sm:text-sm text-gray-700"
                           />
                         </div>
 
@@ -335,7 +335,7 @@ export const ProfilePage: React.FC = () => {
                             value={course}
                             onChange={(e) => setCourse(e.target.value)}
                             placeholder="B.Com (Hons)"
-                            className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-[#5636A7]/10 focus:border-[#5636A7] outline-none transition-all font-bold text-gray-700"
+                            className="w-full px-4 sm:px-6 py-3.5 sm:py-4 bg-white border border-gray-200 rounded-xl sm:rounded-2xl focus:ring-4 focus:ring-[#5636A7]/10 focus:border-[#5636A7] outline-none transition-all font-bold text-base sm:text-sm text-gray-700"
                           />
                         </div>
                       </div>
@@ -373,38 +373,38 @@ export const ProfilePage: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100"
+                  className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-10 shadow-sm border border-gray-100"
                 >
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
-                      <HelpCircle className="w-6 h-6" />
+                  <div className="flex items-center gap-3.5 sm:gap-4 mb-6 sm:mb-8">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                      <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-black text-gray-900">Help & Support</h2>
-                      <p className="text-gray-500 font-medium text-sm">Find answers or contact our team</p>
+                      <h2 className="text-xl sm:text-2xl font-black text-gray-900">Help & Support</h2>
+                      <p className="text-gray-500 font-medium text-xs sm:text-sm">Find answers or contact our team</p>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {[
                       { q: 'How do I upload notes?', a: 'You can upload notes by going to the Browse section and clicking on the Upload Resource button at the top right.' },
                       { q: 'Is Campus Exchange safe?', a: 'Yes, but always meet in public spaces on campus and verify the item before making any payment. We verify student emails.' },
                       { q: 'How can I change my college?', a: 'You can update your college and course in the Profile Settings tab. Changes reflect immediately.' }
                     ].map((faq, i) => (
-                      <div key={i} className="p-5 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors">
-                        <h4 className="font-bold text-gray-900 mb-1">{faq.q}</h4>
-                        <p className="text-sm text-gray-600 leading-relaxed">{faq.a}</p>
+                      <div key={i} className="p-4 sm:p-5 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <h4 className="font-bold text-gray-900 mb-1 text-sm sm:text-base">{faq.q}</h4>
+                        <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{faq.a}</p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="mt-8 pt-8 border-t border-gray-100 text-center bg-gray-50 rounded-3xl p-8">
-                    <p className="text-sm text-gray-500 font-medium mb-4">Still need help? Our team is always here for you.</p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                      <a href="mailto:support@mycollegegenie.in" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-gray-800 transition-colors shadow-md w-full sm:w-auto">
+                  <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-100 text-center bg-gray-50 rounded-2xl sm:rounded-3xl p-5 sm:p-8">
+                    <p className="text-xs sm:text-sm text-gray-500 font-medium mb-4">Still need help? Our team is always here for you.</p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                      <a href="mailto:support@mycollegegenie.in" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-gray-800 transition-colors shadow-md w-full sm:w-auto">
                         Contact Support <ExternalLink className="w-4 h-4" />
                       </a>
-                      <a href="https://www.reddit.com/r/AskMyCollegeGenie" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FF4500] text-white rounded-xl font-bold text-sm hover:bg-[#E03D00] transition-colors shadow-md w-full sm:w-auto">
+                      <a href="https://www.reddit.com/r/AskMyCollegeGenie" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#FF4500] text-white rounded-xl font-bold text-sm hover:bg-[#E03D00] transition-colors shadow-md w-full sm:w-auto">
                         Ask on Reddit <ExternalLink className="w-4 h-4" />
                       </a>
                     </div>
@@ -413,6 +413,20 @@ export const ProfilePage: React.FC = () => {
               )}
 
             </AnimatePresence>
+
+            {/* Sign Out (Mobile Bottom Card) */}
+            <button 
+              onClick={handleLogout}
+              disabled={isSigningOut}
+              className="lg:hidden mt-5 w-full flex items-center justify-center gap-2 p-4 bg-white text-rose-600 rounded-2xl font-bold hover:bg-rose-50 transition-all border border-gray-100 shadow-sm disabled:opacity-70"
+            >
+              {isSigningOut ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <LogOut className="w-5 h-5" />
+              )}
+              {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+            </button>
           </div>
         </div>
       </div>
