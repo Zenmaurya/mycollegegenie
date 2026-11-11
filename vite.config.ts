@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => {
           // from precache. They are only needed for FlipbookPage and will be
           // cached at runtime the first time a user visits that page.
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-          globIgnores: [
+          globIgnores: ['**/*Page-*.js',
             '**/pdf.worker.min*.mjs',   // 1,244 KB — too heavy for precache
             '**/pdf.worker*.js',
             '**/vendor-pdfjs*.js',       // 452 KB — only for FlipbookPage
