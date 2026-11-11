@@ -771,8 +771,8 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                         <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedItem.id}&backgroundColor=c0aede`} alt="Avatar" className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <p className="font-bold text-gray-900">Student Verified</p>
-                        <p className="text-xs font-medium text-gray-500">Member since 2024</p>
+                        <p className="font-bold text-gray-900">{selectedItem.seller_name || "Student seller"}</p>
+                        <p className="text-xs font-medium text-gray-500"></p>
                       </div>
                    </div>
                 </div>
@@ -801,7 +801,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                       <h4 className="font-bold text-orange-800 text-sm">Login Required</h4>
                       <p className="text-[10px] sm:text-xs font-medium text-orange-600 mt-0.5">Please sign in to view contact details.</p>
                     </div>
-                    <Link to="/auth" className="shrink-0 px-4 sm:px-6 py-2.5 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white font-black uppercase tracking-widest text-[10px] sm:text-xs rounded-xl transition-colors shadow-sm">
+                    <Link to="/login" className="shrink-0 px-4 sm:px-6 py-2.5 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white font-black uppercase tracking-widest text-[10px] sm:text-xs rounded-xl transition-colors shadow-sm">
                       Sign In
                     </Link>
                   </div>
@@ -848,7 +848,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
                   <p className="text-gray-500 mb-6 max-w-sm mx-auto">
                     You need to be logged in to post items on the Campus Exchange. It helps keep our community safe!
                   </p>
-                  <Link to="/auth" className="inline-block px-8 py-3.5 sm:py-4 bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest text-[10px] sm:text-xs rounded-xl transition-all shadow-lg shadow-purple-600/20">
+                  <Link to="/login" className="inline-block px-8 py-3.5 sm:py-4 bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest text-[10px] sm:text-xs rounded-xl transition-all shadow-lg shadow-purple-600/20">
                     Sign in to post
                   </Link>
                 </div>
