@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 8587)
-Total output lines: 609
-
 /**
  * ResourceUploadModal.tsx
  * ─────────────────────────────────────────────────────────────────
