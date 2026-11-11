@@ -113,6 +113,11 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
                   <ChevronRight className="w-3 h-3 text-purple-500" /> Upload
                 </button>
               </li>
+              <li>
+                <Link to="/blog" onClick={() => window.scrollTo(0, 0)} className="hover:text-purple-400 transition-colors flex items-center gap-2">
+                  <ChevronRight className="w-3 h-3 text-purple-500" /> Student Blog
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -139,7 +144,19 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
             <h4 className="text-white font-bold mb-4 lg:mb-6 text-sm">Support &amp; Legal</h4>
             <ul className="space-y-4 font-medium text-[13px]">
               <li><Link to="/contact" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Contact Us</Link></li>
-              <li><Link to="/blog" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Blog</Link></li>
+              <li>
+                <Link
+                  to="/blog"
+                  onClick={() => window.scrollTo(0, 0)}
+                  className="hover:text-purple-400 transition-colors flex items-center gap-2 group"
+                >
+                  <ChevronRight className="w-3 h-3 text-purple-500 group-hover:translate-x-0.5 transition-transform" />
+                  <span>Blog &amp; Guides</span>
+                  <span className="text-[9px] bg-purple-500/20 text-purple-300 font-bold px-1.5 py-0.5 rounded-full border border-purple-500/30">
+                    NEW
+                  </span>
+                </Link>
+              </li>
               <li><Link to="/contributors" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Our Team &amp; Contributors</Link></li>
               <li><Link to="/privacy" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Terms of Service</Link></li>

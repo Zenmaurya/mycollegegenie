@@ -7,7 +7,7 @@
  * Uses useAuth() for auth state and useResources() to prepend the
  * newly created resource to the shared list immediately.
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -116,6 +116,17 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
     resetForm();
     onClose();
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && uploadStatus !== 'uploading') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, uploadStatus]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -296,6 +307,9 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
             className="absolute inset-0 bg-black/60 backdrop-blur-md"
           />
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="upload-modal-title"
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -309,11 +323,16 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                   <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">Upload Material</h2>
+                  <h2 id="upload-modal-title" className="text-lg sm:text-xl font-bold text-gray-900">Upload Material</h2>
                   <p className="text-[8px] sm:text-[10px] text-gray-500 uppercase tracking-widest font-bold">Share your knowledge</p>
                 </div>
               </div>
-              <button type="button" onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <button
+                type="button"
+                onClick={handleClose}
+                aria-label="Close upload modal"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import {
@@ -6,6 +6,8 @@ import {
   MapPin, Globe, Users, Instagram, Linkedin, Twitter,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
+import { config } from '../lib/config';
 
 const SUBJECT_OPTIONS = [
   'General Inquiry',
@@ -56,22 +58,25 @@ export const ContactPage: React.FC = () => {
     e.preventDefault();
     setStatus('sending');
     try {
-      // Send to backend or mailto fallback
-      const res = await fetch('/api/contact', {
+      const res = await fetch(`${config.apiUrl}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      if (!res.ok) throw new Error('Failed');
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to deliver message');
+      }
       setStatus('success');
+      toast.success(data?.message || 'Message sent! Our support team will get back to you shortly.');
       setFormData({ name: '', email: '', subject: 'General Inquiry', message: '' });
-    } catch {
-      // Fallback to mailto if backend not available
+    } catch (err: any) {
+      console.warn('[ContactPage] API submit failed, offering mailto fallback:', err?.message);
+      setStatus('idle');
+      toast.error(err?.message || 'Server unavailable. Opening your default mail app...');
       const mailto = `mailto:support@mycollegegenie.in?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\n${formData.message}`)}`;
       window.location.href = mailto;
-      setStatus('success');
     }
-    setTimeout(() => setStatus('idle'), 6000);
   };
 
   const inputClass =

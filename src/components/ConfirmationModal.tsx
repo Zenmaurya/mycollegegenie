@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertCircle, X } from 'lucide-react';
 
@@ -23,6 +23,16 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   cancelText = 'Cancel',
   type = 'info'
 }) => {
+  // Safe keyboard dismissal on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -35,6 +45,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-modal-title"
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -45,12 +58,16 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${type === 'danger' ? 'bg-rose-50 text-rose-600' : 'bg-purple-50 text-purple-600'}`}>
                   <AlertCircle className="w-6 h-6" />
                 </div>
-                <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                <button
+                  onClick={onClose}
+                  aria-label="Close dialog"
+                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                >
                   <X className="w-5 h-5 text-gray-400" />
                 </button>
               </div>
               
-              <h3 className="text-xl font-black text-gray-900 mb-2 tracking-tight">{title}</h3>
+              <h3 id="confirm-modal-title" className="text-xl font-black text-gray-900 mb-2 tracking-tight">{title}</h3>
               <p className="text-gray-500 font-medium leading-relaxed mb-8">{message}</p>
               
               <div className="flex gap-3">

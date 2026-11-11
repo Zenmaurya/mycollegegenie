@@ -33,6 +33,20 @@ const getYouTubeThumbnail = (url?: string) => {
   return null;
 };
 
+const openSafeUrl = (rawUrl?: string) => {
+  if (!rawUrl) return;
+  try {
+    const parsed = new URL(rawUrl, window.location.origin);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      window.open(parsed.href, '_blank', 'noopener,noreferrer');
+    } else {
+      console.warn('[ResourceCard] Blocked navigation to unsafe scheme:', parsed.protocol);
+    }
+  } catch (e) {
+    console.warn('[ResourceCard] Invalid URL:', rawUrl);
+  }
+};
+
 export const ResourceCard: React.FC<ResourceCardProps> = ({
   resource,
   viewMode = 'grid',
@@ -144,7 +158,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         {/* Actions */}
         <div className="flex items-center gap-1.5 shrink-0 border-l border-gray-100 pl-3">
           {canDownload && (
-            <button onClick={(e) => { e.stopPropagation(); window.open(resource.directDownloadLink || resource.link, '_blank'); }}
+            <button onClick={(e) => { e.stopPropagation(); openSafeUrl(resource.directDownloadLink || resource.link); }}
               className="p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-all hover:scale-105" title="Download" aria-label={`Download ${resource.title}`}>
               <Download className="w-4 h-4" />
             </button>
@@ -229,7 +243,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
           {resource.course}{resource.subjectCode && ` (${resource.subjectCode})`}
         </span>
         {canDownload && (
-          <button onClick={(e) => { e.stopPropagation(); window.open(resource.directDownloadLink || resource.link, '_blank'); }}
+          <button onClick={(e) => { e.stopPropagation(); openSafeUrl(resource.directDownloadLink || resource.link); }}
             className="ml-auto shrink-0 p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg border border-green-100 transition-all hover:scale-105"
             title="Download" aria-label={`Download ${resource.title}`}>
             <Download className="w-3.5 h-3.5" />

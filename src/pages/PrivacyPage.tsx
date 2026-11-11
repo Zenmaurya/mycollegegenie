@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import { Shield, Lock, Eye, FileText, ChevronRight, ArrowLeft, Check, Server } from 'lucide-react';
@@ -103,7 +103,8 @@ export const PrivacyPage: React.FC = () => {
                 <ul className="space-y-4">
                   {[
                     { label: 'Account Information', body: 'When you sign in with Google, we receive your name, email address, and profile picture.' },
-                    { label: 'Usage Data', body: 'We collect information about which resources you view, save, and rate to improve our recommendations.' },
+                    { label: 'Usage & Diagnostics', body: 'We collect anonymous interaction metrics and error diagnostic telemetry (via Sentry and PostHog) to identify crashes, fix bugs, and improve recommendations.' },
+                    { label: 'Local Storage & Preferences', body: 'We use local browser storage strictly for session persistence, filter preferences, and fast client-side resource caching.' },
                     { label: 'Uploaded Content', body: 'Any resources you upload, including titles, descriptions, and links, are stored on our secure servers.' },
                   ].map(item => (
                     <li key={item.label} className="flex items-start gap-3">

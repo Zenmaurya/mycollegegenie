@@ -37,3 +37,13 @@ firebase-applet-config.json
 # Editor
 .vscode/
 .idea/
+
+# Backend submodule / standalone repository
+backend/
+
+# Sensitive documentation and extracted archives
+documentation_and_keys/
+temp_zip_extract/
+
+# Agent skills & local configurations
+.agents/

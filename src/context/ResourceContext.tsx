@@ -46,10 +46,14 @@ export function ResourceProvider({ children }: { children: React.ReactNode }) {
       const data = await getResources(includeUnapproved);
       if (data) {
         setResources(data);
-        try {
-          localStorage.setItem('mcg_cached_resources', JSON.stringify(data));
-        } catch (e) {
-          console.warn('[ResourceContext] Failed to write cache to localStorage:', e);
+        // Only cache public approved items into persistent localStorage
+        // Prevents unapproved admin items from leaking across accounts/sessions
+        if (!includeUnapproved) {
+          try {
+            localStorage.setItem('mcg_cached_resources', JSON.stringify(data));
+          } catch (e) {
+            console.warn('[ResourceContext] Failed to write cache to localStorage:', e);
+          }
         }
       }
     } catch (err) {

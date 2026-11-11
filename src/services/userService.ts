@@ -45,7 +45,7 @@ export const updateUserProfile = async (data: {
         college: data.college,
         course: data.course,
         batchYear: data.batchYear,
-        // Note: photoUrl is updated via /api/users/me/avatar endpoint, not here
+        photoUrl: data.photoUrl,
       }),
     });
   } catch (error) {

@@ -102,6 +102,7 @@ export const PlaylistPage: React.FC<PlaylistPageProps> = ({
   const filteredPlaylists = useMemo(() => {
     const filtered = resources.filter(resource => {
       if (resource.type !== 'Playlist') return false;
+      if ((resource as any).isApproved === false || (resource as any).is_approved === 0) return false;
       const matchesQuery =
         resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         resource.course.toLowerCase().includes(searchQuery.toLowerCase()) ||

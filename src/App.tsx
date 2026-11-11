@@ -428,6 +428,7 @@ function AppContent() {
               <Route path="/otp-verify" element={<OTPVerificationPage />} />
               <Route path="/contributors" element={<ContributorsPage />} />
               <Route path="/blog" element={<BlogPage />} />
+              <Route path="/blog/:slug" element={<BlogPage />} />
 
               <Route path="*" element={
                 <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 px-4 text-center">
