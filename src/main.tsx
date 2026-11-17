@@ -11,8 +11,13 @@ import { registerSW } from 'virtual:pwa-register';
 const isDev = import.meta.env.DEV;
 const updateSW = registerSW({
   onNeedRefresh() {
-    if (isDev) console.log('New content available, please refresh.');
-    // In production: could show a toast here if desired
+    if (isDev) {
+      console.log('New content available, refreshing.');
+      return;
+    }
+    // Activate the new production bundle immediately so users do not stay on
+    // stale auth/UI code cached by the service worker.
+    void updateSW(true);
   },
   onOfflineReady() {
     if (isDev) console.log('App is ready to work offline.');
