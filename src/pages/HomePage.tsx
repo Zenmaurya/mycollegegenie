@@ -413,7 +413,11 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
               <img 
                 src="/hero-students.webp" 
-                alt="Students using My College Genie" 
+                alt="Students using My College Genie"
+                width="960"
+                height="720"
+                loading="eager"
+                fetchPriority="high" 
                 className="w-full h-full object-contain mix-blend-multiply drop-shadow-sm scale-[1.05] xl:scale-[1.1] origin-center"
                 fetchPriority="high"
                 loading="eager"
@@ -613,7 +617,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <motion.button 
                   key={idx}
                   type="button"
-                  whileHover={{ x: 10 }}
+                  whileHover={{ y: -2 }}
                   className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 transition-all cursor-pointer flex items-start gap-4 shadow-sm hover:shadow-xl hover:shadow-purple-600/5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600"
                   onClick={() => navigate(`/news?news=${encodeURIComponent(item.title)}`)}
                 >

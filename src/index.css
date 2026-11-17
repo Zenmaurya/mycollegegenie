@@ -9,8 +9,15 @@
   --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
   --duration-fast: 150ms;
   --duration-base: 250ms;
-  --duration-slow: 400ms;
-  --duration-slower: 600ms;
+  --duration-slow: 280ms;
+  --duration-slower: 420ms;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --ink: #0f172a;
+  --ink-muted: #64748b;
+  --brand: #4f46e5;
+  --brand-strong: #3730a3;
+  --line: #e2e8f0;
 }
 
 /* ── Base Rendering Optimizations ──────────────────────────────── */
@@ -33,8 +40,34 @@ html {
 }
 
 body {
+  margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: var(--surface-muted);
   overscroll-behavior-y: none;
+  line-height: 1.5;
+}
+
+/* Keep repeated page sections cheap to paint while preserving their layout footprint. */
+main > section,
+main > div > section {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 520px;
+}
+
+button, a, input, select, textarea {
+  min-height: 44px;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+::selection {
+  background: rgba(79, 70, 229, 0.18);
+  color: var(--ink);
 }
 
 /* ── Page Transition System ─────────────────────────────────────── */
@@ -45,8 +78,8 @@ body {
 .page-enter-active {
   opacity: 1;
   transform: translateY(0) scale(1);
-  transition: opacity var(--duration-slow) var(--ease-out-expo),
-              transform var(--duration-slow) var(--ease-out-expo);
+  transition: opacity var(--duration-base) var(--ease-out-expo),
+              transform var(--duration-base) var(--ease-out-expo);
 }
 .page-exit {
   opacity: 1;
@@ -119,12 +152,10 @@ body {
   from { 
     opacity: 0; 
     transform: translateY(20px) skewY(2deg);
-    filter: blur(4px);
   }
   to { 
     opacity: 1; 
     transform: translateY(0) skewY(0deg);
-    filter: blur(0);
   }
 }
 
@@ -157,7 +188,6 @@ a, button {
 .card-hover {
   transition: transform var(--duration-base) var(--ease-spring),
               box-shadow var(--duration-base) var(--ease-smooth);
-  will-change: transform, box-shadow;
   backface-visibility: hidden;
 }
 .card-hover:hover {
@@ -168,15 +198,15 @@ a, button {
 /* ── Glassmorphism ─────────────────────────────────────────────── */
 .glass {
   background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px) saturate(120%);
-  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .glass-dark {
   background: rgba(10, 10, 20, 0.6);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -307,9 +337,9 @@ img {
 
 /* ── Navbar Glass Effect ─────────────────────────────────────────── */
 .navbar-glass {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 1px 40px rgba(0, 0, 0, 0.04);
 }
@@ -391,3 +421,57 @@ img {
 /* Scrollbar hide utility */
 .scrollbar-none { scrollbar-width: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
+
+
+/* Editorial UI defaults: calm surfaces, clear hierarchy, no decorative AI-slop motion. */
+.surface-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.text-muted { color: var(--ink-muted); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .card-hover:hover { transform: translateY(-2px); }
+}
+
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .navbar-glass { box-shadow: 0 1px 12px rgba(15, 23, 42, 0.06); }
+}
+
+
+/* Disable decorative blur layers: they are costly on mobile and obscure hierarchy. */
+.backdrop-blur,
+.backdrop-blur-sm,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl,
+.backdrop-blur-2xl,
+.backdrop-blur-3xl {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Keep interaction feedback, remove perpetual decorative movement. */
+.animate-char-wave,
+.animate-char-pulse,
+.animate-char-float,
+.animate-char-bounce,
+.animate-char-spin-slow,
+.animate-char-heartbeat,
+.animate-typing,
+.cursor-blink::after {
+  animation: none !important;
+}
+
+/* Use motion only for state changes, never to hide primary content. */
+.animate-text-reveal,
+.animate-fade-up,
+.animate-slide-left,
+.animate-slide-right,
+.animate-scale-in {
+  animation-duration: 180ms;
+  filter: none;
+}

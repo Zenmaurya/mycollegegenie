@@ -293,13 +293,12 @@ function AppContent() {
 
   // ── Page suspense fallback ──────────────────────────────────────
   const PageFallback = (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4">
-      <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center shadow-inner relative overflow-hidden">
-        <Loader2 className="w-8 h-8 text-purple-600 animate-spin relative z-10" />
-      </div>
-      <div className="text-center">
-        <h3 className="font-bold text-gray-900 text-lg">Loading Experience…</h3>
-        <p className="text-sm text-gray-500 font-medium">Preparing the platform</p>
+    <div className="min-h-[60vh] w-full max-w-7xl mx-auto px-4 sm:px-6 py-10" role="status" aria-label="Loading page">
+      <div className="h-8 w-48 rounded-lg bg-slate-200 animate-pulse mb-8" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2].map((item) => (
+          <div key={item} className="h-44 rounded-2xl border border-slate-200 bg-white animate-pulse" />
+        ))}
       </div>
     </div>
   );
@@ -323,7 +322,7 @@ function AppContent() {
   );
 
   return (
-    <div className="min-h-screen bg-ethereal-mesh text-gray-900 font-sans selection:bg-purple-100 selection:text-purple-900 flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900 flex flex-col">
       <Toaster position="top-center" expand={false} richColors />
 
       {/* Announcement banner */}
