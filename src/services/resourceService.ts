@@ -138,6 +138,7 @@ export const uploadFile = async (
   const isDirectUploadType = fileToUpload.type === 'application/pdf' ||
     ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(fileToUpload.type);
   if (isDirectUploadType && ['pyqs', 'notes', 'books', 'resources'].includes(folder)) {
+    let directUploadStarted = false;
     try {
       const presignResponse = await fetchWithAuth('/api/resources/presign-upload', {
         method: 'POST',
@@ -155,6 +156,7 @@ export const uploadFile = async (
       if (presignResponse && presignResponse.uploadUrl && presignResponse.fileUrl) {
         const { uploadUrl, fileUrl } = presignResponse;
         
+        directUploadStarted = true;
         return await new Promise<string>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open('PUT', uploadUrl, true);
@@ -185,8 +187,8 @@ export const uploadFile = async (
         });
       }
     } catch (presignErr) {
-      console.warn('[uploadFile] Direct presigned upload failed, falling back to multi-hop backend upload:', presignErr);
-      // Continuous uptime guarantee: fall back seamlessly to legacy multi-hop upload if presigning endpoint fails
+      if (directUploadStarted) throw presignErr;
+      console.warn('[uploadFile] Presign unavailable; using the legacy upload endpoint:', presignErr);
     }
   }
 

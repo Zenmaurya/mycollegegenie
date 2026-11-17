@@ -125,6 +125,15 @@ export async function fetchWithAuth(
     clearApiCache();
   }
 
+  // Return a recent anonymous GET immediately before doing any Supabase session work.
+  // Public catalog endpoints are safe to cache by URL; authenticated responses still use
+  // the token-partitioned cache below.
+  if (isGet) {
+    const anonymousKey = endpoint + ':' + (restOptions.method || 'GET') + ':' + JSON.stringify(restOptions.headers || {}) + ':anonymous';
+    const anonymousCached = getCache.get(anonymousKey);
+    if (anonymousCached && (Date.now() - anonymousCached.timestamp) < 30_000) return anonymousCached.data;
+  }
+
   const token = await getFreshToken();
 
   // Partition private response/in-flight caches by the exact authenticated session.

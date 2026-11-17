@@ -395,7 +395,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
             Left portion of overlay — characters peek from below
           */}
           <div
-            className="hidden lg:flex flex-col items-center justify-between pb-0 relative overflow-hidden bg-[#F3F2F8] rounded-l-[40px] shadow-[inset_-2px_0_10px_rgba(0,0,0,0.02)]"
+            className="hidden"
             style={{
               width: '460px',
               pointerEvents: 'auto',
@@ -417,7 +417,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
                 Student Platform.
               </h2>
               <p className="text-[15px] font-bold text-gray-500 mb-4 tracking-tight">
-                We're building it together.
+                Study, connect, and get things done.
               </p>
               <a 
                 href="https://www.linkedin.com/company/my-college-genie/" 
@@ -425,8 +425,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-white/40 backdrop-blur-md border border-white/60 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(99,102,241,0.15)] transition-all duration-300 hover:-translate-y-0.5 cursor-pointer mt-1"
               >
-                <span className="text-[14px]">👥</span>
-                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-[#6366f1] via-[#a855f7] to-[#ec4899]">
+                <span className="sr-only">👥</span>
+                <span className="text-[11px] font-semibold text-gray-600">
                   Join Our Builder Team
                 </span>
               </a>

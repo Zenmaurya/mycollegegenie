@@ -306,15 +306,16 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            className="absolute inset-0 bg-black/45"
           />
           <motion.div
             role="dialog"
             aria-modal="true"
             aria-labelledby="upload-modal-title"
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            aria-busy={uploadStatus === "uploading"}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
             onClick={e => e.stopPropagation()}
             className="relative w-full max-w-2xl mx-4 bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
           >
@@ -326,7 +327,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                 </div>
                 <div>
                   <h2 id="upload-modal-title" className="text-lg sm:text-xl font-bold text-gray-900">Upload Material</h2>
-                  <p className="text-[8px] sm:text-[10px] text-gray-500 uppercase tracking-widest font-bold">Share your knowledge</p>
+                  <p className="text-[8px] sm:text-[10px] text-gray-500 uppercase tracking-widest font-bold">Add study material</p>
                 </div>
               </div>
               <button
