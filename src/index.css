@@ -48,6 +48,14 @@ body {
   line-height: 1.5;
 }
 
+/* Reserve space for the fixed mobile tab bar so cards/forms never end behind it. */
+@media (max-width: 1279px) {
+  body:has(.mobile-bottom-tab-bar) {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    scroll-padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* Keep repeated page sections cheap to paint while preserving their layout footprint. */
 main > section,
 main > div > section {
