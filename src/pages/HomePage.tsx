@@ -833,7 +833,9 @@ export const HomePage: React.FC<HomePageProps> = ({
               const numMatch = cleanVal.match(/^(\d+(?:\.\d+)?)/);
               if (!numMatch) return { end: defaultEnd, suffix: defaultSuffix };
               const end = parseFloat(numMatch[1]);
-              const suffix = cleanVal.substring(numMatch[1].length);
+              // Do not render backend placeholder values such as 0 or 0k+ as social proof.
+              if (!Number.isFinite(end) || end <= 0) return { end: defaultEnd, suffix: defaultSuffix };
+              const suffix = cleanVal.substring(numMatch[1].length) || defaultSuffix;
               return { end, suffix };
             };
 
