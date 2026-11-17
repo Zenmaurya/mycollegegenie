@@ -629,7 +629,7 @@ export const BLOG_POSTS: BlogPost[] = [
       description: 'Land tech internships with our proven cold outreach playbook: subject lines, decision maker research, 75-word scripts, and follow-up templates.',
       keywords: ['cold email for internships', 'how to get tech internship', 'linkedin cold message templates', 'software engineer referral email', 'student job search tips'],
     },
-  },,
+  },
 
   {
     id: 'post-sol-exam-form-deadline-2026',
