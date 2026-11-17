@@ -413,8 +413,8 @@ function AppContent() {
               } />
 
               {/* Login/signup routes */}
-              <Route path="/login" element={<LoginPage user={appUser} />} />
-              <Route path="/signup" element={<LoginPage user={appUser} />} />
+              <Route path="/login" element={<LoginPage user={user} />} />
+              <Route path="/signup" element={<LoginPage user={user} />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ForgotPasswordPage />} />
               <Route path="/profile" element={<ProfilePage />} />
