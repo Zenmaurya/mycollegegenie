@@ -125,6 +125,15 @@ function AppContent() {
     setIsUploadModalOpen(true);
   }, []);
 
+  // Support shareable /upload links while keeping the existing upload modal UX.
+  useEffect(() => {
+    if (location.pathname !== '/browse' || searchParams.get('openUpload') !== '1') return;
+    openUploadModal();
+    const next = new URLSearchParams(searchParams);
+    next.delete('openUpload');
+    setSearchParams(next, { replace: true });
+  }, [location.pathname, searchParams, openUploadModal, setSearchParams]);
+
   // ── Fetch news + site settings once ───────────────────────────
   const hasFetchedNews = useRef(false);
   useEffect(() => {
@@ -346,6 +355,8 @@ function AppContent() {
           <Suspense fallback={PageFallback}>
             <Routes location={location}>
               <Route path="/" element={HomePageElement} />
+
+              <Route path="/upload" element={<Navigate to="/browse?openUpload=1" replace />} />
 
               <Route path="/browse" element={
                 <BrowsePage
