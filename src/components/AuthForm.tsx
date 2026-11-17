@@ -202,7 +202,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const [otherBatchYear,  setOtherBatchYear]  = useState('');
   const [course,          setCourse]          = useState('');
   const [role,            setRole]            = useState<'user' | 'faculty'>('user');
-  const [isLoading,       setIsLoading]       = useState(false);
+  const [loadingAction,    setLoadingAction]    = useState<'email' | 'google' | 'github' | null>(null);
+  const isLoading = loadingAction !== null;
   const [showPassword,    setShowPassword]    = useState(false);
   const [showConfirm,     setShowConfirm]     = useState(false);
   const [showOTP,         setShowOTP]         = useState(false);
@@ -264,7 +265,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
     const finalCollege = college === 'Other' ? otherCollege.trim() : college;
     const finalBatchYear = batchYear === 'Other' ? otherBatchYear.trim() : batchYear;
 
-    setIsLoading(true);
+    setLoadingAction('email');
     try {
       if (mode === 'login') {
         if (!email || !password) { toast.error('Please fill in all fields.'); return; }
@@ -303,22 +304,32 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         toast.error(err.message || 'Authentication failed. Please try again.');
       }
     } finally {
-      setIsLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleGoogle = async () => {
     if (isLoading) return;
-    setIsLoading(true);
-    try { await signInWithGoogle(); }
-    catch (err: any) { toast.error(err.message || 'Google login failed.'); setIsLoading(false); }
+    setLoadingAction('google');
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      toast.error(err.message || 'Google login failed.');
+    } finally {
+      setLoadingAction(null);
+    }
   };
 
   const handleGithub = async () => {
     if (isLoading) return;
-    setIsLoading(true);
-    try { await signInWithGithub(); }
-    catch (err: any) { toast.error(err.message || 'GitHub login failed.'); setIsLoading(false); }
+    setLoadingAction('github');
+    try {
+      await signInWithGithub();
+    } catch (err: any) {
+      toast.error(err.message || 'GitHub login failed.');
+    } finally {
+      setLoadingAction(null);
+    }
   };
 
   /* ─── Render ─── */
@@ -397,7 +408,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 h-12 rounded-xl font-bold text-sm hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm disabled:opacity-50 active:scale-[0.99]"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />} Continue with Google
+              {loadingAction === 'google' ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />} Continue with Google
             </button>
             <button
               type="button"
@@ -405,7 +416,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-3 bg-gray-900 border border-gray-800 text-white h-12 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-sm disabled:opacity-50 active:scale-[0.99]"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <GithubIcon />} Continue with GitHub
+              {loadingAction === 'github' ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <GithubIcon />} Continue with GitHub
             </button>
           </motion.div>
         )}
@@ -715,7 +726,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-3 bg-[#5636A7] hover:bg-[#4a2e92] text-white h-12 rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-60 active:scale-[0.99]"
             >
-              {isLoading ? (
+              {loadingAction === 'email' ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : mode === 'login' ? (
                 'Login'
