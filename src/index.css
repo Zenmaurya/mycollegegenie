@@ -152,12 +152,10 @@ button:disabled,
   from { 
     opacity: 0; 
     transform: translateY(20px) skewY(2deg);
-    filter: blur(4px);
   }
   to { 
     opacity: 1; 
     transform: translateY(0) skewY(0deg);
-    filter: blur(0);
   }
 }
 
@@ -190,7 +188,6 @@ a, button {
 .card-hover {
   transition: transform var(--duration-base) var(--ease-spring),
               box-shadow var(--duration-base) var(--ease-smooth);
-  will-change: transform, box-shadow;
   backface-visibility: hidden;
 }
 .card-hover:hover {
@@ -442,4 +439,39 @@ img {
 @media (max-width: 640px) {
   body { font-size: 16px; }
   .navbar-glass { box-shadow: 0 1px 12px rgba(15, 23, 42, 0.06); }
+}
+
+
+/* Disable decorative blur layers: they are costly on mobile and obscure hierarchy. */
+.backdrop-blur,
+.backdrop-blur-sm,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl,
+.backdrop-blur-2xl,
+.backdrop-blur-3xl {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Keep interaction feedback, remove perpetual decorative movement. */
+.animate-char-wave,
+.animate-char-pulse,
+.animate-char-float,
+.animate-char-bounce,
+.animate-char-spin-slow,
+.animate-char-heartbeat,
+.animate-typing,
+.cursor-blink::after {
+  animation: none !important;
+}
+
+/* Use motion only for state changes, never to hide primary content. */
+.animate-text-reveal,
+.animate-fade-up,
+.animate-slide-left,
+.animate-slide-right,
+.animate-scale-in {
+  animation-duration: 180ms;
+  filter: none;
 }
