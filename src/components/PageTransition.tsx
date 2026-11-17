@@ -22,14 +22,14 @@ interface PageTransitionProps {
 }
 
 const pageVariants = {
-  initial: { opacity: 0, y: 14, scale: 0.99, filter: 'blur(2px)' },
+  initial: { opacity: 0, y: 8, scale: 1 },
   animate: {
-    opacity: 1, y: 0, scale: 1, filter: 'blur(0px)',
-    transition: { duration: 0.42, ease: [0.19, 1, 0.22, 1] }
+    opacity: 1, y: 0, scale: 1,
+    transition: { duration: 0.18, ease: [0.19, 1, 0.22, 1] }
   },
   exit: {
-    opacity: 0, y: -8, scale: 1.005, filter: 'blur(1px)',
-    transition: { duration: 0.2, ease: [0.4, 0, 1, 1] }
+    opacity: 0, y: -4, scale: 1,
+    transition: { duration: 0.12, ease: [0.4, 0, 1, 1] }
   }
 };
 
