@@ -112,8 +112,8 @@ export function NavBar() {
       <nav
         className={`sticky top-0 z-[100] transition-all duration-500 ${
           isScrolled
-            ? 'bg-white/80 backdrop-blur-2xl border-b border-gray-100/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] py-2'
-            : 'bg-transparent py-2.5'
+            ? 'bg-white border-b border-slate-200 shadow-sm py-2'
+            : 'bg-white/90 border-b border-transparent py-2.5'
         }`}
       >
         <ScrollProgressBar />
@@ -126,6 +126,10 @@ export function NavBar() {
               <img
                 src="/logo.webp"
                 alt="My College Genie"
+                width="176"
+                height="72"
+                loading="eager"
+                fetchPriority="high"
                 className="h-9 sm:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
             </div>
