@@ -629,6 +629,108 @@ export const BLOG_POSTS: BlogPost[] = [
       description: 'Land tech internships with our proven cold outreach playbook: subject lines, decision maker research, 75-word scripts, and follow-up templates.',
       keywords: ['cold email for internships', 'how to get tech internship', 'linkedin cold message templates', 'software engineer referral email', 'student job search tips'],
     },
+  },,
+
+  {
+    id: 'post-sol-exam-form-deadline-2026',
+    slug: 'du-sol-exam-form-last-date-extended-november-2026',
+    title: 'DU SOL Exam Form Last Date Extended to 22 November 2026',
+    subtitle: 'The University of Delhi SOL/CDOE has extended the examination-form submission deadline for eligible undergraduate and postgraduate promoted and ex-students.',
+    excerpt: 'DU SOL students now have time until 22 November 2026 to submit their examination forms for the 2026–27 academic session. Check eligibility, next steps and the official SOL source.',
+    category: 'Study & Exams',
+    categoryColor: 'bg-purple-50 text-purple-700 border-purple-200/60 dark:bg-purple-950/40 dark:text-purple-300',
+    coverImage: '/og-image.png',
+    coverAlt: 'MyCollegeGenie study and examination update',
+    publishedDate: '2026-11-13T12:00:00+05:30',
+    formattedDate: 'November 13, 2026',
+    readTime: '4 min read',
+    trending: true,
+    tags: ['DU SOL Exam Form 2026', 'SOL Exam Date', 'University of Delhi', 'Exam Form Deadline', 'Promoted Students', 'Ex-Students'],
+    author: {
+      name: 'MyCollegeGenie Editorial Desk',
+      role: 'Student Information Desk',
+      college: 'MyCollegeGenie',
+      avatar: '/logo.webp',
+      bio: 'We turn verified university notices into clear, useful updates for college students.',
+    },
+    keyTakeaways: [
+      'The DU SOL examination-form deadline has moved from 15 November 2026 to 22 November 2026.',
+      'The notice covers eligible undergraduate promoted students and undergraduate ex-students from years 1, 2 and 3.',
+      'It also covers eligible postgraduate promoted students and postgraduate ex-students from years 1 and 2.',
+      'Students should submit early and verify the latest instructions on the official SOL website.',
+    ],
+    tableOfContents: [
+      { id: 'deadline-extension', title: '1. What changed in the DU SOL deadline' },
+      { id: 'students-covered', title: '2. Which students are covered' },
+      { id: 'submission-checklist', title: '3. What students should do now' },
+      { id: 'avoid-last-day-rush', title: '4. Why early submission matters' },
+      { id: 'official-source', title: '5. Official SOL source' },
+    ],
+    sections: [
+      {
+        sectionId: 'deadline-extension',
+        heading: '1. What changed in the DU SOL deadline',
+        paragraphs: [
+          'The Department of Distance and Continuing Education, Campus of Open Learning and Centre for Distance and Online Education (CDOE) has extended the last date for submitting examination forms for the 2026–27 academic session.',
+          'The previous deadline was 15 November 2026. The revised last date mentioned in the official notice is 22 November 2026.',
+        ],
+        callout: {
+          type: 'warning',
+          title: 'Revised last date',
+          text: 'Eligible students should complete the examination-form process by 22 November 2026.',
+        },
+      },
+      {
+        sectionId: 'students-covered',
+        heading: '2. Which students are covered',
+        paragraphs: [
+          'The notice refers to undergraduate promoted students and undergraduate ex-students from the first, second and third year.',
+          'It also refers to postgraduate promoted students and postgraduate ex-students from the first and second year. Students should match their course, year and status against the official notice before submitting.',
+        ],
+      },
+      {
+        sectionId: 'submission-checklist',
+        heading: '3. What students should do now',
+        paragraphs: [
+          'Students who have not yet completed the form should use the official SOL student portal and follow the current instructions shown there.',
+        ],
+        checklist: {
+          title: 'Submission checklist',
+          items: [
+            { title: 'Open the official portal', desc: 'Use the latest SOL examination-form link published by the University of Delhi.' },
+            { title: 'Review every field', desc: 'Check course, year, paper selection and personal details before submitting.' },
+            { title: 'Complete payment and upload', desc: 'Finish required uploads and examination-fee payment, if applicable.' },
+            { title: 'Save proof of submission', desc: 'Keep the confirmation page, receipt and payment reference safely.' },
+          ],
+        },
+      },
+      {
+        sectionId: 'avoid-last-day-rush',
+        heading: '4. Why early submission matters',
+        paragraphs: [
+          'Students should avoid waiting until the final day. Heavy traffic, payment failures, login problems or document-upload errors can take time to resolve.',
+          'Submitting early also gives students time to recheck the confirmation details and contact the official SOL support channel if a correction is needed.',
+        ],
+      },
+      {
+        sectionId: 'official-source',
+        heading: '5. Official SOL source',
+        paragraphs: [
+          'This update is based on the official SOL/CDOE notice dated 13 November 2026. Students should continue checking the official School of Open Learning website for corrections, further instructions and future examination updates.',
+          'MyCollegeGenie is sharing the notice as a student information update. The official SOL notification and student portal remain the final authority.',
+        ],
+        callout: {
+          type: 'quote',
+          title: 'Source',
+          text: 'Official School of Open Learning / CDOE website notice, Ref. No. SOL/SSU/…, dated 13 November 2026.',
+        },
+      },
+    ],
+    seo: {
+      title: 'DU SOL Exam Form Last Date Extended to 22 November 2026',
+      description: 'DU SOL has extended the examination-form deadline from 15 November to 22 November 2026 for eligible UG and PG promoted and ex-students. Check the official SOL update and submission checklist.',
+      keywords: ['DU SOL exam form last date 2026', 'SOL exam form 2026', 'DU SOL promoted students', 'DU SOL ex-students', 'University of Delhi exam form deadline'],
+    },
   },
 ];
 
