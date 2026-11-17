@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
-import { User } from '../types';
+import { User, SupabaseAuthUser } from '../types';
 import { AuthForm } from '../components/AuthForm';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
@@ -12,7 +12,7 @@ import { isImeKeyEvent } from '../lib/security';
 /* Main LoginPage — right-side overlay panel                                 */
 /* ─────────────────────────────────────────────────────────────────────── */
 interface LoginPageProps {
-  user: User | null;
+  user: User | SupabaseAuthUser | null;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
@@ -28,6 +28,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
       navigate('/');
     }
   };
+
+  // OAuth and email auth update the session asynchronously. Leave the auth
+  // overlay as soon as Supabase exposes the authenticated user, even if the
+  // profile request is still finishing in the background.
+  useEffect(() => {
+    if (user) navigate(from, { replace: true });
+  }, [user, from, navigate]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
