@@ -419,8 +419,6 @@ export const HomePage: React.FC<HomePageProps> = ({
                 loading="eager"
                 fetchPriority="high" 
                 className="w-full h-full object-contain mix-blend-multiply drop-shadow-sm scale-[1.05] xl:scale-[1.1] origin-center"
-                fetchPriority="high"
-                loading="eager"
                 decoding="async"
               />
             </div>
