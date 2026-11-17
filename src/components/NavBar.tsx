@@ -547,7 +547,7 @@ export function NavBar() {
 
       {/* ── Mobile Bottom Tab Bar ── */}
       {!isLoginSignupPage && (
-        <div className="xl:hidden fixed bottom-0 left-0 right-0 z-[110] bg-white/95 backdrop-blur-2xl border-t border-gray-100 pb-[env(safe-area-inset-bottom,8px)] shadow-[0_-12px_40px_rgba(0,0,0,0.06)]">
+        <div aria-label="Primary mobile navigation" className="mobile-bottom-tab-bar xl:hidden fixed bottom-0 left-0 right-0 z-[110] bg-white/95 backdrop-blur-2xl border-t border-gray-100 pb-[env(safe-area-inset-bottom,8px)] shadow-[0_-12px_40px_rgba(0,0,0,0.06)]">
           <div className="flex items-center justify-around px-1 pt-2 pb-1.5 relative">
             {MOBILE_BOTTOM_NAV_LINKS.map((navItem) => {
               const { to, icon: Icon, label } = navItem;
