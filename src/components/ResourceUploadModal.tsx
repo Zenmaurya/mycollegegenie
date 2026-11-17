@@ -341,7 +341,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
             </div>
 
             {/* Body */}
-            <form onSubmit={handleUpload} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4 sm:space-y-6 custom-scrollbar">
+            <form onSubmit={handleUpload} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4 sm:space-y-6 custom-scrollbar scroll-pb-24">
               {uploadStatus === 'success' ? (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-12">
                   <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -615,7 +615,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                     <motion.button
                       whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       type="submit"
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-purple-600/20 flex items-center justify-center gap-2 transition-all"
+                      className="sticky bottom-0 z-10 w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-purple-600/20 flex items-center justify-center gap-2 transition-all"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Publish Resource
                     </motion.button>
