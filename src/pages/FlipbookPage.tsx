@@ -47,6 +47,7 @@ export const FlipbookPage: React.FC = () => {
   const [resource, setResource] = useState<Resource | null>(null);
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -56,16 +57,20 @@ export const FlipbookPage: React.FC = () => {
   useEffect(() => {
     const fetchResource = async () => {
       try {
-        const allResources = await getResources(true);
-        const found = allResources.find(r => r.id === id);
+        // Flipbooks are public. The previous `true` flag requested the
+        // protected admin/unapproved feed, which is empty for logged-out users.
+        const publicResources = await getResources(false);
+        const found = publicResources.find(r => r.id === id);
         if (found) {
           setResource(found);
           loadPdf(found.directDownloadLink || found.link || '');
         } else {
+          setLoadError('This resource is not available for public viewing.');
           setLoading(false);
         }
       } catch (error) {
         console.error('Error fetching resource:', error);
+        setLoadError('We could not load this resource. Please try again.');
         setLoading(false);
       }
     };
@@ -74,6 +79,7 @@ export const FlipbookPage: React.FC = () => {
 
   const loadPdf = async (url: string) => {
     if (!url) {
+      setLoadError('This resource does not have a readable PDF link yet.');
       setLoading(false);
       return;
     }
@@ -110,6 +116,7 @@ export const FlipbookPage: React.FC = () => {
       setLoading(false);
     } catch (error) {
       console.error('Error loading PDF:', error);
+      setLoadError('The PDF could not be opened. Try View Source or Download instead.');
       setLoading(false);
     }
   };
@@ -179,14 +186,14 @@ export const FlipbookPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center text-white p-6 text-center">
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Resource Not Found</h1>
-        <p className="text-gray-400 mb-6">The resource you are looking for might have been removed or the link is invalid.</p>
-        <button 
-          onClick={() => navigate(-1)}
-          className="px-8 py-4 bg-purple-600 rounded-2xl font-black uppercase tracking-widest hover:bg-purple-700 transition-all shadow-xl shadow-purple-600/20"
-        >
-          Go Back
-        </button>
+        <h1 className="text-2xl font-bold mb-2">Unable to open flipbook</h1>
+        <p className="text-gray-400 max-w-md mb-6">{loadError || 'The resource could not be loaded.'}</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          {resource?.directDownloadLink && (
+            <a href={resource.directDownloadLink} target="_blank" rel="noreferrer" className="px-6 py-3 bg-white/10 rounded-xl font-bold hover:bg-white/20 transition-colors">Open PDF</a>
+          )}
+          <button onClick={() => navigate(-1)} className="px-6 py-3 bg-purple-600 rounded-xl font-bold hover:bg-purple-700 transition-colors shadow-xl shadow-purple-600/20">Go Back</button>
+        </div>
       </div>
     );
   }
@@ -352,4 +359,5 @@ export const FlipbookPage: React.FC = () => {
     </div>
   );
 };
+
 
