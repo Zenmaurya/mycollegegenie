@@ -24,6 +24,25 @@ interface ResourceContextValue {
   isResourcesLoading: boolean;
 }
 
+// Keep duplicate API rows from overwhelming the browse and home feeds. Some
+// imports create a new id for the same title/course/semester combination.
+function dedupeResources(items: Resource[]): Resource[] {
+  const seen = new Set<string>();
+  return items.filter(item => {
+    const key = [
+      item.type,
+      item.title.trim().toLowerCase(),
+      item.course.trim().toLowerCase(),
+      String(item.semester),
+      (item as any).subjectCode || '',
+      item.link || '',
+    ].join('|');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 const ResourceContext = createContext<ResourceContextValue | null>(null);
 
 export function ResourceProvider({ children }: { children: React.ReactNode }) {
@@ -31,7 +50,7 @@ export function ResourceProvider({ children }: { children: React.ReactNode }) {
   const [resources, setResources] = useState<Resource[]>(() => {
     try {
       const cached = localStorage.getItem('mcg_cached_resources');
-      return cached ? JSON.parse(cached) : [];
+      return cached ? dedupeResources(JSON.parse(cached)) : [];
     } catch {
       return [];
     }
@@ -45,12 +64,13 @@ export function ResourceProvider({ children }: { children: React.ReactNode }) {
       const includeUnapproved = appUser?.role === 'admin';
       const data = await getResources(includeUnapproved);
       if (data) {
-        setResources(data);
+        const cleanData = dedupeResources(data);
+        setResources(cleanData);
         // Only cache public approved items into persistent localStorage
         // Prevents unapproved admin items from leaking across accounts/sessions
         if (!includeUnapproved) {
           try {
-            localStorage.setItem('mcg_cached_resources', JSON.stringify(data));
+            localStorage.setItem('mcg_cached_resources', JSON.stringify(cleanData));
           } catch (e) {
             console.warn('[ResourceContext] Failed to write cache to localStorage:', e);
           }
@@ -135,3 +155,4 @@ export function useResources(): ResourceContextValue {
   if (!ctx) throw new Error('useResources must be inside <ResourceProvider>');
   return ctx;
 }
+
