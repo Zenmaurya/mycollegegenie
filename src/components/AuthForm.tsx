@@ -112,6 +112,7 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, icon: Icon 
       >
         <input 
            type="text"
+           aria-label={placeholder}
            placeholder={isOpen && value ? value : placeholder}
            className={`w-full h-full bg-transparent outline-none border-none text-base sm:text-sm p-0 m-0 ${!value && !search && !isOpen ? 'text-gray-400 placeholder-gray-400' : 'text-gray-900'}`}
            value={isOpen ? search : value || ''}
@@ -449,6 +450,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             <>
               {/* Email */}
               <div className="relative">
+                <label htmlFor="login-email" className="sr-only">Email address</label>
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   ref={firstFieldRef}
@@ -468,6 +470,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
               {/* Password */}
               <div className="relative">
+                <label htmlFor="login-password" className="sr-only">Password</label>
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   id="login-password"
@@ -509,6 +512,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             <>
               {/* Email */}
               <div className="relative">
+                <label htmlFor="signup-email" className="sr-only">Email address</label>
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   ref={firstFieldRef}
@@ -529,6 +533,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               {/* Password */}
               <div>
                 <div className="relative">
+                  <label htmlFor="signup-password" className="sr-only">Create password</label>
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   <input
                     id="signup-password"
@@ -557,6 +562,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
               {/* Confirm password */}
               <div className="relative">
+                <label htmlFor="signup-confirm-password" className="sr-only">Confirm password</label>
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   id="signup-confirm-password"
@@ -615,6 +621,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
               {/* Full name */}
               <div className="relative">
+                <label htmlFor="signup-name" className="sr-only">Full name</label>
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   ref={firstFieldRef}
@@ -642,6 +649,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               {/* Other College Input */}
               {college === 'Other' && (
                 <div className="relative">
+                  <label htmlFor="signup-other-college" className="sr-only">College name</label>
                   <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   <input
                     id="signup-other-college"
@@ -659,6 +667,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
               {/* Course */}
               <div className="relative">
+                <label htmlFor="signup-course" className="sr-only">Course</label>
                 <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   id="signup-course"
@@ -684,8 +693,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               {/* Other Batch Input */}
               {batchYear === 'Other' && (
                 <div className="relative">
+                  <label htmlFor="signup-other-batch-year" className="sr-only">Batch year</label>
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   <input
+                    id="signup-other-batch-year"
                     name="other-batch-year"
                     type="text"
                     placeholder="Enter your batch year"
@@ -755,3 +766,4 @@ export const AuthForm: React.FC<AuthFormProps> = ({
     </div>
   );
 };
+
