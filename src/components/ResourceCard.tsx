@@ -106,7 +106,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
         {/* Icon or Thumbnail */}
         {youtubeThumbnail ? (
           <div className="w-16 h-11 rounded-xl overflow-hidden shrink-0 relative border border-gray-100 group-hover:border-purple-200 transition-colors shadow-sm">
-            <img src={youtubeThumbnail} alt="Thumbnail" className="w-full h-full object-cover" />
+            <img src={youtubeThumbnail} alt="Thumbnail" loading="lazy" decoding="async" width="160" height="90" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/10 transition-colors">
               <Youtube className="w-4 h-4 text-white" />
             </div>
@@ -198,6 +198,10 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
           <img
             src={youtubeThumbnail}
             alt={resource.title}
+            loading="lazy"
+            decoding="async"
+            width="640"
+            height="360"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
@@ -307,3 +311,4 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
     </motion.div>
   );
 };
+
