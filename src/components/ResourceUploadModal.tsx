@@ -7,7 +7,7 @@
  * Uses useAuth() for auth state and useResources() to prepend the
  * newly created resource to the shared list immediately.
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -62,6 +62,8 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
   const [duplicateWarningAcknowledged, setDuplicateWarningAcknowledged] = useState(false);
   const [uploadCourseOpen, setUploadCourseOpen] = useState(false);
   const [uploadCourseSearch, setUploadCourseSearch] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -120,14 +122,29 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
 
   useEffect(() => {
     if (!isOpen) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const focusable = dialogRef.current?.querySelector<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href]');
+    focusable?.focus();
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isImeKeyEvent(e)) return;
       if (e.key === 'Escape' && uploadStatus !== 'uploading') {
         handleClose();
+        return;
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const elements = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href]'));
+        if (!elements.length) return;
+        const first = elements[0] as HTMLElement;
+        const last = elements[elements.length - 1] as HTMLElement;
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      previouslyFocusedRef.current?.focus?.();
+    };
   }, [isOpen, uploadStatus]);
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -309,6 +326,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
             className="absolute inset-0 bg-black/45"
           />
           <motion.div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="upload-modal-title"
@@ -341,7 +359,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
             </div>
 
             {/* Body */}
-            <form onSubmit={handleUpload} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4 sm:space-y-6 custom-scrollbar scroll-pb-24">
+            <form onSubmit={handleUpload} className="flex-1 overflow-y-auto p-6 sm:p-8 pb-28 sm:pb-32 space-y-4 sm:space-y-6 custom-scrollbar scroll-pb-32">
               {uploadStatus === 'success' ? (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-12">
                   <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -382,6 +400,9 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                         <button
                           type="button"
                           onClick={() => { setUploadCourseOpen(p => !p); setUploadCourseSearch(''); }}
+                          aria-label={formData.course ? `Course: ${formData.course}` : 'Select course'}
+                          aria-expanded={uploadCourseOpen}
+                          aria-haspopup="listbox"
                           className={`w-full flex items-center justify-between px-3.5 py-2.5 bg-gray-50 border rounded-xl text-base sm:text-sm font-medium transition-all text-left ${uploadCourseOpen ? 'border-purple-500 ring-2 ring-purple-500/20 bg-white' : 'border-gray-200'} ${!formData.course ? 'text-gray-400' : 'text-gray-800'}`}
                         >
                           <span className="truncate">{formData.course || 'Select Course'}</span>
@@ -435,6 +456,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                           {(['Note', 'PYQ', 'Book', 'Playlist', 'Syllabus'] as const).map(t => (
                             <button key={t} type="button"
                               onClick={() => setFormData(d => ({ ...d, type: t }))}
+                              aria-pressed={formData.type === t}
                               className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all ${formData.type === t ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-purple-300 hover:text-purple-700'}`}
                             >
                               {t}
@@ -460,6 +482,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                       {Array.from({ length: COURSE_METADATA[formData.course]?.semesters || 8 }, (_, i) => i + 1).map(sem => (
                         <button key={sem} type="button"
                           onClick={() => setFormData(d => ({ ...d, semester: String(sem) }))}
+                          aria-pressed={formData.semester === String(sem)}
                           className={`w-10 h-10 sm:h-9 rounded-xl text-xs font-bold border transition-all ${formData.semester === String(sem) ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-purple-300 hover:text-purple-700'}`}
                         >
                           {sem}
@@ -615,7 +638,7 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
                     <motion.button
                       whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       type="submit"
-                      className="sticky bottom-0 z-10 w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-purple-600/20 flex items-center justify-center gap-2 transition-all"
+                      className="sticky bottom-0 z-10 w-full bg-purple-600/95 backdrop-blur-sm hover:bg-purple-700 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-xl shadow-purple-600/20 flex items-center justify-center gap-2 transition-all"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Publish Resource
                     </motion.button>
@@ -630,3 +653,4 @@ export function ResourceUploadModal({ isOpen, onClose, isPlaylistContext }: Reso
     document.body,
   );
 }
+
