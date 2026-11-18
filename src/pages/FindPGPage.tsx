@@ -278,9 +278,9 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
             transition={{ delay: 0.3 }}
             className="max-w-4xl mx-auto flex flex-col gap-2 p-2 sm:p-2.5 bg-white rounded-xl sm:rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100"
           >
-            <div className="flex flex-col md:flex-row gap-2">
+            <div className="flex flex-col md:flex-row gap-2 min-w-0">
               {/* Search Input */}
-              <div className="flex-1 relative">
+              <div className="flex-1 min-w-0 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type="text"
@@ -328,6 +328,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                 <select
                   value={zoneFilter}
                   onChange={(e) => setZoneFilter(e.target.value)}
+                  aria-label="Filter by campus zone"
                   className="w-full sm:w-auto px-2.5 py-2 sm:py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 outline-none cursor-pointer truncate"
                 >
                   <option value="All">All Campuses</option>
@@ -343,6 +344,7 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
                 <select
                   value={budgetFilter}
                   onChange={(e) => setBudgetFilter(e.target.value)}
+                  aria-label="Filter by budget"
                   className="w-full sm:w-auto px-2.5 py-2 sm:py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 outline-none cursor-pointer truncate"
                 >
                   <option value="All">Any Budget</option>
@@ -938,3 +940,4 @@ export const FindPGPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
     </div>
   );
 };
+
