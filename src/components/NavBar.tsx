@@ -59,6 +59,7 @@ export function NavBar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isUpdatesMenuOpen, setIsUpdatesMenuOpen] = useState(false);
   const showNewBadge = useNewBadge();
 
   // Scroll tracking
@@ -71,7 +72,10 @@ export function NavBar() {
   }, [scrollY]);
 
   // Close mobile menu on route change
-  useEffect(() => { setIsMobileMenuOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsUpdatesMenuOpen(false);
+  }, [location.pathname]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -146,6 +150,7 @@ export function NavBar() {
                 <Link
                   key={to}
                   to={to}
+                  aria-current={active ? 'page' : undefined}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 group relative whitespace-nowrap ${
                     active
                       ? 'text-purple-700'
@@ -180,14 +185,22 @@ export function NavBar() {
             <span className="w-px h-5 bg-gray-200/80 mx-1 shrink-0" />
 
             {/* Campus Updates dropdown */}
-            <div className="relative group">
+            <div
+              className="relative group"
+              onMouseEnter={() => setIsUpdatesMenuOpen(true)}
+              onMouseLeave={() => setIsUpdatesMenuOpen(false)}
+            >
               <button
+                type="button"
+                onClick={() => setIsUpdatesMenuOpen(open => !open)}
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 whitespace-nowrap ${
                   isUpdatesActive
                     ? 'bg-white text-purple-700 shadow-[0_2px_12px_-2px_rgba(147,51,234,0.18)] border border-purple-100/60'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-white/70 border border-transparent'
                 }`}
                 aria-label="Campus updates dropdown"
+                aria-expanded={isUpdatesMenuOpen}
+                aria-haspopup="menu"
               >
                 <span
                   className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 transition-all duration-300 ${
@@ -201,7 +214,7 @@ export function NavBar() {
                 <span className="leading-none">Updates</span>
                 <ChevronDown className="w-3 h-3 opacity-50 transition-transform group-hover:rotate-180" />
               </button>
-              <div className="absolute top-full left-0 pt-2 w-44 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top scale-95 group-hover:scale-100 z-50">
+              <div className={`absolute top-full left-0 pt-2 w-44 transition-all duration-200 transform origin-top z-50 ${isUpdatesMenuOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-95'}`}>
                 <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.15)] border border-gray-100 p-2 flex flex-col gap-1 relative z-10">
                   {[
                     { to: '/news', icon: Newspaper, label: 'News' },
@@ -438,6 +451,7 @@ export function NavBar() {
                       <Link
                         key={to}
                         to={to}
+                        aria-current={isActive ? 'page' : undefined}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={`flex items-center gap-3 px-3.5 py-3 min-h-[48px] rounded-xl transition-all font-semibold text-sm ${
                           isActive ? 'bg-purple-50 text-purple-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -634,3 +648,4 @@ export function NavBar() {
     </>
   );
 }
+
