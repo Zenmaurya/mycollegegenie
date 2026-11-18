@@ -381,6 +381,10 @@ export const PlaylistPage: React.FC<PlaylistPageProps> = ({
                             <img
                               src={thumb}
                               alt={playlist.title}
+                              loading="lazy"
+                              decoding="async"
+                              width="640"
+                              height="360"
                               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                             />
@@ -529,4 +533,5 @@ export const PlaylistPage: React.FC<PlaylistPageProps> = ({
     </div>
   );
 };
+
 
