@@ -215,19 +215,21 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-base sm:text-sm font-medium transition-all" />
           </div>
-          <div className="grid grid-cols-2 sm:flex gap-2">
-            <div className="w-full sm:w-auto relative">
+          <div className="grid grid-cols-2 sm:flex gap-2 min-w-0">
+            <div className="w-full sm:w-auto relative min-w-0">
               <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)}
-                className="w-full text-ellipsis overflow-hidden pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
+                aria-label="Filter by course"
+                className="w-full min-w-0 text-ellipsis overflow-hidden pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
                 <option value="All">All Courses</option>
                 {College_COURSES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div className="w-full sm:w-auto relative">
+            <div className="w-full sm:w-auto relative min-w-0">
               <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <select value={selectedTopic} onChange={e => setSelectedTopic(e.target.value)}
-                className="w-full text-ellipsis overflow-hidden pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
+                aria-label="Filter by topic"
+                className="w-full min-w-0 text-ellipsis overflow-hidden pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/15 focus:border-purple-500 outline-none text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer transition-all">
                 <option value="All">All Topics</option>
                 {FORUM_TOPICS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -236,7 +238,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
         </div>
 
         {/* Tab Pills */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 min-w-0 overflow-x-auto scrollbar-none pb-1">
           {(['hot', 'new', 'top'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${activeTab === tab ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-600/20' : 'bg-white text-gray-500 border-gray-200 hover:border-purple-200 hover:text-purple-600'}`}>
@@ -246,7 +248,7 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
               {tab}
             </button>
           ))}
-          <span className="ml-auto text-xs text-gray-400 font-medium self-center">{filteredPosts.length} discussions</span>
+          <span className="ml-auto shrink-0 text-xs text-gray-400 font-medium self-center">{filteredPosts.length} discussions</span>
         </div>
 
         {/* Posts */}
@@ -614,5 +616,6 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
     </div>
   );
 };
+
 
 
