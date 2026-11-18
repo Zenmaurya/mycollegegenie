@@ -289,15 +289,15 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-12"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
           </motion.div>
 
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10">
-          <div className="flex-1">
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10 min-w-0">
+          <div className="flex-1 min-w-0 w-full">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4"
+              className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-4 min-w-0"
             >
-              <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight break-words min-w-0">
                 Campus <span className="text-purple-600">Exchange</span>
               </h1>
               <Repeat className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
@@ -1188,5 +1188,6 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
     </div>
   );
 }
+
 
 
