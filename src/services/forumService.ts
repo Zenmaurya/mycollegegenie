@@ -1,6 +1,8 @@
-import { fetchWithAuth, safeJsonParse } from '../lib/apiClient';
+import { fetchWithAuth, safeJsonParse, getFreshToken } from '../lib/apiClient';
 import { supabase } from '../supabase';
 import { ForumPost, Comment } from '../types';
+import { mapPost } from '../lib/feed';
+import { config } from '../lib/config';
 
 
 
@@ -16,19 +18,7 @@ export const ForumService = {
 
       const data = await fetchWithAuth(`/api/forum/posts?${params.toString()}`);
       
-      const posts: ForumPost[] = data.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        content: p.content,
-        authorId: p.author_id,
-        authorName: p.author_name,
-        course: p.course,
-        topic: p.topic,
-        createdAt: p.created_at,
-        upvotes: Array.isArray(p.upvotes) ? p.upvotes : [],
-        downvotes: Array.isArray(p.downvotes) ? p.downvotes : [],
-        commentCount: p.comment_count || 0
-      }));
+      const posts: ForumPost[] = data.map(mapPost);
       
       if (callback) callback(posts);
       return posts;
@@ -43,19 +33,7 @@ export const ForumService = {
   getPost: async (postId: string) => {
     try {
       const p = await fetchWithAuth(`/api/forum/posts/${postId}`);
-      return {
-        id: p.id,
-        title: p.title,
-        content: p.content,
-        authorId: p.author_id,
-        authorName: p.author_name,
-        course: p.course,
-        topic: p.topic,
-        createdAt: p.created_at,
-        upvotes: Array.isArray(p.upvotes) ? p.upvotes : [],
-        downvotes: Array.isArray(p.downvotes) ? p.downvotes : [],
-        commentCount: p.comment_count || 0
-      } as ForumPost;
+      return mapPost(p);
     } catch (error) {
       console.error('Failed to get post:', error);
       return null;
@@ -73,6 +51,24 @@ export const ForumService = {
       console.error('[forumService] createPost error:', error);
       throw error;
     }
+  },
+
+  /** Upload one post photo (already resized in the browser). Returns the Cloudinary URL. */
+  uploadPostImage: async (file: Blob): Promise<string> => {
+    const token = await getFreshToken();
+    const formData = new FormData();
+    formData.append('image', file, 'photo');
+    const res = await fetch(`${config.apiUrl}/api/forum/upload-image`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => null);
+      throw new Error(errData?.error || 'Photo upload nahi hua');
+    }
+    const data = await res.json();
+    return data.url;
   },
 
   updatePost: async (_postId: string, _updates: Partial<ForumPost>) => {

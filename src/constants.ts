@@ -1,5 +1,11 @@
 export const SUB_CATEGORIES = ['PYQs', 'Syllabus', 'Assignments', 'Projects', 'Lecture Notes', 'Reference Books'];
 
+export const FORUM_TOPICS = ['General', 'Doubt', 'Exam Tips', 'Notes', 'Placement', 'Events'] as const;
+
+/** Display names for forum topics ("Doubt" reads as a question so seniors answer). */
+export const TOPIC_LABELS: Record<string, string> = { Doubt: 'Sawaal / Doubt' };
+export const topicLabel = (topic: string) => TOPIC_LABELS[topic] || topic;
+
 export const INITIAL_RESOURCES: any[] = [];
 
 export const College_COURSES = [

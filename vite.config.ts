@@ -37,26 +37,7 @@ export default defineConfig(({ mode }) => {
             '**/pdf.worker*.js',
             '**/vendor-pdfjs*.js',       // 452 KB — only for FlipbookPage
           ],
-          runtimeCaching: [
-
-            // Cache Google Fonts for 1 year
-            {
-              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'google-fonts-stylesheets',
-                expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 365 }
-              }
-            },
-            {
-              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'google-fonts-webfonts',
-                expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 }
-              }
-            },
-          ]
+          runtimeCaching: []
         }
       })
     ],

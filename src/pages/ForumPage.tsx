@@ -7,17 +7,17 @@ import {
   GraduationCap, X, AlertCircle, RefreshCw, TrendingUp,
   Bookmark, Flame, Sparkles
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { ForumPost } from '../types';
 import type { SupabaseAuthUser } from '../types';
 import { ForumService } from '../services/forumService';
 import { getCurrentUser, supabase } from '../supabase';
-import { College_COURSES, SUB_CATEGORIES } from '../constants';
+import { College_COURSES, SUB_CATEGORIES, FORUM_TOPICS } from '../constants';
 import { toast } from 'sonner';
 import { Skeleton } from '../components/ui/skeleton';
 
-export const FORUM_TOPICS = ['General', 'Doubt', 'Exam Tips', 'Notes', 'Placement', 'Events'] as const;
+export { FORUM_TOPICS };
 
 const TOPIC_COLORS: Record<string, string> = {
   'Exam Tips': 'bg-amber-50 text-amber-700 border-amber-200',
@@ -90,7 +90,10 @@ export const ForumPage: React.FC<{ user?: any }> = ({ user: propUser }) => {
   const currentUser = propUser ?? null;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('All');
-  const [selectedTopic, setSelectedTopic] = useState('All');
+  const [topicParams] = useSearchParams();
+  const [selectedTopic, setSelectedTopic] = useState(() => topicParams.get('topic') || 'All');
+  // Left-nav topic links change ?topic= while the page stays mounted
+  useEffect(() => { const t = topicParams.get('topic'); if (t) setSelectedTopic(t); }, [topicParams]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [limitCount, setLimitCount] = useState(10);

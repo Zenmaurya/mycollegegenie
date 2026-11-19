@@ -59,11 +59,12 @@ const CampusExchangePage = lazy(() => import('./pages/CampusExchangePage').then(
 const OTPVerificationPage = lazy(() => import('./pages/OTPVerificationPage').then(m => ({ default: m.OTPVerificationPage })));
 const ContributorsPage = lazy(() => import('./pages/ContributorsPage').then(m => ({ default: m.ContributorsPage })));
 const BlogPage = lazy(() => import('./pages/BlogPage').then(m => ({ default: m.BlogPage })));
+const FeedPage = lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
 
 // ── Components ────────────────────────────────────────────────────
 import { PageTransition } from './components/PageTransition';
-import { NavBar } from './components/NavBar';
-import { AppFooter } from './components/AppFooter';
+import { AppShell } from './components/shell/AppShell';
+import { RightRail } from './components/shell/RightRail';
 import { AnnouncementBanner } from './components/AnnouncementBanner';
 import { ResourceUploadModal } from './components/ResourceUploadModal';
 import { ResourceDetailModal } from './components/ResourceDetailModal';
@@ -133,6 +134,13 @@ function AppContent() {
     next.delete('openUpload');
     setSearchParams(next, { replace: true });
   }, [location.pathname, searchParams, openUploadModal, setSearchParams]);
+
+  // Top-bar search lands on /browse?q=… — prefill the Browse search box once.
+  useEffect(() => {
+    if (location.pathname !== '/browse') return;
+    const q = searchParams.get('q');
+    if (q) setSearchQuery(q);
+  }, [location.pathname, searchParams]);
 
   // ── Fetch news + site settings once ───────────────────────────
   const hasFetchedNews = useRef(false);
@@ -331,7 +339,7 @@ function AppContent() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900 flex flex-col">
+    <div className="min-h-screen bg-canvas text-ink font-sans selection:bg-indigo-100 selection:text-indigo-900 flex flex-col">
       <Toaster position="top-center" expand={false} richColors />
 
       {/* Announcement banner */}
@@ -347,14 +355,12 @@ function AppContent() {
       )}
 
       {/* Navigation */}
-      <NavBar />
-
-      {/* Main routes */}
-      <main className="flex-grow flex flex-col">
+      {/* App shell: top bar, left nav, right rail (home only), mobile tab bar, composer */}
+      <AppShell rightRail={location.pathname === '/' && user ? <RightRail news={newsItems} /> : undefined}>
         <PageTransition>
           <Suspense fallback={PageFallback}>
             <Routes location={location}>
-              <Route path="/" element={HomePageElement} />
+              <Route path="/" element={isAuthLoading && !user ? PageFallback : user ? <FeedPage news={newsItems} /> : HomePageElement} />
 
               <Route path="/upload" element={<Navigate to="/browse?openUpload=1" replace />} />
 
@@ -455,14 +461,7 @@ function AppContent() {
             </Routes>
           </Suspense>
         </PageTransition>
-      </main>
-
-
-
-      {/* Footer */}
-      {!isAuthPage && !isLoginSignupPage && !isFlipbookView && (
-        <AppFooter onOpenUpload={openUploadModal} />
-      )}
+      </AppShell>
 
       {/* ── Portalled modals ── */}
       <ResourceUploadModal

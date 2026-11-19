@@ -130,7 +130,15 @@ export interface ForumPost {
   commentCount: number;
   upvotes: string[];
   downvotes: string[];
+  images?: string[];
 }
+
+export type FeedTab = 'foryou' | 'trending' | 'recent';
+
+export type FeedItem =
+  | { kind: 'post'; post: ForumPost }
+  | { kind: 'event'; item: NewsItem }
+  | { kind: 'news'; item: NewsItem };
 
 export interface PGListing {
   id: string;

@@ -41,8 +41,6 @@
     <meta name="google-site-verification" content="rbWCCbf6i8ua1sxaBWrClDqBxGH9X0T30sbCCfQhweM" />
 
     <!-- ── Performance & Network Optimization ──────────────────── -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://vjylgntbixjchpxomjko.supabase.co" />
     <link rel="dns-prefetch" href="https://res.cloudinary.com" />
     <link rel="dns-prefetch" href="https://api.mycollegegenie.in" />
@@ -76,23 +74,16 @@
     <meta name="twitter:image" content="https://mycollegegenie.in/og-image.png" />
     <meta name="twitter:image:alt" content="MyCollegeGenie platform preview" />
 
-    <!-- ── Fonts ─────────────────────────────────────────────────── -->
-    <!-- Kept display=swap to maintain exact website look (Inter/Outfit fonts always show) -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&family=Caveat:wght@400;600&display=swap" media="print" onload="this.media='all'" />
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&family=Caveat:wght@400;600&display=swap" />
-    </noscript>
+    <!-- ── Fonts: system font stack (no web-font download) ──────────── -->
 
     <!-- ── DNS Prefetch ───────────────────────────────────────────── -->
     <link rel="dns-prefetch" href="//mycollegegenie.in" />
-    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="//fonts.gstatic.com" />
     <link rel="dns-prefetch" href="//www.googletagmanager.com" />
 
     <!-- ── Icons ─────────────────────────────────────────────────── -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/genie-icon.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/genie-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/genie-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
     <!-- ── Structured Data: WebSite ───────────────────────────────── -->
@@ -168,16 +159,11 @@
       }
       body {
         margin: 0;
-        font-family: 'Inter', system-ui, sans-serif;
+        font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
       #root { min-height: 100vh; }
-      /* Prevent layout shift from fonts */
-      @font-face {
-        font-family: 'Inter';
-        font-display: swap;
-      }
     </style>
 
     <!-- ── Google Analytics 4 (GA4) — deferred ────────────────── -->

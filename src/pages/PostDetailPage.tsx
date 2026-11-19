@@ -13,6 +13,7 @@ import { supabase } from '../supabase';
 import { toast } from 'sonner';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { UploaderProfilePopover } from '../components/UploaderProfilePopover';
+import { PhotoGrid } from '../components/feed/PhotoGrid';
 
 const TOPIC_COLORS: Record<string, string> = {
   'Exam Tips': 'bg-amber-50 text-amber-700 border-amber-200',
@@ -323,6 +324,9 @@ export const PostDetailPage: React.FC = () => {
             <p className="text-[14px] sm:text-[15px] text-gray-600 leading-relaxed whitespace-pre-wrap font-medium mb-6">
               {post.content}
             </p>
+            {post.images && post.images.length > 0 && (
+              <div className="mb-6"><PhotoGrid images={post.images} /></div>
+            )}
 
             {/* Interactivity Row (Footer) */}
             <div className="flex items-center justify-between border-t border-gray-50 pt-4 mt-auto gap-3">
