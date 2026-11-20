@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ForumService } from '../../services/forumService';
 import { FORUM_TOPICS, topicLabel } from '../../constants';
 import { compressImage, isSupportedImageType } from '../../lib/compressImage';
+import { Sheet } from '../ui/Sheet';
 import { submitPost, MAX_POST_PHOTOS } from '../../lib/submitPost';
 
 interface ComposerProps {
@@ -25,43 +26,11 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [sending, setSending] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const returnFocusRef = useRef<HTMLElement | null>(null);
-  const sendingRef = useRef(false);
-  sendingRef.current = sending;
 
   // Prefill the student's course once their profile loads
   useEffect(() => {
     if (appUser?.course) setCourse((c) => c || appUser.course || '');
   }, [appUser?.course]);
-
-  useEffect(() => {
-    if (!open) return;
-    returnFocusRef.current = document.activeElement as HTMLElement | null;
-    const t = setTimeout(() => titleRef.current?.focus(), 30);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden'; // stop the page behind the modal from scrolling
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !sendingRef.current) { onClose(); return; }
-      if (e.key !== 'Tab' || !dialogRef.current) return;
-      // Keep keyboard focus inside the dialog
-      const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
-      if (focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-      returnFocusRef.current?.focus?.();
-    };
-  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -116,22 +85,7 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 md:items-center md:p-4" onClick={() => !sending && onClose()}>
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="composer-title"
-        className="flex h-full w-full flex-col bg-surface md:h-auto md:max-h-[90vh] md:max-w-xl md:rounded-card md:shadow-card"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-line px-4 py-3">
-          <h2 id="composer-title" className="text-[17px] font-bold text-ink">Create post</h2>
-          <button type="button" onClick={onClose} disabled={sending} aria-label="Close" className="rounded-full p-2 text-ink-muted hover:bg-canvas">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
+    <Sheet open onClose={onClose} title="Create post" dismissible={!sending} initialFocusRef={titleRef}>
         {!user ? (
           <div className="p-6 text-center text-[15px] text-ink">
             <p className="mb-4">Log in to create a post</p>
@@ -209,7 +163,6 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
             </div>
           </form>
         )}
-      </div>
-    </div>
+    </Sheet>
   );
 }

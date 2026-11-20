@@ -4,16 +4,27 @@
    New UI uses only these tokens: bg-brand, text-ink-muted, rounded-card, shadow-card … */
 @theme {
   --font-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --color-brand: #3B30F0;
-  --color-brand-accent: #B517D6;
+  --color-brand: #E31C79;
+  --color-brand-hover: #C8106A;
+  --color-brand-soft: #FDE7F1;
+  --color-brand-accent: #B517D6; /* legacy: logo gradient purple, used by Phase 1 feed icons */
+  --color-highlight: #22B8E8;
   --color-brand-highlight: #22B8E8;
   --color-surface: #FFFFFF;
-  --color-canvas: #F0F2F5;
-  --color-ink: #1C1E21;
-  --color-ink-muted: #65676B;
-  --color-line: #E4E6EB;
+  --color-canvas: #F7F7F7;
+  --color-ink: #222222;
+  --color-ink-muted: #6A6A6A;
+  --color-line: #EBEBEB;
+  --color-success: #0F9D58;
+  --color-warning: #F59E0B;
+  --color-danger: #D93025;
+  --radius-sm: 8px;
   --radius-card: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.08);
+  --shadow-float: 0 2px 8px rgb(0 0 0 / 0.12);
+  --shadow-modal: 0 8px 28px rgb(0 0 0 / 0.28);
 }
 
 .bg-brand-gradient {
@@ -312,9 +323,8 @@ a, button {
 
 /* ── Focus Rings ────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid #4400FF;
-  outline-offset: 3px;
-  border-radius: 4px;
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
 }
 
 /* ── Image Performance ──────────────────────────────────────────── */

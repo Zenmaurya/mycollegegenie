@@ -59,6 +59,7 @@ const CampusExchangePage = lazy(() => import('./pages/CampusExchangePage').then(
 const OTPVerificationPage = lazy(() => import('./pages/OTPVerificationPage').then(m => ({ default: m.OTPVerificationPage })));
 const ContributorsPage = lazy(() => import('./pages/ContributorsPage').then(m => ({ default: m.ContributorsPage })));
 const BlogPage = lazy(() => import('./pages/BlogPage').then(m => ({ default: m.BlogPage })));
+const DevUiPage = import.meta.env.DEV ? lazy(() => import('./pages/DevUiPage').then(m => ({ default: m.DevUiPage }))) : null;
 const FeedPage = lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
 
 // ── Components ────────────────────────────────────────────────────
@@ -410,6 +411,7 @@ function AppContent() {
                 />
               } />
 
+              {DevUiPage && <Route path="/dev/ui" element={<DevUiPage />} />}
               <Route path="/forum" element={<ForumPage user={user} />} />
               <Route path="/forum/:postId" element={<PostDetailPage />} />
               <Route path="/find-pg" element={<FindPGPage user={user} />} />
