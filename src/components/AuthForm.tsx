@@ -171,6 +171,8 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, icon: Icon 
 interface AuthFormProps {
   initialMode?: 'login' | 'signup';
   onSuccess?: () => void;
+  /** Fired just before email sign-up is submitted (a failed attempt is harmless: /onboarding skips users who already have a college). */
+  onSignupStart?: () => void;
   onPasswordChange?: (p: string) => void;
   onShowPasswordChange?: (s: boolean) => void;
   onTypingChange?: (t: boolean) => void;
@@ -182,6 +184,7 @@ interface AuthFormProps {
 export const AuthForm: React.FC<AuthFormProps> = ({
   initialMode = 'signup',
   onSuccess,
+  onSignupStart,
   onPasswordChange,
   onShowPasswordChange,
   onTypingChange,
@@ -273,6 +276,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         await signInWithEmail(email, password);
         toast.success('Welcome back! 👋');
       } else {
+        onSignupStart?.(); // before the await: a session may appear immediately
         await signUpWithEmail(email, password, { full_name: name, college: finalCollege, course, role, batch_year: finalBatchYear || undefined });
         try {
           const { data: { session } } = await supabase.auth.getSession();

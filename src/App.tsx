@@ -62,6 +62,7 @@ const DevUiPage = import.meta.env.DEV ? lazy(() => import('./pages/DevUiPage').t
 const ExplorePage = lazy(() => import('./pages/ExplorePage').then(m => ({ default: m.ExplorePage })));
 const InboxPage = lazy(() => import('./pages/InboxPage').then(m => ({ default: m.InboxPage })));
 const YouPage = lazy(() => import('./pages/YouPage').then(m => ({ default: m.YouPage })));
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const FeedPage = lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
 
 // ── Components ────────────────────────────────────────────────────
@@ -455,6 +456,7 @@ function AppContent() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/news" element={<OfficialNewsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
               <Route path="/events" element={<CollegeEventsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/otp-verify" element={<OTPVerificationPage />} />
               <Route path="/contributors" element={<ContributorsPage />} />
               <Route path="/blog" element={<BlogPage />} />

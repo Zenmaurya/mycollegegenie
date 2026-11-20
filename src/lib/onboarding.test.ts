@@ -33,3 +33,18 @@ test('INTERESTS has the 14 options', () => {
   assert.strictEqual(INTERESTS.length, 14);
   assert.ok(INTERESTS.includes('Social impact'));
 });
+
+import { safeNext, batchYearFromStudyYear } from './onboarding';
+
+test('safeNext only allows same-origin paths', () => {
+  assert.strictEqual(safeNext('/post/1?x=2'), '/post/1?x=2');
+  for (const bad of [null, undefined, '', 'https://evil.com', '//evil.com', '/\\evil.com', 'javascript:1', 'post/1']) {
+    assert.strictEqual(safeNext(bad as string | null), '/');
+  }
+});
+
+test('batchYearFromStudyYear stores the graduation year', () => {
+  assert.strictEqual(batchYearFromStudyYear(1, 2026), 2029);
+  assert.strictEqual(batchYearFromStudyYear(4, 2026), 2026);
+  assert.strictEqual(batchYearFromStudyYear(5, 2026), 2025);
+});

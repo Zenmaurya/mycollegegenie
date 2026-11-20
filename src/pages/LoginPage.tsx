@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
@@ -7,6 +7,7 @@ import { AuthForm } from '../components/AuthForm';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { isImeKeyEvent } from '../lib/security';
+import { safeNext } from '../lib/onboarding';
 
 /* ─────────────────────────────────────────────────────────────────────── */
 /* Main LoginPage — right-side overlay panel                                 */
@@ -19,6 +20,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
   const navigate  = useNavigate();
   const location  = useLocation();
   const from      = (location.state as any)?.from?.pathname || '/';
+  // Set once a new account is created: after OTP we go to onboarding instead of `from`.
+  const newSignup = useRef(false);
+  const afterAuth = () => navigate(newSignup.current ? `/onboarding?next=${encodeURIComponent(safeNext(from))}` : from, { replace: true });
 
   /* redirect if already logged in */
   const handleClose = () => {
@@ -33,7 +37,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
   // overlay as soon as Supabase exposes the authenticated user, even if the
   // profile request is still finishing in the background.
   useEffect(() => {
-    if (user) navigate(from, { replace: true });
+    if (user && !newSignup.current) navigate(from, { replace: true });
   }, [user, from, navigate]);
 
   useEffect(() => {
@@ -119,7 +123,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
               >
                 <AuthForm
                   initialMode={isSignup ? 'signup' : 'login'}
-                  onSuccess={() => navigate(from, { replace: true })}
+                  onSuccess={afterAuth}
+                  onSignupStart={() => { newSignup.current = true; }}
                 />
               </motion.div>
             </div>

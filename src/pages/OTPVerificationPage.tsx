@@ -101,8 +101,8 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
       if (error) throw error;
 
       toast.success('Email verified! Welcome to MyCollegeGenie 🎉');
-      onVerified?.();
-      navigate('/');
+      if (onVerified) onVerified();
+      else navigate('/');
     } catch (err: any) {
       const msg = err?.message?.toLowerCase() ?? '';
       if (msg.includes('expired')) {

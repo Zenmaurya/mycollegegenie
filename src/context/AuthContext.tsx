@@ -18,6 +18,7 @@ interface AuthContextValue {
   appUser: AppUser | null;
   isAuthLoading: boolean;
   logout: () => Promise<void>;
+  refreshAppUser: () => Promise<void>;
   isAuthModalOpen: boolean;
   authModalMessage?: string;
   openAuthModal: (message?: string) => void;
@@ -136,6 +137,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const refreshAppUser = useCallback(async () => {
+    const profile = await createUserProfile(null);
+    if (profile) setAppUser(profile as AppUser);
+  }, []);
+
   const openAuthModal = useCallback((message?: string) => {
     setAuthModalMessage(message);
     setIsAuthModalOpen(true);
@@ -147,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, appUser, isAuthLoading, logout, isAuthModalOpen, authModalMessage, openAuthModal, closeAuthModal }}>
+    <AuthContext.Provider value={{ user, appUser, isAuthLoading, logout, refreshAppUser, isAuthModalOpen, authModalMessage, openAuthModal, closeAuthModal }}>
       {children}
     </AuthContext.Provider>
   );
