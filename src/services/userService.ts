@@ -7,6 +7,18 @@ import { supabase } from '../supabase';
 
 
 
+// Adds camelCase onboarding fields to the raw /me row (interests may be a JSON string or array).
+const withOnboardingFields = (raw: any) =>
+  raw && {
+    ...raw,
+    collegeId: raw.college_id ?? null,
+    collegeOther: raw.college_other ?? null,
+    collegeName: raw.college_name ?? null,
+    onboardedAt: raw.onboarded_at ?? null,
+    batchYear: raw.batch_year ?? null,
+    interests: Array.isArray(raw.interests) ? raw.interests : safeJsonParse<string[]>(raw.interests, []),
+  };
+
 // ── GET /api/users/me OR /api/users/public/:id ───────────────────────────────────────
 export const getUserProfile = async (uid?: string) => {
   try {
@@ -17,7 +29,7 @@ export const getUserProfile = async (uid?: string) => {
       // is still valid with Supabase server and auto-refreshes if needed.
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      return await fetchWithAuth('/api/users/me');
+      return withOnboardingFields(await fetchWithAuth('/api/users/me'));
     }
   } catch (error) {
     console.error('[userService] getUserProfile error:', error);
@@ -69,15 +81,15 @@ export const createUserProfile = async (
     if (!user) return null;
 
     if (additionalData && Object.keys(additionalData).length > 0) {
-      return await fetchWithAuth('/api/users/me', {
+      return withOnboardingFields(await fetchWithAuth('/api/users/me', {
         method: 'PATCH',
         body: JSON.stringify({
           college: additionalData.college,
           course: additionalData.course,
         }),
-      });
+      }));
     }
-    return await fetchWithAuth('/api/users/me');
+    return withOnboardingFields(await fetchWithAuth('/api/users/me'));
   } catch (error) {
     console.error('[userService] createUserProfile error:', error);
     throw error;

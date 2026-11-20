@@ -63,6 +63,12 @@ export interface User {
   createdAt: string;
   college?: string;
   course?: string;
+  collegeId?: string | null;
+  collegeOther?: string | null;
+  collegeName?: string | null;
+  onboardedAt?: string | null;
+  batchYear?: number | null;
+  interests?: string[];
 }
 
 export interface News {
