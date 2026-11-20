@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 
 const tones = {
   brand: "bg-brand-soft text-brand-hover",
-  success: "bg-success/10 text-success",
+  success: "bg-success/10 text-[#0B6E3E]",
   neutral: "bg-canvas text-ink-muted",
 }
 
