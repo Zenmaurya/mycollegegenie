@@ -60,6 +60,9 @@ const OTPVerificationPage = lazy(() => import('./pages/OTPVerificationPage').the
 const ContributorsPage = lazy(() => import('./pages/ContributorsPage').then(m => ({ default: m.ContributorsPage })));
 const BlogPage = lazy(() => import('./pages/BlogPage').then(m => ({ default: m.BlogPage })));
 const DevUiPage = import.meta.env.DEV ? lazy(() => import('./pages/DevUiPage').then(m => ({ default: m.DevUiPage }))) : null;
+const ExplorePage = lazy(() => import('./pages/ExplorePage').then(m => ({ default: m.ExplorePage })));
+const InboxPage = lazy(() => import('./pages/InboxPage').then(m => ({ default: m.InboxPage })));
+const YouPage = lazy(() => import('./pages/YouPage').then(m => ({ default: m.YouPage })));
 const FeedPage = lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
 
 // ── Components ────────────────────────────────────────────────────
@@ -362,6 +365,10 @@ function AppContent() {
           <Suspense fallback={PageFallback}>
             <Routes location={location}>
               <Route path="/" element={<FeedPage news={newsItems} />} />
+
+              <Route path="/explore" element={<ExplorePage />} />
+              <Route path="/inbox" element={<InboxPage />} />
+              <Route path="/you" element={<YouPage />} />
 
               <Route path="/upload" element={<Navigate to="/browse?openUpload=1" replace />} />
 

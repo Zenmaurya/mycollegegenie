@@ -1,24 +1,27 @@
-import { BedDouble, Calendar, Home, LibraryBig, MessagesSquare, Newspaper, ShoppingBag, Youtube, type LucideIcon } from 'lucide-react';
+import { BedDouble, Calendar, Compass, Bookmark, Heart, Home, LibraryBig, Newspaper, ShoppingBag, Youtube, type LucideIcon } from 'lucide-react';
 
 export type NavItem = { to: string; label: string; icon: LucideIcon };
 
 export const MODULES: NavItem[] = [
   { to: '/', label: 'Home', icon: Home },
+  { to: '/explore', label: 'Explore', icon: Compass },
   { to: '/browse', label: 'Notes & PYQs', icon: LibraryBig },
   { to: '/playlists', label: 'Playlists', icon: Youtube },
   { to: '/find-pg', label: 'Find PG', icon: BedDouble },
   { to: '/campus-exchange', label: 'Exchange', icon: ShoppingBag },
-  { to: '/forum', label: 'Forum', icon: MessagesSquare },
-  { to: '/news', label: 'News', icon: Newspaper },
   { to: '/events', label: 'Events', icon: Calendar },
+  { to: '/news', label: 'News', icon: Newspaper },
 ];
 
-/** Modules not on the mobile tab bar — shown in the mobile account menu. */
-export const MORE_LINKS = [
-  { to: '/find-pg', label: 'Find PG' },
-  { to: '/playlists', label: 'Playlists' },
-  { to: '/news', label: 'News' },
-  { to: '/events', label: 'Events' },
+export const EXPLORE_TILES: NavItem[] = [
+  { to: '/browse', label: 'Notes & PYQs', icon: LibraryBig },
+  { to: '/playlists', label: 'Playlists', icon: Youtube },
+  { to: '/find-pg', label: 'Find PG', icon: BedDouble },
+  { to: '/campus-exchange', label: 'Exchange', icon: ShoppingBag },
+  { to: '/events', label: 'Events', icon: Calendar },
+  { to: '/news', label: 'News', icon: Newspaper },
+  { to: '/profile?tab=saved', label: 'Saved', icon: Bookmark },
+  { to: '/contributors', label: 'Contributors', icon: Heart },
 ];
 
 export const FOOTER_LINKS = [
@@ -28,3 +31,9 @@ export const FOOTER_LINKS = [
   { to: '/blog', label: 'Blog' },
   { to: '/contributors', label: 'Contributors' },
 ];
+
+/** Active-state matcher: '/' is exact; others match the path or a sub-path (segment boundary). */
+export function isNavActive(to: string, pathname: string): boolean {
+  if (to === '/') return pathname === '/';
+  return pathname === to || pathname.startsWith(to + '/');
+}
