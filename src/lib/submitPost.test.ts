@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { submitPost, type PostDraft } from './submitPost';
 
 const draft = (over: Partial<PostDraft> = {}): PostDraft => ({
-  title: 'Hackathon team?', content: 'Koi hai?', topic: 'Doubt', course: 'B.Com', files: [], ...over,
+  title: 'Hackathon team?', content: 'Anyone interested?', topic: 'Doubt', course: 'B.Com', files: [], ...over,
 });
 const blob = () => new Blob(['x']);
 

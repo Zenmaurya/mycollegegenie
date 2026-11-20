@@ -9,7 +9,7 @@ function RailCard({ title, icon, to, children }: { title: string; icon: React.Re
     <section className="rounded-card bg-surface p-4 shadow-card">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-[15px] font-bold text-ink">{icon}{title}</h2>
-        <Link to={to} className="text-[13px] font-semibold text-brand">Sab dekho</Link>
+        <Link to={to} className="text-[13px] font-semibold text-brand">See all</Link>
       </div>
       {children}
     </section>

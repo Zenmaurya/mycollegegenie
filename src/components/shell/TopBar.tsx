@@ -57,7 +57,7 @@ export function TopBar() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Notes, PYQs, playlists dhundho..."
+              placeholder="Search notes, PYQs, playlists..."
               aria-label="Search"
               className="w-full bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-muted"
             />
@@ -71,7 +71,7 @@ export function TopBar() {
           <button type="button" onClick={open} className="hidden h-10 items-center gap-1.5 rounded-full bg-brand-gradient px-4 text-[15px] font-semibold text-white md:flex" aria-label="Create post">
             <Plus className="h-5 w-5" /> <span className="hidden lg:inline">Create</span>
           </button>
-          <button type="button" onClick={() => toast('Notifications jaldi aa rahe hain')} className={iconBtn} aria-label="Notifications">
+          <button type="button" onClick={() => toast('Notifications are coming soon')} className={iconBtn} aria-label="Notifications">
             <Bell className="h-5 w-5" />
           </button>
 

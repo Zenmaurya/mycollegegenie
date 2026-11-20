@@ -27,12 +27,12 @@ export async function compressImage(file: File, maxSide = 1280, quality = 0.8): 
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Photo process nahi ho payi');
+  if (!ctx) throw new Error("Couldn't process this photo");
   ctx.drawImage(bitmap, 0, 0, width, height);
   bitmap.close();
 
   let blob = await canvasToBlob(canvas, 'image/webp', quality);
   if (needsJpegFallback(blob)) blob = await canvasToBlob(canvas, 'image/jpeg', quality);
-  if (!blob) throw new Error('Photo process nahi ho payi');
+  if (!blob) throw new Error("Couldn't process this photo");
   return blob;
 }

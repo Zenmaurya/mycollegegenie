@@ -29,7 +29,7 @@ export function PostCard({ post }: { post: ForumPost }) {
   const detailUrl = `/forum/${post.id}`;
 
   const vote = async (dir: 'up' | 'down') => {
-    if (!uid) { toast('Vote karne ke liye login karo'); return; }
+    if (!uid) { toast('Log in to vote'); return; }
     const before = votes;
     setVotes(applyVote(votes, uid, dir));
     try {
@@ -37,7 +37,7 @@ export function PostCard({ post }: { post: ForumPost }) {
       else await ForumService.toggleDownvote(post.id, uid, before.down.includes(uid));
     } catch {
       setVotes(before);
-      toast.error('Vote nahi hua, dobara try karo');
+      toast.error("Couldn't vote. Please try again.");
     }
   };
 
@@ -48,7 +48,7 @@ export function PostCard({ post }: { post: ForumPost }) {
       try { await navigator.share(data); } catch { /* user cancelled */ }
       return;
     }
-    try { await navigator.clipboard.writeText(url); toast.success('Link copy ho gaya!'); } catch { /* clipboard blocked */ }
+    try { await navigator.clipboard.writeText(url); toast.success('Link copied!'); } catch { /* clipboard blocked */ }
   };
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
@@ -77,7 +77,7 @@ export function PostCard({ post }: { post: ForumPost }) {
       )}
       {isLong && !expanded && (
         <button type="button" onClick={(e) => { stop(e); setExpanded(true); }} className="mt-1 text-[13px] font-semibold text-brand">
-          aur padho
+          Read more
         </button>
       )}
 

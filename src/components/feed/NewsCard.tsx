@@ -16,9 +16,9 @@ export function NewsCard({ item }: { item: NewsItem }) {
       <h3 className="text-[17px] font-semibold leading-snug text-ink">{item.title}</h3>
       {item.summary && <p className="mt-1 line-clamp-2 text-[15px] text-ink">{item.summary}</p>}
       {item.url ? (
-        <a href={item.url} target="_blank" rel="noopener noreferrer" className={readClass}>Padho →</a>
+        <a href={item.url} target="_blank" rel="noopener noreferrer" className={readClass}>Read more →</a>
       ) : (
-        <Link to="/news" className={readClass}>Padho →</Link>
+        <Link to="/news" className={readClass}>Read more →</Link>
       )}
     </article>
   );

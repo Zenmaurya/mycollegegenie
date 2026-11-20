@@ -70,11 +70,11 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
     const next: Photo[] = [];
     for (const file of Array.from(list)) {
       if (!isSupportedImageType(file.type)) {
-        toast.error('Ye photo format support nahi hai (JPG, PNG, WebP chalega)');
+        toast.error('This photo format is not supported (use JPG, PNG or WebP)');
         continue;
       }
       if (photos.length + next.length >= MAX_POST_PHOTOS) {
-        toast.error(`Max ${MAX_POST_PHOTOS} photos laga sakte ho`);
+        toast.error(`You can add up to ${MAX_POST_PHOTOS} photos`);
         break;
       }
       next.push({ file, preview: URL.createObjectURL(file) });
@@ -104,12 +104,12 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
         { title, content, topic, course, files },
         { upload: ForumService.uploadPostImage, create: (p) => ForumService.createPost(p as any) },
       );
-      toast.success('Post ho gaya!');
+      toast.success('Posted!');
       reset();
       onPosted(id);
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Post nahi ho paya, dobara try karo');
+      toast.error(err instanceof Error ? err.message : "Couldn't post. Please try again.");
     } finally {
       setSending(false);
     }
@@ -126,15 +126,15 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
-          <h2 id="composer-title" className="text-[17px] font-bold text-ink">Post banao</h2>
-          <button type="button" onClick={onClose} disabled={sending} aria-label="Band karo" className="rounded-full p-2 text-ink-muted hover:bg-canvas">
+          <h2 id="composer-title" className="text-[17px] font-bold text-ink">Create post</h2>
+          <button type="button" onClick={onClose} disabled={sending} aria-label="Close" className="rounded-full p-2 text-ink-muted hover:bg-canvas">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {!user ? (
           <div className="p-6 text-center text-[15px] text-ink">
-            <p className="mb-4">Post karne ke liye login karo</p>
+            <p className="mb-4">Log in to create a post</p>
             <Link to="/login" onClick={onClose} className="inline-block rounded-full bg-brand px-5 py-2 font-semibold text-white">Login</Link>
           </div>
         ) : (
@@ -145,7 +145,7 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={200}
-                placeholder="Title (jaise: Hackathon ke liye team chahiye?)"
+                placeholder="Title (e.g. Looking for a hackathon team?)"
                 aria-label="Post title"
                 className="w-full rounded-lg border border-line px-3 py-2 text-[15px] font-semibold text-ink outline-none focus:border-brand"
               />
@@ -154,7 +154,7 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
                 onChange={(e) => setContent(e.target.value)}
                 maxLength={5000}
                 rows={5}
-                placeholder="Kuch poochho ya share karo..."
+                placeholder="Ask a question or share something..."
                 aria-label="Post text"
                 className="w-full resize-none rounded-lg border border-line px-3 py-2 text-[15px] text-ink outline-none focus:border-brand"
               />
@@ -186,8 +186,8 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
                 <div className="grid grid-cols-4 gap-2">
                   {photos.map((p, i) => (
                     <div key={p.preview} className="relative aspect-square overflow-hidden rounded-lg bg-canvas">
-                      <img src={p.preview} alt={`Chuni hui photo ${i + 1}`} className="h-full w-full object-cover" />
-                      <button type="button" onClick={() => removePhoto(i)} aria-label={`Photo ${i + 1} hatao`} className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white">
+                      <img src={p.preview} alt={`Selected photo ${i + 1}`} className="h-full w-full object-cover" />
+                      <button type="button" onClick={() => removePhoto(i)} aria-label={`Remove photo ${i + 1}`} className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white">
                         <X className="h-3 w-3" />
                       </button>
                     </div>
@@ -204,7 +204,7 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
               </label>
               <button type="submit" disabled={sending} className="flex items-center gap-2 rounded-full bg-brand px-5 py-2 text-[15px] font-semibold text-white disabled:opacity-60">
                 {sending && <Loader2 className="h-4 w-4 animate-spin" />}
-                Post karo
+                Post
               </button>
             </div>
           </form>

@@ -70,7 +70,7 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
           </span>
         )}
         <button type="button" onClick={open} className="flex-1 rounded-full bg-canvas px-4 py-2.5 text-left text-[15px] text-ink-muted hover:bg-line">
-          Kuch poochho ya share karo...
+          Ask a question or share something...
         </button>
       </div>
 
@@ -94,15 +94,15 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
 
         {status === 'error' && (
           <div className="rounded-card bg-surface p-6 text-center shadow-card">
-            <p className="mb-3 text-[15px] text-ink">Feed load nahi hua</p>
+            <p className="mb-3 text-[15px] text-ink">Couldn't load the feed</p>
             <button type="button" onClick={() => load(tab)} className="rounded-full bg-brand px-5 py-2 text-[15px] font-semibold text-white">Retry</button>
           </div>
         )}
 
         {status === 'ready' && items.length === 0 && (
           <div className="rounded-card bg-surface p-6 text-center shadow-card">
-            <p className="mb-3 text-[15px] text-ink">Abhi yahan kuch nahi. Pehla sawaal tum poochho!</p>
-            <button type="button" onClick={open} className="rounded-full bg-brand px-5 py-2 text-[15px] font-semibold text-white">Post banao</button>
+            <p className="mb-3 text-[15px] text-ink">Nothing here yet. Be the first to ask a question!</p>
+            <button type="button" onClick={open} className="rounded-full bg-brand px-5 py-2 text-[15px] font-semibold text-white">Create post</button>
           </div>
         )}
 
@@ -115,7 +115,7 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
         ))}
 
         {status === 'ready' && items.length > 0 && (
-          <Link to="/forum" className="block py-3 text-center text-[15px] font-semibold text-brand">Forum mein aur dekho</Link>
+          <Link to="/forum" className="block py-3 text-center text-[15px] font-semibold text-brand">See more in Forum</Link>
         )}
       </div>
     </div>

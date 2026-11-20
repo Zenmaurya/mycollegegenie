@@ -65,7 +65,7 @@ export const ForumService = {
     });
     if (!res.ok) {
       const errData = await res.json().catch(() => null);
-      throw new Error(errData?.error || 'Photo upload nahi hua');
+      throw new Error(errData?.error || 'Photo upload failed');
     }
     const data = await res.json();
     return data.url;

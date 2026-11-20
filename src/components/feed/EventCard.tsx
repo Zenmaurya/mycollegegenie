@@ -29,9 +29,9 @@ export function EventCard({ item }: { item: NewsItem }) {
           <span>Outsiders: {allowed ? '✅ Allowed' : `❌ ${item.eligibility}`}</span>
         </p>
         {link.external ? (
-          <a href={link.href} target="_blank" rel="noopener noreferrer" className={btnClass}>Details dekho</a>
+          <a href={link.href} target="_blank" rel="noopener noreferrer" className={btnClass}>View details</a>
         ) : (
-          <Link to={link.href} className={btnClass}>Details dekho</Link>
+          <Link to={link.href} className={btnClass}>View details</Link>
         )}
       </div>
     </article>

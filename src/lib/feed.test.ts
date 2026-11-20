@@ -61,7 +61,7 @@ test('outsidersAllowed', () => {
 
 test('timeAgo', () => {
   const now = new Date('2026-11-19T12:00:00Z');
-  assert.strictEqual(timeAgo('2026-11-19T11:59:40Z', now), 'abhi');
+  assert.strictEqual(timeAgo('2026-11-19T11:59:40Z', now), 'now');
   assert.strictEqual(timeAgo('2026-11-19T11:55:00Z', now), '5m');
   assert.strictEqual(timeAgo('2026-11-19T09:00:00Z', now), '3h');
   assert.strictEqual(timeAgo('2026-11-17T12:00:00Z', now), '2d');
