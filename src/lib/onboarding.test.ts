@@ -37,14 +37,18 @@ test('INTERESTS has the 14 options', () => {
 import { safeNext, batchYearFromStudyYear } from './onboarding';
 
 test('safeNext only allows same-origin paths', () => {
-  assert.strictEqual(safeNext('/post/1?x=2'), '/post/1?x=2');
-  for (const bad of [null, undefined, '', 'https://evil.com', '//evil.com', '/\\evil.com', 'javascript:1', 'post/1']) {
-    assert.strictEqual(safeNext(bad as string | null), '/');
+  const o = 'https://x.in';
+  assert.strictEqual(safeNext('/post/1?x=2', o), '/post/1?x=2');
+  assert.strictEqual(safeNext('/c/abc?x=1', o), '/c/abc?x=1');
+  for (const bad of [null, undefined, '', 'https://evil.com', '//evil.com', '/\\evil.com', '/\t/evil.com', '%2F%2Fevil.com', 'javascript:1', 'post/1']) {
+    assert.strictEqual(safeNext(bad as string | null, o), '/');
   }
 });
 
-test('batchYearFromStudyYear stores the graduation year', () => {
-  assert.strictEqual(batchYearFromStudyYear(1, 2026), 2029);
-  assert.strictEqual(batchYearFromStudyYear(4, 2026), 2026);
-  assert.strictEqual(batchYearFromStudyYear(5, 2026), 2025);
+test('batchYearFromStudyYear: graduation year, academic year starts in July, clamped', () => {
+  const nov = new Date(2026, 10, 20);
+  assert.strictEqual(batchYearFromStudyYear(1, nov), 2030);
+  assert.strictEqual(batchYearFromStudyYear(4, nov), 2027);
+  assert.strictEqual(batchYearFromStudyYear(5, nov), 2026);
+  assert.strictEqual(batchYearFromStudyYear(1, new Date(2026, 2, 1)), 2029);
 });

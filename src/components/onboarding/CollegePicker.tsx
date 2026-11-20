@@ -1,5 +1,5 @@
 import { useEffect, useId, useState, type KeyboardEvent } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { searchColleges, type College } from '../../services/collegeService';
 import { useDebounce } from '../../hooks/useDebounce';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,8 @@ export function CollegePicker({ value, onChange }: { value: CollegeValue; onChan
   const [active, setActive] = useState(0);
   const [otherOpen, setOtherOpen] = useState(!!value && 'other' in value);
   const debounced = useDebounce(query, 250);
-  const { data, isLoading, isError } = useQuery({ queryKey: ['colleges', debounced.trim()], queryFn: () => searchColleges(debounced) });
+  const { data, isLoading, isError, isFetching } = useQuery({ queryKey: ['colleges', debounced.trim()], queryFn: () => searchColleges(debounced), placeholderData: keepPreviousData });
+  const settled = query.trim() === debounced.trim() && !isFetching;
   const items = data ?? [];
   const optionCount = items.length + 1; // last option is "Other college"
   const selectedId = value && 'id' in value ? value.id : null;
@@ -29,7 +30,7 @@ export function CollegePicker({ value, onChange }: { value: CollegeValue; onChan
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); setActive(a => (a + 1) % optionCount); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => (a - 1 + optionCount) % optionCount); }
-    else if (e.key === 'Enter') { e.preventDefault(); pick(active); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (settled) pick(active); }
   };
 
   const optId = (i: number) => `${uid}-opt-${i}`;

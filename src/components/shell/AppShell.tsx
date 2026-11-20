@@ -13,7 +13,7 @@ const ComposerContext = createContext<ComposerContextValue>({ open: () => {}, po
 export const useComposer = () => useContext(ComposerContext);
 
 /** Routes where the full-screen experience hides the bottom tab bar. */
-const NO_TAB_BAR = ['/login', '/signup', '/forgot-password', '/reset-password'];
+const NO_TAB_BAR = ['/login', '/signup', '/forgot-password', '/reset-password', '/onboarding'];
 
 export function isTabBarHidden(pathname: string): boolean {
   return pathname.startsWith('/flipbook') || NO_TAB_BAR.includes(pathname);

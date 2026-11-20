@@ -15,9 +15,21 @@ export const shouldShowCollegeCard = (user: User | null, dismissedThisSession: b
 export const collegeLabel = (user: User | null): string | null =>
   user?.collegeName ?? user?.collegeOther ?? null;
 
-/** Redirect target from `?next=`: same-origin path only, else "/". */
-export const safeNext = (next: string | null | undefined): string =>
-  next && next.startsWith('/') && !next.startsWith('//') && !next.includes('\\') ? next : '/';
+/** Redirect target from `?next=`: same-origin path only, else "/". Pure: origin is passed in. */
+export const safeNext = (next: string | null | undefined, origin = 'http://localhost'): string => {
+  if (!next || !next.startsWith('/') || next.startsWith('//') || next.includes('\\') || /[\u0000-\u001F\u007F]/.test(next)) return '/';
+  try {
+    return new URL(next, origin).origin === origin ? next : '/';
+  } catch {
+    return '/';
+  }
+};
 
-/** "Nth year" -> expected graduation year (batchYear), assuming a 4-year course. */
-export const batchYearFromStudyYear = (year: number, now = new Date().getFullYear()): number => now + (4 - year);
+/**
+ * "Nth year" -> expected graduation year for a 4-year course. Academic year starts in July;
+ * never earlier than the current calendar year.
+ */
+export const batchYearFromStudyYear = (studyYear: number, now: Date = new Date()): number => {
+  const start = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+  return Math.max(now.getFullYear(), start + 4 - (studyYear - 1));
+};

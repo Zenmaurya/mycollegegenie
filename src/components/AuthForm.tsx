@@ -173,6 +173,8 @@ interface AuthFormProps {
   onSuccess?: () => void;
   /** Fired just before email sign-up is submitted (a failed attempt is harmless: /onboarding skips users who already have a college). */
   onSignupStart?: () => void;
+  /** Sign-up failed or the user switched to login: undo onSignupStart. */
+  onSignupAbort?: () => void;
   onPasswordChange?: (p: string) => void;
   onShowPasswordChange?: (s: boolean) => void;
   onTypingChange?: (t: boolean) => void;
@@ -185,6 +187,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   initialMode = 'signup',
   onSuccess,
   onSignupStart,
+  onSignupAbort,
   onPasswordChange,
   onShowPasswordChange,
   onTypingChange,
@@ -225,6 +228,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
   /* ── Reset on mode switch ── */
   const switchMode = (next: 'login' | 'signup') => {
+    if (next === 'login') onSignupAbort?.();
     navigate(next === 'login' ? '/login' : '/signup', { replace: true });
     setMode(next);
     setSignupStep(1);
@@ -293,6 +297,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
       }
       onSuccess?.();
     } catch (err: any) {
+      if (mode === 'signup') onSignupAbort?.();
       const msg = (err?.message ?? '').toLowerCase();
       if (msg.includes('email not confirmed')) {
         toast.error('Please verify your email to log in. We sent you an OTP.');

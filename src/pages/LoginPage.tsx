@@ -22,7 +22,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
   const from      = (location.state as any)?.from?.pathname || '/';
   // Set once a new account is created: after OTP we go to onboarding instead of `from`.
   const newSignup = useRef(false);
-  const afterAuth = () => navigate(newSignup.current ? `/onboarding?next=${encodeURIComponent(safeNext(from))}` : from, { replace: true });
+  const afterAuth = () => navigate(newSignup.current ? `/onboarding?next=${encodeURIComponent(safeNext(from, window.location.origin))}` : from, { replace: true });
 
   /* redirect if already logged in */
   const handleClose = () => {
@@ -125,6 +125,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ user }) => {
                   initialMode={isSignup ? 'signup' : 'login'}
                   onSuccess={afterAuth}
                   onSignupStart={() => { newSignup.current = true; }}
+                  onSignupAbort={() => { newSignup.current = false; }}
                 />
               </motion.div>
             </div>
