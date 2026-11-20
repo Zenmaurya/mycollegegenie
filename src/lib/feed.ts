@@ -80,3 +80,25 @@ export function timeAgo(iso: string, now: Date = new Date()): string {
   if (days < 7) return `${days}d`;
   return `${then.getUTCDate()} ${MONTHS[then.getUTCMonth()]}`;
 }
+
+export type FeedPage = { items: FeedItem[]; nextCursor: string | null };
+
+/** Accepts the paged `{items,nextCursor}` shape and the legacy bare array (one page, no cursor). */
+export function mapFeedPage(raw: any): FeedPage {
+  const list: unknown[] = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
+  const items = list.map(mapFeedItem).filter((i): i is FeedItem => i !== null);
+  return { items, nextCursor: !Array.isArray(raw) && typeof raw?.nextCursor === 'string' ? raw.nextCursor : null };
+}
+
+export function feedQuery(p: { tab: string; cursor?: string; topic?: string; course?: string }): string {
+  const q = new URLSearchParams({ tab: p.tab });
+  if (p.cursor) q.set('cursor', p.cursor);
+  if (p.topic) q.set('topic', p.topic);
+  if (p.course) q.set('course', p.course);
+  return q.toString();
+}
+
+/** Index (count of items before it) where the logged-out sign-up card goes, or null. */
+export function signupCardAfter(count: number, loggedIn: boolean): number | null {
+  return loggedIn || count < 5 ? null : 5;
+}

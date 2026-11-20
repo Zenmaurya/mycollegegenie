@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowBigDown, ArrowBigUp, MessageCircle, Share2 } from 'lucide-react';
+import { ArrowBigDown, ArrowBigUp, Bookmark, MessageCircle, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
+import { useResources } from '../../context/ResourceContext';
+import { Menu } from '../ui/Menu';
 import { ForumService } from '../../services/forumService';
 import { topicLabel } from '../../constants';
 import { timeAgo } from '../../lib/feed';
@@ -22,11 +24,13 @@ function applyVote(v: Votes, uid: string, dir: 'up' | 'down'): Votes {
 export function PostCard({ post }: { post: ForumPost }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { savedResourceIds, toggleSave } = useResources();
+  const saved = savedResourceIds.includes(post.id);
   const [votes, setVotes] = useState<Votes>({ up: post.upvotes, down: post.downvotes });
   const [expanded, setExpanded] = useState(false);
   const uid = user?.id;
   const score = votes.up.length - votes.down.length;
-  const detailUrl = `/forum/${post.id}`;
+  const detailUrl = `/post/${post.id}`;
 
   const vote = async (dir: 'up' | 'down') => {
     if (!uid) { toast('Log in to vote'); return; }
@@ -51,13 +55,17 @@ export function PostCard({ post }: { post: ForumPost }) {
     try { await navigator.clipboard.writeText(url); toast.success('Link copied!'); } catch { /* clipboard blocked */ }
   };
 
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(`${window.location.origin}${detailUrl}`); toast.success('Link copied!'); } catch { /* clipboard blocked */ }
+  };
+
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   const isLong = (post.content || '').length > 280;
 
   return (
     <article
       onClick={() => navigate(detailUrl)}
-      className="cursor-pointer rounded-card bg-surface p-4 shadow-card transition-colors hover:bg-white/80"
+      className="cursor-pointer rounded-card bg-surface p-4 shadow-card transition-shadow hover:shadow-float"
     >
       <header className="mb-2 flex flex-wrap items-center gap-x-1.5 text-[13px] text-ink-muted">
         <span className="font-semibold text-ink">{post.authorName || 'Student'}</span>
@@ -65,8 +73,15 @@ export function PostCard({ post }: { post: ForumPost }) {
         <span aria-hidden>·</span>
         <time dateTime={post.createdAt}>{timeAgo(post.createdAt)}</time>
         {post.topic && (
-          <span className="ml-auto rounded-full bg-brand/10 px-2 py-0.5 text-[12px] font-semibold text-brand">{topicLabel(post.topic)}</span>
+          <span className="ml-auto rounded-full border border-line px-2 py-0.5 text-[12px] font-semibold text-ink">{topicLabel(post.topic)}</span>
         )}
+        <span className={post.topic ? '' : 'ml-auto'} onClick={stop}>
+          <Menu label="More actions" items={[
+            { label: 'Copy link', onSelect: copyLink },
+            // shortcut: ReportModal and /api/resources/:id/report only handle resources; no post-report API yet.
+            { label: 'Report', onSelect: () => toast('Reporting posts is coming soon'), danger: true },
+          ]} />
+        </span>
       </header>
 
       <h3 className="mb-1 text-[17px] font-semibold leading-snug text-ink">
@@ -83,23 +98,26 @@ export function PostCard({ post }: { post: ForumPost }) {
 
       {post.images && post.images.length > 0 && <div className="mt-3"><PhotoGrid images={post.images} /></div>}
 
-      <footer className="mt-3 flex items-center gap-1 text-[13px] font-semibold text-ink-muted" onClick={stop}>
+      <footer className="mt-3 flex flex-wrap items-center gap-2 text-[13px] font-semibold text-ink-muted" onClick={stop}>
         <div className="flex items-center rounded-full bg-canvas">
           <button type="button" onClick={() => vote('up')} aria-label="Upvote" aria-pressed={!!uid && votes.up.includes(uid)}
-            className={`rounded-full p-1.5 hover:bg-line ${uid && votes.up.includes(uid) ? 'text-brand-accent' : ''}`}>
+            className={`flex h-11 w-11 items-center justify-center rounded-full hover:bg-line focus-visible:outline-2 focus-visible:outline-brand ${uid && votes.up.includes(uid) ? 'text-brand' : ''}`}>
             <ArrowBigUp className="h-5 w-5" />
           </button>
           <span className="min-w-[2ch] text-center text-ink" aria-label={`Score ${score}`}>{score}</span>
           <button type="button" onClick={() => vote('down')} aria-label="Downvote" aria-pressed={!!uid && votes.down.includes(uid)}
-            className={`rounded-full p-1.5 hover:bg-line ${uid && votes.down.includes(uid) ? 'text-brand' : ''}`}>
+            className={`flex h-11 w-11 items-center justify-center rounded-full hover:bg-line focus-visible:outline-2 focus-visible:outline-brand ${uid && votes.down.includes(uid) ? 'text-brand' : ''}`}>
             <ArrowBigDown className="h-5 w-5" />
           </button>
         </div>
-        <Link to={detailUrl} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-canvas" aria-label={`${post.commentCount} comments`}>
+        <Link to={detailUrl} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand" aria-label={`${post.commentCount} comments`}>
           <MessageCircle className="h-4 w-4" /> {post.commentCount}
         </Link>
-        <button type="button" onClick={share} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-canvas">
+        <button type="button" onClick={share} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
           <Share2 className="h-4 w-4" /> Share
+        </button>
+        <button type="button" onClick={() => toggleSave(post.id)} aria-pressed={saved} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
+          <Bookmark className={`h-4 w-4 ${saved ? 'fill-current text-ink' : ''}`} /> {saved ? 'Saved' : 'Save'}
         </button>
       </footer>
     </article>

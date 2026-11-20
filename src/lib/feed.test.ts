@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { mapFeedItem, eventLink, outsidersAllowed, timeAgo } from './feed';
+import { mapFeedPage, feedQuery, signupCardAfter, mapFeedItem, eventLink, outsidersAllowed, timeAgo } from './feed';
 
 const rawPost = (images: unknown) => ({
   feedType: 'forum_post', id: 'p1', title: 'T', content: 'C', author_id: 'u1', author_name: 'Aman',
@@ -67,4 +67,36 @@ test('timeAgo', () => {
   assert.strictEqual(timeAgo('2026-11-17T12:00:00Z', now), '2d');
   assert.strictEqual(timeAgo('2026-11-01T12:00:00Z', now), '1 Nov');
   assert.strictEqual(timeAgo('', now), '');
+});
+
+test('mapFeedPage: object shape, drops unknown items', () => {
+  const page = mapFeedPage({ items: [rawPost([]), { feedType: 'wat' }, null], nextCursor: 'abc' });
+  assert.strictEqual(page.items.length, 1);
+  assert.strictEqual(page.nextCursor, 'abc');
+});
+
+test('mapFeedPage: legacy bare array is one page with no cursor', () => {
+  const page = mapFeedPage([rawPost([]), rawPost([])]);
+  assert.strictEqual(page.items.length, 2);
+  assert.strictEqual(page.nextCursor, null);
+});
+
+test('mapFeedPage: garbage gives empty page', () => {
+  assert.deepStrictEqual(mapFeedPage(null), { items: [], nextCursor: null });
+  assert.deepStrictEqual(mapFeedPage({ items: [], nextCursor: 5 }), { items: [], nextCursor: null });
+});
+
+test('feedQuery builds and encodes params, skipping empties', () => {
+  assert.strictEqual(feedQuery({ tab: 'recent' }), 'tab=recent');
+  assert.strictEqual(
+    feedQuery({ tab: 'foryou', cursor: 'a b', topic: 'Exam Tips', course: 'B.Com. (Hons.)' }),
+    'tab=foryou&cursor=a+b&topic=Exam+Tips&course=B.Com.+%28Hons.%29',
+  );
+});
+
+test('signupCardAfter: after item 5 for logged-out only when 5 items exist', () => {
+  assert.strictEqual(signupCardAfter(20, false), 5);
+  assert.strictEqual(signupCardAfter(5, false), 5);
+  assert.strictEqual(signupCardAfter(4, false), null);
+  assert.strictEqual(signupCardAfter(20, true), null);
 });

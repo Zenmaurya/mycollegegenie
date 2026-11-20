@@ -1,10 +1,8 @@
 import { fetchWithAuth } from '../lib/apiClient';
-import { mapFeedItem } from '../lib/feed';
-import type { FeedItem, FeedTab } from '../types';
+import { feedQuery, mapFeedPage, type FeedPage } from '../lib/feed';
+import type { FeedTab } from '../types';
 
-/** Home feed (forum posts + news + events). Throws on network/server error so the page can show Retry. */
-export async function getFeed(tab: FeedTab): Promise<FeedItem[]> {
-  const data = await fetchWithAuth(`/api/feed/foryou?tab=${tab}`);
-  if (!Array.isArray(data)) return [];
-  return data.map(mapFeedItem).filter((item): item is FeedItem => item !== null);
+/** One page of the home feed. Throws on network/server error so the page can show Retry. */
+export async function getFeedPage(p: { tab: FeedTab; cursor?: string; topic?: string; course?: string }): Promise<FeedPage> {
+  return mapFeedPage(await fetchWithAuth(`/api/feed/foryou?${feedQuery(p)}`));
 }

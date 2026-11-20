@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import './index.css';
 import { initSentry, initPostHog } from './lib/monitoring';
@@ -28,12 +29,16 @@ const updateSW = registerSW({
 initSentry();
 initPostHog();
 
+const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } } });
+
 const rootElement = document.getElementById('root')!;
 const app = (
   <StrictMode>
     <ErrorBoundary>
       <HelmetProvider>
-        <App />
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
       </HelmetProvider>
     </ErrorBoundary>
   </StrictMode>
