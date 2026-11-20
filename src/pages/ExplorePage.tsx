@@ -22,7 +22,7 @@ export function ExplorePage() {
           return (
             <li key={to + label}>
               {soon ? (
-                <div aria-disabled="true" className={`${base}`}>{inner}</div>
+                <div aria-disabled="true" className={`${base} opacity-100! cursor-default!`}>{inner}</div>
               ) : (
                 <Link to={to} className={`${base} hover:shadow-float focus-visible:outline-2 focus-visible:outline-brand`}>{inner}</Link>
               )}
