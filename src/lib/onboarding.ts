@@ -33,3 +33,12 @@ export const batchYearFromStudyYear = (studyYear: number, now: Date = new Date()
   const start = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
   return Math.max(now.getFullYear(), start + 4 - (studyYear - 1));
 };
+
+/** Backend requires the college on every onboarding save, so every payload carries exactly one of collegeId/collegeOther. */
+export const buildOnboardingPayload = (
+  college: { id: string } | { other: string } | null,
+  extra: { course?: string; batchYear?: number; interests?: string[] } = {},
+): { collegeId?: string; collegeOther?: string; course?: string; batchYear?: number; interests?: string[] } => {
+  if (!college) throw new Error('Pick your college first.');
+  return 'id' in college ? { collegeId: college.id, ...extra } : { collegeOther: college.other.trim(), ...extra };
+};

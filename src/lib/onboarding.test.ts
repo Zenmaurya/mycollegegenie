@@ -52,3 +52,14 @@ test('batchYearFromStudyYear: graduation year, academic year starts in July, cla
   assert.strictEqual(batchYearFromStudyYear(5, nov), 2026);
   assert.strictEqual(batchYearFromStudyYear(1, new Date(2026, 2, 1)), 2029);
 });
+
+import { buildOnboardingPayload } from './onboarding';
+
+test('buildOnboardingPayload always carries exactly one college field', () => {
+  assert.deepStrictEqual(buildOnboardingPayload({ id: 'srcc' }, { course: 'B.Com', batchYear: 2029 }), { collegeId: 'srcc', course: 'B.Com', batchYear: 2029 });
+  assert.deepStrictEqual(buildOnboardingPayload({ id: 'srcc' }, { interests: ['Coding'] }), { collegeId: 'srcc', interests: ['Coding'] });
+  const o = buildOnboardingPayload({ other: '  My College  ' }, { interests: ['Quiz'] });
+  assert.deepStrictEqual(o, { collegeOther: 'My College', interests: ['Quiz'] });
+  assert.ok(!('collegeId' in o));
+  assert.throws(() => buildOnboardingPayload(null, { interests: ['Quiz'] }));
+});

@@ -4,7 +4,7 @@ import { Chip } from '@/components/ui/Chip';
 import { CollegePicker, type CollegeValue } from './CollegePicker';
 import { saveOnboarding } from '../../services/collegeService';
 import { useAuth } from '../../context/AuthContext';
-import { INTERESTS, batchYearFromStudyYear } from '../../lib/onboarding';
+import { INTERESTS, batchYearFromStudyYear, buildOnboardingPayload } from '../../lib/onboarding';
 
 type Payload = Parameters<typeof saveOnboarding>[0];
 
@@ -12,7 +12,7 @@ const inputCls = 'mt-1 min-h-11 w-full rounded-sm border border-line bg-surface 
 const YEARS = ['1st', '2nd', '3rd', '4th', '5th'];
 
 export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; startStep?: 1 | 2 | 3 }) {
-  const { refreshAppUser } = useAuth();
+  const { appUser, refreshAppUser } = useAuth();
   const [step, setStep] = useState<number>(startStep);
   const [college, setCollege] = useState<CollegeValue>(null);
   const [course, setCourse] = useState('');
@@ -22,19 +22,22 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
   const [error, setError] = useState('');
 
   const collegeReady = !!college && ('id' in college || college.other.trim().length > 0);
-  const collegePayload = (): Payload =>
-    !college ? {} : 'id' in college ? { collegeId: college.id } : { collegeOther: college.other.trim() };
-  const coursePayload = (): Payload => ({
+  // Chosen in this flow, else the user's saved college (flow may start at step 2/3).
+  const saved = appUser?.collegeId ? { id: appUser.collegeId } : appUser?.collegeOther ? { other: appUser.collegeOther } : null;
+  const effective = college ?? saved;
+  const collegePayload = () => buildOnboardingPayload(college);
+  const coursePayload = () => buildOnboardingPayload(effective, {
     ...(course.trim() && { course: course.trim() }),
     ...(year && { batchYear: batchYearFromStudyYear(Number(year)) }),
   });
+  const interestsPayload = () => buildOnboardingPayload(effective, { interests });
   const hasCourse = !!course.trim() || !!year;
 
   // Saves (if there is anything to save), then moves on. Server errors stay inline.
-  const save = async (payload: Payload | null, then: () => void | Promise<void>) => {
+  const save = async (payload: (() => Payload) | null, then: () => void | Promise<void>) => {
     setBusy(true); setError('');
     try {
-      if (payload) await saveOnboarding(payload);
+      if (payload) await saveOnboarding(payload());
       await then();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
@@ -84,9 +87,9 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
       <div className="mt-6 flex items-center justify-end gap-2">
         {step === 2 && <Button variant="ghost" disabled={busy} onClick={toStep3}>Skip</Button>}
         {step === 3 && <Button variant="ghost" disabled={busy} onClick={() => void save(null, finish)}>Skip</Button>}
-        {step === 1 && <Button disabled={!collegeReady} loading={busy} onClick={() => void save(collegePayload(), () => setStep(2))}>Continue</Button>}
-        {step === 2 && <Button disabled={!hasCourse} loading={busy} onClick={() => void save(coursePayload(), toStep3)}>Continue</Button>}
-        {step === 3 && <Button disabled={interests.length === 0} loading={busy} onClick={() => void save({ interests }, finish)}>Finish</Button>}
+        {step === 1 && <Button disabled={!collegeReady} loading={busy} onClick={() => void save(collegePayload, () => setStep(2))}>Continue</Button>}
+        {step === 2 && <Button disabled={!hasCourse} loading={busy} onClick={() => void save(coursePayload, toStep3)}>Continue</Button>}
+        {step === 3 && <Button disabled={interests.length === 0} loading={busy} onClick={() => void save(interestsPayload, finish)}>Finish</Button>}
       </div>
     </div>
   );
