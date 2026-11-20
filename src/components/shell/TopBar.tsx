@@ -1,12 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, Inbox, Plus, Search } from 'lucide-react';
-import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useComposer } from './AppShell';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/button';
-import { IconButton } from '../ui/IconButton';
 
 export function TopBar() {
   const { user, appUser, logout } = useAuth();
@@ -45,7 +43,7 @@ export function TopBar() {
         </Link>
 
         <form onSubmit={submitSearch} role="search" className="hidden flex-1 md:block md:max-w-md">
-          <label className="flex min-h-11 items-center gap-2 rounded-full bg-canvas px-4 text-ink-muted shadow-card focus-within:outline-2 focus-within:outline-brand">
+          <label className="flex min-h-11 items-center gap-2 rounded-full bg-canvas px-4 text-ink-muted shadow-float focus-within:outline-2 focus-within:outline-brand">
             <Search className="h-4 w-4" aria-hidden />
             <input
               value={query}
@@ -67,7 +65,9 @@ export function TopBar() {
           <Link to="/inbox" className="hidden h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand md:inline-flex" aria-label="Inbox">
             <Inbox className="h-5 w-5" aria-hidden />
           </Link>
-          <IconButton label="Notifications" icon={Bell} onClick={() => toast('Notifications are coming soon')} />
+          <Link to="/inbox" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand" aria-label="Notifications">
+            <Bell className="h-5 w-5" aria-hidden />
+          </Link>
 
           {!user && (
             <Link to="/login" className="ml-1 hidden min-h-11 items-center rounded-full bg-brand px-4 text-[15px] font-semibold text-white hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex">Login</Link>

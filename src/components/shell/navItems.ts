@@ -1,6 +1,6 @@
 import { BedDouble, Calendar, Compass, Bookmark, Heart, Home, LibraryBig, Newspaper, ShoppingBag, Youtube, type LucideIcon } from 'lucide-react';
 
-export type NavItem = { to: string; label: string; icon: LucideIcon };
+export type NavItem = { to: string; label: string; icon: LucideIcon; soon?: boolean };
 
 export const MODULES: NavItem[] = [
   { to: '/', label: 'Home', icon: Home },
@@ -20,7 +20,7 @@ export const EXPLORE_TILES: NavItem[] = [
   { to: '/campus-exchange', label: 'Exchange', icon: ShoppingBag },
   { to: '/events', label: 'Events', icon: Calendar },
   { to: '/news', label: 'News', icon: Newspaper },
-  { to: '/profile?tab=saved', label: 'Saved', icon: Bookmark },
+  { to: '/profile?tab=saved', label: 'Saved', icon: Bookmark, soon: true },
   { to: '/contributors', label: 'Contributors', icon: Heart },
 ];
 

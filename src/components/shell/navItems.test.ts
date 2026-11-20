@@ -20,5 +20,5 @@ test('MODULES has Explore and no Forum', () => {
 
 test('EXPLORE_TILES has 8 tiles incl. Saved', () => {
   assert.equal(EXPLORE_TILES.length, 8);
-  assert.ok(EXPLORE_TILES.some((t) => t.to === '/profile?tab=saved'));
+  assert.ok(EXPLORE_TILES.find((t) => t.label === 'Saved')?.soon);
 });

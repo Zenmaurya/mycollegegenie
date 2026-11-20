@@ -1,8 +1,9 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { TopBar } from './TopBar';
 import { LeftNav } from './LeftNav';
 import { MobileTabBar } from './MobileTabBar';
+import { FOOTER_LINKS } from './navItems';
 import { Composer } from '../feed/Composer';
 
 type ComposerContextValue = { open(): void; postedAt: number };
@@ -43,6 +44,11 @@ export function AppShell({ rightRail, children }: AppShellProps) {
         {!isFlipbook && <LeftNav />}
         <main className={`flex min-w-0 flex-1 flex-col ${hideTabBar ? '' : 'pb-[calc(64px+env(safe-area-inset-bottom,0px))] md:pb-0'}`}>
           {children}
+          {!hideTabBar && (
+            <ul className="hidden flex-wrap gap-x-4 gap-y-1 border-t border-line px-4 py-4 text-[13px] text-ink-muted md:flex lg:hidden">
+              {FOOTER_LINKS.map((l) => <li key={l.to}><Link to={l.to} className="hover:underline">{l.label}</Link></li>)}
+            </ul>
+          )}
         </main>
         {rightRail && (
           <aside className="hidden w-80 shrink-0 px-4 py-4 lg:block" aria-label="Sidebar">
