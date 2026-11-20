@@ -5,6 +5,9 @@ export const MAX_DEPTH = 3;
 export type CommentNode = Comment & { replies: CommentNode[]; depth: number };
 export type CommentSort = 'relevant' | 'newest';
 
+// Must match DELETED_CONTENT in backend src/utils/comments.js.
+export const isDeletedComment = (c: Comment) => c.content === '[This comment has been deleted]';
+
 const score = (c: Comment) => c.upvotes.length - c.downvotes.length;
 const time = (c: Comment) => new Date(c.createdAt).getTime() || 0;
 

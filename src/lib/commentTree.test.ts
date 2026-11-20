@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { buildCommentTree, canMarkBest } from './commentTree';
+import { buildCommentTree, canMarkBest, isDeletedComment } from './commentTree';
 import type { Comment } from '../types';
 
 const c = (id: string, parentId: string | null = null, o: Partial<Comment> = {}): Comment => ({
@@ -86,4 +86,11 @@ test('a parent cycle (a<->b) still surfaces both comments', () => {
   const all = (n: { id: string; replies: any[] }) => { ids.push(n.id); n.replies.forEach(all); };
   roots.forEach(all);
   assert.deepEqual(ids.sort(), ['a', 'b']);
+});
+
+test('tombstone keeps its replies and is flagged deleted', () => {
+  const { roots } = buildCommentTree([c('a', null, { content: '[This comment has been deleted]' }), c('b', 'a')], null, 'newest');
+  assert.strictEqual(isDeletedComment(roots[0]), true);
+  assert.strictEqual(roots[0].replies.length, 1);
+  assert.strictEqual(isDeletedComment(roots[0].replies[0]), false);
 });
