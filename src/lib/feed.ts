@@ -31,6 +31,8 @@ export function mapPost(raw: any): ForumPost {
     commentCount: raw.comment_count || 0,
     images: toArray(raw.images),
     bestCommentId: raw.best_comment_id ?? null,
+    postKind: raw.post_kind || 'post',
+    community: raw.community ? { slug: raw.community.slug, name: raw.community.name, logoUrl: raw.community.logo_url ?? null, status: raw.community.status } : null,
   };
 }
 

@@ -140,6 +140,8 @@ export interface ForumPost {
   downvotes: string[];
   images?: string[];
   bestCommentId?: string | null;
+  postKind?: 'post' | 'official' | 'discussion';
+  community?: { slug: string; name: string; logoUrl: string | null; status: 'unverified' | 'official' | 'hidden' } | null;
 }
 
 export type FeedTab = 'foryou' | 'trending' | 'recent';
