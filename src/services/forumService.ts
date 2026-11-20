@@ -123,7 +123,8 @@ export const ForumService = {
         content: c.content,
         createdAt: c.created_at,
         upvotes: Array.isArray(c.upvotes) ? c.upvotes : [],
-        downvotes: Array.isArray(c.downvotes) ? c.downvotes : []
+        downvotes: Array.isArray(c.downvotes) ? c.downvotes : [],
+        parentId: c.parent_id ?? null, // live API predates threading
       }));
       if (callback) callback(comments);
       return comments;
@@ -134,17 +135,26 @@ export const ForumService = {
     }
   },
 
-  addComment: async (postId: string, comment: Omit<Comment, 'id' | 'createdAt' | 'upvotes' | 'downvotes'>) => {
+  addComment: async (postId: string, content: string, parentId?: string | null): Promise<string> => {
     try {
       const data = await fetchWithAuth(`/api/forum/posts/${postId}/comments`, {
         method: 'POST',
-        body: JSON.stringify(comment)
+        body: JSON.stringify(parentId ? { content, parentId } : { content })
       });
       return data.id;
     } catch (error) {
       console.error('[forumService] addComment error:', error);
       throw error;
     }
+  },
+
+  /** Post author only; commentId null clears it. */
+  setBestAnswer: async (postId: string, commentId: string | null): Promise<string | null> => {
+    const data = await fetchWithAuth(`/api/forum/posts/${postId}/best-answer`, {
+      method: 'PATCH',
+      body: JSON.stringify({ commentId })
+    });
+    return data.bestCommentId ?? null;
   },
 
   toggleCommentUpvote: async (postId: string, commentId: string, _userId: string, _isUpvoted: boolean) => {

@@ -30,6 +30,7 @@ export function mapPost(raw: any): ForumPost {
     downvotes: toArray(raw.downvotes),
     commentCount: raw.comment_count || 0,
     images: toArray(raw.images),
+    bestCommentId: raw.best_comment_id ?? null,
   };
 }
 

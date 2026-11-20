@@ -116,6 +116,8 @@ export interface Comment {
   createdAt: string;
   upvotes: string[];
   downvotes: string[];
+  /** null/undefined = top-level */
+  parentId?: string | null;
 }
 
 export interface ForumPost {
@@ -131,6 +133,7 @@ export interface ForumPost {
   upvotes: string[];
   downvotes: string[];
   images?: string[];
+  bestCommentId?: string | null;
 }
 
 export type FeedTab = 'foryou' | 'trending' | 'recent';

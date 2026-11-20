@@ -29,7 +29,7 @@ import React, { useState, useMemo, useCallback, useEffect, useRef, Suspense, laz
 import { useDebounce } from './hooks/useDebounce';
 import {
   BrowserRouter, Routes, Route, Link, useLocation, useNavigate,
-  useSearchParams, Navigate,
+  useSearchParams, Navigate, useParams,
 } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
@@ -42,8 +42,7 @@ import { ResourceProvider, useResources } from './context/ResourceContext';
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
 const BrowsePage = lazy(() => import('./pages/BrowsePage').then(m => ({ default: m.BrowsePage })));
 const PlaylistPage = lazy(() => import('./pages/PlaylistPage').then(m => ({ default: m.PlaylistPage })));
-const ForumPage = lazy(() => import('./pages/ForumPage').then(m => ({ default: m.ForumPage })));
-const PostDetailPage = lazy(() => import('./pages/PostDetailPage').then(m => ({ default: m.PostDetailPage })));
+const PostPage = lazy(() => import('./pages/PostPage').then(m => ({ default: m.PostPage })));
 const AdminPanel = lazy(() => import('./pages/AdminPanel').then(m => ({ default: m.AdminPanel })));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import('./pages/TermsPage').then(m => ({ default: m.TermsPage })));
@@ -85,6 +84,11 @@ import { getNews } from './services/newsService';
 import { rateResource } from './services/resourceService';
 import { fetchWithAuth } from './lib/apiClient';
 import { config } from './lib/config';
+
+function ForumPostRedirect() {
+  const { postId } = useParams();
+  return <Navigate to={`/post/${postId}`} replace />;
+}
 
 // ─────────────────────────────────────────────────────────────────
 // AppContent — uses AuthProvider + ResourceProvider from parent App
@@ -419,8 +423,9 @@ function AppContent() {
               } />
 
               {DevUiPage && <Route path="/dev/ui" element={<DevUiPage />} />}
-              <Route path="/forum" element={<ForumPage user={user} />} />
-              <Route path="/forum/:postId" element={<PostDetailPage />} />
+              <Route path="/post/:id" element={<PostPage />} />
+              <Route path="/forum" element={<Navigate to={'/' + location.search} replace />} />
+              <Route path="/forum/:postId" element={<ForumPostRedirect />} />
               <Route path="/find-pg" element={<FindPGPage user={user} />} />
               <Route path="/campus-exchange" element={<CampusExchangePage user={user} />} />
 
