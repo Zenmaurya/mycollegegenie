@@ -3,44 +3,32 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowBigDown, ArrowBigUp, Bookmark, MessageCircle, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
-import { useResources } from '../../context/ResourceContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { Menu } from '../ui/Menu';
 import { ForumService } from '../../services/forumService';
 import { topicLabel } from '../../constants';
-import { timeAgo } from '../../lib/feed';
+import { applyVote, timeAgo } from '../../lib/feed';
 import type { ForumPost } from '../../types';
 import { PhotoGrid } from './PhotoGrid';
 
-type Votes = { up: string[]; down: string[] };
-
-function applyVote(v: Votes, uid: string, dir: 'up' | 'down'): Votes {
-  const has = (dir === 'up' ? v.up : v.down).includes(uid);
-  const up = v.up.filter((x) => x !== uid);
-  const down = v.down.filter((x) => x !== uid);
-  if (has) return { up, down }; // clicking the same arrow again removes the vote
-  return dir === 'up' ? { up: [...up, uid], down } : { up, down: [...down, uid] };
-}
-
-export function PostCard({ post }: { post: ForumPost }) {
+function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSaved: boolean; onToggleSave: (id: string) => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { savedResourceIds, toggleSave } = useResources();
-  const saved = savedResourceIds.includes(post.id);
-  const [votes, setVotes] = useState<Votes>({ up: post.upvotes, down: post.downvotes });
+  const qc = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const uid = user?.id;
-  const score = votes.up.length - votes.down.length;
+  const score = post.upvotes.length - post.downvotes.length;
   const detailUrl = `/post/${post.id}`;
 
   const vote = async (dir: 'up' | 'down') => {
     if (!uid) { toast('Log in to vote'); return; }
-    const before = votes;
-    setVotes(applyVote(votes, uid, dir));
+    const snapshot = qc.getQueriesData({ queryKey: ['feed'] });
+    qc.setQueriesData({ queryKey: ['feed'] }, (d: any) => applyVote(d, post.id, uid, dir));
     try {
-      if (dir === 'up') await ForumService.toggleUpvote(post.id, uid, before.up.includes(uid));
-      else await ForumService.toggleDownvote(post.id, uid, before.down.includes(uid));
+      if (dir === 'up') await ForumService.toggleUpvote(post.id, uid, post.upvotes.includes(uid));
+      else await ForumService.toggleDownvote(post.id, uid, post.downvotes.includes(uid));
     } catch {
-      setVotes(before);
+      snapshot.forEach(([key, data]) => qc.setQueryData(key, data));
       toast.error("Couldn't vote. Please try again.");
     }
   };
@@ -100,13 +88,13 @@ export function PostCard({ post }: { post: ForumPost }) {
 
       <footer className="mt-3 flex flex-wrap items-center gap-2 text-[13px] font-semibold text-ink-muted" onClick={stop}>
         <div className="flex items-center rounded-full bg-canvas">
-          <button type="button" onClick={() => vote('up')} aria-label="Upvote" aria-pressed={!!uid && votes.up.includes(uid)}
-            className={`flex h-11 w-11 items-center justify-center rounded-full hover:bg-line focus-visible:outline-2 focus-visible:outline-brand ${uid && votes.up.includes(uid) ? 'text-brand' : ''}`}>
+          <button type="button" onClick={() => vote('up')} aria-label="Upvote" aria-pressed={!!uid && post.upvotes.includes(uid)}
+            className={`flex h-11 w-11 items-center justify-center rounded-full hover:bg-line focus-visible:outline-2 focus-visible:outline-brand ${uid && post.upvotes.includes(uid) ? 'text-brand' : ''}`}>
             <ArrowBigUp className="h-5 w-5" />
           </button>
           <span className="min-w-[2ch] text-center text-ink" aria-label={`Score ${score}`}>{score}</span>
-          <button type="button" onClick={() => vote('down')} aria-label="Downvote" aria-pressed={!!uid && votes.down.includes(uid)}
-            className={`flex h-11 w-11 items-center justify-center rounded-full hover:bg-line focus-visible:outline-2 focus-visible:outline-brand ${uid && votes.down.includes(uid) ? 'text-brand' : ''}`}>
+          <button type="button" onClick={() => vote('down')} aria-label="Downvote" aria-pressed={!!uid && post.downvotes.includes(uid)}
+            className={`flex h-11 w-11 items-center justify-center rounded-full hover:bg-line focus-visible:outline-2 focus-visible:outline-brand ${uid && post.downvotes.includes(uid) ? 'text-brand' : ''}`}>
             <ArrowBigDown className="h-5 w-5" />
           </button>
         </div>
@@ -116,10 +104,12 @@ export function PostCard({ post }: { post: ForumPost }) {
         <button type="button" onClick={share} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
           <Share2 className="h-4 w-4" /> Share
         </button>
-        <button type="button" onClick={() => toggleSave(post.id)} aria-pressed={saved} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
-          <Bookmark className={`h-4 w-4 ${saved ? 'fill-current text-ink' : ''}`} /> {saved ? 'Saved' : 'Save'}
+        <button type="button" onClick={() => onToggleSave(post.id)} aria-pressed={isSaved} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
+          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-ink' : ''}`} /> {isSaved ? 'Saved' : 'Save'}
         </button>
       </footer>
     </article>
   );
 }
+
+export const PostCard = React.memo(PostCardImpl);

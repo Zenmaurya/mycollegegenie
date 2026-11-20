@@ -102,3 +102,40 @@ export function feedQuery(p: { tab: string; cursor?: string; topic?: string; cou
 export function signupCardAfter(count: number, loggedIn: boolean): number | null {
   return loggedIn || count < 5 ? null : 5;
 }
+
+/** Only the Retry button may refetch after a failed page, otherwise a visible sentinel loops forever. */
+export function shouldLoadMore(s: { hasNextPage: boolean; isFetchingNextPage: boolean; isError: boolean }): boolean {
+  return s.hasNextPage && !s.isFetchingNextPage && !s.isError;
+}
+
+/** Flair chip order for the feed (FORUM_TOPICS order is left alone). */
+export const FEED_TOPIC_ORDER = ['Doubt', 'Exam Tips', 'Notes', 'Placement', 'Events', 'General'] as const;
+
+type Votes = { up: string[]; down: string[] };
+
+/** Same arrow again removes the vote; the other arrow switches it. */
+export function toggleVote(v: Votes, uid: string, dir: 'up' | 'down'): Votes {
+  const has = (dir === 'up' ? v.up : v.down).includes(uid);
+  const up = v.up.filter((x) => x !== uid);
+  const down = v.down.filter((x) => x !== uid);
+  if (has) return { up, down };
+  return dir === 'up' ? { up: [...up, uid], down } : { up, down: [...down, uid] };
+}
+
+type FeedData = { pages: FeedPage[]; pageParams: unknown[] };
+
+/** Pure updater for the infinite-query cache. Returns new data; the input is never mutated, so it doubles as the rollback snapshot. */
+export function applyVote<T extends FeedData | undefined>(data: T, postId: string, uid: string, dir: 'up' | 'down'): T {
+  if (!data) return data;
+  return {
+    ...data,
+    pages: data.pages.map((pg) => ({
+      ...pg,
+      items: pg.items.map((it) => {
+        if (it.kind !== 'post' || it.post.id !== postId) return it;
+        const v = toggleVote({ up: it.post.upvotes, down: it.post.downvotes }, uid, dir);
+        return { ...it, post: { ...it.post, upvotes: v.up, downvotes: v.down } };
+      }),
+    })),
+  } as T;
+}

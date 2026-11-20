@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { mapFeedPage, feedQuery, signupCardAfter, mapFeedItem, eventLink, outsidersAllowed, timeAgo } from './feed';
+import { shouldLoadMore, applyVote, mapFeedPage, feedQuery, signupCardAfter, mapFeedItem, eventLink, outsidersAllowed, timeAgo } from './feed';
 
 const rawPost = (images: unknown) => ({
   feedType: 'forum_post', id: 'p1', title: 'T', content: 'C', author_id: 'u1', author_name: 'Aman',
@@ -99,4 +99,26 @@ test('signupCardAfter: after item 5 for logged-out only when 5 items exist', () 
   assert.strictEqual(signupCardAfter(5, false), 5);
   assert.strictEqual(signupCardAfter(4, false), null);
   assert.strictEqual(signupCardAfter(20, true), null);
+});
+
+test('shouldLoadMore never refetches automatically after an error', () => {
+  assert.strictEqual(shouldLoadMore({ hasNextPage: true, isFetchingNextPage: false, isError: false }), true);
+  assert.strictEqual(shouldLoadMore({ hasNextPage: true, isFetchingNextPage: false, isError: true }), false);
+  assert.strictEqual(shouldLoadMore({ hasNextPage: true, isFetchingNextPage: true, isError: false }), false);
+  assert.strictEqual(shouldLoadMore({ hasNextPage: false, isFetchingNextPage: false, isError: false }), false);
+});
+
+test('applyVote updates only the target post across pages, without mutating the snapshot', () => {
+  const mk = (id: string) => mapFeedItem({ ...rawPost([]), id, upvotes: ['x'] })!;
+  const data = { pages: [{ items: [mk('a')], nextCursor: 'n' }, { items: [mk('b')], nextCursor: null }], pageParams: [undefined, 'n'] };
+  const next = applyVote(data, 'b', 'u1', 'up');
+  const up = (d: typeof data, i: number) => (d.pages[i].items[0] as any).post.upvotes;
+  assert.deepStrictEqual(up(next, 1), ['x', 'u1']);
+  assert.deepStrictEqual(up(next, 0), ['x']);
+  assert.deepStrictEqual(up(data, 1), ['x']); // snapshot intact for rollback
+  assert.deepStrictEqual(up(applyVote(next, 'b', 'u1', 'up'), 1), ['x']); // same arrow removes
+  const down = applyVote(next, 'b', 'u1', 'down');
+  assert.deepStrictEqual(up(down, 1), ['x']);
+  assert.deepStrictEqual((down.pages[1].items[0] as any).post.downvotes, ['u1']);
+  assert.strictEqual(applyVote(undefined, 'b', 'u1', 'up'), undefined);
 });
