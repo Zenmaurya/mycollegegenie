@@ -7,6 +7,15 @@ import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { ForumService } from '../services/forumService';
 import { topicLabel } from '../constants';
+
+const TOPIC_BLURB: Record<string, string> = {
+  General: 'Anything on student life that does not fit elsewhere.',
+  Doubt: 'Questions from students, answered by seniors and peers.',
+  'Exam Tips': 'Study plans, past papers and last-minute advice.',
+  Notes: 'Share and find notes for your courses.',
+  Placement: 'Internships, interviews and placement prep.',
+  Events: 'Fests, workshops and campus happenings.',
+};
 import { applyVote, timeAgo, toggleVote } from '../lib/feed';
 import { buildCommentTree, canMarkBest, type CommentNode, type CommentSort } from '../lib/commentTree';
 import type { Comment, ForumPost } from '../types';
@@ -14,14 +23,12 @@ import { Avatar } from '../components/ui/Avatar';
 import { Button } from '../components/ui/button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Menu } from '../components/ui/Menu';
-import { Segmented } from '../components/ui/Segmented';
 import { Skeleton } from '../components/ui/skeleton';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { PhotoGrid } from '../components/feed/PhotoGrid';
 import { CommentItem } from '../components/post/CommentItem';
 import { CommentComposer } from '../components/post/CommentComposer';
 
-const SORTS = [{ value: 'relevant', label: 'Most relevant' }, { value: 'newest', label: 'Newest' }];
 
 export function PostPage() {
   const { id = '' } = useParams<{ id: string }>();
@@ -35,11 +42,11 @@ export function PostPage() {
 
   const postKey = ['post', id];
   const commentsKey = ['comments', id];
-  const { data: post, isLoading } = useQuery({ queryKey: postKey, queryFn: () => ForumService.getPost(id), enabled: !!id });
+  const { data: post, isLoading, isError, refetch } = useQuery({ queryKey: postKey, queryFn: () => ForumService.getPost(id), enabled: !!id, retry: 1 });
   const { data: comments = [] } = useQuery({ queryKey: commentsKey, queryFn: () => ForumService.getComments(id), enabled: !!id });
   const { data: related = [] } = useQuery({
     queryKey: ['related', post?.topic],
-    queryFn: () => ForumService.getPosts(undefined, post!.topic, 5),
+    queryFn: () => ForumService.getPosts(undefined, post!.topic, 6),
     enabled: !!post?.topic,
   });
 
@@ -79,7 +86,7 @@ export function PostPage() {
     mutationFn: (n: CommentNode) => ForumService.deleteComment(id, n.id),
     onSuccess: () => toast.success('Comment deleted.'),
     onError: () => toast.error("Couldn't delete the comment."),
-    onSettled: () => { qc.invalidateQueries({ queryKey: commentsKey }); qc.invalidateQueries({ queryKey: postKey }); },
+    onSettled: () => { qc.invalidateQueries({ queryKey: commentsKey }); qc.invalidateQueries({ queryKey: postKey }); qc.invalidateQueries({ queryKey: ['feed'] }); },
   });
 
   const votePost = async (dir: 'up' | 'down') => {
@@ -124,9 +131,10 @@ export function PostPage() {
   };
 
   const isAdmin = appUser?.role === 'admin';
-  const canDelete = (n: CommentNode) => !!uid && (n.authorId === uid || post?.authorId === uid || isAdmin);
+  const canDelete = (n: CommentNode) => !!uid && (n.authorId === uid || isAdmin) // backend: comment author or admin only;
 
   if (isLoading) return <div className="mx-auto w-full max-w-2xl space-y-3 p-4"><Skeleton className="h-8 w-2/3" /><Skeleton className="h-32 w-full" /><Skeleton className="h-20 w-full" /></div>;
+  if (isError) return <div className="mx-auto w-full max-w-2xl"><EmptyState title="Couldn't load this post" body="Check your connection and try again." action={<Button onClick={() => refetch()}>Retry</Button>} /></div>;
   if (!post) return <div className="mx-auto w-full max-w-2xl"><EmptyState title="Post not found" body="It may have been deleted." action={<Link to="/" className="font-semibold text-brand">Back to Home</Link>} /></div>;
 
   const score = post.upvotes.length - post.downvotes.length;
@@ -136,7 +144,7 @@ export function PostPage() {
       onMarkBest={(c) => bestMut.mutate(c ? c.id : null)} onDelete={(c) => setConfirm({ kind: 'comment', node: c })} />
   );
   const pill = 'flex h-11 w-11 items-center justify-center rounded-full hover:bg-line focus-visible:outline-2 focus-visible:outline-brand';
-  const relatedPosts = related.filter((p) => p.id !== post.id).slice(0, 4);
+  const relatedPosts = related.filter((p) => p.id !== post.id).slice(0, 5);
 
   return (
     <div className="mx-auto flex w-full max-w-5xl gap-6 px-0 md:px-4">
@@ -174,22 +182,36 @@ export function PostPage() {
         </article>
 
         <section aria-label="Comments" className="mt-2 bg-surface px-4 pb-4 pt-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[17px] font-bold text-ink">Comments</h2>
-            <Segmented label="Sort comments" options={SORTS} value={sort} onChange={(v) => setSort(v as CommentSort)} />
-          </div>
+          <h2 className="flex flex-wrap items-center text-[17px] font-bold text-ink">
+            {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
+            <span aria-hidden className="mx-2 text-ink-muted">·</span>
+            <label className="flex items-center text-[14px] font-semibold text-ink-muted">
+              Sort:
+              <select value={sort} onChange={(e) => setSort(e.target.value as CommentSort)} className="min-h-11 bg-transparent pl-1 text-ink focus-visible:outline-2 focus-visible:outline-brand">
+                <option value="relevant">Most relevant</option>
+                <option value="newest">Newest</option>
+              </select>
+            </label>
+          </h2>
           {comments.length === 0 ? (
             <EmptyState title="No comments yet" body="Be the first to reply." />
           ) : (
             <ul>{tree.best && row(tree.best, true)}{tree.roots.map((n) => row(n))}</ul>
           )}
         </section>
-        <CommentComposer replyingTo={replyTo ? replyTo.authorName || 'Student' : null} onCancelReply={() => setReplyTo(null)} onSubmit={submit} />
+        <CommentComposer name={uid ? (appUser?.displayName || 'you') : null} replyKey={replyTo?.id ?? null} onRequireLogin={() => requireLogin('Log in to comment')} replyingTo={replyTo ? replyTo.authorName || 'Student' : null} onCancelReply={() => setReplyTo(null)} onSubmit={submit} />
       </div>
 
-      {relatedPosts.length > 0 && (
-        <aside aria-label="Related posts" className="hidden w-72 shrink-0 lg:block">
-          <div className="sticky top-4 rounded-card bg-surface p-4">
+      <aside aria-label="Topic info" className="hidden w-72 shrink-0 space-y-3 lg:block">
+        {post.topic && (
+          <div className="rounded-card bg-surface p-4">
+            <h2 className="text-[15px] font-bold text-ink">About {topicLabel(post.topic)}</h2>
+            <p className="mt-1 text-[14px] text-ink-muted">{TOPIC_BLURB[post.topic] || 'Posts on this topic.'}</p>
+            <Link to={`/?topic=${encodeURIComponent(post.topic)}`} className="mt-2 flex min-h-11 items-center text-[14px] font-semibold text-brand focus-visible:outline-2 focus-visible:outline-brand">More in {topicLabel(post.topic)}</Link>
+          </div>
+        )}
+        {relatedPosts.length > 0 && (
+          <div className="rounded-card bg-surface p-4">
             <h2 className="mb-2 text-[15px] font-bold text-ink">Related posts</h2>
             <ul className="space-y-1">
               {relatedPosts.map((p) => (
@@ -197,8 +219,8 @@ export function PostPage() {
               ))}
             </ul>
           </div>
-        </aside>
-      )}
+        )}
+      </aside>
 
       <ConfirmationModal
         isOpen={!!confirm}

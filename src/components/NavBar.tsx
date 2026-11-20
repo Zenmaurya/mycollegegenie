@@ -25,14 +25,12 @@ const NAV_LINKS = [
   { to: '/playlists', icon: Youtube, label: 'Playlists' },
   { to: '/find-pg', icon: BedDouble, label: 'Find PG' },
   { to: '/campus-exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
-  { to: '/forum', icon: MessagesSquare, label: 'Forum' },
 ] as const;
 
 const MOBILE_BOTTOM_NAV_LINKS = [
   { to: '/', icon: Home, label: 'Home' },
   { to: '/browse', icon: LibraryBig, label: 'Browse' },
   { to: '/campus-exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
-  { to: '/forum', icon: MessagesSquare, label: 'Forum' },
 ] as const;
 
 const MOBILE_NAV_LINKS = [

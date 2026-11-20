@@ -79,3 +79,11 @@ test('canMarkBest: only the post author, only on top-level comments', () => {
   assert.equal(canMarkBest(undefined, 'u1', 1), false);
   assert.equal(canMarkBest('u1', '', 1), false);
 });
+
+test('a parent cycle (a<->b) still surfaces both comments', () => {
+  const { roots } = buildCommentTree([c('a', 'b'), c('b', 'a')], null, 'newest');
+  const ids: string[] = [];
+  const all = (n: { id: string; replies: any[] }) => { ids.push(n.id); n.replies.forEach(all); };
+  roots.forEach(all);
+  assert.deepEqual(ids.sort(), ['a', 'b']);
+});

@@ -30,13 +30,13 @@ export const ForumService = {
   },
 
 
+  /** null = the post does not exist (404); any other failure throws so the page can offer Retry. */
   getPost: async (postId: string) => {
     try {
-      const p = await fetchWithAuth(`/api/forum/posts/${postId}`);
-      return mapPost(p);
+      return mapPost(await fetchWithAuth(`/api/forum/posts/${postId}`));
     } catch (error) {
-      console.error('Failed to get post:', error);
-      return null;
+      if (error instanceof Error && /not found/i.test(error.message)) return null;
+      throw error;
     }
   },
 

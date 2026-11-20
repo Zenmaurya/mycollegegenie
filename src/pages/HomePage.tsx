@@ -751,7 +751,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               Connect with fellow students, ask questions about courses, discuss exam strategies, and share your academic journey.
             </p>
             <Link 
-              to="/forum"
+              to="/"
               className="inline-flex items-center justify-center gap-3 px-6 sm:px-10 py-3 sm:py-5 bg-white text-purple-900 rounded-2xl font-black text-sm sm:text-lg hover:bg-purple-50 transition-all shadow-2xl shadow-black/20 group w-full sm:w-auto"
             >
               Go to Forum

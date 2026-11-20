@@ -133,7 +133,7 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
                   {showNewBadge && <span className="bg-[#FF0080] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1">NEW</span>}
                 </Link>
               </li>
-              <li><Link to="/forum" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Student Forums</Link></li>
+              <li><Link to="/" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Student Forums</Link></li>
               <li><Link to="/news" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Official News</Link></li>
               <li><Link to="/events" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> College Events</Link></li>
             </ul>

@@ -35,12 +35,12 @@ export function CommentItem(props: Props): ReactElement {
           <div className={`rounded-card px-3 py-2 ${isBest ? 'border-2 border-ink bg-surface' : 'bg-canvas'}`}>
             <div className="flex flex-wrap items-center gap-x-2 text-[13px] text-ink-muted">
               <span className="font-semibold text-ink">{node.authorName || 'Student'}</span>
-              <time dateTime={node.createdAt}>{pending ? 'sending…' : timeAgo(node.createdAt)}</time>
               {isBest && <Badge tone="success">Best answer</Badge>}
             </div>
             <p className="mt-1 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-ink">{node.content}</p>
           </div>
           <div className="flex flex-wrap items-center">
+            <time dateTime={node.createdAt} className="px-1 text-[13px] text-ink-muted">{pending ? 'sending…' : timeAgo(node.createdAt)}</time>
             <button type="button" onClick={() => onVote(node)} disabled={pending} aria-pressed={voted} aria-label={`Upvote, ${node.upvotes.length} upvotes`} className={`${btn} ${voted ? 'text-brand' : ''}`}>
               <ArrowBigUp className="h-4 w-4" aria-hidden /> {node.upvotes.length}
             </button>

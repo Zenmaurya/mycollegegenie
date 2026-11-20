@@ -34,7 +34,7 @@ export function LeftNav() {
           <ul className="space-y-0.5">
             {FORUM_TOPICS.map((t) => (
               <li key={t}>
-                <Link to={`/forum?topic=${encodeURIComponent(t)}`} className="flex items-center gap-2 rounded-lg px-3 py-2 text-[15px] text-ink hover:bg-line/60 focus-visible:outline-2 focus-visible:outline-brand">
+                <Link to={`/?topic=${encodeURIComponent(t)}`} className="flex items-center gap-2 rounded-lg px-3 py-2 text-[15px] text-ink hover:bg-line/60 focus-visible:outline-2 focus-visible:outline-brand">
                   <Hash className="h-4 w-4 text-ink-muted" aria-hidden />
                   {topicLabel(t)}
                 </Link>

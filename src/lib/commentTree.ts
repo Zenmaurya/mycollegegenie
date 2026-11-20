@@ -20,12 +20,22 @@ export function buildCommentTree(comments: Comment[], bestId: string | null, sor
   }
 
   // Depth is assigned top-down so it is right whatever order the API returned.
+  const seen = new Set<string>();
   const walk = (n: CommentNode, d: number) => {
+    seen.add(n.id);
     n.depth = d;
     n.replies.sort((a, b) => time(a) - time(b));
     n.replies.forEach((r) => walk(r, d + 1));
   };
   roots.forEach((r) => walk(r, 1));
+  // Parent cycles never reach a root; break each one and surface the comment.
+  for (const n of nodes.values()) {
+    if (seen.has(n.id)) continue;
+    const p = n.parentId ? nodes.get(n.parentId) : undefined;
+    if (p) p.replies = p.replies.filter((r) => r !== n);
+    roots.push(n);
+    walk(n, 1);
+  }
 
   roots.sort(sort === 'newest' ? (a, b) => time(b) - time(a) : (a, b) => score(b) - score(a) || time(b) - time(a));
 
