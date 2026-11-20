@@ -17,6 +17,7 @@ import { Tabs } from '../components/ui/Tabs';
 import { Chip } from '../components/ui/Chip';
 import { Sheet } from '../components/ui/Sheet';
 import { EmptyState } from '../components/ui/EmptyState';
+import { PickCollegeCard } from '../components/feed/PickCollegeCard';
 
 const TABS: { id: FeedTab; label: string }[] = [
   { id: 'foryou', label: 'For You' },
@@ -119,6 +120,8 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
           Ask a question or share something...
         </button>
       </div>
+
+      <PickCollegeCard />
 
       <Tabs label="Feed" items={TABS} value={tab} onChange={chooseTab} />
 
