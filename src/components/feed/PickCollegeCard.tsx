@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 const KEY = 'mcg_college_card_dismissed';
 
 export function PickCollegeCard() {
-  const { appUser } = useAuth();
+  const { appUser, refreshAppUser } = useAuth();
   const [dismissed, setDismissed] = useState(() => {
     try { return sessionStorage.getItem(KEY) === '1'; } catch { return false; }
   });
@@ -18,6 +18,17 @@ export function PickCollegeCard() {
   const notNow = () => {
     setDismissed(true);
     try { sessionStorage.setItem(KEY, '1'); } catch { /* storage blocked */ }
+  };
+
+  // Close first; the card may unmount once appUser has a college, which would strand focus on <body>.
+  const close = () => {
+    setOpen(false);
+    void refreshAppUser(); // step 1 may already be saved even if the user bailed out
+    setTimeout(() => {
+      if (document.activeElement === document.body || !document.activeElement) {
+        document.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus();
+      }
+    }, 100);
   };
 
   if (!shouldShowCollegeCard(appUser, dismissed)) return null;
@@ -34,8 +45,10 @@ export function PickCollegeCard() {
           </div>
         </div>
       </div>
-      <Sheet open={open} onClose={() => setOpen(false)} title="Pick your college">
-        <OnboardingFlow startStep={1} onDone={() => setOpen(false)} />
+      <Sheet open={open} onClose={close} title="Set up your profile">
+        <div className="flex-1 overflow-y-auto p-4">
+          <OnboardingFlow startStep={1} onDone={close} />
+        </div>
       </Sheet>
     </>
   );
