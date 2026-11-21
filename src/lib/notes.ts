@@ -60,6 +60,11 @@ export function yearFromTitle(title: string | null | undefined): number | null {
   return m ? Number(m[1]) : null;
 }
 
+/** Suggested title from an uploaded file name. */
+export function titleFromFilename(name: string): string {
+  return name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 export function formatHelpedPct(yes: number, no: number): string | null {
   const n = yes + no;
   return n < 5 ? null : `${Math.round((yes / n) * 100)}% found it helpful`;

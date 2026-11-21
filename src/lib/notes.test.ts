@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, yearFromTitle, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
+import { canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, yearFromTitle, titleFromFilename, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
 
 const BBA = 'Bachelor of Business Administration (Financial Investment Analysis) [BBA(FIA)]';
 
@@ -34,6 +34,8 @@ test('legacyBrowseToNotes redirects old browse URLs', () => {
 test('yearFromTitle, formatHelpedPct, report reasons', () => {
   assert.strictEqual(yearFromTitle('Taxation PYQ 2023 Dec'), 2023);
   assert.strictEqual(yearFromTitle('Code 120234'), null);
+  assert.strictEqual(yearFromTitle('PYQ_2022-Dec'), 2022);
+  assert.strictEqual(yearFromTitle('PYQ 1999'), null);
   assert.strictEqual(formatHelpedPct(4, 0), null);
   assert.strictEqual(formatHelpedPct(87, 13), '87% found it helpful');
   assert.deepStrictEqual([...RESOURCE_REPORT_REASONS], ['Wrong file', 'Copyright', 'Low quality', 'Spam', 'Other']);
@@ -79,4 +81,9 @@ test('previewKind: each kind and garbage', () => {
   assert.deepStrictEqual(previewKind('https://drive.google.com/drive/folders/zzz'), { kind: 'other' });
   assert.deepStrictEqual(previewKind('not a url'), { kind: 'other' });
   assert.deepStrictEqual(previewKind(''), { kind: 'other' });
+});
+
+test('titleFromFilename drops the extension and tidies separators', () => {
+  assert.strictEqual(titleFromFilename('  Micro_Eco--Unit-1  notes.final.PDF'), 'Micro Eco Unit 1 notes.final');
+  assert.strictEqual(titleFromFilename('scan'), 'scan');
 });

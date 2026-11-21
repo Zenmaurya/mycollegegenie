@@ -32,7 +32,7 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
  */
 function compressImage(
   file: File,
-  folder: 'pyqs' | 'notes' | 'books' | 'resources' | 'exchange' | 'events' | 'avatars' | 'pg'
+  folder: 'pyqs' | 'notes' | 'books' | 'resources' | 'thumbnails' | 'exchange' | 'events' | 'avatars' | 'pg'
 ): Promise<File> {
   return new Promise((resolve) => {
     if (!file.type.startsWith('image/') || file.type === 'image/gif') {
@@ -110,7 +110,7 @@ function compressImage(
  */
 export const uploadFile = async (
   file: File,
-  folder: 'pyqs' | 'notes' | 'books' | 'resources' | 'exchange' | 'events' | 'avatars' | 'pg' = 'resources',
+  folder: 'pyqs' | 'notes' | 'books' | 'resources' | 'thumbnails' | 'exchange' | 'events' | 'avatars' | 'pg' = 'resources',
   meta: { subject?: string; course?: string; subjectCode?: string } = {},
   onProgress?: (percent: number) => void,
   _isRetry = false,
@@ -125,7 +125,7 @@ export const uploadFile = async (
   // Compress images before choosing their upload route so the signed size matches
   // the bytes sent to storage and users do not wait for an oversized transfer.
   let fileToUpload = file;
-  if (file.type.startsWith('image/') && file.type !== 'image/gif') {
+  if (folder !== 'thumbnails' && file.type.startsWith('image/') && file.type !== 'image/gif') { // thumbnails are already small WebP
     try {
       fileToUpload = await compressImage(file, folder);
     } catch (e) {
@@ -137,7 +137,7 @@ export const uploadFile = async (
   // Bypass the backend bytes hop for PDFs and compressed images.
   const isDirectUploadType = fileToUpload.type === 'application/pdf' ||
     ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(fileToUpload.type);
-  if (isDirectUploadType && ['pyqs', 'notes', 'books', 'resources'].includes(folder)) {
+  if (isDirectUploadType && ['pyqs', 'notes', 'books', 'resources', 'thumbnails'].includes(folder)) {
     let directUploadStarted = false;
     try {
       const presignResponse = await fetchWithAuth('/api/resources/presign-upload', {
