@@ -16,11 +16,13 @@ export interface CommunitySummary {
   /** Viewer follows this page (false when logged out). */
   following?: boolean;
 }
+/** Latest verification request; only page admins receive it. */
+export interface VerificationState { status: 'pending' | 'approved' | 'rejected'; method: 'instagram' | 'email' | 'letter'; code: string; created_at: string }
 export interface CommunityDetail extends CommunitySummary {
   description: string | null; links: Record<string, string>; founded_year: number | null; achievements: string | null;
   faculty_advisor: string | null; banner_url: string | null;
   isListed: boolean;
-  viewer: { following: boolean; role: PageRole | null; status: 'active' | 'pending' | null; joinMode: JoinMode };
+  viewer: { following: boolean; role: PageRole | null; status: 'active' | 'pending' | null; joinMode: JoinMode; verification?: VerificationState | null };
 }
 export interface CommunityMember { userId: string; displayName: string; avatar: string | null; role: PageRole; title: string | null; sort_order: number }
 export interface EventCard {
@@ -71,9 +73,10 @@ export function deadlineSoon(saved: EventCard[], now: Date): EventCard[] {
 
 export type CommunityForm = { name: string; category: string; description: string; instagram: string; linkedin: string; website: string; email: string };
 
-const isHttpsUrl = (v: string) => {
-  if (!v.startsWith('https://') || v.length > 500) return false;
-  try { return new URL(v).hostname.length > 0; } catch { return false; }
+/** Mirrors backend safeHttpsUrl: https only, no whitespace/control chars, no credentials, at most 500 chars. */
+export const isHttpsUrl = (v: string) => {
+  if (!v.startsWith('https://') || v.length > 500 || /[\s\x00-\x1f\x7f]/.test(v)) return false;
+  try { const u = new URL(v); return u.protocol === 'https:' && !!u.hostname && !u.username && !u.password; } catch { return false; }
 };
 
 /** Client-side first pass; the server's validation is final. Returns field -> message. */

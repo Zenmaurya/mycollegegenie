@@ -24,7 +24,7 @@ export function MembersPanel({ slug, viewerId, viewerRole, onChanged }: Props) {
 
   const mut = useMutation({
     mutationFn: ({ m, u }: { m: CommunityMember; u: MemberUpdate }) => updateMember(slug, m.userId, u),
-    onSuccess: async () => { setError(''); setConfirm(null); await onChanged(); },
+    onSuccess: async (_d, v) => { setError(''); setConfirm(null); if (v.u.action === 'remove') toast.success('Member removed'); await onChanged(); },
     onError: (e: Error) => { setError(e.message || 'Could not update the member'); setConfirm(null); },
   });
   const run = (m: CommunityMember, u: MemberUpdate) => mut.mutate({ m, u });
@@ -51,8 +51,8 @@ export function MembersPanel({ slug, viewerId, viewerRole, onChanged }: Props) {
               <li key={m.userId} className="flex flex-wrap items-center gap-3 p-3">
                 <Avatar src={m.avatar} name={m.displayName} />
                 <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">{m.displayName}</span>
-                <Button size="sm" onClick={() => run(m, { action: 'approve' })} disabled={mut.isPending} aria-label={`Approve ${m.displayName}`}>Approve</Button>
-                <Button size="sm" variant="secondary" onClick={() => run(m, { action: 'decline' })} disabled={mut.isPending} aria-label={`Decline ${m.displayName}`}>Decline</Button>
+                <Button onClick={() => run(m, { action: 'approve' })} disabled={mut.isPending} aria-label={`Approve ${m.displayName}`}>Approve</Button>
+                <Button variant="secondary" onClick={() => run(m, { action: 'decline' })} disabled={mut.isPending} aria-label={`Decline ${m.displayName}`}>Decline</Button>
               </li>
             ))}
           </ul>
@@ -95,11 +95,11 @@ export function MembersPanel({ slug, viewerId, viewerRole, onChanged }: Props) {
                       </div>
                     )}
                     {isAdmin && title !== (m.title ?? '') && (
-                      <Button size="sm" variant="secondary" disabled={mut.isPending}
+                      <Button variant="secondary" disabled={mut.isPending}
                         onClick={() => run(m, { action: 'set_role', title: title.trim() || null })} aria-label={`Save title for ${m.displayName}`}>Save title</Button>
                     )}
                     {(isAdmin || m.role !== 'admin') && !self && (
-                      <Button size="sm" variant="danger" disabled={mut.isPending} onClick={() => setConfirm({ m, kind: 'remove' })} aria-label={`Remove ${m.displayName}`}>Remove</Button>
+                      <Button variant="danger" disabled={mut.isPending} onClick={() => setConfirm({ m, kind: 'remove' })} aria-label={`Remove ${m.displayName}`}>Remove</Button>
                     )}
                   </div>
                 </li>

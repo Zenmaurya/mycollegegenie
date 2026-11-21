@@ -10,17 +10,17 @@ export function NewEventPage() {
   const { slug = '' } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { q, viewer } = useCommunity(slug);
+  const { q, viewer, role } = useCommunity(slug);
 
   if (q.isPending) return wrapPage(<Skeleton className="h-56 w-full rounded-card" />);
   if (q.isError) return wrapPage(<Button onClick={() => void q.refetch()}>Retry</Button>);
   const d = q.data;
-  const role = d.viewer.status === 'active' ? d.viewer.role : null;
-  if (role !== 'admin' && role !== 'core') return <Navigate to={`/c/${slug}`} replace />;
+  if (!role) return <Navigate to={`/c/${slug}`} replace />;
 
   const back = () => navigate(`/c/${slug}/events`);
+  const cancel = () => navigate(`/c/${slug}/manage?tab=events`);
   return wrapPage(
-    <EventForm slug={slug} isOfficial={d.status === 'official' || d.kind === 'mcg'} onCancel={back}
+    <EventForm slug={slug} isOfficial={d.status === 'official' || d.kind === 'mcg'} onCancel={cancel}
       onSaved={async () => {
         await Promise.all([
           qc.invalidateQueries({ queryKey: ['community', viewer] }),

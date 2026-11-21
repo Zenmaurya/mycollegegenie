@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { EVENT_TYPES, EVENT_MODES, ELIGIBILITY, type EventCard } from '../../lib/communities';
-import { eventToForm, emptyEventForm, toIsoWithOffset, validateEventForm, type EventFormValues } from '../../lib/eventForm';
+import { eventToForm, emptyEventForm, toIsoWithOffset, validateEventForm, feePrizeState, type EventFormValues } from '../../lib/eventForm';
 import { createEvent, updateEvent, type EventInput } from '../../services/eventService';
 import { Field, field, aria, pickImage, uploadImage } from './CommunityFields';
 import { Button } from '../ui/button';
@@ -55,7 +55,7 @@ export function EventForm({ slug, isOfficial, initial, onSaved, onCancel }: Prop
     }
   };
 
-  const hint = isOfficial ? undefined : 'Fees and prizes need an Official page';
+  const { disabled: feeLocked, hint } = feePrizeState(isOfficial, initial);
   return (
     <form onSubmit={submit} noValidate className="space-y-4 rounded-card bg-surface p-4 shadow-card">
       <h2 className="text-[19px] font-bold text-ink">{initial ? 'Edit event' : 'Add event'}</h2>
@@ -83,10 +83,10 @@ export function EventForm({ slug, isOfficial, initial, onSaved, onCancel }: Prop
         </Field>
       </div>
       <Field id="entry_fee" label="Entry fee in ₹ (blank is free)" error={err('entry_fee')} hint={hint}>
-        <input id="entry_fee" type="number" inputMode="numeric" min={0} max={100000} className={field} value={f.entry_fee} onChange={set('entry_fee')} disabled={!isOfficial} {...aria('entry_fee', err('entry_fee'), !isOfficial)} />
+        <input id="entry_fee" type="number" inputMode="numeric" min={0} max={100000} className={field} value={f.entry_fee} onChange={set('entry_fee')} disabled={feeLocked} {...aria('entry_fee', err('entry_fee'), !!hint)} />
       </Field>
       <Field id="prize" label="Prize (optional)" error={err('prize')} hint={hint}>
-        <input id="prize" className={field} value={f.prize} onChange={set('prize')} maxLength={200} disabled={!isOfficial} {...aria('prize', err('prize'), !isOfficial)} />
+        <input id="prize" className={field} value={f.prize} onChange={set('prize')} maxLength={200} disabled={feeLocked} {...aria('prize', err('prize'), !!hint)} />
       </Field>
       <Field id="register_url" label="Registration link (optional)" error={err('register_url')}>
         <input id="register_url" type="url" inputMode="url" placeholder="https://..." className={field} value={f.register_url} onChange={set('register_url')} {...a('register_url')} />

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { matchRoutes } from 'react-router-dom';
-import { toIsoWithOffset, fromIsoToLocalInput, validateEventForm, emptyEventForm, type EventFormValues } from './eventForm';
+import { toIsoWithOffset, fromIsoToLocalInput, validateEventForm, feePrizeState, emptyEventForm, type EventFormValues } from './eventForm';
 
 const at = (min: number) => ({ getTimezoneOffset: () => min }) as Date; // -330 = India
 
@@ -58,4 +58,20 @@ test('static manage and events/new routes outrank /c/:slug/:tab?', () => {
   assert.equal(matchRoutes(routes, '/c/abc/manage')![0].route.path, '/c/:slug/manage');
   assert.equal(matchRoutes(routes, '/c/abc/events/new')![0].route.path, '/c/:slug/events/new');
   assert.equal(matchRoutes(routes, '/c/abc/events')![0].route.path, '/c/:slug/:tab?');
+});
+
+test('feePrizeState', () => {
+  assert.deepEqual(feePrizeState(true), { disabled: false });
+  assert.deepEqual(feePrizeState(false), { disabled: true, hint: 'Fees and prizes need an Official page' });
+  assert.deepEqual(feePrizeState(false, { entry_fee: 0, prize: null }), { disabled: true, hint: 'Fees and prizes need an Official page' });
+  assert.deepEqual(feePrizeState(false, { entry_fee: 50, prize: null }), { disabled: false, hint: 'Fees and prizes need an Official page — clear them to save' });
+  assert.equal(feePrizeState(false, { entry_fee: 0, prize: 'Cash' }).disabled, false);
+});
+test('register url mirrors backend safeHttpsUrl', () => {
+  assert.ok(v({ register_url: 'https://a.com/a b' }).register_url);
+  assert.ok(v({ register_url: 'https://a.com/' }).register_url);
+  assert.ok(v({ register_url: 'https://user:pw@a.com' }).register_url);
+  assert.ok(v({ register_url: 'https://user@a.com' }).register_url);
+  assert.equal(v({ register_url: `https://a.com/${'x'.repeat(486)}` }).register_url, undefined); // 500 chars
+  assert.ok(v({ register_url: `https://a.com/${'x'.repeat(487)}` }).register_url);
 });

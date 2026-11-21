@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -22,7 +22,11 @@ export function useCommunity(slug: string) {
   const { appUser } = useAuth();
   const viewer = appUser?.uid ?? 'anon';
   const q = useQuery({ queryKey: ['community', viewer, appUser?.collegeId ?? '', slug], queryFn: () => getCommunity(slug), retry: false });
-  return { q, viewer, uid: appUser?.uid ?? '' };
+  const d = q.data;
+  const member = d?.viewer.status === 'active' ? d.viewer.role : null;
+  // MCG site admins manage any page
+  const role: 'admin' | 'core' | null = appUser?.role === 'admin' ? 'admin' : member === 'admin' || member === 'core' ? member : null;
+  return { q, viewer, uid: appUser?.uid ?? '', role };
 }
 
 function PageSection({ detail, onChanged }: { detail: CommunityDetail; onChanged: () => Promise<unknown> }) {
@@ -38,16 +42,20 @@ function PageSection({ detail, onChanged }: { detail: CommunityDetail; onChanged
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
   const [serverError, setServerError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirmRename, setConfirmRename] = useState(false);
 
   const set = (k: keyof CommunityForm) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
   const pick = (setter: (f: File | null) => void, label: string) => pickImage(setter, (m) => setErrors((p) => ({ ...p, [label]: m })));
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
+  const renames = detail.status === 'official' && detail.kind === 'society' && f.name.trim() !== detail.name;
+  const submit = async (e?: FormEvent) => {
+    e?.preventDefault();
     setServerError('');
     const v = validateCommunityForm(f);
     setErrors(v);
     if (Object.keys(v).length) return;
+    if (renames && !confirmRename) { setConfirmRename(true); return; }
+    setConfirmRename(false);
     setBusy(true);
     try {
       const [logo_url, banner_url] = await Promise.all([uploadImage(logo), uploadImage(banner)]);
@@ -69,6 +77,7 @@ function PageSection({ detail, onChanged }: { detail: CommunityDetail; onChanged
   };
 
   return (
+    <>
     <form onSubmit={submit} noValidate className="space-y-4">
       <CommunityFields f={f} errors={errors} onChange={set} onLogo={pick(setLogo, 'logo')} onBanner={pick(setBanner, 'banner')} nameLocked={detail.kind === 'mcg'} />
       <Field id="advisor" label="Faculty advisor (optional)">
@@ -83,6 +92,9 @@ function PageSection({ detail, onChanged }: { detail: CommunityDetail; onChanged
       {serverError && <p role="alert" className="text-[15px] text-danger">{serverError}</p>}
       <Button type="submit" loading={busy}>Save page</Button>
     </form>
+    <ConfirmSheet open={confirmRename} title="Change name?" body="Changing the name removes your Official badge until MCG verifies it again."
+        confirmLabel="Change name" busy={busy} onClose={() => setConfirmRename(false)} onConfirm={() => { void submit(); }} />
+    </>
   );
 }
 
@@ -117,8 +129,8 @@ function EventsSection({ detail, viewer, onChanged }: { detail: CommunityDetail;
                 <span className="block truncate text-[15px] font-semibold text-ink">{e.title}</span>
                 <span className="block text-[13px] text-ink-muted">{e.type} · {new Date(e.starts_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
               </span>
-              <Button size="sm" variant="secondary" onClick={() => setEditing(e)} aria-label={`Edit ${e.title}`}>Edit</Button>
-              <Button size="sm" variant="danger" onClick={() => setDeleting(e)} aria-label={`Delete ${e.title}`}>Delete</Button>
+              <Button variant="secondary" onClick={() => setEditing(e)} aria-label={`Edit ${e.title}`}>Edit</Button>
+              <Button variant="danger" onClick={() => setDeleting(e)} aria-label={`Delete ${e.title}`}>Delete</Button>
             </li>
           ))}
         </ul>
@@ -133,16 +145,16 @@ export function ManageCommunityPage() {
   const { slug = '' } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { q, viewer, uid } = useCommunity(slug);
-  const [tab, setTab] = useState('');
+  const { q, viewer, uid, role } = useCommunity(slug);
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState(params.get('tab') ?? '');
 
   if (q.isPending) return wrapPage(<Skeleton className="h-56 w-full rounded-card" />);
   if (q.isError) {
     return wrapPage(<div className="rounded-card bg-surface p-6 text-center shadow-card"><p className="mb-3 text-[17px] font-semibold text-ink">Couldn't load this page</p><Button onClick={() => void q.refetch()}>Retry</Button></div>);
   }
   const d = q.data;
-  const role = d.viewer.status === 'active' ? d.viewer.role : null;
-  if (role !== 'admin' && role !== 'core') return <Navigate to={`/c/${slug}`} replace />;
+  if (!role) return <Navigate to={`/c/${slug}`} replace />;
 
   const tabs = role === 'admin'
     ? [{ id: 'page', label: 'Page' }, { id: 'members', label: 'Members' }, { id: 'events', label: 'Events' }, { id: 'verification', label: 'Verification' }]

@@ -1,5 +1,5 @@
 // Pure helpers for the event form. Mirrors backend validateEvent.
-import { EVENT_TYPES, EVENT_MODES, ELIGIBILITY, type EventCard } from './communities';
+import { EVENT_TYPES, EVENT_MODES, ELIGIBILITY, isHttpsUrl, type EventCard } from './communities';
 
 export type EventFormValues = {
   title: string; type: string; mode: string; eligibility: string; eligibility_note: string;
@@ -40,10 +40,6 @@ export function eventToForm(e: EventCard): EventFormValues {
   };
 }
 
-const isHttps = (v: string) => {
-  if (!v.startsWith('https://') || v.length > 500) return false;
-  try { return new URL(v).hostname.length > 0; } catch { return false; }
-};
 const int = (v: string) => (/^\d+$/.test(v.trim()) ? Number(v) : NaN);
 
 export function validateEventForm(f: EventFormValues, { isOfficial }: { isOfficial: boolean }): Partial<Record<keyof EventFormValues, string>> {
@@ -73,6 +69,13 @@ export function validateEventForm(f: EventFormValues, { isOfficial }: { isOffici
     if (fee > 0) e.entry_fee = 'Fees and prizes need an Official page';
     if (f.prize.trim()) e.prize = 'Fees and prizes need an Official page';
   }
-  if (f.register_url.trim() && !isHttps(f.register_url.trim())) e.register_url = 'Use a full https:// link';
+  if (f.register_url.trim() && !isHttpsUrl(f.register_url.trim())) e.register_url = 'Use a full https:// link';
   return e;
+}
+
+/** Fee and prize fields: locked on unverified pages, unless the event already carries a fee or prize that must be cleared. */
+export function feePrizeState(isOfficial: boolean, initial?: Pick<EventCard, 'entry_fee' | 'prize'>): { disabled: boolean; hint?: string } {
+  if (isOfficial) return { disabled: false };
+  if (initial && (initial.entry_fee > 0 || initial.prize)) return { disabled: false, hint: 'Fees and prizes need an Official page — clear them to save' };
+  return { disabled: true, hint: 'Fees and prizes need an Official page' };
 }
