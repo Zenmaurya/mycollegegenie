@@ -13,6 +13,8 @@ export interface CommunitySummary {
   id: string; slug: string; kind: 'society' | 'mcg'; name: string; category: string; logo_url: string | null; status: CommunityStatus;
   college: { id: string; short_name: string } | null;
   followers: number; members: number; recruitment_until: string | null;
+  /** Viewer follows this page (false when logged out). */
+  following?: boolean;
 }
 export interface CommunityDetail extends CommunitySummary {
   description: string | null; links: Record<string, string>; founded_year: number | null; achievements: string | null;
@@ -69,6 +71,11 @@ export function deadlineSoon(saved: EventCard[], now: Date): EventCard[] {
 
 export type CommunityForm = { name: string; category: string; description: string; instagram: string; linkedin: string; website: string; email: string };
 
+const isHttpsUrl = (v: string) => {
+  if (!v.startsWith('https://') || v.length > 500) return false;
+  try { return new URL(v).hostname.length > 0; } catch { return false; }
+};
+
 /** Client-side first pass; the server's validation is final. Returns field -> message. */
 export function validateCommunityForm(f: CommunityForm): Partial<Record<keyof CommunityForm, string>> {
   const e: Partial<Record<keyof CommunityForm, string>> = {};
@@ -78,9 +85,9 @@ export function validateCommunityForm(f: CommunityForm): Partial<Record<keyof Co
   if (f.description.length > 1000) e.description = 'Keep the description under 1000 characters';
   for (const k of ['instagram', 'linkedin', 'website'] as const) {
     const v = f[k].trim();
-    if (v && (!v.startsWith('https://') || v.length > 500)) e[k] = 'Links must start with https://';
+    if (v && !isHttpsUrl(v)) e[k] = 'Links must be a full https:// address';
   }
   const mail = f.email.trim();
-  if (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) e.email = 'Enter a valid email';
+  if (mail && (mail.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail))) e.email = 'Enter a valid email';
   return e;
 }

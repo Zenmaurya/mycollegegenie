@@ -58,6 +58,8 @@ test('validateCommunityForm: links must be https, email plain', () => {
   assert.ok(validateCommunityForm({ ...okForm, linkedin: 'javascript:alert(1)' }).linkedin);
   assert.ok(validateCommunityForm({ ...okForm, website: 'x.com' }).website);
   assert.deepEqual(validateCommunityForm({ ...okForm, website: 'https://x.com' }), {});
+  assert.ok(validateCommunityForm({ ...okForm, website: 'https://' }).website);
+  assert.ok(validateCommunityForm({ ...okForm, email: `${'a'.repeat(116)}@b.co` }).email);
   assert.ok(validateCommunityForm({ ...okForm, email: 'nope' }).email);
   assert.deepEqual(validateCommunityForm({ ...okForm, email: 'a@b.co' }), {});
 });

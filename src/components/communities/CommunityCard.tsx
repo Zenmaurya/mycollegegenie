@@ -5,9 +5,9 @@ import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/button';
 
-interface Props { community: CommunitySummary; following: boolean; onToggleFollow: (c: CommunitySummary, following: boolean) => void }
+interface Props { community: CommunitySummary; following: boolean; followers: number; onToggleFollow: (c: CommunitySummary, following: boolean) => void }
 
-export function CommunityCard({ community: c, following, onToggleFollow }: Props) {
+export function CommunityCard({ community: c, following, followers, onToggleFollow }: Props) {
   return (
     <li className="flex items-center gap-3 rounded-card bg-surface p-3 shadow-card">
       <Link to={`/c/${c.slug}`} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-brand">
@@ -15,7 +15,7 @@ export function CommunityCard({ community: c, following, onToggleFollow }: Props
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[17px] font-bold text-ink">{c.name}</span>
           <span className="block truncate text-[13px] text-ink-muted">
-            {[c.college?.short_name, c.category, `${c.followers} ${c.followers === 1 ? 'follower' : 'followers'}`].filter(Boolean).join(' · ')}
+            {[c.college?.short_name, c.category, `${followers} ${followers === 1 ? 'follower' : 'followers'}`].filter(Boolean).join(' · ')}
           </span>
           <span className="mt-1 block">
             {c.status === 'official'

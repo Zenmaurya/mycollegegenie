@@ -7,7 +7,6 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { follow, listCommunities, unfollow } from '../../services/communityService';
 import { CATEGORIES, type CommunitySummary } from '../../lib/communities';
 import { shouldLoadMore } from '../../lib/feed';
-import { needsCollege } from '../../lib/onboarding';
 import { CommunityCard } from '../../components/communities/CommunityCard';
 import { OnboardingFlow } from '../../components/onboarding/OnboardingFlow';
 import { Chip } from '../../components/ui/Chip';
@@ -32,7 +31,7 @@ export function CommunitiesPage() {
   const college = atCollege && collegeId ? collegeId : '';
 
   const query = useInfiniteQuery({
-    queryKey: ['communities', { q, category, college, recruiting }],
+    queryKey: ['communities', appUser?.uid ?? 'anon', collegeId, { q, category, college, recruiting }],
     queryFn: ({ pageParam }) => listCommunities({ q, category, college, recruiting, cursor: pageParam }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (p) => p.nextCursor ?? undefined,
@@ -49,6 +48,7 @@ export function CommunitiesPage() {
     return () => io.disconnect();
   }, [hasNextPage, isFetchingNextPage, isError, fetchNextPage, items.length]);
 
+  const isFollowing = (c: CommunitySummary) => followed[c.slug] ?? c.following ?? false;
   const toLogin = (path: string) => navigate('/login', { state: { from: { pathname: path } } });
 
   const onToggleFollow = async (c: CommunitySummary, following: boolean) => {
@@ -64,7 +64,7 @@ export function CommunitiesPage() {
 
   const create = () => {
     if (!user) return toLogin('/c/new');
-    if (needsCollege(appUser)) return setCollegeOpen(true);
+    if (!appUser?.collegeId) return setCollegeOpen(true);
     navigate('/c/new');
   };
   const closeCollege = () => { setCollegeOpen(false); void refreshAppUser(); };
@@ -104,7 +104,7 @@ export function CommunitiesPage() {
         )}
         {items.length > 0 && (
           <ul className="space-y-3">
-            {items.map((c) => <Fragment key={c.id}><CommunityCard community={c} following={followed[c.slug] ?? false} onToggleFollow={onToggleFollow} /></Fragment>)}
+            {items.map((c) => <Fragment key={c.id}><CommunityCard community={c} following={isFollowing(c)} followers={Math.max(0, c.followers + Number(isFollowing(c)) - Number(!!c.following))} onToggleFollow={onToggleFollow} /></Fragment>)}
           </ul>
         )}
         <div ref={sentinel} aria-hidden className="h-1" />

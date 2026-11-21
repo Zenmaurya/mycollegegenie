@@ -5,6 +5,7 @@ import { createCommunity } from '../../services/communityService';
 import { ForumService } from '../../services/forumService';
 import { compressImage, isSupportedImageType } from '../../lib/compressImage';
 import { CATEGORIES, validateCommunityForm, type CommunityForm } from '../../lib/communities';
+import { OnboardingFlow } from '../../components/onboarding/OnboardingFlow';
 import { Button } from '../../components/ui/button';
 
 const field = 'min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-brand';
@@ -21,7 +22,7 @@ function Field({ id, label, error, hint, children }: { id: string; label: string
 }
 
 export function CreateCommunityPage() {
-  const { user, appUser, isAuthLoading } = useAuth();
+  const { user, appUser, isAuthLoading, refreshAppUser } = useAuth();
   const navigate = useNavigate();
   const [f, setF] = useState<CommunityForm>({ name: '', category: '', description: '', instagram: '', linkedin: '', website: '', email: '' });
   const [logo, setLogo] = useState<File | null>(null);
@@ -37,8 +38,8 @@ export function CreateCommunityPage() {
     return (
       <div className="mx-auto w-full max-w-[680px] space-y-3 px-3 py-6 sm:px-4">
         <h1 className="text-[22px] font-bold text-ink">Pick your college first</h1>
-        <p className="text-[15px] text-ink-muted">Society pages belong to a college. Choose yours, then come back.</p>
-        <Link to="/c" className="inline-flex min-h-11 items-center rounded-sm bg-brand px-4 text-[15px] font-semibold text-white">Back to societies</Link>
+        <p className="text-[15px] text-ink-muted">Society pages belong to a college. Choose yours to continue.</p>
+        <OnboardingFlow startStep={1} onDone={() => void refreshAppUser()} />
       </div>
     );
   }
@@ -73,7 +74,10 @@ export function CreateCommunityPage() {
   };
 
   const e = (k: string) => errors[k] || undefined;
-  const d = (k: string) => (e(k) ? { 'aria-invalid': true, 'aria-describedby': `${k}-err` } : {});
+  const d = (k: string) => {
+    const ids = [k === 'description' ? 'description-hint' : '', e(k) ? `${k}-err` : ''].filter(Boolean).join(' ');
+    return { ...(e(k) ? { 'aria-invalid': true } : {}), ...(ids ? { 'aria-describedby': ids } : {}) };
+  };
 
   return (
     <form onSubmit={submit} noValidate className="mx-auto w-full max-w-[680px] space-y-4 px-3 py-4 sm:px-4">
@@ -93,10 +97,10 @@ export function CreateCommunityPage() {
         <textarea id="description" className={`${field} py-2`} rows={4} value={f.description} onChange={set('description')} {...d('description')} />
       </Field>
       <Field id="logo" label="Logo (optional)" error={e('logo')}>
-        <input id="logo" type="file" accept="image/jpeg,image/png,image/webp" className={field} onChange={pick(setLogo, 'logo')} />
+        <input id="logo" type="file" accept="image/jpeg,image/png,image/webp" className={field} onChange={pick(setLogo, 'logo')} {...d('logo')} />
       </Field>
       <Field id="banner" label="Banner (optional)" error={e('banner')}>
-        <input id="banner" type="file" accept="image/jpeg,image/png,image/webp" className={field} onChange={pick(setBanner, 'banner')} />
+        <input id="banner" type="file" accept="image/jpeg,image/png,image/webp" className={field} onChange={pick(setBanner, 'banner')} {...d('banner')} />
       </Field>
       <Field id="instagram" label="Instagram link (optional)" error={e('instagram')}>
         <input id="instagram" type="url" inputMode="url" placeholder="https://instagram.com/..." className={field} value={f.instagram} onChange={set('instagram')} {...d('instagram')} />
