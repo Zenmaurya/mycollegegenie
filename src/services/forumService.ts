@@ -93,6 +93,10 @@ export const ForumService = {
     }
   },
 
+  // "Not interested": hides a post for this viewer only. Errors carry the server message.
+  hidePost: async (postId: string) => fetchWithAuth(`/api/forum/posts/${postId}/hide`, { method: 'POST' }),
+  unhidePost: async (postId: string) => fetchWithAuth(`/api/forum/posts/${postId}/hide`, { method: 'DELETE' }),
+
   toggleUpvote: async (postId: string, _userId: string, _isUpvoted: boolean) => {
     try {
       return await fetchWithAuth(`/api/forum/posts/${postId}/vote`, {

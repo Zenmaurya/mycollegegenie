@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Menu } from '../ui/Menu';
 import { ForumService } from '../../services/forumService';
 import { topicLabel } from '../../constants';
-import { applyVote, timeAgo } from '../../lib/feed';
+import { applyVote, removePostFromFeed, timeAgo } from '../../lib/feed';
 import type { ForumPost } from '../../types';
 import { PhotoGrid } from './PhotoGrid';
 import { Avatar } from '../ui/Avatar';
@@ -36,6 +36,24 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
     } catch {
       snapshot.forEach(([key, data]) => qc.setQueryData(key, data));
       toast.error("Couldn't vote. Please try again.");
+    }
+  };
+
+  const notInterested = async () => {
+    if (!uid) { navigate('/login', { state: { from: { pathname: location.pathname } } }); return; }
+    const snapshot = qc.getQueriesData({ queryKey: ['feed'] });
+    qc.setQueriesData({ queryKey: ['feed'] }, (d: any) => removePostFromFeed(d, post.id));
+    try {
+      await ForumService.hidePost(post.id);
+      toast("Post hidden. You'll see less like this.", {
+        action: {
+          label: 'Undo',
+          onClick: () => { ForumService.unhidePost(post.id).catch(() => {}).finally(() => qc.invalidateQueries({ queryKey: ['feed'] })); },
+        },
+      });
+    } catch (e) {
+      snapshot.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error(e instanceof Error && e.message ? e.message : "Couldn't hide this post. Please try again.");
     }
   };
 
@@ -83,6 +101,7 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
         <span className={post.topic ? '' : 'ml-auto'} onClick={stop}>
           <Menu label="More actions" items={[
             { label: 'Copy link', onSelect: copyLink },
+            ...(uid && post.authorId === uid ? [] : [{ label: 'Not interested', onSelect: notInterested }]),
             ...(uid && post.authorId === uid ? [] : [{ label: 'Report', danger: true, onSelect: () => (uid ? setReporting(true) : navigate('/login', { state: { from: { pathname: location.pathname } } })) }]),
           ]} />
         </span>

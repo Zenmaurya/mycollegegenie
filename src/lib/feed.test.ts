@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { shouldLoadMore, applyVote, mapFeedPage, feedQuery, signupCardAfter, mapFeedItem, eventLink, outsidersAllowed, timeAgo } from './feed';
+import { shouldLoadMore, applyVote, removePostFromFeed, mapFeedPage, feedQuery, signupCardAfter, mapFeedItem, eventLink, outsidersAllowed, timeAgo } from './feed';
 
 const rawPost = (images: unknown) => ({
   feedType: 'forum_post', id: 'p1', title: 'T', content: 'C', author_id: 'u1', author_name: 'Aman',
@@ -121,4 +121,16 @@ test('applyVote updates only the target post across pages, without mutating the 
   assert.deepStrictEqual(up(down, 1), ['x']);
   assert.deepStrictEqual((down.pages[1].items[0] as any).post.downvotes, ['u1']);
   assert.strictEqual(applyVote(undefined, 'b', 'u1', 'up'), undefined);
+});
+
+test('removePostFromFeed drops only that post across pages, without mutating the snapshot', () => {
+  const mk = (id: string) => mapFeedItem({ ...rawPost([]), id })!;
+  const news = mapFeedItem({ feedType: 'news', id: 'a', title: 'N' })!; // same id as a post: only posts are removed
+  const data = { pages: [{ items: [mk('a'), news], nextCursor: 'n' }, { items: [mk('b')], nextCursor: null }], pageParams: [undefined, 'n'] };
+  const next = removePostFromFeed(data, 'a');
+  assert.deepStrictEqual(next.pages[0].items, [news]);
+  assert.strictEqual(next.pages[1], data.pages[1]);
+  assert.strictEqual(data.pages[0].items.length, 2);
+  assert.strictEqual(next.pages[0].nextCursor, 'n');
+  assert.strictEqual(removePostFromFeed(undefined, 'a'), undefined);
 });

@@ -144,3 +144,14 @@ export function applyVote<T extends FeedData | undefined>(data: T, postId: strin
     })),
   } as T;
 }
+
+/** Drops one post from every cached page (optimistic "Not interested"); input is never mutated, so it doubles as the rollback snapshot. */
+export function removePostFromFeed<T extends FeedData | undefined>(data: T, postId: string): T {
+  if (!data) return data;
+  return {
+    ...data,
+    pages: data.pages.map((pg) => (pg.items.some((it) => it.kind === 'post' && it.post.id === postId)
+      ? { ...pg, items: pg.items.filter((it) => !(it.kind === 'post' && it.post.id === postId)) }
+      : pg)),
+  } as T;
+}
