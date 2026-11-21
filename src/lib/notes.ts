@@ -102,3 +102,11 @@ export function mapNote(raw: any): Resource {
     isHidden: Boolean(raw.is_hidden),
   };
 }
+
+/** Leaving sections mode: carry the viewer's default course/semester into the URL unless it already has them. */
+export function withPickDefaults(params: URLSearchParams, pick: { course: string; semester: string }): URLSearchParams {
+  const out = new URLSearchParams(params);
+  if (pick.course && !out.get('course')) out.set('course', pick.course);
+  if (pick.semester && !out.get('semester')) out.set('semester', pick.semester);
+  return out;
+}

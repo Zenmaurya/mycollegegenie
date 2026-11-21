@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { canonicalCourse, courseShort, currentSemester, legacyBrowseToNotes, yearFromTitle, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS } from './notes';
+import { canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, yearFromTitle, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS } from './notes';
 
 const BBA = 'Bachelor of Business Administration (Financial Investment Analysis) [BBA(FIA)]';
 
@@ -58,4 +58,11 @@ test('courseShort abbreviates known courses', () => {
   assert.strictEqual(courseShort('Bachelor of Management Studies (BMS)'), 'BMS');
   assert.strictEqual(courseShort('B.Com. (Hons.)'), 'B.Com (H)');
   assert.strictEqual(courseShort('Other'), 'Other');
+});
+
+test('withPickDefaults fills only missing course/semester', () => {
+  const pick = { course: 'B.Com. (Hons.)', semester: '3' };
+  assert.strictEqual(withPickDefaults(new URLSearchParams('type=PYQ'), pick).toString(), 'type=PYQ&course=B.Com.+%28Hons.%29&semester=3');
+  assert.strictEqual(withPickDefaults(new URLSearchParams('type=PYQ&course=BMS&semester=1'), pick).get('course'), 'BMS');
+  assert.strictEqual(withPickDefaults(new URLSearchParams('q=tax'), { course: '', semester: '' }).toString(), 'q=tax');
 });

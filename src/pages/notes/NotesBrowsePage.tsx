@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useResources } from '../../context/ResourceContext';
 import { COURSE_METADATA } from '../../constants';
 import { shouldLoadMore } from '../../lib/feed';
-import { canonicalCourse, courseShort, currentSemester } from '../../lib/notes';
+import { canonicalCourse, courseShort, currentSemester, withPickDefaults } from '../../lib/notes';
 import { fetchWithAuth } from '../../lib/apiClient';
 import { NotesService } from '../../services/notesService';
 import { NotesSection } from '../../components/notes/NotesSection';
@@ -45,7 +45,8 @@ export function NotesBrowsePage() {
   const q = params.get('q') ?? '';
   const draft = useMemo<FilterDraft>(() => Object.fromEntries(KEYS.map((k) => [k, params.get(k) ?? ''])) as FilterDraft, [params]);
   const [qInput, setQInput] = useState(q);
-  const filtersActive = !!q || KEYS.some((k) => draft[k]);
+  // sort alone keeps the sections view
+  const filtersActive = !!q || KEYS.some((k) => k !== 'sort' && draft[k]);
 
   const profilePick = useMemo<Pick>(() => {
     const course = canonicalCourse(appUser?.course ?? null);
@@ -60,13 +61,17 @@ export function NotesBrowsePage() {
   toggleRef.current = toggleSave;
   const onToggleSave = useCallback((id: string) => { void toggleRef.current(id); }, []);
 
-  const setParam = useCallback((next: Record<string, string>) => {
+  // Leaving sections mode (tab, subject tile, search) keeps the viewer's default course/semester.
+  const setParam = useCallback((next: Record<string, string>, keepPick = true) => {
     setParams((prev) => {
-      const out = new URLSearchParams(prev);
+      let out = new URLSearchParams(prev);
       for (const [k, v] of Object.entries(next)) { if (v) out.set(k, v); else out.delete(k); }
+      const wasActive = !!prev.get('q') || KEYS.some((k) => k !== 'sort' && prev.get(k));
+      const active = !!out.get('q') || KEYS.some((k) => k !== 'sort' && out.get(k));
+      if (keepPick && !wasActive && active) out = withPickDefaults(out, pick);
       return out;
     }, { replace: true });
-  }, [setParams]);
+  }, [setParams, pick]);
 
   // search box -> ?q= after a short pause
   useEffect(() => {
@@ -81,7 +86,7 @@ export function NotesBrowsePage() {
       const p = { course: d.course, semester: d.semester };
       setStored(p);
       try { localStorage.setItem(PICK_KEY, JSON.stringify(p)); } catch { /* storage blocked */ }
-    } else setParam(d);
+    } else setParam(d, false);
     setSheet(null);
   };
 
@@ -271,7 +276,7 @@ export function NotesBrowsePage() {
       {sheet && (
         <NotesFilterSheet
           mode={sheet} q={q} hasCollege={!!(appUser?.collegeId || appUser?.college)} onApply={apply} onClose={() => setSheet(null)}
-          initial={sheet === 'pick' ? { ...EMPTY, ...pick } : draft}
+          initial={sheet === 'pick' ? { ...EMPTY, ...pick } : filtersActive ? draft : { ...draft, ...pick }}
         />
       )}
     </div>
