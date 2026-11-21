@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowBigDown, ArrowBigUp, BadgeCheck, Bookmark, MessageCircle, Share2 } from 'lucide-react';
+import { BadgeCheck, Bookmark, MessageCircle, Share2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -21,7 +21,9 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const uid = user?.id;
-  const score = post.upvotes.length - post.downvotes.length;
+  // ✨ Spark = MCG's one positive reaction (stored as an upvote); downvotes are no longer shown
+  const sparks = post.upvotes.length;
+  const sparked = !!uid && post.upvotes.includes(uid);
   const detailUrl = `/post/${post.id}`;
 
   const vote = async (dir: 'up' | 'down') => {
@@ -101,17 +103,11 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
       {post.images && post.images.length > 0 && <div className="mt-3"><PhotoGrid images={post.images} /></div>}
 
       <footer className="mt-3 flex flex-wrap items-center gap-2 text-[13px] font-semibold text-ink-muted" onClick={stop}>
-        <div className="flex items-center rounded-full bg-canvas">
-          <button type="button" onClick={() => vote('up')} aria-label="Upvote" aria-pressed={!!uid && post.upvotes.includes(uid)}
-            className={`flex h-11 w-11 items-center justify-center rounded-full hover:bg-line focus-visible:outline-2 focus-visible:outline-brand ${uid && post.upvotes.includes(uid) ? 'text-brand' : ''}`}>
-            <ArrowBigUp className="h-5 w-5" />
-          </button>
-          <span className="min-w-[2ch] text-center text-ink" aria-label={`Score ${score}`}>{score}</span>
-          <button type="button" onClick={() => vote('down')} aria-label="Downvote" aria-pressed={!!uid && post.downvotes.includes(uid)}
-            className={`flex h-11 w-11 items-center justify-center rounded-full hover:bg-line focus-visible:outline-2 focus-visible:outline-brand ${uid && post.downvotes.includes(uid) ? 'text-brand' : ''}`}>
-            <ArrowBigDown className="h-5 w-5" />
-          </button>
-        </div>
+        <button type="button" onClick={() => vote('up')} aria-pressed={sparked}
+          aria-label={`Spark, ${sparks} ${sparks === 1 ? 'spark' : 'sparks'}`}
+          className={`flex min-h-11 items-center gap-1.5 rounded-full px-4 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${sparked ? 'bg-brand-soft text-brand' : 'bg-canvas hover:bg-line'}`}>
+          <Sparkles className={`h-4 w-4 ${sparked ? 'fill-current' : ''}`} aria-hidden /> {sparks}
+        </button>
         <Link to={detailUrl} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand" aria-label={`${post.commentCount} comments`}>
           <MessageCircle className="h-4 w-4" /> {post.commentCount}
         </Link>

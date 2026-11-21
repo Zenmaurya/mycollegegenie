@@ -1,5 +1,5 @@
 import { useState, type ReactElement } from 'react';
-import { ArrowBigUp, CheckCircle2, Trash2 } from 'lucide-react';
+import { CheckCircle2, Sparkles, Trash2 } from 'lucide-react';
 import { Menu } from '../ui/Menu';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
@@ -44,8 +44,8 @@ export function CommentItem(props: Props): ReactElement {
           </div>
           <div className="flex flex-wrap items-center">
             <time dateTime={node.createdAt} className="px-1 text-[13px] text-ink-muted">{pending ? 'sending…' : timeAgo(node.createdAt)}</time>
-            {!deleted && <button type="button" onClick={() => onVote(node)} disabled={pending} aria-pressed={voted} aria-label={`Upvote, ${node.upvotes.length} upvotes`} className={`${btn} ${voted ? 'text-brand' : ''}`}>
-              <ArrowBigUp className="h-4 w-4" aria-hidden /> {node.upvotes.length}
+            {!deleted && <button type="button" onClick={() => onVote(node)} disabled={pending} aria-pressed={voted} aria-label={`Spark, ${node.upvotes.length} ${node.upvotes.length === 1 ? 'spark' : 'sparks'}`} className={`${btn} ${voted ? 'text-brand' : ''}`}>
+              <Sparkles className={`h-4 w-4 ${voted ? 'fill-current' : ''}`} aria-hidden /> {node.upvotes.length}
             </button>}
             {!atCap && !pending && !deleted && <button type="button" onClick={() => onReply(node)} className={btn}>Reply</button>}
             {canMarkBest && !pending && !deleted && (
