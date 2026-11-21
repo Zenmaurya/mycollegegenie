@@ -15,15 +15,19 @@ import {
   Globe,
   BookOpen,
   GraduationCap,
-  Flag
+  Flag,
+  ScrollText
 } from 'lucide-react';
 
 
-export type AdminTab = 'overview' | 'resources' | 'news' | 'forum' | 'pg' | 'exchange' | 'playlists' | 'verification' | 'testimonials' | 'users' | 'carousel' | 'ads' | 'homepage-settings' | 'contributors' | 'blogs' | 'societies' | 'reports';
+export type AdminTab = 'overview' | 'resources' | 'news' | 'forum' | 'pg' | 'exchange' | 'playlists' | 'verification' | 'testimonials' | 'users' | 'carousel' | 'ads' | 'homepage-settings' | 'contributors' | 'blogs' | 'societies' | 'reports' | 'moderation-log';
+
+export const MODERATOR_TABS: AdminTab[] = ['societies', 'reports', 'moderation-log'];
 
 interface SidebarProps {
   activeTab: AdminTab;
   setActiveTab: (tab: AdminTab) => void;
+  role?: string;
   pendingCounts?: {
     resources?: number;
     verifications?: number;
@@ -31,7 +35,7 @@ interface SidebarProps {
   };
 }
 
-export const AdminSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, pendingCounts }) => {
+export const AdminSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, pendingCounts, role }) => {
   const navGroups = [
     {
       title: 'Dashboard',
@@ -72,10 +76,11 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, 
         { id: 'testimonials', label: 'Testimonials', icon: MessageSquare },
         { id: 'contributors', label: 'Contributors', icon: Users },
         { id: 'societies', label: 'Societies', icon: GraduationCap },
-        { id: 'reports', label: 'Reports', icon: Flag }
+        { id: 'reports', label: 'Reports', icon: Flag },
+        { id: 'moderation-log', label: 'Moderation log', icon: ScrollText }
       ]
     }
-  ];
+  ].map((g) => (role === 'moderator' ? { ...g, items: g.items.filter((i) => MODERATOR_TABS.includes(i.id as AdminTab)) } : g)).filter((g) => g.items.length);
 
   return (
     <div className="w-full md:w-64 bg-white/80 backdrop-blur-xl border-r border-white/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex-shrink-0 h-auto md:h-[calc(100vh-5rem)] md:sticky top-20 overflow-y-auto custom-scrollbar">

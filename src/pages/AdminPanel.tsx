@@ -59,7 +59,8 @@ import { Card as TestimonialPreviewCard, VerifyIcon } from '../components/ui/dem
 import { College_COURSES, COURSE_METADATA, SUB_CATEGORIES } from '../constants';
 import { toast } from 'sonner';
 import { ConfirmationModal } from '../components/ConfirmationModal';
-import { AdminSidebar, AdminTab } from './admin/AdminSidebar';
+import { AdminSidebar, AdminTab, MODERATOR_TABS } from './admin/AdminSidebar';
+import { AdminModerationLog } from './admin/AdminModerationLog';
 import { AdminContributors } from './admin/AdminContributors';
 import { AdminSocieties } from './admin/AdminSocieties';
 import { AdminReports } from './admin/AdminReports';
@@ -85,7 +86,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   const [exchangeItems, setExchangeItems] = useState<any[]>([]);
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<AdminTab | 'pending' | 'approved' | 'upload'>('overview');
+  const [rawTab, setActiveTab] = useState<AdminTab | 'pending' | 'approved' | 'upload'>('overview');
+  // moderators are confined to their tabs even if state holds a stale value
+  const activeTab = appUser?.role === 'moderator' && !(MODERATOR_TABS as string[]).includes(rawTab) ? 'societies' : rawTab;
   const [resourceSubTab, setResourceSubTab] = useState<'pending' | 'approved' | 'upload'>('approved');
   const [verifications, setVerifications] = useState<any[]>([]);
   const [emailModal, setEmailModal] = useState<{ id: number; email: string; name: string } | null>(null);
@@ -955,7 +958,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
     );
   }
 
-  if (appUser?.role !== 'admin') {
+  if (appUser?.role !== 'admin' && appUser?.role !== 'moderator') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-transparent px-4">
         <motion.div 
@@ -991,6 +994,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
       <AdminSidebar 
         activeTab={activeTab as AdminTab} 
         setActiveTab={setActiveTab} 
+        role={appUser?.role}
         pendingCounts={{ 
           resources: resources.filter(r => !r.isApproved).length, 
           verifications: verifications.filter(v => v.status === 'pending').length 
@@ -3071,6 +3075,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           <AdminSocieties />
         ) : activeTab === 'reports' ? (
           <AdminReports />
+        ) : activeTab === 'moderation-log' ? (
+          <AdminModerationLog />
         ) : null}
 
       </div>

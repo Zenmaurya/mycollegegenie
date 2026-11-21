@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { adminCommunity, decideVerification, listCommunities, listVerification, type VerificationRequest } from '../../services/communityService';
 import { timeAgo } from '../../lib/feed';
 import { ConfirmSheet } from './ConfirmSheet';
-import { adminActionsFor, proofLink, type AdminAction } from './adminActions';
+import { societyActionsFor, proofLink, type AdminAction } from './adminActions';
 
 const btn = 'min-h-[44px] min-w-[44px] px-4 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50';
 const LABEL: Record<AdminAction, string> = { hide: 'Hide', unhide: 'Unhide', remove_official: 'Remove Official', delete: 'Delete' };
@@ -91,7 +91,7 @@ export const AdminSocieties: React.FC = () => {
                   <p className="text-gray-600">{c.college?.short_name ?? 'MCG'} · {c.status}{c.is_hidden && <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-bold">Hidden</span>}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {adminActionsFor(role, { isHidden: !!c.is_hidden, official: c.status === 'official', society: c.kind === 'society' }).map((a) => (
+                  {societyActionsFor(role, { isHidden: !!c.is_hidden, official: c.status === 'official', society: c.kind === 'society' }).map((a) => (
                     <button key={a} disabled={actM.isPending} aria-label={`${LABEL[a]} ${c.name}`}
                       className={`${btn} ${a === 'delete' ? 'bg-rose-700 text-white' : 'bg-gray-100 text-gray-900'}`}
                       onClick={() => (a === 'delete' ? setDel({ slug: c.slug, name: c.name }) : actM.mutate({ slug: c.slug, a }))}>{LABEL[a]}</button>
