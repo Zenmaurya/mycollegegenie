@@ -301,7 +301,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   // Auth guard is handled at the route level in App.tsx.
   // This effect only fetches data once admin access is confirmed.
   useEffect(() => {
-    if (!isAuthLoading && (appUser?.role === 'admin' || appUser?.role === 'moderator')) {
+    // admin-only: these endpoints return emails and other admin data a moderator must not receive
+    if (!isAuthLoading && appUser?.role === 'admin') {
       fetchResources();
       fetchNewsData();
       fetchTestimonials();
@@ -328,6 +329,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
   };
 
   useEffect(() => {
+    if (appUser?.role !== 'admin') return undefined;
     if (activeTab === 'carousel') {
       // Load all events for carousel management
       fetchNewsData();
@@ -368,7 +370,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
       fetchSettings();
       return undefined;
     }
-  }, [activeTab]);
+  }, [activeTab, appUser?.role]);
 
   // ── Fetch Ads ──
   const fetchAds = async () => {

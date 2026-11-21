@@ -41,8 +41,8 @@ export const AdminReports: React.FC = () => {
   const m = useMutation({
     mutationFn: (v: { r: ReportRow; a: ModAction; reason?: string; duration?: BanDuration }) =>
       actOnReport(v.r.itemType, v.r.itemId, v.a, { ...(v.reason ? { reason: v.reason } : {}), ...(v.duration ? { duration: v.duration } : {}) }),
-    onSuccess: (_x, v) => {
-      toast.success(`${LABEL[v.a]} done`);
+    onSuccess: (x, v) => {
+      toast.success((x as { noop?: boolean } | undefined)?.noop ? 'No change needed' : `${LABEL[v.a]} done`);
       closeSheet();
       qc.invalidateQueries({ queryKey: ['admin-reports'] });
       qc.invalidateQueries({ queryKey: ['admin-communities'] });
