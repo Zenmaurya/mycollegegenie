@@ -48,7 +48,7 @@ export function AppShell({ rightRail, children }: AppShellProps) {
         {!isFlipbook && <LeftNav />}
         <main className={`flex min-w-0 flex-1 flex-col ${hideTabBar ? '' : 'pb-[calc(64px+env(safe-area-inset-bottom,0px))] md:pb-0'}`}>
           {ban.banned && (
-            <div role="status" className="border-b border-danger/30 bg-danger/10 px-4 py-3 text-[14px] text-danger">
+            <div role="status" className="border-b border-danger/30 bg-danger/10 px-4 py-3 text-[14px] text-[#9B1C14]">
               <p className="font-semibold">
                 {ban.permanent || !ban.until
                   ? 'Your account is suspended.'

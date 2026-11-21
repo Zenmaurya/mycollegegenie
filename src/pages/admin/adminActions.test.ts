@@ -26,17 +26,23 @@ test('MCG pages get no delete/remove_official', () => {
 // Mirrors backend moderationActionsFor (utils/moderation.js); hide/unhide narrowed by current state.
 test('adminActionsFor matches the backend matrix', () => {
   const admin = ['dismiss', 'warn', 'ban', 'unban'];
-  assert.deepEqual(adminActionsFor('admin', 'user', false), admin);
+  assert.deepEqual(adminActionsFor('admin', 'user', false, true), admin);
   for (const t of ['post', 'comment', 'event'] as const) {
-    assert.deepEqual(adminActionsFor('admin', t, false), ['dismiss', 'hide', 'delete', 'warn', 'ban', 'unban']);
-    assert.deepEqual(adminActionsFor('admin', t, true), ['dismiss', 'unhide', 'delete', 'warn', 'ban', 'unban']);
+    assert.deepEqual(adminActionsFor('admin', t, false, true), ['dismiss', 'hide', 'delete', 'warn', 'ban', 'unban']);
+    assert.deepEqual(adminActionsFor('admin', t, true, true), ['dismiss', 'unhide', 'delete', 'warn', 'ban', 'unban']);
   }
-  assert.deepEqual(adminActionsFor('admin', 'community', false), ['dismiss', 'hide', 'delete', 'warn', 'ban', 'unban', 'remove_official']);
+  assert.deepEqual(adminActionsFor('admin', 'community', false, true), ['dismiss', 'hide', 'delete', 'warn', 'ban', 'unban', 'remove_official']);
   assert.deepEqual(adminActionsFor('moderator', 'user', false), ['dismiss', 'warn']);
   for (const t of ['post', 'comment', 'event', 'community'] as const) {
     assert.deepEqual(adminActionsFor('moderator', t, false), ['dismiss', 'hide', 'warn']);
     assert.deepEqual(adminActionsFor('moderator', t, true), ['dismiss', 'unhide', 'warn']);
   }
+});
+test('adminActionsFor: unban only when the target is banned', () => {
+  assert.deepEqual(adminActionsFor('admin', 'post', false), ['dismiss', 'hide', 'delete', 'warn', 'ban']);
+  assert.deepEqual(adminActionsFor('admin', 'user', false), ['dismiss', 'warn', 'ban']);
+  assert.ok(adminActionsFor('admin', 'comment', false, true).includes('unban'));
+  assert.ok(!adminActionsFor('moderator', 'post', false, true).includes('unban'));
 });
 test('adminActionsFor: other roles and unknown types get nothing', () => {
   assert.deepEqual(adminActionsFor('user', 'post', false), []);

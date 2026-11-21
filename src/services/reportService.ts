@@ -5,7 +5,7 @@ export type ReportItemType = 'community' | 'event' | 'post' | 'comment' | 'user'
 export type ReportRow = {
   itemType: ReportItemType; itemId: string; title: string; slug: string; status: string; is_hidden: boolean;
   reporters: number; reasons: Record<string, number>; latest: string;
-  postId?: string; displayName?: string; warn_count?: number; banned_until?: string | null;
+  postId?: string; displayName?: string; warn_count?: number; banned_until?: string | null; target_banned_until?: string | null;
 };
 export type ModAction = 'dismiss' | 'hide' | 'unhide' | 'delete' | 'warn' | 'ban' | 'unban' | 'remove_official';
 export type BanDuration = '1d' | '7d' | '30d' | 'permanent';

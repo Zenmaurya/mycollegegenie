@@ -21,7 +21,7 @@ export function proofLink(proof: string): string | null {
 
 
 /** Mirrors backend moderationActionsFor (utils/moderation.js), with hide/unhide narrowed to the item's current state. */
-export function adminActionsFor(role: string | undefined, itemType: string, isHidden: boolean): ModAction[] {
+export function adminActionsFor(role: string | undefined, itemType: string, isHidden: boolean, targetBanned = false): ModAction[] {
   if (!['community', 'event', 'post', 'comment', 'user'].includes(itemType)) return [];
   let a: ModAction[];
   if (role === 'admin') {
@@ -29,5 +29,5 @@ export function adminActionsFor(role: string | undefined, itemType: string, isHi
       : ['dismiss', 'hide', 'unhide', 'delete', 'warn', 'ban', 'unban', ...(itemType === 'community' ? ['remove_official' as const] : [])];
   } else if (role === 'moderator') a = itemType === 'user' ? ['dismiss', 'warn'] : ['dismiss', 'hide', 'unhide', 'warn'];
   else return [];
-  return a.filter((x) => x !== (isHidden ? 'hide' : 'unhide'));
+  return a.filter((x) => x !== (isHidden ? 'hide' : 'unhide') && (x !== 'unban' || targetBanned));
 }

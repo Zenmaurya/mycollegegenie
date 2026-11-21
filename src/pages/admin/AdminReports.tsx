@@ -8,6 +8,7 @@ import { actOnReport, listReports, type BanDuration, type ModAction, type Report
 import { timeAgo } from '../../lib/feed';
 import { ConfirmSheet } from './ConfirmSheet';
 import { adminActionsFor } from './adminActions';
+import { banStatus } from '../../lib/moderation';
 
 const btn = 'min-h-[44px] min-w-[44px] px-4 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50';
 const LABEL: Record<ModAction, string> = { dismiss: 'Dismiss', hide: 'Hide', unhide: 'Unhide', delete: 'Delete', warn: 'Warn', ban: 'Ban', unban: 'Unban', remove_official: 'Remove official' };
@@ -19,7 +20,8 @@ const FILTERS: { v: ReportItemType | undefined; label: string }[] = [
 const DURATIONS: { v: BanDuration; label: string }[] = [{ v: '1d', label: '1 day' }, { v: '7d', label: '7 days' }, { v: '30d', label: '30 days' }, { v: 'permanent', label: 'Permanent' }];
 const chip = (on: boolean) => `min-h-[44px] px-4 rounded-full text-sm font-bold border ${on ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-800 border-gray-300'}`;
 
-const isBanned = (r: ReportRow) => !!r.banned_until && new Date(r.banned_until) > new Date();
+// the target (author, or the user on user rows) is currently banned
+const isBanned = (r: ReportRow) => banStatus({ bannedUntil: r.target_banned_until ?? r.banned_until }, new Date()).banned;
 const banBadge = (r: ReportRow) => (new Date(r.banned_until!).getFullYear() >= 9999 ? 'Banned' : `Banned until ${new Date(r.banned_until!).toLocaleDateString()}`);
 
 export const AdminReports: React.FC = () => {
@@ -69,10 +71,8 @@ export const AdminReports: React.FC = () => {
         : !rows.length ? <p className="text-gray-600">No {status} reports</p> : (
         <ul className="space-y-3">
           {rows.map((r) => {
-            const acts = adminActionsFor(role, r.itemType, r.is_hidden)
-              .filter((a) => status === 'open' || a !== 'dismiss')
-              // unban only makes sense on a banned user row
-              .filter((a) => a !== 'unban' || (r.itemType === 'user' && isBanned(r)));
+            const acts = adminActionsFor(role, r.itemType, r.is_hidden, isBanned(r))
+              .filter((a) => status === 'open' || a !== 'dismiss');
             const href = r.itemType === 'community' ? `/c/${r.slug}` : r.itemType === 'event' ? `/c/${r.slug}/events` : r.itemType !== 'user' && r.postId ? `/post/${r.postId}` : null;
             const label = r.itemType === 'user' ? (r.displayName ?? '(deleted user)') : (r.title ?? '(deleted item)');
             return (
