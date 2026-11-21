@@ -51,6 +51,18 @@ export interface Resource {
   isApproved?: boolean;
   averageRating?: number;
   uploadTimestamp?: number;
+  thumbnailUrl?: string | null;
+  pageCount?: number | null;
+  ratingAvg?: number | null;
+  ratingCount?: number;
+  downloads?: number;
+  views?: number;
+  year?: number | null;
+  uploaderCollege?: string | null;
+  uploaderVerified?: boolean;
+  helpfulYes?: number;
+  helpfulNo?: number;
+  isHidden?: boolean;
 }
 
 export interface User {

@@ -1,0 +1,95 @@
+/**
+ * Pure helpers for /notes (no network/env imports so they run in node:test).
+ */
+import type { Resource, ResourceType } from '../types';
+import { COURSE_METADATA } from '../constants';
+
+export const RESOURCE_REPORT_REASONS = ['Wrong file', 'Copyright', 'Low quality', 'Spam', 'Other'] as const;
+
+const BBA = 'Bachelor of Business Administration (Financial Investment Analysis) [BBA(FIA)]';
+const BMS = 'Bachelor of Management Studies (BMS)';
+const BCOM = 'B.Com. (Hons.)';
+const SEC = 'Skill Enhancement Course (SEC)';
+
+const COURSE_BY_KEY = new Map<string, string>(
+  [BBA, BMS, SEC, BCOM, ...Object.keys(COURSE_METADATA)].map((c) => [c.toLowerCase(), c]),
+);
+const ALIASES: Record<string, string> = {
+  'bba': BBA, 'bba-fia': BBA, 'bba fia': BBA, 'bba(fia)': BBA,
+  'bms': BMS,
+  'bcom': BCOM, 'b.com': BCOM, 'b.com (hons)': BCOM,
+};
+
+export function canonicalCourse(text: string | null): string | null {
+  const k = (text ?? '').trim().toLowerCase();
+  return COURSE_BY_KEY.get(k) ?? ALIASES[k] ?? null;
+}
+
+/** batchYear = admission year; the academic year starts in July. null when outside 1..maxSem. */
+export function currentSemester(batchYear: number | null, now: Date, maxSem: number): number | null {
+  if (batchYear == null) return null;
+  const autumn = now.getMonth() >= 6;
+  const sem = ((autumn ? now.getFullYear() : now.getFullYear() - 1) - batchYear) * 2 + (autumn ? 1 : 2);
+  return sem >= 1 && sem <= maxSem ? sem : null;
+}
+
+const KEPT = ['q', 'type', 'course', 'semester', 'subjectCode'];
+
+export function legacyBrowseToNotes(search: string): string {
+  const src = new URLSearchParams(search);
+  const id = src.get('resourceId');
+  if (id) return `/notes/${encodeURIComponent(id)}`;
+  const out = new URLSearchParams();
+  for (const k of KEPT) { const v = src.get(k); if (v) out.set(k, v); }
+  const qs = out.toString();
+  return qs ? `/notes?${qs}` : '/notes';
+}
+
+// Same rule as backend utils/resources.js
+export function yearFromTitle(title: string | null | undefined): number | null {
+  const m = /(?<!\d)(20(?:1\d|2\d|30))(?!\d)/.exec(String(title || ''));
+  return m ? Number(m[1]) : null;
+}
+
+export function formatHelpedPct(yes: number, no: number): string | null {
+  const n = yes + no;
+  return n < 5 ? null : `${Math.round((yes / n) * 100)}% found it helpful`;
+}
+
+/** Raw snake_case API row to Resource. link/directDownloadLink are '' when the API omits them (logged out). */
+export function mapNote(raw: any): Resource {
+  const date = raw.upload_date ? String(raw.upload_date).slice(0, 10) : '';
+  return {
+    id: raw.id,
+    title: raw.title,
+    description: raw.description || '',
+    type: raw.type as ResourceType,
+    course: raw.course || '',
+    semester: Number(raw.semester) || 0,
+    subCategory: raw.sub_category || '',
+    subjectCode: raw.subject_code || '',
+    tags: Array.isArray(raw.tags) ? raw.tags : [],
+    link: raw.link || '',
+    directDownloadLink: raw.direct_download_link || '',
+    uploadDate: date,
+    uploadTimestamp: date ? new Date(date).getTime() : undefined,
+    uploader: raw.uploader || '',
+    uploaderId: raw.uploader_id || '',
+    uploaderRole: raw.uploader_role || 'user',
+    isApproved: Boolean(raw.is_approved),
+    ratings: [],
+    reports: [],
+    thumbnailUrl: raw.thumbnail_url ?? null,
+    pageCount: raw.page_count ?? null,
+    ratingAvg: raw.rating_avg == null ? null : Number(raw.rating_avg),
+    ratingCount: Number(raw.rating_count) || 0,
+    downloads: Number(raw.downloads) || 0,
+    views: Number(raw.views) || 0,
+    year: raw.year ?? null,
+    uploaderCollege: raw.uploader_college ?? null,
+    uploaderVerified: Boolean(raw.uploader_verified),
+    helpfulYes: Number(raw.helpful_yes) || 0,
+    helpfulNo: Number(raw.helpful_no) || 0,
+    isHidden: Boolean(raw.is_hidden),
+  };
+}
