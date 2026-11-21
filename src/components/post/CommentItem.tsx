@@ -1,5 +1,6 @@
 import { useState, type ReactElement } from 'react';
 import { ArrowBigUp, CheckCircle2, Trash2 } from 'lucide-react';
+import { Menu } from '../ui/Menu';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { timeAgo } from '../../lib/feed';
@@ -17,10 +18,11 @@ interface Props {
   onReply: (node: CommentNode) => void;
   onMarkBest: (node: CommentNode | null) => void;
   onDelete: (node: CommentNode) => void;
+  onReport?: (node: CommentNode) => void;
 }
 
 export function CommentItem(props: Props): ReactElement {
-  const { node, uid, isBest, canMarkBest, canDelete, onVote, onReply, onMarkBest, onDelete } = props;
+  const { node, uid, isBest, canMarkBest, canDelete, onVote, onReply, onMarkBest, onDelete, onReport } = props;
   const [open, setOpen] = useState(false);
   const voted = !!uid && node.upvotes.includes(uid);
   const deleted = isDeletedComment(node);
@@ -53,6 +55,9 @@ export function CommentItem(props: Props): ReactElement {
             )}
             {canDelete(node) && !pending && !deleted && (
               <button type="button" onClick={() => onDelete(node)} aria-label="Delete comment" className={btn}><Trash2 className="h-4 w-4" aria-hidden /></button>
+            )}
+            {onReport && !pending && !deleted && node.authorId !== uid && (
+              <span className="ml-auto"><Menu label="More comment actions" items={[{ label: 'Report', danger: true, onSelect: () => onReport(node) }]} /></span>
             )}
           </div>
           {node.replies.length > 0 && (atCap && !open ? (

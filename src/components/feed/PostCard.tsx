@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowBigDown, ArrowBigUp, BadgeCheck, Bookmark, MessageCircle, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -11,10 +11,13 @@ import { applyVote, timeAgo } from '../../lib/feed';
 import type { ForumPost } from '../../types';
 import { PhotoGrid } from './PhotoGrid';
 import { Avatar } from '../ui/Avatar';
+import { ReportSheet } from '../communities/ReportSheet';
 
 function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSaved: boolean; onToggleSave: (id: string) => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [reporting, setReporting] = useState(false);
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const uid = user?.id;
@@ -78,8 +81,7 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
         <span className={post.topic ? '' : 'ml-auto'} onClick={stop}>
           <Menu label="More actions" items={[
             { label: 'Copy link', onSelect: copyLink },
-            // shortcut: ReportModal and /api/resources/:id/report only handle resources; no post-report API yet.
-            { label: 'Report', onSelect: () => toast('Reporting posts is coming soon'), danger: true },
+            ...(uid && post.authorId === uid ? [] : [{ label: 'Report', danger: true, onSelect: () => (uid ? setReporting(true) : navigate('/login', { state: { from: { pathname: location.pathname } } })) }]),
           ]} />
         </span>
       </header>
@@ -120,6 +122,7 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
           <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-ink' : ''}`} /> {isSaved ? 'Saved' : 'Save'}
         </button>
       </footer>
+      {reporting && <span onClick={stop}><ReportSheet open onClose={() => setReporting(false)} itemType="post" itemId={post.id} title="Report post" /></span>}
     </article>
   );
 }

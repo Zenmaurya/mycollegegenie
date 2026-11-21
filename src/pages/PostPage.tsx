@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowBigDown, ArrowBigUp, ArrowLeft, MessageCircle, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,6 +23,8 @@ import { Avatar } from '../components/ui/Avatar';
 import { Button } from '../components/ui/button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Menu } from '../components/ui/Menu';
+import { ReportSheet } from '../components/communities/ReportSheet';
+import type { ReportItemType } from '../services/reportService';
 import { Skeleton } from '../components/ui/skeleton';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { PhotoGrid } from '../components/feed/PhotoGrid';
@@ -34,6 +36,8 @@ export function PostPage() {
   const { id = '' } = useParams<{ id: string }>();
   const { user, appUser, openAuthModal } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [reportTarget, setReportTarget] = useState<{ type: ReportItemType; id: string } | null>(null);
   const qc = useQueryClient();
   const uid = user?.id;
   const [sort, setSort] = useState<CommentSort>('relevant');
@@ -138,6 +142,10 @@ export function PostPage() {
   };
 
   const isAdmin = appUser?.role === 'admin';
+  const startReport = (type: ReportItemType, rid: string) => {
+    if (uid) setReportTarget({ type, id: rid });
+    else navigate('/login', { state: { from: { pathname: location.pathname } } });
+  };
   const canDelete = (n: CommentNode) => !!uid && (n.authorId === uid || isAdmin) // backend: comment author or admin only;
 
   if (isLoading) return <div className="mx-auto w-full max-w-2xl space-y-3 p-4"><Skeleton className="h-8 w-2/3" /><Skeleton className="h-32 w-full" /><Skeleton className="h-20 w-full" /></div>;
@@ -148,7 +156,7 @@ export function PostPage() {
   const row = (n: CommentNode, isBest = false) => (
     <CommentItem key={n.id} node={n} uid={uid} isBest={isBest} canMarkBest={canMarkBest(uid, post.authorId, n.depth)} canDelete={canDelete}
       onVote={voteComment} onReply={(c) => { if (requireLogin('Log in to reply')) setReplyTo(c); }}
-      onMarkBest={(c) => bestMut.mutate(c ? c.id : null)} onDelete={(c) => setConfirm({ kind: 'comment', node: c })} />
+      onMarkBest={(c) => bestMut.mutate(c ? c.id : null)} onDelete={(c) => setConfirm({ kind: 'comment', node: c })} onReport={(c) => startReport('comment', c.id)} />
   );
   const pill = 'flex h-11 w-11 items-center justify-center rounded-full hover:bg-line focus-visible:outline-2 focus-visible:outline-brand';
   const relatedPosts = related.filter((p) => p.id !== post.id).slice(0, 5);
@@ -170,9 +178,10 @@ export function PostPage() {
             {post.course && <><span aria-hidden>·</span><span className="truncate">{post.course}</span></>}
             <span aria-hidden>·</span><time dateTime={post.createdAt}>{timeAgo(post.createdAt)}</time>
             {post.topic && <span className="ml-auto rounded-full border border-line px-2 py-0.5 text-[12px] font-semibold text-ink">{topicLabel(post.topic)}</span>}
-            {uid && (post.authorId === uid || isAdmin) && (
-              <span className={post.topic ? '' : 'ml-auto'}><Menu label="More actions" items={[{ label: 'Delete post', danger: true, onSelect: () => setConfirm({ kind: 'post' }) }]} /></span>
-            )}
+            <span className={post.topic ? '' : 'ml-auto'}><Menu label="More actions" items={[
+              ...(post.authorId === uid ? [] : [{ label: 'Report', danger: true, onSelect: () => startReport('post', post.id) }]),
+              ...(uid && (post.authorId === uid || isAdmin) ? [{ label: 'Delete post', danger: true, onSelect: () => setConfirm({ kind: 'post' }) }] : []),
+            ]} /></span>
           </header>
           <h1 className="mb-2 text-[22px] font-bold leading-snug text-ink">{post.title}</h1>
           {post.content && <p className="whitespace-pre-wrap break-words text-[16px] leading-relaxed text-ink">{post.content}</p>}
@@ -234,6 +243,7 @@ export function PostPage() {
         )}
       </aside>
 
+      {reportTarget && <ReportSheet open onClose={() => setReportTarget(null)} itemType={reportTarget.type} itemId={reportTarget.id} title={reportTarget.type === 'post' ? 'Report post' : 'Report comment'} />}
       <ConfirmationModal
         isOpen={!!confirm}
         onClose={() => setConfirm(null)}

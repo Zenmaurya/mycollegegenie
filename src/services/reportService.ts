@@ -1,7 +1,7 @@
 import { fetchWithAuth } from '../lib/apiClient';
 import type { REPORT_REASONS } from '../lib/communities';
 
-export type ReportItemType = 'community' | 'event';
+export type ReportItemType = 'community' | 'event' | 'post' | 'comment' | 'user';
 export type ReportRow = {
   itemType: ReportItemType; itemId: string; title: string; slug: string; status: string; is_hidden: boolean;
   reporters: number; reasons: Record<string, number>; latest: string;
