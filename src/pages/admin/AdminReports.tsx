@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { REPORT_REASONS } from '../../lib/communities';
 import { useAuth } from '../../context/AuthContext';
 import { actOnReport, listReports, type ReportRow } from '../../services/reportService';
 import { timeAgo } from '../../lib/feed';
-import { ConfirmationModal } from '../../components/ConfirmationModal';
-import { adminActionsFor } from './adminActions';
+import { ConfirmSheet } from './ConfirmSheet';
+import { reportActionsFor } from './adminActions';
 
 const btn = 'min-h-[44px] min-w-[44px] px-4 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50';
 type Act = 'dismiss' | 'hide' | 'unhide' | 'delete';
@@ -41,13 +42,13 @@ export const AdminReports: React.FC = () => {
         : !rows.length ? <p className="text-gray-600">No open reports</p> : (
         <ul className="space-y-3">
           {rows.map((r) => {
-            const acts: Act[] = ['dismiss', ...adminActionsFor(role, { isHidden: r.is_hidden }).filter((a): a is 'hide' | 'unhide' | 'delete' => a !== 'remove_official')];
+            const acts = reportActionsFor(role, r.is_hidden);
             return (
               <li key={`${r.itemType}:${r.itemId}`} className="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col gap-3">
                 <div className="text-sm text-gray-800 space-y-1">
                   <Link to={r.itemType === 'community' ? `/c/${r.slug}` : `/c/${r.slug}/events`} className="font-black text-purple-700 underline">{r.title ?? '(deleted item)'}</Link>
                   <p>{r.itemType === 'community' ? 'Page' : 'Event'} · {r.reporters} reporter{r.reporters === 1 ? '' : 's'} · latest {timeAgo(r.latest)}{r.is_hidden ? ' · Already hidden' : ''}</p>
-                  <p>{Object.entries(r.reasons).map(([k, n]) => `${k}: ${n}`).join(' · ')}</p>
+                  <p>{REPORT_REASONS.filter((k) => r.reasons[k]).map((k) => `${k}: ${r.reasons[k]}`).join(' · ')}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {acts.map((a) => (
@@ -62,8 +63,8 @@ export const AdminReports: React.FC = () => {
         </ul>
       )}
       {q.hasNextPage && <button className={`${btn} bg-gray-900 text-white`} disabled={q.isFetchingNextPage} onClick={() => q.fetchNextPage()}>Load more</button>}
-      <ConfirmationModal isOpen={!!del} onClose={() => setDel(null)} type="danger" title="Delete this item?"
-        message={`Permanently delete ${del?.title ?? 'this item'}? This cannot be undone.`} confirmText="Delete"
+      <ConfirmSheet open={!!del} onClose={() => setDel(null)} danger title="Delete this item?" confirmLabel="Delete"
+        message={`Permanently delete ${del?.title ?? 'this item'}? This cannot be undone.`}
         onConfirm={() => { if (del) m.mutate({ r: del, a: 'delete' }); setDel(null); }} />
     </section>
   );

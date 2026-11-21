@@ -13,6 +13,8 @@ export interface CommunitySummary {
   id: string; slug: string; kind: 'society' | 'mcg'; name: string; category: string; logo_url: string | null; status: CommunityStatus;
   college: { id: string; short_name: string } | null;
   followers: number; members: number; recruitment_until: string | null;
+  /** Present only for MCG admins. */
+  is_hidden?: boolean;
   /** Viewer follows this page (false when logged out). */
   following?: boolean;
 }

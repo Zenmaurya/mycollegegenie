@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { adminCommunity, decideVerification, listCommunities, listVerification, type VerificationRequest } from '../../services/communityService';
 import { timeAgo } from '../../lib/feed';
-import { ConfirmationModal } from '../../components/ConfirmationModal';
+import { ConfirmSheet } from './ConfirmSheet';
 import { adminActionsFor, proofLink, type AdminAction } from './adminActions';
 
 const btn = 'min-h-[44px] min-w-[44px] px-4 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50';
@@ -18,7 +18,6 @@ export const AdminSocieties: React.FC = () => {
   const [search, setSearch] = useState('');
   const [decide, setDecide] = useState<{ r: VerificationRequest; d: 'approve' | 'reject' } | null>(null);
   const [del, setDel] = useState<{ slug: string; name: string } | null>(null);
-  const [typed, setTyped] = useState('');
 
   // Backend verification routes are full-admin only.
   const reqs = useQuery({ queryKey: ['admin-verification'], queryFn: () => listVerification('pending'), enabled: role === 'admin' });
@@ -60,7 +59,7 @@ export const AdminSocieties: React.FC = () => {
                   <li key={r.id} className="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col gap-3">
                     <div className="text-sm text-gray-800 space-y-1">
                       <Link to={`/c/${r.slug}`} className="font-black text-purple-700 underline">{r.name}</Link>
-                      <p>Method: {r.method} · Submitted {timeAgo(r.created_at)}</p>
+                      <p>College: {r.college_short ?? 'MCG'} · Method: {r.method} · Submitted {timeAgo(r.created_at)}</p>
                       <p className="break-all">Proof: {href ? <a href={href} target="_blank" rel="noopener noreferrer nofollow" className="text-purple-700 underline">{href}</a> : r.proof}</p>
                       <p>Code: <code className="font-mono bg-gray-100 px-1 rounded">{r.code}</code></p>
                     </div>
@@ -89,13 +88,13 @@ export const AdminSocieties: React.FC = () => {
               <li key={c.id} className="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                 <div className="text-sm">
                   <Link to={`/c/${c.slug}`} className="font-black text-purple-700 underline">{c.name}</Link>
-                  <p className="text-gray-600">{c.college?.short_name ?? 'MCG'} · {c.status}</p>
+                  <p className="text-gray-600">{c.college?.short_name ?? 'MCG'} · {c.status}{c.is_hidden && <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-bold">Hidden</span>}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {adminActionsFor(role, { isHidden: c.status === 'hidden', official: c.status === 'official' }).map((a) => (
+                  {adminActionsFor(role, { isHidden: !!c.is_hidden, official: c.status === 'official', society: c.kind === 'society' }).map((a) => (
                     <button key={a} disabled={actM.isPending} aria-label={`${LABEL[a]} ${c.name}`}
                       className={`${btn} ${a === 'delete' ? 'bg-rose-700 text-white' : 'bg-gray-100 text-gray-900'}`}
-                      onClick={() => (a === 'delete' ? (setTyped(''), setDel({ slug: c.slug, name: c.name })) : actM.mutate({ slug: c.slug, a }))}>{LABEL[a]}</button>
+                      onClick={() => (a === 'delete' ? setDel({ slug: c.slug, name: c.name }) : actM.mutate({ slug: c.slug, a }))}>{LABEL[a]}</button>
                   ))}
                 </div>
               </li>
@@ -105,27 +104,15 @@ export const AdminSocieties: React.FC = () => {
         {pages.hasNextPage && <button className={`${btn} mt-4 bg-gray-900 text-white`} disabled={pages.isFetchingNextPage} onClick={() => pages.fetchNextPage()}>Load more</button>}
       </section>
 
-      <ConfirmationModal isOpen={!!decide} onClose={() => setDecide(null)}
+      <ConfirmSheet open={!!decide} onClose={() => setDecide(null)} danger={decide?.d === 'reject'}
         title={decide?.d === 'approve' ? 'Approve this page?' : 'Reject this request?'}
         message={decide ? `${decide.d === 'approve' ? 'Approve' : 'Reject'} verification for ${decide.r.name}?` : ''}
-        confirmText={decide?.d === 'approve' ? 'Approve' : 'Reject'} type={decide?.d === 'reject' ? 'danger' : 'info'}
+        confirmLabel={decide?.d === 'approve' ? 'Approve' : 'Reject'}
         onConfirm={() => { if (decide) decideM.mutate({ id: decide.r.id, d: decide.d }); setDecide(null); }} />
 
-      {del && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60">
-          <div role="dialog" aria-modal="true" aria-labelledby="del-h" className="w-full max-w-md bg-white rounded-2xl p-6 space-y-4">
-            <h3 id="del-h" className="text-xl font-black text-gray-900">Delete {del.name}?</h3>
-            <p className="text-gray-700">This permanently deletes the page. Posts and events stay hidden.</p>
-            <label className="block text-sm font-bold text-gray-800">Type the page name to confirm
-              <input value={typed} onChange={(e) => setTyped(e.target.value)} autoFocus className="mt-1 w-full min-h-[44px] px-3 rounded-xl border border-gray-300 font-normal" />
-            </label>
-            <div className="flex gap-2 justify-end">
-              <button className={`${btn} bg-gray-100 text-gray-900`} onClick={() => setDel(null)}>Cancel</button>
-              <button className={`${btn} bg-rose-700 text-white`} disabled={typed.trim() !== del.name} onClick={() => { actM.mutate({ slug: del.slug, a: 'delete' }); setDel(null); }}>Delete page</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmSheet open={!!del} onClose={() => setDel(null)} danger typeName={del?.name} title={`Delete ${del?.name ?? 'page'}?`} confirmLabel="Delete page"
+        message="This permanently deletes the page. Posts and events stay hidden."
+        onConfirm={() => { if (del) actM.mutate({ slug: del.slug, a: 'delete' }); setDel(null); }} />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { adminActionsFor, proofLink } from './adminActions';
+import { adminActionsFor, proofLink, reportActionsFor } from './adminActions';
 
 test('admin gets every action that applies', () => {
   assert.deepEqual(adminActionsFor('admin', { isHidden: false, official: true }), ['hide', 'remove_official', 'delete']);
@@ -19,4 +19,12 @@ test('proofLink links only https', () => {
   assert.equal(proofLink('http://x.com'), null);
   assert.equal(proofLink('javascript:alert(1)'), null);
   assert.equal(proofLink('@handle'), null);
+});
+test('MCG pages get no delete/remove_official', () => {
+  assert.deepEqual(adminActionsFor('admin', { isHidden: false, official: true, society: false }), ['hide']);
+});
+test('reportActionsFor never offers remove_official; delete is admin only', () => {
+  assert.deepEqual(reportActionsFor('admin', false), ['dismiss', 'hide', 'delete']);
+  assert.deepEqual(reportActionsFor('admin', true), ['dismiss', 'unhide', 'delete']);
+  assert.deepEqual(reportActionsFor('moderator', false), ['dismiss', 'hide']);
 });

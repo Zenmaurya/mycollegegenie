@@ -9,7 +9,7 @@ export type CommunityInput = {
   name: string; category: string; description?: string; links?: Record<string, string>; founded_year?: number | null;
   logo_url?: string | null; banner_url?: string | null; achievements?: string | null; faculty_advisor?: string | null; recruitment_until?: string | null;
 };
-export type VerificationRequest = { id: string; community_id: string; method: string; proof: string; code: string; status: string; created_at: string; slug: string; name: string; kind: string; community_status: string };
+export type VerificationRequest = { id: string; community_id: string; method: string; proof: string; code: string; status: string; created_at: string; slug: string; name: string; kind: string; community_status: string; college_short: string | null };
 
 export function listCommunities(f: { q?: string; category?: string; college?: string; recruiting?: boolean; cursor?: string } = {}): Promise<{ items: CommunitySummary[]; nextCursor: string | null }> {
   const p = new URLSearchParams();
