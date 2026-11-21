@@ -10,7 +10,9 @@ test('joinButton: logged out', () =>
 test('joinButton: pick college', () =>
   assert.deepEqual(joinButton(detail({ joinMode: 'pick_college' })), { label: 'Pick your college to join', action: 'pick_college' }));
 test('joinButton: pending', () =>
-  assert.deepEqual(joinButton(detail({ joinMode: 'request', status: 'pending' })), { label: 'Requested', action: null }));
+  assert.deepEqual(joinButton(detail({ joinMode: 'request', status: 'pending' })), { label: 'Requested', action: 'leave' }));
+test('joinButton: member with cleared college is still Member', () =>
+  assert.deepEqual(joinButton(detail({ joinMode: 'pick_college', status: 'active' })), { label: 'Member', action: 'leave' }));
 test('joinButton: active member', () =>
   assert.deepEqual(joinButton(detail({ status: 'active', role: 'member' })), { label: 'Member', action: 'leave' }));
 test('joinButton: join', () =>

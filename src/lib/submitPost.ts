@@ -2,9 +2,9 @@
 
 export const MAX_POST_PHOTOS = 4;
 
-export type PostDraft = { title: string; content: string; topic: string; course: string; files: Blob[] };
+export type PostDraft = { title: string; content: string; topic: string; course: string; files: Blob[]; communityId?: string; postKind?: 'official' | 'discussion' };
 
-export type NewPost = { title: string; content: string; topic: string; course: string; images: string[] };
+export type NewPost = { title: string; content: string; topic: string; course: string; images: string[]; communityId?: string; postKind?: 'official' | 'discussion' };
 
 export type SubmitDeps = {
   upload(b: Blob): Promise<string>;
@@ -21,5 +21,6 @@ export async function submitPost(draft: PostDraft, deps: SubmitDeps): Promise<st
   if (draft.files.length > MAX_POST_PHOTOS) throw new Error(`You can add up to ${MAX_POST_PHOTOS} photos`);
 
   const images = await Promise.all(draft.files.map((f) => deps.upload(f)));
-  return deps.create({ title, content, topic: draft.topic, course: draft.course, images });
+  const page = draft.communityId && draft.postKind ? { communityId: draft.communityId, postKind: draft.postKind } : {};
+  return deps.create({ title, content, topic: draft.topic, course: draft.course, images, ...page });
 }

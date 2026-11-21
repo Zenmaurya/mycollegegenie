@@ -40,7 +40,7 @@ export const ForumService = {
     }
   },
 
-  createPost: async (post: Omit<ForumPost, 'id' | 'createdAt' | 'commentCount' | 'upvotes' | 'downvotes'>) => {
+  createPost: async (post: Omit<ForumPost, 'id' | 'createdAt' | 'commentCount' | 'upvotes' | 'downvotes' | 'postKind' | 'community'> & { communityId?: string; postKind?: 'official' | 'discussion' }) => {
     try {
       const data = await fetchWithAuth('/api/forum/posts', {
         method: 'POST',

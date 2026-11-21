@@ -38,9 +38,9 @@ export type JoinButton = {
 export function joinButton(d: Pick<CommunityDetail, 'isListed' | 'viewer'>): JoinButton {
   const { status, joinMode } = d.viewer;
   if (joinMode === 'login') return { label: 'Log in to join', action: 'login' };
-  if (joinMode === 'pick_college') return { label: 'Pick your college to join', action: 'pick_college' };
-  if (status === 'pending') return { label: 'Requested', action: null };
   if (status === 'active') return { label: 'Member', action: 'leave' };
+  if (status === 'pending') return { label: 'Requested', action: 'leave' }; // DELETE /join cancels a pending request
+  if (joinMode === 'pick_college') return { label: 'Pick your college to join', action: 'pick_college' };
   // unlisted page: the backend refuses outsiders, so show the label but no action
   const action = d.isListed ? joinMode : null;
   return joinMode === 'join' ? { label: 'Join', action } : { label: 'Request to join', action };

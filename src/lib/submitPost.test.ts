@@ -54,3 +54,12 @@ test('rejects too-long title and empty content', async () => {
   await assert.rejects(submitPost(draft({ title: 'a'.repeat(201) }), deps));
   await assert.rejects(submitPost(draft({ content: '' }), deps));
 });
+
+test('passes communityId and postKind only when both are set', async () => {
+  const { calls, deps } = fakeDeps();
+  await submitPost(draft({ communityId: 'c1', postKind: 'official' }), deps);
+  await submitPost(draft(), deps);
+  assert.strictEqual(calls.create[0].communityId, 'c1');
+  assert.strictEqual(calls.create[0].postKind, 'official');
+  assert.ok(!('communityId' in calls.create[1]) && !('postKind' in calls.create[1]));
+});

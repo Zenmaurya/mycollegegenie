@@ -21,13 +21,14 @@ export function listCommunities(f: { q?: string; category?: string; college?: st
   return fetchWithAuth(`/api/communities?${p}`);
 }
 export const getCommunity = (slug: string): Promise<CommunityDetail> => fetchWithAuth(base(slug));
-export const createCommunity = (input: CommunityInput): Promise<{ id: string; slug: string }> => fetchWithAuth('/api/communities', send('POST', input));
+export const createCommunity = (input: CommunityInput): Promise<{ slug: string }> => fetchWithAuth('/api/communities', send('POST', input));
 export const updateCommunity = (slug: string, patch: Partial<CommunityInput>): Promise<{ ok: true; statusReset?: true }> => fetchWithAuth(base(slug), send('PATCH', patch));
-export const follow = (slug: string) => fetchWithAuth(`${base(slug)}/follow`, send('POST'));
-export const unfollow = (slug: string) => fetchWithAuth(`${base(slug)}/follow`, send('DELETE'));
+export const follow = (slug: string): Promise<{ following: true }> => fetchWithAuth(`${base(slug)}/follow`, send('POST'));
+export const unfollow = (slug: string): Promise<{ following: false }> => fetchWithAuth(`${base(slug)}/follow`, send('DELETE'));
 /** Joins (status 'active') or requests (status 'pending') depending on the page and the user's college. */
 export const join = (slug: string): Promise<{ status: 'active' | 'pending' }> => fetchWithAuth(`${base(slug)}/join`, send('POST'));
-export const leave = (slug: string) => fetchWithAuth(`${base(slug)}/join`, send('DELETE'));
+/** Also cancels a pending request. */
+export const leave = (slug: string): Promise<{ ok: true }> => fetchWithAuth(`${base(slug)}/join`, send('DELETE'));
 export async function listMembers(slug: string, status: 'active' | 'pending' = 'active'): Promise<CommunityMember[]> {
   return (await fetchWithAuth(`${base(slug)}/members?status=${status}`)).items;
 }
