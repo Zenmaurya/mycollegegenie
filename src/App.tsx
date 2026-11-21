@@ -63,6 +63,8 @@ const ExplorePage = lazy(() => import('./pages/ExplorePage').then(m => ({ defaul
 const InboxPage = lazy(() => import('./pages/InboxPage').then(m => ({ default: m.InboxPage })));
 const YouPage = lazy(() => import('./pages/YouPage').then(m => ({ default: m.YouPage })));
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
+const CommunitiesPage = lazy(() => import('./pages/communities/CommunitiesPage').then(m => ({ default: m.CommunitiesPage })));
+const CreateCommunityPage = lazy(() => import('./pages/communities/CreateCommunityPage').then(m => ({ default: m.CreateCommunityPage })));
 const FeedPage = lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
 
 // ── Components ────────────────────────────────────────────────────
@@ -372,6 +374,8 @@ function AppContent() {
               <Route path="/" element={<FeedPage news={newsItems} />} />
 
               <Route path="/explore" element={<ExplorePage />} />
+              <Route path="/c" element={<CommunitiesPage />} />
+              <Route path="/c/new" element={<CreateCommunityPage />} />
               <Route path="/inbox" element={<InboxPage />} />
               <Route path="/you" element={<YouPage />} />
 

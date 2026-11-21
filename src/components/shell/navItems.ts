@@ -1,4 +1,4 @@
-import { BedDouble, Calendar, Compass, Bookmark, Heart, Home, LibraryBig, Newspaper, ShoppingBag, Youtube, type LucideIcon } from 'lucide-react';
+import { BedDouble, Calendar, Compass, Bookmark, Heart, Home, Users, LibraryBig, Newspaper, ShoppingBag, Youtube, type LucideIcon } from 'lucide-react';
 
 export type NavItem = { to: string; label: string; icon: LucideIcon; soon?: boolean };
 
@@ -9,6 +9,7 @@ export const MODULES: NavItem[] = [
   { to: '/playlists', label: 'Playlists', icon: Youtube },
   { to: '/find-pg', label: 'Find PG', icon: BedDouble },
   { to: '/campus-exchange', label: 'Exchange', icon: ShoppingBag },
+  { to: '/c', label: 'Societies', icon: Users },
   { to: '/events', label: 'Events', icon: Calendar },
   { to: '/news', label: 'News', icon: Newspaper },
 ];
@@ -18,6 +19,7 @@ export const EXPLORE_TILES: NavItem[] = [
   { to: '/playlists', label: 'Playlists', icon: Youtube },
   { to: '/find-pg', label: 'Find PG', icon: BedDouble },
   { to: '/campus-exchange', label: 'Exchange', icon: ShoppingBag },
+  { to: '/c', label: 'Societies', icon: Users },
   { to: '/events', label: 'Events', icon: Calendar },
   { to: '/news', label: 'News', icon: Newspaper },
   { to: '/profile?tab=saved', label: 'Saved', icon: Bookmark, soon: true },

@@ -207,7 +207,8 @@ export async function fetchWithAuth(
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
         const message = errData.error || `Request failed: ${response.statusText || response.status}`;
-        throw new Error(message);
+        // `data` carries extra body fields (e.g. the existing page's slug on a 409).
+        throw Object.assign(new Error(message), { status: response.status, data: errData });
       }
 
       if (response.status === 204) return null;

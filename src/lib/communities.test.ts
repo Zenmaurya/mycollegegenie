@@ -42,3 +42,22 @@ test('deadlineSoon filters and sorts by deadline', () => {
   const a = ev({ id: 'a', register_by: hrs(40) }), b = ev({ id: 'b', register_by: hrs(10) }), c = ev({ id: 'c', register_by: hrs(100) });
   assert.deepEqual(deadlineSoon([a, b, c, ev({ id: 'd' })], NOW).map((e) => e.id), ['b', 'a']);
 });
+
+import { validateCommunityForm } from './communities';
+const okForm = { name: 'Finance Cell', category: 'Finance & Economics', description: '', instagram: '', linkedin: '', website: '', email: '' };
+test('validateCommunityForm: valid form has no errors', () => assert.deepEqual(validateCommunityForm(okForm), {}));
+test('validateCommunityForm: name, category, description', () => {
+  assert.ok(validateCommunityForm({ ...okForm, name: ' ab ' }).name);
+  assert.ok(validateCommunityForm({ ...okForm, name: 'x'.repeat(81) }).name);
+  assert.ok(validateCommunityForm({ ...okForm, category: '' }).category);
+  assert.ok(validateCommunityForm({ ...okForm, category: 'Nope' }).category);
+  assert.ok(validateCommunityForm({ ...okForm, description: 'x'.repeat(1001) }).description);
+});
+test('validateCommunityForm: links must be https, email plain', () => {
+  assert.ok(validateCommunityForm({ ...okForm, instagram: 'http://x.com/a' }).instagram);
+  assert.ok(validateCommunityForm({ ...okForm, linkedin: 'javascript:alert(1)' }).linkedin);
+  assert.ok(validateCommunityForm({ ...okForm, website: 'x.com' }).website);
+  assert.deepEqual(validateCommunityForm({ ...okForm, website: 'https://x.com' }), {});
+  assert.ok(validateCommunityForm({ ...okForm, email: 'nope' }).email);
+  assert.deepEqual(validateCommunityForm({ ...okForm, email: 'a@b.co' }), {});
+});

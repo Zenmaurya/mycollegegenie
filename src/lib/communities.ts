@@ -66,3 +66,21 @@ export function eventBadges(e: EventCard, now: Date): string[] {
 export function deadlineSoon(saved: EventCard[], now: Date): EventCard[] {
   return saved.filter((e) => closingSoon(e, now)).sort((a, b) => new Date(a.register_by!).getTime() - new Date(b.register_by!).getTime());
 }
+
+export type CommunityForm = { name: string; category: string; description: string; instagram: string; linkedin: string; website: string; email: string };
+
+/** Client-side first pass; the server's validation is final. Returns field -> message. */
+export function validateCommunityForm(f: CommunityForm): Partial<Record<keyof CommunityForm, string>> {
+  const e: Partial<Record<keyof CommunityForm, string>> = {};
+  const name = f.name.trim();
+  if (name.length < 3 || name.length > 80) e.name = 'Name must be 3 to 80 characters';
+  if (!(CATEGORIES as readonly string[]).includes(f.category)) e.category = 'Choose a category';
+  if (f.description.length > 1000) e.description = 'Keep the description under 1000 characters';
+  for (const k of ['instagram', 'linkedin', 'website'] as const) {
+    const v = f[k].trim();
+    if (v && (!v.startsWith('https://') || v.length > 500)) e[k] = 'Links must start with https://';
+  }
+  const mail = f.email.trim();
+  if (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) e.email = 'Enter a valid email';
+  return e;
+}
