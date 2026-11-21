@@ -110,3 +110,23 @@ export function withPickDefaults(params: URLSearchParams, pick: { course: string
   if (pick.semester && !out.get('semester')) out.set('semester', pick.semester);
   return out;
 }
+
+export type PreviewKind = { kind: 'pdf' | 'drive' | 'youtube' | 'image' | 'other'; id?: string };
+
+/** What the resource page should embed for a link. id is the Drive file id or YouTube video id. */
+export function previewKind(link: string): PreviewKind {
+  let u: URL;
+  try { u = new URL(link); } catch { return { kind: 'other' }; }
+  const host = u.hostname.replace(/^www\./, '');
+  if (host === 'drive.google.com' || host === 'docs.google.com') {
+    const id = /\/file\/d\/([\w-]+)/.exec(u.pathname)?.[1] ?? u.searchParams.get('id');
+    return id ? { kind: 'drive', id } : { kind: 'other' };
+  }
+  if (host === 'youtu.be' || host.endsWith('youtube.com')) {
+    const id = host === 'youtu.be' ? u.pathname.split('/')[1] : (u.searchParams.get('v') ?? /\/embed\/([\w-]+)/.exec(u.pathname)?.[1]);
+    return id ? { kind: 'youtube', id } : { kind: 'other' };
+  }
+  if (/\.pdf$/i.test(u.pathname)) return { kind: 'pdf' };
+  if (/\.(png|jpe?g|webp|gif)$/i.test(u.pathname)) return { kind: 'image' };
+  return { kind: 'other' };
+}

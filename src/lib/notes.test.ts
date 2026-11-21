@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, yearFromTitle, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS } from './notes';
+import { canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, yearFromTitle, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
 
 const BBA = 'Bachelor of Business Administration (Financial Investment Analysis) [BBA(FIA)]';
 
@@ -65,4 +65,18 @@ test('withPickDefaults fills only missing course/semester', () => {
   assert.strictEqual(withPickDefaults(new URLSearchParams('type=PYQ'), pick).toString(), 'type=PYQ&course=B.Com.+%28Hons.%29&semester=3');
   assert.strictEqual(withPickDefaults(new URLSearchParams('type=PYQ&course=BMS&semester=1'), pick).get('course'), 'BMS');
   assert.strictEqual(withPickDefaults(new URLSearchParams('q=tax'), { course: '', semester: '' }).toString(), 'q=tax');
+});
+
+test('previewKind: each kind and garbage', () => {
+  assert.deepStrictEqual(previewKind('https://pub-abc.r2.dev/notes/a.PDF'), { kind: 'pdf' });
+  assert.deepStrictEqual(previewKind('https://drive.google.com/file/d/1aB_-c/view?usp=sharing'), { kind: 'drive', id: '1aB_-c' });
+  assert.deepStrictEqual(previewKind('https://drive.google.com/open?id=XyZ9'), { kind: 'drive', id: 'XyZ9' });
+  assert.deepStrictEqual(previewKind('https://www.youtube.com/watch?v=abc123&t=5'), { kind: 'youtube', id: 'abc123' });
+  assert.deepStrictEqual(previewKind('https://youtu.be/abc123'), { kind: 'youtube', id: 'abc123' });
+  assert.deepStrictEqual(previewKind('https://www.youtube.com/embed/abc123'), { kind: 'youtube', id: 'abc123' });
+  assert.deepStrictEqual(previewKind('https://x.r2.dev/p.jpg'), { kind: 'image' });
+  assert.deepStrictEqual(previewKind('https://example.com/page'), { kind: 'other' });
+  assert.deepStrictEqual(previewKind('https://drive.google.com/drive/folders/zzz'), { kind: 'other' });
+  assert.deepStrictEqual(previewKind('not a url'), { kind: 'other' });
+  assert.deepStrictEqual(previewKind(''), { kind: 'other' });
 });
