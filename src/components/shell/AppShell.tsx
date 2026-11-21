@@ -5,6 +5,8 @@ import { LeftNav } from './LeftNav';
 import { MobileTabBar } from './MobileTabBar';
 import { FOOTER_LINKS } from './navItems';
 import { Composer } from '../feed/Composer';
+import { useAuth } from '../../context/AuthContext';
+import { banStatus } from '../../lib/moderation';
 
 type ComposerContextValue = { open(): void; postedAt: number };
 
@@ -26,6 +28,8 @@ interface AppShellProps {
 
 export function AppShell({ rightRail, children }: AppShellProps) {
   const { pathname } = useLocation();
+  const { appUser } = useAuth();
+  const ban = banStatus(appUser, new Date());
   const [composerOpen, setComposerOpen] = useState(false);
   const [postedAt, setPostedAt] = useState(0);
 
@@ -43,6 +47,16 @@ export function AppShell({ rightRail, children }: AppShellProps) {
       <div className="mx-auto flex w-full max-w-[1320px] flex-grow">
         {!isFlipbook && <LeftNav />}
         <main className={`flex min-w-0 flex-1 flex-col ${hideTabBar ? '' : 'pb-[calc(64px+env(safe-area-inset-bottom,0px))] md:pb-0'}`}>
+          {ban.banned && (
+            <div role="status" className="border-b border-danger/30 bg-danger/10 px-4 py-3 text-[14px] text-danger">
+              <p className="font-semibold">
+                {ban.permanent || !ban.until
+                  ? 'Your account is suspended.'
+                  : `Your account is suspended until ${ban.until.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} — you can read but not post.`}
+              </p>
+              {appUser?.banReason && <p>Reason: {appUser.banReason}</p>}
+            </div>
+          )}
           {children}
           {!hideTabBar && (
             <ul className="hidden flex-wrap gap-x-4 gap-y-1 border-t border-line px-4 py-4 text-[13px] text-ink-muted md:flex lg:hidden">

@@ -69,6 +69,9 @@ export interface User {
   onboardedAt?: string | null;
   batchYear?: number | null;
   interests?: string[];
+  bannedUntil?: string | null;
+  banReason?: string | null;
+  warnCount?: number;
 }
 
 export interface News {

@@ -16,6 +16,9 @@ const withOnboardingFields = (raw: any) =>
     collegeName: raw.college_name ?? null,
     onboardedAt: raw.onboarded_at ?? null,
     batchYear: raw.batch_year ?? null,
+    bannedUntil: raw.banned_until ?? null,
+    banReason: raw.ban_reason ?? null,
+    warnCount: raw.warn_count ?? 0,
     interests: Array.isArray(raw.interests) ? raw.interests : safeJsonParse<string[]>(raw.interests, []),
   };
 
