@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { requestVerification } from '../../services/communityService';
 import type { CommunityDetail } from '../../lib/communities';
-import { Field, field, aria, pickImage, uploadImage } from './CommunityFields';
+import { Field, field, aria } from './CommunityFields';
 import { Button } from '../ui/button';
 
-type Method = 'instagram' | 'email' | 'letter';
+type Method = 'instagram' | 'email'; // 'letter' is hidden for launch; a stored letter request still shows read-only
 const METHODS: { id: Method; label: string; proof: string }[] = [
   { id: 'instagram', label: 'Instagram', proof: 'Your Instagram handle' },
   { id: 'email', label: 'Email', proof: 'Official college email' },
-  { id: 'letter', label: 'Letter', proof: 'Letter from your faculty advisor (image)' },
 ];
 const card = 'space-y-2 rounded-card bg-surface p-4 shadow-card';
 
@@ -17,7 +16,6 @@ const card = 'space-y-2 rounded-card bg-surface p-4 shadow-card';
 export function VerificationPanel({ detail, onChanged }: { detail: CommunityDetail; onChanged: () => void }) {
   const [method, setMethod] = useState<Method>('instagram');
   const [proof, setProof] = useState('');
-  const [letter, setLetter] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -39,11 +37,10 @@ export function VerificationPanel({ detail, onChanged }: { detail: CommunityDeta
   const m = METHODS.find((x) => x.id === method)!;
   const submit = async () => {
     setError('');
-    let value = proof.trim();
-    if (method === 'letter' ? !letter : !value) { setError(method === 'letter' ? 'Choose the letter image' : 'This is required'); return; }
+    const value = proof.trim();
+    if (!value) { setError('This is required'); return; }
     setBusy(true);
     try {
-      if (method === 'letter') value = (await uploadImage(letter)) as string;
       await requestVerification(detail.slug, method, value);
       toast.success('Verification request sent');
     } catch (e: any) {
@@ -66,15 +63,9 @@ export function VerificationPanel({ detail, onChanged }: { detail: CommunityDeta
         </div>
       </fieldset>
       {method === 'instagram' && <p className="text-[15px] text-ink-muted">Enter your handle to get your code. You will add it to your Instagram bio next.</p>}
-      {method === 'letter' ? (
-        <Field id="proof" label={m.proof} error={error}>
-          <input id="proof" type="file" accept="image/jpeg,image/png,image/webp" className={field} onChange={pickImage(setLetter, setError)} {...aria('proof', error || undefined)} />
-        </Field>
-      ) : (
-        <Field id="proof" label={m.proof} error={error}>
-          <input id="proof" className={field} value={proof} maxLength={1000} onChange={(e) => setProof(e.target.value)} type={method === 'email' ? 'email' : 'text'} {...aria('proof', error || undefined)} />
-        </Field>
-      )}
+      <Field id="proof" label={m.proof} error={error}>
+        <input id="proof" className={field} value={proof} maxLength={1000} onChange={(e) => setProof(e.target.value)} type={method === 'email' ? 'email' : 'text'} {...aria('proof', error || undefined)} />
+      </Field>
       <Button onClick={() => void submit()} loading={busy}>{method === 'instagram' ? 'Get your code' : 'Send request'}</Button>
     </div>
   );

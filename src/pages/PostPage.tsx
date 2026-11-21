@@ -38,6 +38,7 @@ export function PostPage() {
   const uid = user?.id;
   const [sort, setSort] = useState<CommentSort>('relevant');
   const [replyTo, setReplyTo] = useState<CommentNode | null>(null);
+  const [replyErr, setReplyErr] = useState('');
   const [confirm, setConfirm] = useState<{ kind: 'post' } | { kind: 'comment'; node: CommentNode } | null>(null);
 
   const postKey = ['post', id];
@@ -67,7 +68,12 @@ export function PostPage() {
       }]);
       return { prev };
     },
-    onError: (e, _v, ctx) => { qc.setQueryData(commentsKey, ctx?.prev); toast.error(e instanceof Error ? e.message : "Couldn't post your comment."); },
+    onError: (e, _v, ctx) => {
+      qc.setQueryData(commentsKey, ctx?.prev);
+      const msg = e instanceof Error ? e.message : '';
+      if (msg === 'Only members can reply in this discussion') setReplyErr(msg);
+      else toast.error(msg || "Couldn't post your comment.");
+    },
     onSettled: () => { qc.invalidateQueries({ queryKey: commentsKey }); qc.invalidateQueries({ queryKey: ['feed'] }); },
   });
 
@@ -126,6 +132,7 @@ export function PostPage() {
 
   const submit = async (content: string) => {
     if (!requireLogin('Log in to comment')) throw new Error('auth');
+    setReplyErr('');
     await addComment.mutateAsync({ content, parentId: replyTo?.id });
     setReplyTo(null);
   };
@@ -199,7 +206,12 @@ export function PostPage() {
             <ul>{tree.best && row(tree.best, true)}{tree.roots.map((n) => row(n))}</ul>
           )}
         </section>
+        {post.isLocked ? (
+          <p className="sticky bottom-16 z-30 border-t border-line bg-surface px-4 py-3 text-[15px] text-ink-muted md:bottom-0">This discussion is locked</p>
+        ) : (<>
+        {replyErr && <p role="alert" className="bg-surface px-4 pt-3 text-[13px] text-danger">{replyErr}</p>}
         <CommentComposer name={uid ? (appUser?.displayName || 'you') : null} replyKey={replyTo?.id ?? null} onRequireLogin={() => requireLogin('Log in to comment')} replyingTo={replyTo ? replyTo.authorName || 'Student' : null} onCancelReply={() => setReplyTo(null)} onSubmit={submit} />
+        </>)}
       </div>
 
       <aside aria-label="Topic info" className="hidden w-72 shrink-0 space-y-3 lg:block">

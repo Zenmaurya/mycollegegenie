@@ -50,7 +50,7 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
   // No societies to suggest (or the lookup failed): nothing to show, so finish.
   const finishRef = useRef(finish);
   finishRef.current = finish;
-  const skipSocieties = useCallback(() => { void finishRef.current(); }, []);
+  const skipSocieties = useCallback(() => { finishRef.current().catch((e) => setError(e instanceof Error ? e.message : 'Something went wrong. Try again.')); }, []);
   const toggle = (i: string) => setInterests(s => (s.includes(i) ? s.filter(x => x !== i) : [...s, i]));
 
   return (
@@ -97,7 +97,7 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
         {step === 1 && <Button disabled={!collegeReady} loading={busy} onClick={() => void save(collegePayload, () => setStep(2))}>Continue</Button>}
         {step === 2 && <Button disabled={!hasCourse} loading={busy} onClick={() => void save(coursePayload, toStep3)}>Continue</Button>}
         {step === 3 && <Button disabled={interests.length === 0} loading={busy} onClick={() => void save(interestsPayload, toStep4)}>Continue</Button>}
-        {step === 4 && <Button loading={busy} onClick={() => void finish()}>Done</Button>}
+        {step === 4 && <Button loading={busy} onClick={() => void save(null, finish)}>Done</Button>}
       </div>
     </div>
   );
