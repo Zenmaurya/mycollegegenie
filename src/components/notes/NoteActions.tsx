@@ -59,8 +59,17 @@ export function NoteActions({ note, saved, onToggleSave, onRated }: Props) {
   const openCls = 'inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-sm bg-brand px-4 text-[15px] font-semibold text-white hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-brand';
 
   return (
+    <>
+      <div className="fixed inset-x-0 bottom-16 z-50 flex gap-2 border-t border-line bg-surface p-3 md:hidden">
+      {external
+        ? <a href={note.link} target="_blank" rel="noopener noreferrer" className={openCls}><ExternalLink className="h-5 w-5" aria-hidden /> Open</a>
+        : <Link to={`/flipbook/${note.id}`} className={openCls}><ExternalLink className="h-5 w-5" aria-hidden /> Open</Link>}
+      <Button variant="secondary" className="flex-1" onClick={needLogin(download)} disabled={downloading}>
+        <Download className="h-5 w-5" aria-hidden /> Download
+      </Button>
+    </div>
     <div className="space-y-4 rounded-card bg-surface p-4 shadow-card md:sticky md:top-20">
-      <div className="flex gap-2">
+      <div className="hidden gap-2 md:flex">
         {external
           ? <a href={note.link} target="_blank" rel="noopener noreferrer" className={openCls}><ExternalLink className="h-5 w-5" aria-hidden /> Open</a>
           : <Link to={`/flipbook/${note.id}`} className={openCls}><ExternalLink className="h-5 w-5" aria-hidden /> Open</Link>}
@@ -113,5 +122,6 @@ export function NoteActions({ note, saved, onToggleSave, onRated }: Props) {
       </div>
       {reporting && <ReportSheet open onClose={() => setReporting(false)} itemType="resource" itemId={note.id} title="Report resource" />}
     </div>
+    </>
   );
 }

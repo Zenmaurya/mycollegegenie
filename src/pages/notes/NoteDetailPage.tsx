@@ -13,6 +13,7 @@ import { CommentComposer } from '../../components/post/CommentComposer';
 import { NoteActions } from '../../components/notes/NoteActions';
 import { NotesSection } from '../../components/notes/NotesSection';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Button } from '../../components/ui/button';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Tabs } from '../../components/ui/Tabs';
 
@@ -64,11 +65,11 @@ export function NoteDetailPage() {
   const { id = '' } = useParams();
   const { savedResourceIds, toggleSave } = useResources();
   const [tab, setTab] = useState<Tab>('about');
-  const [rated, setRated] = useState<RatingResult | null>(null);
+  const [rated, setRated] = useState<{ id: string; r: RatingResult } | null>(null);
 
   const q = useQuery({ queryKey: ['note', id], queryFn: () => NotesService.get(id), retry: false });
-  useEffect(() => { setTab('about'); setRated(null); }, [id]);
-  const note: Resource | undefined = useMemo(() => q.data && (rated ? { ...q.data, ...rated } : q.data), [q.data, rated]);
+  useEffect(() => { setTab('about'); }, [id]);
+  const note: Resource | undefined = useMemo(() => q.data && (rated?.id === q.data.id ? { ...q.data, ...rated.r } : q.data), [q.data, rated]);
 
   const more = useQuery({
     queryKey: ['note-more', id, q.data?.subjectCode, q.data?.course, q.data?.semester],
@@ -85,6 +86,9 @@ export function NoteDetailPage() {
   const onToggleSave = useCallback((rid: string) => { void toggleSave(rid); }, [toggleSave]);
 
   if (q.isLoading) return <div className="mx-auto max-w-5xl space-y-4 p-4"><Skeleton className="h-8 w-2/3" /><Skeleton className="aspect-[4/3] w-full" /></div>;
+  if (q.isError && (q.error as { status?: number }).status !== 404) {
+    return <EmptyState title="Could not load this resource" body="Check your connection and try again." action={<Button onClick={() => void q.refetch()}>Try again</Button>} />;
+  }
   if (q.isError || !note) {
     return <EmptyState title="This resource isn't available" body="It may have been removed or is waiting for approval." action={<Link to="/notes" className="font-semibold text-brand hover:underline">Browse notes</Link>} />;
   }
@@ -94,7 +98,7 @@ export function NoteDetailPage() {
   const stats = [note.ratingAvg != null ? `★ ${note.ratingAvg.toFixed(1)} (${note.ratingCount})` : '', note.downloads ? `Helped ${note.downloads}` : ''].filter(Boolean).join(' · ');
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-4">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-4 pb-24 md:pb-4">
       <Helmet><title>{note.title} | MyCollegeGenie</title></Helmet>
       <header className="space-y-1">
         {crumbs && <p className="text-[13px] text-ink-muted">{crumbs}</p>}
@@ -126,7 +130,7 @@ export function NoteDetailPage() {
             {tab === 'discussion' && <Fragment key={`${id}-discussion`}><Feed id={id} kind="discussion" /></Fragment>}
           </div>
         </div>
-        <aside><NoteActions note={note} saved={saved.has(note.id)} onToggleSave={onToggleSave} onRated={setRated} /></aside>
+        <aside><Fragment key={note.id}><NoteActions note={note} saved={saved.has(note.id)} onToggleSave={onToggleSave} onRated={(r) => setRated({ id: note.id, r })} /></Fragment></aside>
       </div>
 
       <NotesSection title="More from this subject" notes={more.data ?? []} savedIds={saved} onToggleSave={onToggleSave} />
