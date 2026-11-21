@@ -8,16 +8,22 @@ import { FORUM_TOPICS, topicLabel } from '../../constants';
 import { compressImage, isSupportedImageType } from '../../lib/compressImage';
 import { Sheet } from '../ui/Sheet';
 import { submitPost, MAX_POST_PHOTOS } from '../../lib/submitPost';
+import { composerKinds, type PageRole, type PostKind } from '../../lib/communities';
+import { Segmented } from '../ui/Segmented';
 
 interface ComposerProps {
   open: boolean;
   onClose(): void;
   onPosted(id: string): void;
+  /** Post on behalf of a society page; without it the Composer posts to the normal feed. */
+  /** Preselected kind when the Composer is opened from a tab. */
+  initialKind?: PostKind;
+  community?: { id: string; name: string; kind: 'society' | 'mcg'; role: PageRole | null };
 }
 
 type Photo = { file: File; preview: string };
 
-export function Composer({ open, onClose, onPosted }: ComposerProps) {
+export function Composer({ open, onClose, onPosted, community, initialKind }: ComposerProps) {
   const { user, appUser } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -26,6 +32,9 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [sending, setSending] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
+  const [pickedKind, setPickedKind] = useState<PostKind | null>(initialKind ?? null);
+  const kinds = community ? composerKinds(community.role, community.kind) : [];
+  const postKind = pickedKind && kinds.includes(pickedKind) ? pickedKind : kinds[0];
 
   // Prefill the student's course once their profile loads
   useEffect(() => {
@@ -70,7 +79,7 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
     try {
       const files = await Promise.all(photos.map((p) => compressImage(p.file)));
       const id = await submitPost(
-        { title, content, topic, course, files },
+        { title, content, topic, course, files, ...(community && postKind ? { communityId: community.id, postKind } : {}) },
         { upload: ForumService.uploadPostImage, create: (p) => ForumService.createPost(p as any) },
       );
       toast.success('Posted!');
@@ -94,6 +103,12 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-y-auto">
             <div className="space-y-3 p-4">
+              {community && (
+                <div className="space-y-2">
+                  <p className="text-[15px] font-semibold text-ink">Posting as {community.name}</p>
+                  {kinds.length > 1 && <Segmented label="Post type" value={postKind} onChange={(v) => setPickedKind(v as PostKind)} options={kinds.map((k) => ({ value: k, label: k === 'official' ? 'Official' : 'Discussion' }))} />}
+                </div>
+              )}
               <input
                 ref={titleRef}
                 value={title}
@@ -156,7 +171,7 @@ export function Composer({ open, onClose, onPosted }: ComposerProps) {
                 Photo ({photos.length}/{MAX_POST_PHOTOS})
                 <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
               </label>
-              <button type="submit" disabled={sending} className="flex items-center gap-2 rounded-full bg-brand px-5 py-2 text-[15px] font-semibold text-white disabled:opacity-60">
+              <button type="submit" disabled={sending || (!!community && !postKind)} className="flex items-center gap-2 rounded-full bg-brand px-5 py-2 text-[15px] font-semibold text-white disabled:opacity-60">
                 {sending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Post
               </button>

@@ -141,6 +141,8 @@ export interface ForumPost {
   images?: string[];
   bestCommentId?: string | null;
   postKind?: 'post' | 'official' | 'discussion';
+  isPinned?: boolean;
+  isLocked?: boolean;
   community?: { slug: string; name: string; logoUrl: string | null; status: 'unverified' | 'official' | 'hidden' } | null;
 }
 

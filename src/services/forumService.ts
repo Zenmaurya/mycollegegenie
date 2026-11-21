@@ -30,6 +30,12 @@ export const ForumService = {
   },
 
 
+  /** Posts of one society page, pinned first (server order). */
+  getCommunityPosts: async (slug: string, kind: 'official' | 'discussion'): Promise<ForumPost[]> => {
+    const data = await fetchWithAuth(`/api/forum/posts?${new URLSearchParams({ community: slug, kind, limit: '50' })}`);
+    return data.map(mapPost);
+  },
+
   /** null = the post does not exist (404); any other failure throws so the page can offer Retry. */
   getPost: async (postId: string) => {
     try {

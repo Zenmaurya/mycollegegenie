@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { joinButton, eventBadges, deadlineSoon, type CommunityDetail, type EventCard } from './communities';
+import { joinButton, eventBadges, deadlineSoon, canRegister, linkLabel, composerKinds, type CommunityDetail, type EventCard } from './communities';
 
 const detail = (viewer: Partial<CommunityDetail['viewer']>, isListed = true) =>
   ({ isListed, viewer: { following: false, role: null, status: null, joinMode: 'join', ...viewer } }) as CommunityDetail;
@@ -62,4 +62,32 @@ test('validateCommunityForm: links must be https, email plain', () => {
   assert.ok(validateCommunityForm({ ...okForm, email: `${'a'.repeat(116)}@b.co` }).email);
   assert.ok(validateCommunityForm({ ...okForm, email: 'nope' }).email);
   assert.deepEqual(validateCommunityForm({ ...okForm, email: 'a@b.co' }), {});
+});
+
+const pg = (o: object) => ({ status: 'unverified', kind: 'society', isListed: true, college: { id: 'c1', short_name: 'X' }, ...o }) as Parameters<typeof canRegister>[0];
+test('canRegister: official and mcg always', () => {
+  assert.equal(canRegister(pg({ status: 'official' }), null), true);
+  assert.equal(canRegister(pg({ kind: 'mcg', college: null }), null), true);
+});
+test('canRegister: unverified needs same college and listing', () => {
+  assert.equal(canRegister(pg({}), 'c1'), true);
+  assert.equal(canRegister(pg({}), 'c2'), false);
+  assert.equal(canRegister(pg({}), null), false);
+  assert.equal(canRegister(pg({ isListed: false }), 'c1'), false);
+});
+test('canRegister: hidden never', () => assert.equal(canRegister(pg({ status: 'hidden' }), 'c1'), false));
+
+test('linkLabel: domain only for https', () => {
+  assert.equal(linkLabel('https://www.instagram.com/dramsoc'), 'instagram.com');
+  assert.equal(linkLabel('javascript:alert(1)'), null);
+  assert.equal(linkLabel('http://a.com'), null);
+  assert.equal(linkLabel('data:text/html,x'), null);
+});
+test('composerKinds', () => {
+  assert.deepEqual(composerKinds('admin', 'society'), ['official', 'discussion']);
+  assert.deepEqual(composerKinds('core', 'society'), ['official', 'discussion']);
+  assert.deepEqual(composerKinds('member', 'society'), ['discussion']);
+  assert.deepEqual(composerKinds(null, 'society'), []);
+  assert.deepEqual(composerKinds('admin', 'mcg'), ['discussion']);
+  assert.deepEqual(composerKinds(null, 'mcg'), ['discussion']);
 });

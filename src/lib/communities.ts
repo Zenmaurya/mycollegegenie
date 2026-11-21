@@ -91,3 +91,24 @@ export function validateCommunityForm(f: CommunityForm): Partial<Record<keyof Co
   if (mail && (mail.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail))) e.email = 'Enter a valid email';
   return e;
 }
+
+/** Register is shown for official/mcg pages; unverified pages only for listed pages and viewers from the page's own college. */
+export function canRegister(d: Pick<CommunityDetail, 'status' | 'kind' | 'isListed' | 'college'>, viewerCollegeId?: string | null): boolean {
+  if (d.status === 'hidden') return false;
+  if (d.status === 'official' || d.kind === 'mcg') return true;
+  return d.isListed !== false && !!viewerCollegeId && viewerCollegeId === d.college?.id;
+}
+
+/** Domain label for an https link, or null when the link must not be rendered. */
+export function linkLabel(url: string): string | null {
+  if (!isHttpsUrl(url)) return null;
+  return new URL(url).hostname.replace(/^www\./, '');
+}
+
+export type PostKind = 'official' | 'discussion';
+/** Post kinds the viewer may publish on a page. Server rules are final. */
+export function composerKinds(role: PageRole | null, kind: 'society' | 'mcg'): PostKind[] {
+  if (kind === 'mcg') return ['discussion'];
+  if (role === 'admin' || role === 'core') return ['official', 'discussion'];
+  return role === 'member' ? ['discussion'] : [];
+}
