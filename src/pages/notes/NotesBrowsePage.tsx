@@ -170,7 +170,7 @@ export function NotesBrowsePage() {
             className="min-h-11 w-full rounded-full border border-line bg-surface pl-10 pr-4 text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-brand"
           />
         </div>
-        <div className="-mx-3 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:px-0" role="group" aria-label="Filters">
+        <div className="scrollbar-hide -mx-3 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:px-0" role="group" aria-label="Filters">
           <Chip selected={!!(draft.course || (showPick && pick.course))} onToggle={() => setSheet(courseOpens)}>
             {draft.course ? courseShort(draft.course) : showPick && pick.course ? courseShort(pick.course) : 'Pick your course'}
           </Chip>
@@ -243,7 +243,7 @@ export function NotesBrowsePage() {
                 <NotesSection
                   title="PYQs by year" notes={yearGroup.items} savedIds={savedIds} onToggleSave={onToggleSave}
                   header={
-                    <div className="flex gap-2 overflow-x-auto" role="group" aria-label="Year">
+                    <div className="scrollbar-hide flex gap-2 overflow-x-auto" role="group" aria-label="Year">
                       {byYear.map((g) => <Fragment key={g.year}><Chip selected={g.year === yearGroup.year} onToggle={() => setYearPick(g.year)}>{String(g.year)}</Chip></Fragment>)}
                     </div>
                   }

@@ -18,7 +18,7 @@ export function Tabs({ items, value, onChange, label = "Tabs" }: TabsProps) {
     document.getElementById(`tab-${next.id}`)?.focus()
   }
   return (
-    <div role="tablist" aria-label={label} className="flex gap-6 overflow-x-auto border-b border-line">
+    <div role="tablist" aria-label={label} className="scrollbar-hide flex gap-6 overflow-x-auto border-b border-line">
       {items.map((it, i) => {
         const on = it.id === value
         return (

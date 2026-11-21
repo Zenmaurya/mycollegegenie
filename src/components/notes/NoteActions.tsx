@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Download, ExternalLink, Flag, Heart, Share2, Star } from 'lucide-react';
 import { toast } from 'sonner';
@@ -60,6 +61,7 @@ export function NoteActions({ note, saved, onToggleSave, onRated }: Props) {
 
   return (
     <>
+      {createPortal(
       <div className="fixed inset-x-0 bottom-16 z-50 flex gap-2 border-t border-line bg-surface p-3 md:hidden">
       {external
         ? <a href={note.link} target="_blank" rel="noopener noreferrer" className={openCls}><ExternalLink className="h-5 w-5" aria-hidden /> Open</a>
@@ -67,7 +69,7 @@ export function NoteActions({ note, saved, onToggleSave, onRated }: Props) {
       <Button variant="secondary" className="flex-1" onClick={needLogin(download)} disabled={downloading}>
         <Download className="h-5 w-5" aria-hidden /> Download
       </Button>
-    </div>
+      </div>, document.body)}
     <div className="space-y-4 rounded-card bg-surface p-4 shadow-card md:sticky md:top-20">
       <div className="hidden gap-2 md:flex">
         {external

@@ -98,7 +98,7 @@ export function NoteDetailPage() {
   const stats = [note.ratingAvg != null ? `★ ${note.ratingAvg.toFixed(1)} (${note.ratingCount})` : '', note.downloads ? `Helped ${note.downloads}` : ''].filter(Boolean).join(' · ');
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-4 pb-24 md:pb-4">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-4 pb-40 md:pb-4">
       <Helmet><title>{note.title} | MyCollegeGenie</title></Helmet>
       <header className="space-y-1">
         {crumbs && <p className="text-[13px] text-ink-muted">{crumbs}</p>}

@@ -13,7 +13,7 @@ interface ChipProps {
 // Selected = 2px ink border (brand is never a large fill).
 export function Chip({ children, selected = false, onToggle, removable, onRemove }: ChipProps) {
   return (
-    <span className={cn("inline-flex min-h-11 items-center rounded-full border bg-surface text-[13px] font-semibold", selected ? "border-2 border-ink text-ink" : "border-line text-ink-muted")}>
+    <span className={cn("inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full border bg-surface text-[13px] font-semibold", selected ? "border-2 border-ink text-ink" : "border-line text-ink-muted")}>
       <button
         type="button"
         aria-pressed={onToggle ? selected : undefined}
