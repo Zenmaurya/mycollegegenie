@@ -16,6 +16,8 @@ import { ConfirmSheet } from './ConfirmSheet';
 interface Props { detail: CommunityDetail; onChanged: () => Promise<unknown> | void; onReport: () => void }
 
 const today = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
+// date-only value -> local date (new Date('YYYY-MM-DD') would parse as UTC)
+const localDate = (s: string) => { const [y, m, d] = s.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
 
 export function CommunityHeader({ detail: d, onChanged, onReport }: Props) {
   const { user, refreshAppUser } = useAuth();
@@ -74,7 +76,7 @@ export function CommunityHeader({ detail: d, onChanged, onReport }: Props) {
         <p className="text-[14px] text-ink-muted">{stats.join(' · ')}</p>
         {recruiting && (
           <Link to={`/c/${d.slug}/events`} className="inline-flex min-h-11 items-center text-[15px] font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-brand">
-            Recruitment open till {new Date(d.recruitment_until!).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} →
+            Recruitment open till {localDate(d.recruitment_until!).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} →
           </Link>
         )}
         <div className="flex flex-wrap gap-2">

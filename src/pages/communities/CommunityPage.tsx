@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
@@ -50,11 +50,19 @@ export function CommunityPage() {
   const d = q.data;
   const role = d.viewer.status === 'active' ? d.viewer.role : null;
   // prefix match: refreshes both the official and discussion lists
-  const posted = () => { void qc.invalidateQueries({ queryKey: ['community-posts', viewer, slug] }); };
+  const posted = () => {
+    void qc.invalidateQueries({ queryKey: ['community-posts', viewer, slug] });
+    void qc.invalidateQueries({ queryKey: ['feed'] });
+  };
 
   return wrap(
     <>
-      <CommunityHeader detail={d} onChanged={() => qc.invalidateQueries({ queryKey: ['community', viewer] })} onReport={() => setReportOpen(true)} />
+      <CommunityHeader detail={d} onChanged={() => Promise.all([
+        qc.invalidateQueries({ queryKey: ['community', viewer] }),
+        qc.invalidateQueries({ queryKey: ['community-team', slug] }),
+        qc.invalidateQueries({ queryKey: ['community-posts', viewer, slug] }),
+        qc.invalidateQueries({ queryKey: ['community-events', viewer, slug] }),
+      ])} onReport={() => setReportOpen(true)} />
       <Tabs label="Society sections" items={TABS} value={current} onChange={(id) => navigate(id === 'posts' ? `/c/${slug}` : `/c/${slug}/${id}`)} />
       <div role="tabpanel" aria-labelledby={`tab-${current}`} className="space-y-3">
         {current === 'posts' && <PostsTab detail={d} onCreate={() => setComposeKind('official')} />}
@@ -64,8 +72,8 @@ export function CommunityPage() {
         {current === 'about' && <AboutTab detail={d} />}
       </div>
       <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} itemType="community" itemId={d.id} title="Report page" />
-      <Fragment key={composeKind ?? 'closed'}><Composer open={composeKind !== null} onClose={() => setComposeKind(null)} onPosted={posted}
-        initialKind={composeKind ?? undefined} community={{ id: d.id, name: d.name, kind: d.kind, role }} /></Fragment>
+      <Composer open={composeKind !== null} onClose={() => setComposeKind(null)} onPosted={posted}
+        initialKind={composeKind ?? undefined} community={{ id: d.id, name: d.name, kind: d.kind, role }} />
     </>,
   );
 }

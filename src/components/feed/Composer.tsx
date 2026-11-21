@@ -15,9 +15,9 @@ interface ComposerProps {
   open: boolean;
   onClose(): void;
   onPosted(id: string): void;
-  /** Post on behalf of a society page; without it the Composer posts to the normal feed. */
   /** Preselected kind when the Composer is opened from a tab. */
   initialKind?: PostKind;
+  /** Post on behalf of a society page; without it the Composer posts to the normal feed. */
   community?: { id: string; name: string; kind: 'society' | 'mcg'; role: PageRole | null };
 }
 
@@ -33,6 +33,7 @@ export function Composer({ open, onClose, onPosted, community, initialKind }: Co
   const [sending, setSending] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
   const [pickedKind, setPickedKind] = useState<PostKind | null>(initialKind ?? null);
+  useEffect(() => { if (open) setPickedKind(initialKind ?? null); }, [open, initialKind]);
   const kinds = community ? composerKinds(community.role, community.kind) : [];
   const postKind = pickedKind && kinds.includes(pickedKind) ? pickedKind : kinds[0];
 

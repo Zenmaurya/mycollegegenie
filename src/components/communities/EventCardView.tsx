@@ -43,7 +43,7 @@ export function EventCardView({ event: e, now, canRegister, onToggleInterest, on
             Interested{e.interested_count > 0 ? ` · ${e.interested_count}` : ''}
           </button>
           {canRegister && url && (
-            <a href={url} target="_blank" rel="noopener noreferrer"
+            <a href={url} target="_blank" rel="noopener noreferrer nofollow"
               className="inline-flex min-h-11 items-center gap-1.5 rounded-sm bg-brand px-4 text-[15px] font-semibold text-white hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-brand">
               Register <ExternalLink className="h-4 w-4" aria-hidden /><span className="sr-only">(opens in a new tab)</span>
             </a>

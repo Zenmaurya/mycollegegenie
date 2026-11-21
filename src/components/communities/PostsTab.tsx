@@ -50,21 +50,21 @@ export function PostList({ detail, kind, action, emptyTitle, emptyBody }: { deta
       )}
       {q.isSuccess && q.data.length === 0 && <div className="rounded-card bg-surface shadow-card"><EmptyState title={emptyTitle} body={emptyBody} /></div>}
       {q.isSuccess && q.data.map((p) => (
-        <div key={p.id} className="space-y-1">
-          {(p.isPinned || p.isLocked || mod) && (
-            <div className="flex min-h-11 items-center gap-2 px-1">
+        <div key={p.id} className="relative space-y-1">
+          {(p.isPinned || p.isLocked) && (
+            <div className="flex items-center gap-2 px-1">
               {p.isPinned && <Badge tone="brand"><Pin className="mr-1 h-3.5 w-3.5" aria-hidden />Pinned</Badge>}
               {p.isLocked && <Badge><Lock className="mr-1 h-3.5 w-3.5" aria-hidden />Locked</Badge>}
-              {mod && (
-                <span className="ml-auto">
-                  <Menu label={`Moderate: ${p.title}`} items={[
-                    { label: p.isPinned ? 'Unpin' : 'Pin', onSelect: () => void run(p.id, p.isPinned ? 'unpin' : 'pin') },
-                    { label: p.isLocked ? 'Unlock' : 'Lock', onSelect: () => void run(p.id, p.isLocked ? 'unlock' : 'lock') },
-                    { label: 'Remove', danger: true, onSelect: () => setRemoving(p) },
-                  ]} />
-                </span>
-              )}
             </div>
+          )}
+          {mod && (
+            <span className="absolute right-16 top-3 z-10">
+              <Menu label={`Moderate: ${p.title}`} items={[
+                { label: p.isPinned ? 'Unpin' : 'Pin', onSelect: () => void run(p.id, p.isPinned ? 'unpin' : 'pin') },
+                { label: p.isLocked ? 'Unlock' : 'Lock', onSelect: () => void run(p.id, p.isLocked ? 'unlock' : 'lock') },
+                { label: 'Remove', danger: true, onSelect: () => setRemoving(p) },
+              ]} />
+            </span>
           )}
           <PostCard post={p} isSaved={savedResourceIds.includes(p.id)} onToggleSave={onToggleSave} />
         </div>
