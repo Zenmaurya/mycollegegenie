@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { canonicalCourse, currentSemester, legacyBrowseToNotes, yearFromTitle, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS } from './notes';
+import { canonicalCourse, courseShort, currentSemester, legacyBrowseToNotes, yearFromTitle, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS } from './notes';
 
 const BBA = 'Bachelor of Business Administration (Financial Investment Analysis) [BBA(FIA)]';
 
@@ -13,6 +13,7 @@ test('canonicalCourse maps aliases and exact names, rejects unknown', () => {
   assert.strictEqual(canonicalCourse('b.sc. (hons.) mathematics'), 'B.Sc. (Hons.) Mathematics');
   assert.strictEqual(canonicalCourse(null), null);
   assert.strictEqual(canonicalCourse('Physics'), null);
+  assert.strictEqual(canonicalCourse('constructor'), null);
 });
 
 test('currentSemester counts from a July academic year start', () => {
@@ -50,4 +51,11 @@ test('mapNote maps snake_case to camelCase Resource fields', () => {
   assert.strictEqual(r.semester, 3);
   assert.strictEqual(r.link, '');
   assert.strictEqual(mapNote({ id: 'b' }).ratingAvg, null);
+});
+
+test('courseShort abbreviates known courses', () => {
+  assert.strictEqual(courseShort(BBA), 'BBA(FIA)');
+  assert.strictEqual(courseShort('Bachelor of Management Studies (BMS)'), 'BMS');
+  assert.strictEqual(courseShort('B.Com. (Hons.)'), 'B.Com (H)');
+  assert.strictEqual(courseShort('Other'), 'Other');
 });

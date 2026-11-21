@@ -1,17 +1,19 @@
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { REPORT_REASONS } from '../../lib/communities';
+import { RESOURCE_REPORT_REASONS } from '../../lib/notes';
 import { report, type ReportItemType } from '../../services/reportService';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/button';
 
-type Reason = (typeof REPORT_REASONS)[number];
+type Reason = (typeof REPORT_REASONS)[number] | (typeof RESOURCE_REPORT_REASONS)[number];
 interface Props { open: boolean; onClose: () => void; itemType: ReportItemType; itemId: string; title: string }
 
 export function ReportSheet({ open, onClose, itemType, itemId, title }: Props) {
   const [reason, setReason] = useState<Reason | ''>('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const reasons: readonly Reason[] = itemType === 'resource' ? RESOURCE_REPORT_REASONS : REPORT_REASONS;
   const needsNote = reason === 'Other';
   const ready = !!reason && (!needsNote || note.trim().length > 0);
 
@@ -36,7 +38,7 @@ export function ReportSheet({ open, onClose, itemType, itemId, title }: Props) {
       <form onSubmit={submit} className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <fieldset className="space-y-1">
           <legend className="mb-1 text-[15px] font-semibold text-ink">Why are you reporting this?</legend>
-          {REPORT_REASONS.map((r) => (
+          {reasons.map((r) => (
             <label key={r} className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px] text-ink">
               <input type="radio" name="report-reason" value={r} checked={reason === r} onChange={() => setReason(r)} className="h-5 w-5 accent-[var(--color-brand)]" />
               {r}

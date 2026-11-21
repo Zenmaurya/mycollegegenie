@@ -14,6 +14,9 @@ const SEC = 'Skill Enhancement Course (SEC)';
 const COURSE_BY_KEY = new Map<string, string>(
   [BBA, BMS, SEC, BCOM, ...Object.keys(COURSE_METADATA)].map((c) => [c.toLowerCase(), c]),
 );
+/** The four course names live resources use, for the course picker. */
+export const NOTES_COURSES = [BBA, BMS, SEC, BCOM];
+
 const ALIASES: Record<string, string> = {
   'bba': BBA, 'bba-fia': BBA, 'bba fia': BBA, 'bba(fia)': BBA,
   'bms': BMS,
@@ -22,7 +25,13 @@ const ALIASES: Record<string, string> = {
 
 export function canonicalCourse(text: string | null): string | null {
   const k = (text ?? '').trim().toLowerCase();
-  return COURSE_BY_KEY.get(k) ?? ALIASES[k] ?? null;
+  return COURSE_BY_KEY.get(k) ?? (Object.hasOwn(ALIASES, k) ? ALIASES[k] : null);
+}
+
+/** Short course label for cards, e.g. 'BBA(FIA)'. */
+export function courseShort(course: string): string {
+  const m = /\[(.+)\]$|\((BMS|SEC)\)$/.exec(course);
+  return m ? (m[1] ?? m[2]) : course.replace('B.Com. (Hons.)', 'B.Com (H)');
 }
 
 /** batchYear = admission year; the academic year starts in July. null when outside 1..maxSem. */
