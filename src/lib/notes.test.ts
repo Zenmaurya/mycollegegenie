@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, yearFromTitle, titleFromFilename, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
+import { canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, yearFromTitle, titleFromFilename, uploadProblem, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
 
 const BBA = 'Bachelor of Business Administration (Financial Investment Analysis) [BBA(FIA)]';
 
@@ -86,4 +86,13 @@ test('previewKind: each kind and garbage', () => {
 test('titleFromFilename drops the extension and tidies separators', () => {
   assert.strictEqual(titleFromFilename('  Micro_Eco--Unit-1  notes.final.PDF'), 'Micro Eco Unit 1 notes.final');
   assert.strictEqual(titleFromFilename('scan'), 'scan');
+});
+
+test('uploadProblem blocks a file or missing link on Playlist, and bad links', () => {
+  assert.ok(uploadProblem({ type: 'Playlist', hasFile: true, link: '' }));
+  assert.ok(uploadProblem({ type: 'Playlist', hasFile: false, link: '' }));
+  assert.strictEqual(uploadProblem({ type: 'Playlist', hasFile: false, link: 'https://youtube.com/playlist?list=x' }), null);
+  assert.strictEqual(uploadProblem({ type: 'Note', hasFile: true, link: '' }), null);
+  assert.ok(uploadProblem({ type: 'Note', hasFile: false, link: '' }));
+  assert.ok(uploadProblem({ type: 'Note', hasFile: false, link: 'drive.google.com/x' }));
 });

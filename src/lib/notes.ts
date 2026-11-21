@@ -65,6 +65,15 @@ export function titleFromFilename(name: string): string {
   return name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+/** File/link rules for the upload page; null when fine. Re-run when the type changes. */
+export function uploadProblem(o: { type: ResourceType; hasFile: boolean; link: string }): string | null {
+  const link = o.link.trim();
+  if (o.type === 'Playlist' && (o.hasFile || !link)) return 'A Playlist needs a YouTube link, not a file.';
+  if (!o.hasFile && !link) return 'Add a file or paste a link to continue.';
+  if (link && !/^https?:\/\//i.test(link)) return 'Links must start with http:// or https://.';
+  return null;
+}
+
 export function formatHelpedPct(yes: number, no: number): string | null {
   const n = yes + no;
   return n < 5 ? null : `${Math.round((yes / n) * 100)}% found it helpful`;

@@ -3,9 +3,10 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { CheckCircle2, FileText, Link2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { COURSE_METADATA } from '../../constants';
-import { NOTES_COURSES, canonicalCourse, currentSemester, titleFromFilename, yearFromTitle } from '../../lib/notes';
+import { NOTES_COURSES, canonicalCourse, currentSemester, titleFromFilename, uploadProblem, yearFromTitle } from '../../lib/notes';
 import { renderPdfThumb } from '../../lib/pdfThumb';
 import { uploadFile } from '../../services/resourceService';
 import { NotesService } from '../../services/notesService';
@@ -88,15 +89,21 @@ export function NotesUploadPage() {
     return () => URL.revokeObjectURL(u);
   }, [thumb]);
 
+  const subjects = useQuery({
+    queryKey: ['notes-subjects', course, semester],
+    queryFn: () => NotesService.sections(course || undefined, Number(semester) || undefined),
+    enabled: !!user && !!course,
+    staleTime: 5 * 60_000,
+  }).data?.subjects ?? [];
+  const knownSubject = subjects.find((s) => s.code === subjectCode);
+
   const year = type === 'PYQ' ? (yearInput ?? String(yearFromTitle(title) ?? '')) : '';
   const yearNum = year ? Number(year) : null;
   const trimmedLink = link.trim();
   const maxSem = COURSE_METADATA[course]?.semesters ?? 8;
   const courseOptions = course && !NOTES_COURSES.includes(course) ? [course, ...NOTES_COURSES] : NOTES_COURSES;
 
-  const fileProblem = !file && !trimmedLink ? 'Add a file or paste a link to continue.'
-    : type === 'Playlist' && !trimmedLink ? 'A playlist needs a YouTube link.'
-    : trimmedLink && !/^https?:\/\//i.test(trimmedLink) ? 'Links must start with http:// or https://.' : '';
+  const fileProblem = uploadProblem({ type, hasFile: !!file, link }) ?? '';
   const detailsProblem = !title.trim() ? 'Add a title.' : !course ? 'Pick a course.' : !semester ? 'Pick a semester.'
     : yearNum != null && (yearNum < 2010 || yearNum > 2035) ? 'Year must be between 2010 and 2035.' : '';
 
@@ -115,7 +122,7 @@ export function NotesUploadPage() {
     setProgress(0);
     try {
       let finalLink = trimmedLink;
-      if (file) finalLink = await uploadFile(file, FOLDER[type], { course, subject: title, subjectCode }, setProgress);
+      if (file) finalLink = await uploadFile(file, FOLDER[type], { course, subject: knownSubject?.title ?? title, subjectCode }, setProgress);
       let thumbnailUrl: string | null = null;
       let pageCount: number | null = null;
       const t = file ? await thumbJob.current : null;
@@ -166,7 +173,7 @@ export function NotesUploadPage() {
     );
   }
 
-  const problem = step === 0 ? fileProblem : step === 1 ? detailsProblem : '';
+  const problem = step === 0 ? fileProblem : step === 1 ? detailsProblem || fileProblem : '';
   return (
     <main className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-[640px] flex-col gap-4 px-4 py-4">
       <h1 className="text-[22px] font-bold text-ink">Upload to Notes</h1>
@@ -228,8 +235,11 @@ export function NotesUploadPage() {
               </select>
             </div>
             <div>
-              <label htmlFor="up-code" className={label}>Subject / paper code (optional)</label>
-              <input id="up-code" value={subjectCode} onChange={(e) => setSubjectCode(e.target.value.trim())} placeholder="e.g. 32341101" className={field} />
+              <label htmlFor="up-code" className={label}>Subject or paper code (optional)</label>
+              <input id="up-code" list="up-subjects" value={subjectCode} onChange={(e) => setSubjectCode(e.target.value.trim())} placeholder="Search or type a code, e.g. 32341101" className={field} />
+              <datalist id="up-subjects">
+                {subjects.map((s) => <option key={s.code} value={s.code}>{`${s.code} — ${s.title}`}</option>)}
+              </datalist>
             </div>
             {type === 'PYQ' && (
               <div>
