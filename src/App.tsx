@@ -11,25 +11,20 @@
  *   Resources state   → src/context/ResourceContext.tsx
  *   NavBar + mobile   → src/components/NavBar.tsx
  *   Footer            → src/components/AppFooter.tsx
- *   Upload modal      → src/components/ResourceUploadModal.tsx
- *   Detail modal      → src/components/ResourceDetailModal.tsx
- *   Report modal      → src/components/ReportModal.tsx
  *   Event modal       → src/components/EventRequestModal.tsx
  *   Announcement bar  → src/components/AnnouncementBanner.tsx
  *
  * What stays here:
  *   - Route definitions
- *   - Filter / search state (shared between HomePage & BrowsePage)
+ *   - Filter / search state (used by /playlists)
  *   - News + site-settings fetching
- *   - handleRate, handleShare (need both resources + selectedResource)
- *   - openUploadModal / selectedResource coordination
+ *   - handleShare
  */
 
 import React, { useState, useMemo, useCallback, useEffect, useRef, Suspense, lazy } from 'react';
-import { useDebounce } from './hooks/useDebounce';
 import {
   BrowserRouter, Routes, Route, Link, useLocation, useNavigate,
-  useSearchParams, Navigate, useParams,
+  Navigate, useParams,
 } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
@@ -39,8 +34,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ResourceProvider, useResources } from './context/ResourceContext';
 
 // ── Lazy pages ────────────────────────────────────────────────────
-const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
-const BrowsePage = lazy(() => import('./pages/BrowsePage').then(m => ({ default: m.BrowsePage })));
+const NotesBrowsePage = lazy(() => import('./pages/notes/NotesBrowsePage').then(m => ({ default: m.NotesBrowsePage })));
+const NoteDetailPage = lazy(() => import('./pages/notes/NoteDetailPage').then(m => ({ default: m.NoteDetailPage })));
+const NotesUploadPage = lazy(() => import('./pages/notes/NotesUploadPage').then(m => ({ default: m.NotesUploadPage })));
 const PlaylistPage = lazy(() => import('./pages/PlaylistPage').then(m => ({ default: m.PlaylistPage })));
 const PostPage = lazy(() => import('./pages/PostPage').then(m => ({ default: m.PostPage })));
 const AdminPanel = lazy(() => import('./pages/AdminPanel').then(m => ({ default: m.AdminPanel })));
@@ -76,21 +72,18 @@ import { PageTransition } from './components/PageTransition';
 import { AppShell } from './components/shell/AppShell';
 import { RightRail } from './components/shell/RightRail';
 import { AnnouncementBanner } from './components/AnnouncementBanner';
-import { ResourceUploadModal } from './components/ResourceUploadModal';
-import { ResourceDetailModal } from './components/ResourceDetailModal';
-import { ReportModal } from './components/ReportModal';
 import { EventRequestModal } from './components/EventRequestModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 // ── Constants & Types ─────────────────────────────────────────────
-import { College_COURSES, SUB_CATEGORIES, COURSE_METADATA } from './constants';
+import { College_COURSES, COURSE_METADATA } from './constants';
 import type { Resource, NewsItem } from './types';
 
 // ── Services ──────────────────────────────────────────────────────
 import { getNews } from './services/newsService';
-import { rateResource } from './services/resourceService';
 import { fetchWithAuth } from './lib/apiClient';
 import { config } from './lib/config';
+import { legacyBrowseToNotes } from './lib/notes';
 
 function ForumPostRedirect() {
   const { postId } = useParams();
@@ -102,26 +95,19 @@ function ForumPostRedirect() {
 // ─────────────────────────────────────────────────────────────────
 function AppContent() {
   const { user, appUser, isAuthLoading } = useAuth();
-  const { resources, setResources, savedResourceIds, toggleSave } = useResources();
+  const { resources, savedResourceIds, toggleSave } = useResources();
 
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   // ── Filter / search state ──────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'All' | 'Note' | 'PYQ' | 'Book' | 'Syllabus'>('All');
   const [selectedCourse, setSelectedCourse] = useState('All Courses');
   const [selectedSemester, setSelectedSemester] = useState('All Semesters');
-  const [selectedSubCategory, setSelectedSubCategory] = useState('All');
   const [sortBy, setSortBy] = useState<'Title' | 'Date' | 'Rating' | 'Course'>('Date');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [visibleCount, setVisibleCount] = useState(12);
 
   // ── Modal state ────────────────────────────────────────────────
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isEventRequestModalOpen, setIsEventRequestModalOpen] = useState(false);
 
   // ── News + Settings ────────────────────────────────────────────
@@ -133,29 +119,6 @@ function AppContent() {
   );
 
   const resultsRef = useRef<HTMLElement>(null);
-  const isPlaylistContext = location.pathname === '/playlists';
-
-  // ── Open upload modal (also clears selected resource to avoid overlap) ──
-  const openUploadModal = useCallback(() => {
-    setSelectedResource(null);
-    setIsUploadModalOpen(true);
-  }, []);
-
-  // Support shareable /upload links while keeping the existing upload modal UX.
-  useEffect(() => {
-    if (location.pathname !== '/browse' || searchParams.get('openUpload') !== '1') return;
-    openUploadModal();
-    const next = new URLSearchParams(searchParams);
-    next.delete('openUpload');
-    setSearchParams(next, { replace: true });
-  }, [location.pathname, searchParams, openUploadModal, setSearchParams]);
-
-  // Top-bar search lands on /browse?q=… — prefill the Browse search box once.
-  useEffect(() => {
-    if (location.pathname !== '/browse') return;
-    const q = searchParams.get('q');
-    if (q) setSearchQuery(q);
-  }, [location.pathname, searchParams]);
 
   // ── Fetch news + site settings once ───────────────────────────
   const hasFetchedNews = useRef(false);
@@ -210,94 +173,34 @@ function AppContent() {
 
     if (!isFromFlipbook && !isToFlipbook) {
       setSearchQuery('');
-      setActiveFilter('All');
       setSelectedCourse('All Courses');
       setSelectedSemester('All Semesters');
-      setSelectedSubCategory('All');
       setSortBy('Date');
       setVisibleCount(12);
       window.scrollTo(0, 0);
     }
   }, [location.pathname]);
 
-  // ── Reset semester/subCategory when course changes ─────────────
   const availableSemesters = useMemo(() => {
     if (selectedCourse === 'All Courses') return ['All Semesters', '1', '2', '3', '4', '5', '6', '7', '8'];
     const maxSem = COURSE_METADATA[selectedCourse]?.semesters || 8;
     return ['All Semesters', ...Array.from({ length: maxSem }, (_, i) => String(i + 1))];
   }, [selectedCourse]);
 
-  const availableSubCategories = useMemo(() => {
-    if (selectedCourse === 'All Courses') return ['All', ...SUB_CATEGORIES];
-    const meta = COURSE_METADATA[selectedCourse];
-    return ['All', ...(meta?.subCategories || SUB_CATEGORIES)];
-  }, [selectedCourse]);
-
+  // ── Reset semester when course changes ─────────────────────────
   useEffect(() => {
-    if (selectedCourse !== 'All Courses') {
-      if (!availableSemesters.includes(selectedSemester)) setSelectedSemester('All Semesters');
-      if (!availableSubCategories.includes(selectedSubCategory)) setSelectedSubCategory('All');
-    }
-  }, [selectedCourse, availableSemesters, availableSubCategories, selectedSemester, selectedSubCategory]);
+    if (selectedCourse !== 'All Courses' && !availableSemesters.includes(selectedSemester)) setSelectedSemester('All Semesters');
+  }, [selectedCourse, availableSemesters, selectedSemester]);
 
   const courses = useMemo(() => {
     const unique = Array.from(new Set([...resources.map(r => r.course), ...College_COURSES]));
     return ['All Courses', ...unique.sort()];
   }, [resources]);
 
-  // ── Debounced filter computation ───────────────────────────────
-  const debouncedSearch = useDebounce(searchQuery, 350);
-
   const getAverageRating = useCallback((ratings?: number[]) => {
     if (!ratings || ratings.length === 0) return 0;
     return parseFloat((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1));
   }, []);
-
-  const filteredResources = useMemo(() => {
-    const filtered = resources.filter(resource => {
-      if (resource.type === 'Playlist') return false;
-      const isVisible = resource.isApproved || (user && resource.uploaderId === user.id);
-      if (!isVisible) return false;
-      const q = debouncedSearch.toLowerCase();
-      return (
-        (!q || resource.title.toLowerCase().includes(q) || resource.course.toLowerCase().includes(q) ||
-          ((resource as any).subjectCode || '').toLowerCase().includes(q) ||
-          resource.tags.some(tag => tag.toLowerCase().includes(q))) &&
-        (activeFilter === 'All' || resource.type === activeFilter) &&
-        (selectedSubCategory === 'All' || (resource as any).subCategory === selectedSubCategory) &&
-        (selectedCourse === 'All Courses' || resource.course === selectedCourse) &&
-        (selectedSemester === 'All Semesters' || resource.semester.toString() === selectedSemester)
-      );
-    });
-
-    return [...filtered].sort((a, b) => {
-      if (sortBy === 'Title') return a.title.localeCompare(b.title);
-      if (sortBy === 'Date') return (b.uploadTimestamp || 0) - (a.uploadTimestamp || 0);
-      if (sortBy === 'Rating') return (b.averageRating || 0) - (a.averageRating || 0);
-      if (sortBy === 'Course') return a.course.localeCompare(b.course);
-      return 0;
-    });
-  }, [debouncedSearch, activeFilter, selectedSubCategory, selectedCourse, selectedSemester, resources, sortBy, user]);
-
-  // ── Rating handler (needs both resources + selectedResource) ───
-  const handleRate = useCallback(async (resourceId: string, rating: number) => {
-    if (!user) { toast.error('Please sign in to rate resources.'); return; }
-    try {
-      await rateResource(resourceId, rating);
-      setResources(prev => prev.map(r => {
-        if (r.id !== resourceId) return r;
-        const current = (r as any).ratings || [];
-        return { ...r, ratings: [...current, rating] };
-      }));
-      setSelectedResource(prev => {
-        if (!prev || prev.id !== resourceId) return prev;
-        return { ...prev, ratings: [...((prev as any).ratings || []), rating] } as any;
-      });
-      toast.success('Thank you for your rating!');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to submit rating.');
-    }
-  }, [user, setResources]);
 
   // ── Share handler ───────────────────────────────────────────────
   const handleShare = useCallback(async (resource: Resource) => {
@@ -335,24 +238,6 @@ function AppContent() {
     </div>
   );
 
-  // ── Home page element (reused on /login and /signup routes) ────
-  const HomePageElement = (
-    <HomePage
-      searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-      activeFilter={activeFilter} setActiveFilter={setActiveFilter}
-      sortBy={sortBy} setSortBy={setSortBy}
-      College_COURSES={College_COURSES}
-      isNewsLoading={isNewsLoading} newsItems={newsItems}
-      resources={resources}
-      savedResourceIds={savedResourceIds}
-      onSave={toggleSave}
-      getAverageRating={getAverageRating}
-      setSelectedResource={setSelectedResource}
-      handleShare={handleShare}
-      siteSettings={siteSettings}
-    />
-  );
-
   return (
     <div className="min-h-screen bg-canvas text-ink font-sans selection:bg-indigo-100 selection:text-indigo-900 flex flex-col">
       <Toaster position="top-center" expand={false} richColors />
@@ -387,33 +272,11 @@ function AppContent() {
               <Route path="/inbox" element={<InboxPage />} />
               <Route path="/you" element={<YouPage />} />
 
-              <Route path="/upload" element={<Navigate to="/browse?openUpload=1" replace />} />
-
-              <Route path="/browse" element={
-                <BrowsePage
-                  resources={resources}
-                  searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-                  activeFilter={activeFilter} setActiveFilter={setActiveFilter}
-                  selectedCourse={selectedCourse} setSelectedCourse={setSelectedCourse}
-                  selectedSemester={selectedSemester} setSelectedSemester={setSelectedSemester}
-                  selectedSubCategory={selectedSubCategory} setSelectedSubCategory={setSelectedSubCategory}
-                  sortBy={sortBy} setSortBy={setSortBy}
-                  courses={courses}
-                  availableSemesters={availableSemesters}
-                  availableSubCategories={availableSubCategories}
-                  viewMode={viewMode} setViewMode={setViewMode}
-                  visibleCount={visibleCount} setVisibleCount={setVisibleCount}
-                  filteredResources={filteredResources}
-                  savedResourceIds={savedResourceIds}
-                  onSave={toggleSave}
-                  getAverageRating={getAverageRating}
-                  selectedResource={selectedResource}
-                  setSelectedResource={setSelectedResource}
-                  handleShare={handleShare}
-                  setIsUploadModalOpen={openUploadModal}
-                  user={user}
-                />
-              } />
+              <Route path="/upload" element={<Navigate to="/notes/upload" replace />} />
+              <Route path="/browse" element={<Navigate to={legacyBrowseToNotes(location.search)} replace />} />
+              <Route path="/notes" element={<NotesBrowsePage />} />
+              <Route path="/notes/upload" element={<NotesUploadPage />} />
+              <Route path="/notes/:id" element={<NoteDetailPage />} />
 
               <Route path="/playlists" element={
                 <PlaylistPage
@@ -425,8 +288,6 @@ function AppContent() {
                   selectedSemester={selectedSemester} setSelectedSemester={setSelectedSemester}
                   sortBy={sortBy} setSortBy={setSortBy}
                   visibleCount={visibleCount} setVisibleCount={setVisibleCount}
-                  setSelectedResource={setSelectedResource}
-                  setIsUploadModalOpen={openUploadModal}
                   handleShare={handleShare}
                   courses={courses}
                   semesters={availableSemesters}
@@ -490,31 +351,6 @@ function AppContent() {
           </Suspense>
         </PageTransition>
       </AppShell>
-
-      {/* ── Portalled modals ── */}
-      <ResourceUploadModal
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
-        isPlaylistContext={isPlaylistContext}
-      />
-
-      {selectedResource && (
-        <ResourceDetailModal
-          resource={selectedResource}
-          onClose={() => setSelectedResource(null)}
-          onRate={handleRate}
-          onShare={handleShare}
-          onReport={() => setIsReportModalOpen(true)}
-          getAverageRating={getAverageRating}
-        />
-      )}
-
-      <ReportModal
-        isOpen={isReportModalOpen}
-        resource={selectedResource}
-        onClose={() => setIsReportModalOpen(false)}
-        onSuccess={() => setSelectedResource(null)}
-      />
 
       <EventRequestModal
         isOpen={isEventRequestModalOpen}

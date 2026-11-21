@@ -5,7 +5,7 @@ export type NavItem = { to: string; label: string; icon: LucideIcon; soon?: bool
 export const MODULES: NavItem[] = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/explore', label: 'Explore', icon: Compass },
-  { to: '/browse', label: 'Notes & PYQs', icon: LibraryBig },
+  { to: '/notes', label: 'Notes & PYQs', icon: LibraryBig },
   { to: '/playlists', label: 'Playlists', icon: Youtube },
   { to: '/find-pg', label: 'Find PG', icon: BedDouble },
   { to: '/campus-exchange', label: 'Exchange', icon: ShoppingBag },
@@ -15,7 +15,7 @@ export const MODULES: NavItem[] = [
 ];
 
 export const EXPLORE_TILES: NavItem[] = [
-  { to: '/browse', label: 'Notes & PYQs', icon: LibraryBig },
+  { to: '/notes', label: 'Notes & PYQs', icon: LibraryBig },
   { to: '/playlists', label: 'Playlists', icon: Youtube },
   { to: '/find-pg', label: 'Find PG', icon: BedDouble },
   { to: '/campus-exchange', label: 'Exchange', icon: ShoppingBag },

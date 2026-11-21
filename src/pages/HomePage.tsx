@@ -225,7 +225,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     };
 
     const ctaText = siteSettings?.hero_cta_text || "Explore Resources";
-    const ctaLink = siteSettings?.hero_cta_link || "/browse";
+    const ctaLink = siteSettings?.hero_cta_link || "/notes";
 
     return (
       <div className="overflow-x-hidden">
@@ -389,7 +389,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
                   <button
-                    onClick={() => navigate(`/browse?course=${encodeURIComponent(quickCourse)}&sem=${quickSem}`)}
+                    onClick={() => navigate(`/notes?course=${encodeURIComponent(quickCourse)}&semester=${quickSem}`)}
                     className="col-span-12 sm:col-span-3 px-4 py-3 sm:py-2.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer"
                   >
                     <span>Get Notes</span>
@@ -709,7 +709,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
           </div>
           <Link 
-            to="/browse"
+            to="/notes"
             className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-gray-100 rounded-2xl text-[10px] sm:text-xs font-bold text-purple-600 hover:bg-purple-50 transition-all uppercase tracking-widest shadow-sm w-full sm:w-auto"
           >
             Explore All

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, yearFromTitle, titleFromFilename, uploadProblem, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
+import { canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, uploadStatus, yearFromTitle, titleFromFilename, uploadProblem, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
 
 const BBA = 'Bachelor of Business Administration (Financial Investment Analysis) [BBA(FIA)]';
 
@@ -29,6 +29,7 @@ test('legacyBrowseToNotes redirects old browse URLs', () => {
   assert.strictEqual(legacyBrowseToNotes('?q=tax&type=PYQ'), '/notes?q=tax&type=PYQ');
   assert.strictEqual(legacyBrowseToNotes('?foo=1'), '/notes');
   assert.strictEqual(legacyBrowseToNotes(''), '/notes');
+  assert.strictEqual(legacyBrowseToNotes('?openUpload=1'), '/notes/upload');
 });
 
 test('yearFromTitle, formatHelpedPct, report reasons', () => {
@@ -95,4 +96,10 @@ test('uploadProblem blocks a file or missing link on Playlist, and bad links', (
   assert.strictEqual(uploadProblem({ type: 'Note', hasFile: true, link: '' }), null);
   assert.ok(uploadProblem({ type: 'Note', hasFile: false, link: '' }));
   assert.ok(uploadProblem({ type: 'Note', hasFile: false, link: 'drive.google.com/x' }));
+});
+
+test('uploadStatus: hidden beats approved, unapproved is in review', () => {
+  assert.strictEqual(uploadStatus({ isApproved: true, isHidden: true }), 'Hidden');
+  assert.strictEqual(uploadStatus({ isApproved: false }), 'In review');
+  assert.strictEqual(uploadStatus({ isApproved: true }), 'Live');
 });

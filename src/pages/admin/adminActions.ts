@@ -22,9 +22,14 @@ export function proofLink(proof: string): string | null {
 
 /** Mirrors backend moderationActionsFor (utils/moderation.js), with hide/unhide narrowed to the item's current state. */
 export function adminActionsFor(role: string | undefined, itemType: string, isHidden: boolean, targetBanned = false): ModAction[] {
-  if (!['community', 'event', 'post', 'comment', 'user'].includes(itemType)) return [];
+  if (!['community', 'event', 'post', 'comment', 'user', 'resource'].includes(itemType)) return [];
   let a: ModAction[];
-  if (role === 'admin') {
+  // Resources have no author sanction: no warn/ban (backend moderationActionsFor).
+  if (itemType === 'resource') {
+    if (role === 'admin') a = ['dismiss', 'hide', 'unhide', 'delete'];
+    else if (role === 'moderator') a = ['dismiss', 'hide', 'unhide'];
+    else return [];
+  } else if (role === 'admin') {
     a = itemType === 'user' ? ['dismiss', 'warn', 'ban', 'unban']
       : ['dismiss', 'hide', 'unhide', 'delete', 'warn', 'ban', 'unban', ...(itemType === 'community' ? ['remove_official' as const] : [])];
   } else if (role === 'moderator') a = itemType === 'user' ? ['dismiss', 'warn'] : ['dismiss', 'hide', 'unhide', 'warn'];

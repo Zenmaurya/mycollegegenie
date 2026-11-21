@@ -73,7 +73,7 @@ export const AdminReports: React.FC = () => {
           {rows.map((r) => {
             const acts = adminActionsFor(role, r.itemType, r.is_hidden, isBanned(r))
               .filter((a) => status === 'open' || a !== 'dismiss');
-            const href = r.itemType === 'community' ? `/c/${r.slug}` : r.itemType === 'event' ? `/c/${r.slug}/events` : r.itemType !== 'user' && r.postId ? `/post/${r.postId}` : null;
+            const href = r.itemType === 'resource' ? `/notes/${r.itemId}` : r.itemType === 'community' ? `/c/${r.slug}` : r.itemType === 'event' ? `/c/${r.slug}/events` : r.itemType !== 'user' && r.postId ? `/post/${r.postId}` : null;
             const label = r.itemType === 'user' ? (r.displayName ?? '(deleted user)') : (r.title ?? '(deleted item)');
             return (
               <li key={`${r.itemType}:${r.itemId}`} className="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col gap-3">

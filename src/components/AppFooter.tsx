@@ -97,7 +97,7 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
               </li>
               <li>
                 <button
-                  onClick={() => { navigate('/browse'); }}
+                  onClick={() => { navigate('/notes'); }}
                   className="hover:text-purple-400 transition-colors flex items-center gap-2"
                 >
                   <ChevronRight className="w-3 h-3 text-purple-500" /> Browse

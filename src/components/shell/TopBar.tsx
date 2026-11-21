@@ -26,7 +26,7 @@ export function TopBar() {
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = query.trim();
-    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
+    navigate(q ? `/notes?q=${encodeURIComponent(q)}` : '/notes');
   };
 
   const name = appUser?.displayName || (user?.user_metadata?.full_name as string) || user?.email || '';
@@ -56,7 +56,7 @@ export function TopBar() {
         </form>
 
         <div className="ml-auto flex items-center gap-1">
-          <Link to="/browse" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand md:hidden" aria-label="Search">
+          <Link to="/notes" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand md:hidden" aria-label="Search">
             <Search className="h-5 w-5" aria-hidden />
           </Link>
           <Button onClick={open} aria-label="Create post" className="mr-1 hidden rounded-full md:inline-flex">

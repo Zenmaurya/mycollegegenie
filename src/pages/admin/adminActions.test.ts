@@ -49,3 +49,10 @@ test('adminActionsFor: other roles and unknown types get nothing', () => {
   assert.deepEqual(adminActionsFor(undefined, 'user', false), []);
   assert.deepEqual(adminActionsFor('admin', 'bogus', false), []);
 });
+test('adminActionsFor: resource rows get no warn/ban', () => {
+  assert.deepEqual(adminActionsFor('admin', 'resource', false, true), ['dismiss', 'hide', 'delete']);
+  assert.deepEqual(adminActionsFor('admin', 'resource', true), ['dismiss', 'unhide', 'delete']);
+  assert.deepEqual(adminActionsFor('moderator', 'resource', false), ['dismiss', 'hide']);
+  assert.deepEqual(adminActionsFor('moderator', 'resource', true), ['dismiss', 'unhide']);
+  assert.deepEqual(adminActionsFor('user', 'resource', false), []);
+});

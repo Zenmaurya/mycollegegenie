@@ -21,7 +21,7 @@ import { isImeKeyEvent } from '../lib/security';
 
 const NAV_LINKS = [
   { to: '/', icon: Home, label: 'Home' },
-  { to: '/browse', icon: LibraryBig, label: 'Browse' },
+  { to: '/notes', icon: LibraryBig, label: 'Browse' },
   { to: '/playlists', icon: Youtube, label: 'Playlists' },
   { to: '/find-pg', icon: BedDouble, label: 'Find PG' },
   { to: '/campus-exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
@@ -29,7 +29,7 @@ const NAV_LINKS = [
 
 const MOBILE_BOTTOM_NAV_LINKS = [
   { to: '/', icon: Home, label: 'Home' },
-  { to: '/browse', icon: LibraryBig, label: 'Browse' },
+  { to: '/notes', icon: LibraryBig, label: 'Browse' },
   { to: '/campus-exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
 ] as const;
 

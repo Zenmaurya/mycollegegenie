@@ -5,6 +5,7 @@
 import { fetchWithAuth, safeJsonParse, getFreshToken } from '../lib/apiClient';
 import { supabase } from '../supabase';
 import { config } from '../lib/config';
+import { mapNote } from '../lib/notes';
 import { Resource, ResourceType } from '../types';
 
 // FIX Bug #5: OperationType was referenced throughout this file but never declared.
@@ -376,7 +377,7 @@ export const getResources = async (
 export const fetchUserResources = async (): Promise<Resource[]> => {
   try {
     const data = await fetchWithAuth('/api/resources/me');
-    return (Array.isArray(data) ? data : []).map(normaliseResource);
+    return (Array.isArray(data) ? data : []).map(mapNote);
   } catch (error) {
     console.error('[resourceService] fetchUserResources error:', error);
     return [];

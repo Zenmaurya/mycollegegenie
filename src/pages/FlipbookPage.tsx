@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import HTMLFlipBook from 'react-pageflip';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -192,6 +192,7 @@ export const FlipbookPage: React.FC = () => {
           {resource?.directDownloadLink && (
             <a href={resource.directDownloadLink} target="_blank" rel="noreferrer" className="px-6 py-3 bg-white/10 rounded-xl font-bold hover:bg-white/20 transition-colors">Open PDF</a>
           )}
+          {id && <Link to={`/notes/${id}`} className="px-6 py-3 bg-white/10 rounded-xl font-bold hover:bg-white/20 transition-colors">Back to resource</Link>}
           <button onClick={() => navigate(-1)} className="px-6 py-3 bg-purple-600 rounded-xl font-bold hover:bg-purple-700 transition-colors shadow-xl shadow-purple-600/20">Go Back</button>
         </div>
       </div>
@@ -217,6 +218,7 @@ export const FlipbookPage: React.FC = () => {
             <ChevronLeft className="w-5 h-5" />
             <span className="font-bold text-sm">Close Flipbook</span>
           </button>
+          <Link to={`/notes/${resource.id}`} className="px-4 py-2 sm:px-5 sm:py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-white font-bold text-sm border border-white/10">Back to resource</Link>
           <div className="bg-[#1a1a1a]/80 backdrop-blur-xl px-4 py-2 sm:px-6 sm:py-3 rounded-2xl border border-white/10 shadow-2xl hidden md:block">
             <h1 className="text-white font-bold text-sm sm:text-base line-clamp-1">{resource.title}</h1>
             <p className="text-gray-400 text-[10px] uppercase tracking-[0.2em] font-black">{resource.type} • {resource.course}</p>

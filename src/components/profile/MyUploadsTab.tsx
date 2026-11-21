@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 // FIX Perf #5: Replaced 'framer-motion' with 'motion' — same library, avoids duplicate bundle code.
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, PlayCircle, Activity, Folder, ExternalLink, Loader2, Calendar } from 'lucide-react';
+import { FileText, Folder, ExternalLink, Loader2, Calendar } from 'lucide-react';
 import { fetchUserResources } from '../../services/resourceService';
 import type { Resource } from '../../types';
 import { toast } from 'sonner';
+import { uploadStatus } from '../../lib/notes';
 
 export const MyUploadsTab: React.FC = () => {
   const [resources, setResources] = useState<Resource[]>([]);
@@ -26,8 +27,7 @@ export const MyUploadsTab: React.FC = () => {
     }
   };
 
-  const notesCount = resources.filter(r => r.type === 'notes' || r.type === 'pyqs').length;
-  const playlistsCount = resources.filter(r => r.type === 'books').length; // or another logic for playlists
+  const count = (st: string) => resources.filter(r => uploadStatus(r) === st).length;
 
   return (
     <motion.div 
@@ -38,25 +38,21 @@ export const MyUploadsTab: React.FC = () => {
       transition={{ duration: 0.2 }}
       className="space-y-4 sm:space-y-6"
     >
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-sm flex flex-col items-center justify-center">
-          <h4 className="text-gray-400 font-bold text-[10px] sm:text-xs uppercase tracking-wider mb-1 flex items-center gap-1.5"><FileText className="w-3.5 h-3.5"/> Total Uploads</h4>
-          <span className="text-2xl sm:text-4xl font-black text-[#5636A7]">
-            {isLoading ? <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-gray-300" /> : resources.length}
-          </span>
-        </div>
-        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-sm flex flex-col items-center justify-center">
-          <h4 className="text-gray-400 font-bold text-[10px] sm:text-xs uppercase tracking-wider mb-1 flex items-center gap-1.5"><CheckBadge className="w-3.5 h-3.5" isApproved /> Approved</h4>
-          <span className="text-2xl sm:text-4xl font-black text-emerald-500">
-            {isLoading ? <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-gray-300" /> : resources.filter(r => r.isApproved).length}
-          </span>
-        </div>
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        {(['In review', 'Live', 'Hidden'] as const).map(st => (
+          <div key={st} className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-sm flex flex-col items-center justify-center">
+            <h4 className="text-gray-400 font-bold text-[10px] sm:text-xs uppercase tracking-wider mb-1">{st}</h4>
+            <span className="text-2xl sm:text-4xl font-black text-[#5636A7]">
+              {isLoading ? <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-gray-300" /> : count(st)}
+            </span>
+          </div>
+        ))}
       </div>
 
       <div className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-black text-gray-900">Upload History</h2>
-          <a href="/upload" className="text-sm font-bold text-[#5636A7] hover:text-[#4a2e92] transition-colors">
+          <a href="/notes/upload" className="text-sm font-bold text-[#5636A7] hover:text-[#4a2e92] transition-colors">
             Upload Resource
           </a>
         </div>
@@ -72,7 +68,7 @@ export const MyUploadsTab: React.FC = () => {
             </div>
             <h3 className="text-lg font-black text-gray-900 mb-1">No uploads yet</h3>
             <p className="text-sm text-gray-500 mb-6 max-w-sm">You haven't uploaded any new resources recently. Share your notes to help juniors!</p>
-            <a href="/upload" className="px-6 py-3 bg-[#5636A7] text-white rounded-xl font-bold text-sm hover:bg-[#4a2e92] transition-colors shadow-md">
+            <a href="/notes/upload" className="px-6 py-3 bg-[#5636A7] text-white rounded-xl font-bold text-sm hover:bg-[#4a2e92] transition-colors shadow-md">
               Upload Resource
             </a>
           </div>
@@ -93,8 +89,8 @@ export const MyUploadsTab: React.FC = () => {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-md shrink-0 ${resource.isApproved ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                          {resource.isApproved ? 'Approved' : 'Pending'}
+                        <span className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-md shrink-0 ${uploadStatus(resource) === 'Live' ? 'bg-emerald-50 text-emerald-600' : uploadStatus(resource) === 'Hidden' ? 'bg-gray-100 text-gray-600' : 'bg-amber-50 text-amber-600'}`}>
+                          {uploadStatus(resource)}
                         </span>
                         <h3 className="font-bold text-gray-900 truncate" title={resource.title}>
                           {resource.title}
@@ -108,11 +104,14 @@ export const MyUploadsTab: React.FC = () => {
                           <Calendar className="w-3 h-3" />
                           {new Date(resource.uploadDate).toLocaleDateString()}
                         </span>
+                        <span>{resource.views ?? 0} views</span>
+                        <span>{resource.downloads ?? 0} downloads</span>
+                        {resource.ratingAvg != null && <span>★ {resource.ratingAvg.toFixed(1)}</span>}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-                    <a href={`/resources/${resource.id}`} className="p-2 text-gray-400 hover:text-[#5636A7] hover:bg-[#F4EFFF] rounded-lg transition-colors" title="View Resource">
+                    <a href={`/notes/${resource.id}`} className="p-2 text-gray-400 hover:text-[#5636A7] hover:bg-[#F4EFFF] rounded-lg transition-colors" title="View Resource">
                       <ExternalLink className="w-4 h-4" />
                     </a>
                   </div>
@@ -125,9 +124,3 @@ export const MyUploadsTab: React.FC = () => {
     </motion.div>
   );
 };
-
-const CheckBadge = ({ className, isApproved }: { className: string, isApproved: boolean }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);

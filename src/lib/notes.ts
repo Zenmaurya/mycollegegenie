@@ -44,10 +44,16 @@ export function currentSemester(batchYear: number | null, now: Date, maxSem: num
 
 const KEPT = ['q', 'type', 'course', 'semester', 'subjectCode'];
 
+/** My Uploads status chip: hidden wins over approval. */
+export function uploadStatus(r: { isApproved?: boolean; isHidden?: boolean }): 'Hidden' | 'In review' | 'Live' {
+  return r.isHidden ? 'Hidden' : r.isApproved ? 'Live' : 'In review';
+}
+
 export function legacyBrowseToNotes(search: string): string {
   const src = new URLSearchParams(search);
   const id = src.get('resourceId');
   if (id) return `/notes/${encodeURIComponent(id)}`;
+  if (src.get('openUpload') === '1') return '/notes/upload';
   const out = new URLSearchParams();
   for (const k of KEPT) { const v = src.get(k); if (v) out.set(k, v); }
   const qs = out.toString();
