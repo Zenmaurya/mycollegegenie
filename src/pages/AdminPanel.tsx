@@ -61,6 +61,8 @@ import { toast } from 'sonner';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { AdminSidebar, AdminTab } from './admin/AdminSidebar';
 import { AdminContributors } from './admin/AdminContributors';
+import { AdminSocieties } from './admin/AdminSocieties';
+import { AdminReports } from './admin/AdminReports';
 import { AdminBlogs } from './admin/AdminBlogs';
 import { CollegeMMY_EVENTS } from '../components/UpcomingEventsCarousel';
 import { openSafeExternalUrl } from '../lib/security';
@@ -3065,6 +3067,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           <AdminBlogs defaultAuthorName={appUser?.displayName || 'MyCollegeGenie Editorial'} />
         ) : activeTab === 'contributors' ? (
           <AdminContributors />
+        ) : activeTab === 'societies' ? (
+          <AdminSocieties />
+        ) : activeTab === 'reports' ? (
+          <AdminReports />
         ) : null}
 
       </div>
