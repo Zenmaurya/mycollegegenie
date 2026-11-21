@@ -63,3 +63,18 @@ test('buildOnboardingPayload always carries exactly one college field', () => {
   assert.ok(!('collegeId' in o));
   assert.throws(() => buildOnboardingPayload(null, { interests: ['Quiz'] }));
 });
+
+import { categoriesForInterests, mergeSuggestions } from './onboarding';
+
+test('categoriesForInterests maps interests to page categories, skips unknown, dedupes', () => {
+  assert.deepStrictEqual(categoriesForInterests(['Finance', 'Coding', 'Nope', 'Finance']), ['Finance & Economics', 'Tech & Coding']);
+  assert.deepStrictEqual(categoriesForInterests([]), []);
+  assert.strictEqual(categoriesForInterests([...INTERESTS]).length, INTERESTS.length);
+});
+
+test('mergeSuggestions: college first, dedupe by id, cap at 6', () => {
+  const s = (id: string) => ({ id });
+  assert.deepStrictEqual(mergeSuggestions([s('a'), s('b')], [s('b'), s('c')]).map(x => x.id), ['a', 'b', 'c']);
+  const many = ['1', '2', '3', '4'].map(s);
+  assert.strictEqual(mergeSuggestions(many, ['5', '6', '7', '8'].map(s)).length, 6);
+});

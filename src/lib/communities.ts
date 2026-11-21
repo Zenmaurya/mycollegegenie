@@ -115,3 +115,13 @@ export function composerKinds(role: PageRole | null, kind: 'society' | 'mcg'): P
   if (role === 'admin' || role === 'core') return ['official', 'discussion'];
   return role === 'member' ? ['discussion'] : [];
 }
+
+/** "in 30 min" / "in 5 h" / "in 2 days" for a future deadline; "now" once passed. */
+export function closesIn(iso: string, now: Date): string {
+  const min = Math.floor((new Date(iso).getTime() - now.getTime()) / 60_000);
+  if (min <= 0) return 'now';
+  if (min < 60) return `in ${min} min`;
+  if (min < 24 * 60) return `in ${Math.floor(min / 60)} h`;
+  const d = Math.round(min / (24 * 60));
+  return `in ${d} ${d === 1 ? 'day' : 'days'}`;
+}

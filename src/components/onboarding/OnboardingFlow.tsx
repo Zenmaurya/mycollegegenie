@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/Chip';
+import { SuggestedSocieties } from './SuggestedSocieties';
 import { CollegePicker, type CollegeValue } from './CollegePicker';
 import { saveOnboarding } from '../../services/collegeService';
 import { useAuth } from '../../context/AuthContext';
@@ -45,11 +46,16 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
   };
   const finish = async () => { await refreshAppUser(); onDone(); };
   const toStep3 = () => setStep(3);
+  const toStep4 = () => setStep(4);
+  // No societies to suggest (or the lookup failed): nothing to show, so finish.
+  const finishRef = useRef(finish);
+  finishRef.current = finish;
+  const skipSocieties = useCallback(() => { void finishRef.current(); }, []);
   const toggle = (i: string) => setInterests(s => (s.includes(i) ? s.filter(x => x !== i) : [...s, i]));
 
   return (
     <div>
-      <p className="text-[13px] font-semibold text-ink-muted" aria-live="polite">Step {step} of 3</p>
+      <p className="text-[13px] font-semibold text-ink-muted" aria-live="polite">Step {step} of 4</p>
 
       {step === 1 && (
         <>
@@ -81,15 +87,17 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
           </div>
         </>
       )}
+      {step === 4 && <SuggestedSocieties collegeId={effective && 'id' in effective ? effective.id : null} interests={interests} onEmpty={skipSocieties} />}
 
       {error && <p role="alert" className="mt-3 text-[13px] text-danger">{error}</p>}
 
       <div className="mt-6 flex items-center justify-end gap-2">
         {step === 2 && <Button variant="ghost" disabled={busy} onClick={toStep3}>Skip</Button>}
-        {step === 3 && <Button variant="ghost" disabled={busy} onClick={() => void save(null, finish)}>Skip</Button>}
+        {step === 3 && <Button variant="ghost" disabled={busy} onClick={() => toStep4()}>Skip</Button>}
         {step === 1 && <Button disabled={!collegeReady} loading={busy} onClick={() => void save(collegePayload, () => setStep(2))}>Continue</Button>}
         {step === 2 && <Button disabled={!hasCourse} loading={busy} onClick={() => void save(coursePayload, toStep3)}>Continue</Button>}
-        {step === 3 && <Button disabled={interests.length === 0} loading={busy} onClick={() => void save(interestsPayload, finish)}>Finish</Button>}
+        {step === 3 && <Button disabled={interests.length === 0} loading={busy} onClick={() => void save(interestsPayload, toStep4)}>Continue</Button>}
+        {step === 4 && <Button loading={busy} onClick={() => void finish()}>Done</Button>}
       </div>
     </div>
   );

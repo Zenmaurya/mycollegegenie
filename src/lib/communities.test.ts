@@ -91,3 +91,12 @@ test('composerKinds', () => {
   assert.deepEqual(composerKinds('admin', 'mcg'), ['discussion']);
   assert.deepEqual(composerKinds(null, 'mcg'), ['discussion']);
 });
+
+import { closesIn } from './communities';
+test('closesIn: relative future time', () => {
+  assert.equal(closesIn(hrs(0.5), NOW), 'in 30 min');
+  assert.equal(closesIn(hrs(5), NOW), 'in 5 h');
+  assert.equal(closesIn(hrs(30), NOW), 'in 1 day');
+  assert.equal(closesIn(hrs(60), NOW), 'in 3 days');
+  assert.equal(closesIn(hrs(-1), NOW), 'now');
+});

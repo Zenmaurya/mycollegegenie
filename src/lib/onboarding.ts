@@ -42,3 +42,19 @@ export const buildOnboardingPayload = (
   if (!college) throw new Error('Pick your college first.');
   return 'id' in college ? { collegeId: college.id, ...extra } : { collegeOther: college.other.trim(), ...extra };
 };
+
+const INTEREST_CATEGORY: Record<string, string> = {
+  Finance: 'Finance & Economics', Coding: 'Tech & Coding', Debate: 'Debating', Dramatics: 'Dramatics', Music: 'Music', Dance: 'Dance',
+  Quiz: 'Quiz', Entrepreneurship: 'Entrepreneurship', 'Social impact': 'Social service', Sports: 'Sports',
+  Photography: 'Photography & Film', Writing: 'Literary', Design: 'Fine arts', Placements: 'Placement cell',
+};
+
+/** Society categories matching the picked interests (unknown interests skipped, no duplicates). */
+export const categoriesForInterests = (interests: string[]): string[] =>
+  [...new Set(interests.map(i => INTEREST_CATEGORY[i]).filter((c): c is string => !!c))];
+
+/** College societies first, then interest matches; deduped by id, at most 6. */
+export const mergeSuggestions = <T extends { id: string }>(atCollege: T[], byInterest: T[]): T[] => {
+  const seen = new Set<string>();
+  return [...atCollege, ...byInterest].filter(c => !seen.has(c.id) && !!seen.add(c.id)).slice(0, 6);
+};

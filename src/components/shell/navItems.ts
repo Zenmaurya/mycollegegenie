@@ -1,4 +1,4 @@
-import { BedDouble, Calendar, Compass, Bookmark, Heart, Home, Users, LibraryBig, Newspaper, ShoppingBag, Youtube, type LucideIcon } from 'lucide-react';
+import { BedDouble, Calendar, Compass, Bookmark, Heart, Home, Users, LibraryBig, Newspaper, ShoppingBag, Trophy, Youtube, type LucideIcon } from 'lucide-react';
 
 export type NavItem = { to: string; label: string; icon: LucideIcon; soon?: boolean };
 
@@ -21,6 +21,7 @@ export const EXPLORE_TILES: NavItem[] = [
   { to: '/campus-exchange', label: 'Exchange', icon: ShoppingBag },
   { to: '/c', label: 'Societies', icon: Users },
   { to: '/events', label: 'Events', icon: Calendar },
+  { to: '/explore/competitions', label: 'Competitions', icon: Trophy },
   { to: '/news', label: 'News', icon: Newspaper },
   { to: '/profile?tab=saved', label: 'Saved', icon: Bookmark, soon: true },
   { to: '/contributors', label: 'Contributors', icon: Heart },

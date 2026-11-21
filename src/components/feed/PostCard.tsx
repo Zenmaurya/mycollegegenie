@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowBigDown, ArrowBigUp, Bookmark, MessageCircle, Share2 } from 'lucide-react';
+import { ArrowBigDown, ArrowBigUp, BadgeCheck, Bookmark, MessageCircle, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -10,6 +10,7 @@ import { topicLabel } from '../../constants';
 import { applyVote, timeAgo } from '../../lib/feed';
 import type { ForumPost } from '../../types';
 import { PhotoGrid } from './PhotoGrid';
+import { Avatar } from '../ui/Avatar';
 
 function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSaved: boolean; onToggleSave: (id: string) => void }) {
   const { user } = useAuth();
@@ -56,7 +57,18 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
       className="cursor-pointer rounded-card bg-surface p-4 shadow-card transition-shadow hover:shadow-float"
     >
       <header className="mb-2 flex flex-wrap items-center gap-x-1.5 text-[13px] text-ink-muted">
-        <span className="font-semibold text-ink">{post.authorName || 'Student'}</span>
+        {post.community ? (
+          <>
+            <Link to={`/c/${post.community.slug}`} onClick={stop} className="inline-flex min-h-6 items-center gap-1.5 font-semibold text-ink hover:underline focus-visible:outline-2 focus-visible:outline-brand">
+              <Avatar src={post.community.logoUrl} name={post.community.name} size="sm" />
+              {post.community.name}
+              {post.community.status === 'official' && <BadgeCheck className="h-4 w-4 text-highlight" aria-label="Official" />}
+            </Link>
+            <span aria-hidden>·</span><span>{post.authorName || 'Student'}</span>
+          </>
+        ) : (
+          <span className="font-semibold text-ink">{post.authorName || 'Student'}</span>
+        )}
         {post.course && <><span aria-hidden>·</span><span className="truncate">{post.course}</span></>}
         <span aria-hidden>·</span>
         <time dateTime={post.createdAt}>{timeAgo(post.createdAt)}</time>
