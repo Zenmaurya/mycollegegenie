@@ -2,18 +2,19 @@ import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { REPORT_REASONS } from '../../lib/communities';
 import { RESOURCE_REPORT_REASONS } from '../../lib/notes';
+import { STAY_REPORT_REASONS } from '../../lib/stays';
 import { report, type ReportItemType } from '../../services/reportService';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/button';
 
-type Reason = (typeof REPORT_REASONS)[number] | (typeof RESOURCE_REPORT_REASONS)[number];
+type Reason = (typeof REPORT_REASONS)[number] | (typeof RESOURCE_REPORT_REASONS)[number] | (typeof STAY_REPORT_REASONS)[number];
 interface Props { open: boolean; onClose: () => void; itemType: ReportItemType; itemId: string; title: string }
 
 export function ReportSheet({ open, onClose, itemType, itemId, title }: Props) {
   const [reason, setReason] = useState<Reason | ''>('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
-  const reasons: readonly Reason[] = itemType === 'resource' ? RESOURCE_REPORT_REASONS : REPORT_REASONS;
+  const reasons: readonly Reason[] = itemType === 'resource' ? RESOURCE_REPORT_REASONS : itemType === 'stay' ? STAY_REPORT_REASONS : REPORT_REASONS;
   const needsNote = reason === 'Other';
   const ready = !!reason && (!needsNote || note.trim().length > 0);
 

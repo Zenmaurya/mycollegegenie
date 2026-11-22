@@ -12,10 +12,10 @@ import { banStatus } from '../../lib/moderation';
 
 const btn = 'min-h-[44px] min-w-[44px] px-4 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50';
 const LABEL: Record<ModAction, string> = { dismiss: 'Dismiss', hide: 'Hide', unhide: 'Unhide', delete: 'Delete', warn: 'Warn', ban: 'Ban', unban: 'Unban', remove_official: 'Remove official' };
-const TYPE_LABEL: Record<ReportItemType, string> = { community: 'Page', event: 'Event', post: 'Post', comment: 'Comment', user: 'User', resource: 'Resource' };
+const TYPE_LABEL: Record<ReportItemType, string> = { community: 'Page', event: 'Event', post: 'Post', comment: 'Comment', user: 'User', resource: 'Resource', stay: 'Stay' };
 const FILTERS: { v: ReportItemType | undefined; label: string }[] = [
   { v: undefined, label: 'All' }, { v: 'post', label: 'Posts' }, { v: 'comment', label: 'Comments' },
-  { v: 'user', label: 'Users' }, { v: 'community', label: 'Pages' }, { v: 'event', label: 'Events' }, { v: 'resource', label: 'Resources' },
+  { v: 'user', label: 'Users' }, { v: 'community', label: 'Pages' }, { v: 'event', label: 'Events' }, { v: 'resource', label: 'Resources' }, { v: 'stay', label: 'Stays' },
 ];
 const DURATIONS: { v: BanDuration; label: string }[] = [{ v: '1d', label: '1 day' }, { v: '7d', label: '7 days' }, { v: '30d', label: '30 days' }, { v: 'permanent', label: 'Permanent' }];
 const chip = (on: boolean) => `min-h-[44px] px-4 rounded-full text-sm font-bold border ${on ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-800 border-gray-300'}`;
