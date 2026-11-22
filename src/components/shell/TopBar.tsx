@@ -5,10 +5,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useComposer } from './AppShell';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/button';
+import { useInboxBadge } from '../../hooks/useInboxBadge';
 
 export function TopBar() {
   const { user, appUser, logout } = useAuth();
   const { open } = useComposer();
+  const { total: n } = useInboxBadge();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -63,7 +65,10 @@ export function TopBar() {
             <Plus className="h-5 w-5" aria-hidden /> <span className="hidden lg:inline">Create</span>
           </Button>
           <Link to="/inbox" className="hidden h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand md:inline-flex" aria-label="Inbox">
-            <Inbox className="h-5 w-5" aria-hidden />
+            <span className="relative">
+              <Inbox className="h-5 w-5" aria-hidden />
+              {n > 0 && <span aria-label={`${n} unread`} className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold leading-none text-white">{n > 99 ? '99+' : n}</span>}
+            </span>
           </Link>
           <Link to="/inbox" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand" aria-label="Notifications">
             <Bell className="h-5 w-5" aria-hidden />
