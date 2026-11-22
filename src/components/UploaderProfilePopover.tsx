@@ -6,6 +6,7 @@ import { getUserProfile } from '../services/userService';
 import { User, Resource } from '../types';
 import { resolveAvatar, getInitials } from '../constants/avatars';
 import { VerifiedBadge } from './VerifiedBadge';
+import { UserLink } from './profile/UserLink';
 
 interface UploaderProfilePopoverProps {
   uploaderName: string;
@@ -122,7 +123,7 @@ export function UploaderProfilePopover({ uploaderName, uploaderId, resources = [
               {/* Name & Details */}
               <div className="mb-4">
                 <h4 className={`text-lg font-black leading-tight flex items-center gap-2 ${uploaderProfile?.role === 'faculty' ? 'text-amber-600' : 'text-gray-900'}`}>
-                  {displayName}
+                  <UserLink username={uploaderProfile?.username}>{displayName}</UserLink>
                   {(uploaderProfile?.role === 'admin' || uploaderProfile?.role === 'faculty') && <BadgeCheck className="w-5 h-5 text-amber-500 shrink-0" />}
                   {uploaderProfile?.is_verified && uploaderProfile?.role === 'user' && <VerifiedBadge size="sm" showLabel={false} />}
                 </h4>

@@ -16,6 +16,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Button } from '../../components/ui/button';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Tabs } from '../../components/ui/Tabs';
+import { UserLink } from '../../components/profile/UserLink';
 
 const NotePreview = lazy(() => import('../../components/notes/NotePreview'));
 
@@ -123,7 +124,7 @@ export function NoteDetailPage() {
               <div className="space-y-3 py-3">
                 <p className="whitespace-pre-line text-[15px] text-ink">{note.description || 'No description yet.'}</p>
                 {note.tags.length > 0 && <p className="text-[13px] text-ink-muted">{note.tags.map((t) => `#${t}`).join(' ')}</p>}
-                <p className="text-[13px] text-ink-muted">Uploaded by {note.uploader || 'a student'}</p>
+                <p className="text-[13px] text-ink-muted">Uploaded by <UserLink username={note.uploaderUsername} className="font-semibold text-ink">{note.uploader || 'a student'}</UserLink></p>
               </div>
             )}
             {tab === 'tips' && <Fragment key={`${id}-tips`}><Feed id={id} kind="tips" /></Fragment>}

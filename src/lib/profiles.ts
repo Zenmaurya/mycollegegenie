@@ -21,6 +21,21 @@ export function validateUsername(s: unknown): { ok: true; value: string } | { ok
   return { ok: true, value };
 }
 
+// Mirrors backend slugFromName: display name to a valid-looking base (<= 18 chars so a numeric suffix fits).
+export function slugFromName(name: unknown): string {
+  const s = String(name ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/\s+/g, '.').replace(/[^a-z0-9._]/g, '').replace(/\.{2,}/g, '.').replace(/^\.+|\.+$/g, '')
+    .slice(0, 18).replace(/\.+$/, '');
+  return /^[a-z]/.test(s) && s.length >= 3 ? s : 'student';
+}
+
+/** The next suggestion after a taken name: riya -> riya2, riya2 -> riya3. */
+export function nextSuggestion(name: string): string {
+  const m = /^(.*?)(\d*)$/.exec(name)!;
+  const suffix = String((m[2] ? Number(m[2]) : 1) + 1);
+  return m[1].slice(0, 20 - suffix.length).replace(/\.+$/, '') + suffix;
+}
+
 /** When the username may next change, or null if it can change now. */
 export function usernameChangeOn(changedAt: string | null | undefined, now: Date): Date | null {
   if (!changedAt) return null;

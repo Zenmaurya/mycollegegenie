@@ -26,7 +26,7 @@ export interface CommunityDetail extends CommunitySummary {
   isListed: boolean;
   viewer: { following: boolean; role: PageRole | null; status: 'active' | 'pending' | null; joinMode: JoinMode; verification?: VerificationState | null };
 }
-export interface CommunityMember { userId: string; displayName: string; avatar: string | null; role: PageRole; title: string | null; sort_order: number }
+export interface CommunityMember { userId: string; displayName: string; username?: string | null; avatar: string | null; role: PageRole; title: string | null; sort_order: number }
 export interface EventCard {
   id: string; title: string; type: (typeof EVENT_TYPES)[number]; starts_at: string; ends_at: string | null; register_by: string | null;
   mode: (typeof EVENT_MODES)[number]; venue: string | null; eligibility: (typeof ELIGIBILITY)[number]; eligibility_note: string | null;

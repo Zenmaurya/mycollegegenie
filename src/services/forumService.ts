@@ -130,6 +130,7 @@ export const ForumService = {
         postId: c.post_id,
         authorId: c.author_id,
         authorName: c.author_name,
+        authorUsername: c.author_username ?? null,
         content: c.content,
         createdAt: c.created_at,
         upvotes: Array.isArray(c.upvotes) ? c.upvotes : [],

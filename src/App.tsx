@@ -51,7 +51,9 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(
 const FlipbookPage = lazy(() => import('./pages/FlipbookPage').then(m => ({ default: m.FlipbookPage })));
 const OfficialNewsPage = lazy(() => import('./pages/OfficialNewsPage').then(m => ({ default: m.OfficialNewsPage })));
 const CollegeEventsPage = lazy(() => import('./pages/CollegeEventsPage').then(m => ({ default: m.CollegeEventsPage })));
-const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const UserProfilePage = lazy(() => import('./pages/profile/UserProfilePage').then(m => ({ default: m.UserProfilePage })));
+const SettingsPage = lazy(() => import('./pages/profile/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const AdminUserPage = lazy(() => import('./pages/admin/AdminUserPage').then(m => ({ default: m.AdminUserPage })));
 const CampusExchangePage = lazy(() => import('./pages/CampusExchangePage').then(m => ({ default: m.CampusExchangePage })));
 const OTPVerificationPage = lazy(() => import('./pages/OTPVerificationPage').then(m => ({ default: m.OTPVerificationPage })));
 const ContributorsPage = lazy(() => import('./pages/ContributorsPage').then(m => ({ default: m.ContributorsPage })));
@@ -90,6 +92,29 @@ import { legacyBrowseToNotes } from './lib/notes';
 function ForumPostRedirect() {
   const { postId } = useParams();
   return <Navigate to={`/post/${postId}`} replace />;
+}
+
+const PageSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+  </div>
+);
+
+/** Admin and moderator only: spinner while auth loads, home for other users, login for guests. */
+function StaffOnly({ children }: { children: React.ReactNode }) {
+  const { user, appUser, isAuthLoading } = useAuth();
+  if (isAuthLoading || (user && !appUser)) return <PageSpinner />;
+  if (appUser?.role === 'admin' || appUser?.role === 'moderator') return <>{children}</>;
+  return <Navigate to={user ? '/' : '/login'} replace />;
+}
+
+/** Old /profile bookmarks: own profile when a username is set, else settings. */
+function ProfileRedirect() {
+  const { user, appUser, isAuthLoading } = useAuth();
+  const { search } = useLocation(); // keeps /profile?tab=saved working
+  if (isAuthLoading) return <PageSpinner />;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Navigate to={appUser?.username ? `/u/${appUser.username}${search}` : '/settings'} replace />;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -309,26 +334,17 @@ function AppContent() {
               <Route path="/stays/:id/edit" element={<StayNewPage />} />
               <Route path="/campus-exchange" element={<CampusExchangePage user={user} />} />
 
-              <Route path="/admin" element={
-                (isAuthLoading || (user && !appUser)) ? (
-                  <div className="min-h-screen flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-                  </div>
-                ) : (appUser?.role === 'admin' || appUser?.role === 'moderator') ? (
-                  <AdminPanel user={user} appUser={appUser} isAuthLoading={isAuthLoading} />
-                ) : user ? (
-                  <Navigate to="/" replace />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              } />
+              <Route path="/admin" element={<StaffOnly><AdminPanel user={user} appUser={appUser} isAuthLoading={isAuthLoading} /></StaffOnly>} />
+              <Route path="/admin/users/:id" element={<StaffOnly><AdminUserPage /></StaffOnly>} />
 
               {/* Login/signup routes */}
               <Route path="/login" element={<LoginPage user={user} />} />
               <Route path="/signup" element={<LoginPage user={user} />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ForgotPasswordPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/profile" element={<ProfileRedirect />} />
+              <Route path="/u/:username" element={<UserProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="/flipbook/:id" element={<FlipbookPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />

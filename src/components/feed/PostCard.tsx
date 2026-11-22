@@ -11,6 +11,7 @@ import { applyVote, removePostFromFeed, timeAgo } from '../../lib/feed';
 import type { ForumPost } from '../../types';
 import { PhotoGrid } from './PhotoGrid';
 import { Avatar } from '../ui/Avatar';
+import { UserLink } from '../profile/UserLink';
 import { ReportSheet } from '../communities/ReportSheet';
 
 function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSaved: boolean; onToggleSave: (id: string) => void }) {
@@ -87,10 +88,10 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
               {post.community.name}
               {post.community.status === 'official' && <BadgeCheck className="h-4 w-4 text-highlight" aria-label="Official" />}
             </Link>
-            <span aria-hidden>·</span><span>{post.authorName || 'Student'}</span>
+            <span aria-hidden>·</span><UserLink username={post.authorUsername}>{post.authorName || 'Student'}</UserLink>
           </>
         ) : (
-          <span className="font-semibold text-ink">{post.authorName || 'Student'}</span>
+          <UserLink username={post.authorUsername} className="font-semibold text-ink">{post.authorName || 'Student'}</UserLink>
         )}
         {post.course && <><span aria-hidden>·</span><span className="truncate">{post.course}</span></>}
         <span aria-hidden>·</span>

@@ -60,6 +60,7 @@ export interface Resource {
   year?: number | null;
   uploaderCollege?: string | null;
   uploaderVerified?: boolean;
+  uploaderUsername?: string | null;
   helpfulYes?: number;
   helpfulNo?: number;
   isHidden?: boolean;
@@ -137,6 +138,7 @@ export interface Comment {
   postId: string;
   authorId: string;
   authorName: string;
+  authorUsername?: string | null;
   content: string;
   createdAt: string;
   upvotes: string[];
@@ -151,6 +153,7 @@ export interface ForumPost {
   content: string;
   authorId: string;
   authorName: string;
+  authorUsername?: string | null;
   course: string;
   topic: string;
   createdAt: string;

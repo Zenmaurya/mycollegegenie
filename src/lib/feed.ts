@@ -23,6 +23,7 @@ export function mapPost(raw: any): ForumPost {
     content: raw.content,
     authorId: raw.author_id,
     authorName: raw.author_name,
+    authorUsername: raw.author_username ?? null,
     course: raw.course,
     topic: raw.topic,
     createdAt: raw.created_at,

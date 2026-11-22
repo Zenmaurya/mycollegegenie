@@ -30,6 +30,7 @@ import { ConfirmationModal } from '../components/ConfirmationModal';
 import { PhotoGrid } from '../components/feed/PhotoGrid';
 import { CommentItem } from '../components/post/CommentItem';
 import { CommentComposer } from '../components/post/CommentComposer';
+import { UserLink } from '../components/profile/UserLink';
 
 
 export function PostPage() {
@@ -67,7 +68,7 @@ export function PostPage() {
       await qc.cancelQueries({ queryKey: commentsKey });
       const prev = qc.getQueryData<Comment[]>(commentsKey);
       patchComments((l) => [...l, {
-        id: `tmp-${Date.now()}`, postId: id, authorId: uid ?? '', authorName: appUser?.displayName || 'You',
+        id: `tmp-${Date.now()}`, postId: id, authorId: uid ?? '', authorName: appUser?.displayName || 'You', authorUsername: appUser?.username ?? null,
         content, createdAt: new Date().toISOString(), upvotes: [], downvotes: [], parentId: parentId ?? null,
       }]);
       return { prev };
@@ -174,7 +175,7 @@ export function PostPage() {
           </button>
           <header className="mb-2 flex flex-wrap items-center gap-x-1.5 text-[13px] text-ink-muted">
             <Avatar name={post.authorName || 'Student'} size="sm" />
-            <span className="font-semibold text-ink">{post.authorName || 'Student'}</span>
+            <UserLink username={post.authorUsername} className="font-semibold text-ink">{post.authorName || 'Student'}</UserLink>
             {post.course && <><span aria-hidden>·</span><span className="truncate">{post.course}</span></>}
             <span aria-hidden>·</span><time dateTime={post.createdAt}>{timeAgo(post.createdAt)}</time>
             {post.topic && <span className="ml-auto rounded-full border border-line px-2 py-0.5 text-[12px] font-semibold text-ink">{topicLabel(post.topic)}</span>}

@@ -8,6 +8,7 @@ import type { Resource, ResourceType } from '../../types';
 import { Badge } from '../ui/Badge';
 import { Menu } from '../ui/Menu';
 import { ReportSheet } from '../communities/ReportSheet';
+import { UserLink } from '../profile/UserLink';
 
 const TILE: Record<ResourceType, { Icon: ComponentType<{ className?: string }>; tint: string; label: string }> = {
   Note: { Icon: FileText, tint: 'bg-brand-soft text-brand', label: 'Note' },
@@ -72,7 +73,7 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
         {stats && <p className="text-[13px] text-ink-muted" title={helped ?? undefined}>{stats}</p>}
         <div className="mt-auto flex items-center justify-between gap-1 pt-1">
           <p className="min-w-0 truncate text-[13px] text-ink-muted">
-            {note.uploader || 'Student'}{note.uploaderCollege ? ` · ${note.uploaderCollege}` : ''}
+            <UserLink username={note.uploaderUsername} className="relative z-10">{note.uploader || 'Student'}</UserLink>{note.uploaderCollege ? ` · ${note.uploaderCollege}` : ''}
           </p>
           <span className="relative z-10 -mr-2 shrink-0">
             <Menu label="More actions" items={[

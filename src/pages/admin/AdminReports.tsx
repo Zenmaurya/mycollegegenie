@@ -79,6 +79,7 @@ export const AdminReports: React.FC = () => {
               <li key={`${r.itemType}:${r.itemId}`} className="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col gap-3">
                 <div className="text-sm text-gray-800 space-y-1">
                   {href ? <Link to={href} className="font-black text-purple-700 underline">{label}</Link> : <span className="font-black">{label}</span>}
+                  {r.targetUserId && <> · <Link to={`/admin/users/${r.targetUserId}`} className="font-bold text-purple-700 underline">{r.itemType === 'user' ? 'User page' : `Author${r.targetUsername ? ` @${r.targetUsername}` : ''}`}</Link></>}
                   <p>
                     {TYPE_LABEL[r.itemType]} · {r.reporters} reporter{r.reporters === 1 ? '' : 's'} · latest {timeAgo(r.latest)}{r.is_hidden ? ' · Already hidden' : ''}
                     {r.itemType === 'user' && <> · {r.warn_count ?? 0} warning{r.warn_count === 1 ? '' : 's'}{isBanned(r) && <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-bold">{banBadge(r)}</span>}</>}

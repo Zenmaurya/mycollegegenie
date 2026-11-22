@@ -6,6 +6,8 @@ import { CollegePicker, type CollegeValue } from './CollegePicker';
 import { saveOnboarding } from '../../services/collegeService';
 import { useAuth } from '../../context/AuthContext';
 import { INTERESTS, batchYearFromStudyYear, buildOnboardingPayload } from '../../lib/onboarding';
+import { nextSuggestion, slugFromName, validateUsername } from '../../lib/profiles';
+import { ProfileService } from '../../services/profileService';
 
 type Payload = Parameters<typeof saveOnboarding>[0];
 
@@ -21,6 +23,11 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
   const [interests, setInterests] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Asked once, for users who have no @username yet; fixed at mount so saving it doesn't drop the step.
+  const [askUsername] = useState(() => !!appUser && !appUser.username);
+  const [username, setUsername] = useState(() => slugFromName(appUser?.displayName));
+  const [suggestion, setSuggestion] = useState('');
+  const totalSteps = askUsername ? 5 : 4;
 
   const collegeReady = !!college && ('id' in college || college.other.trim().length > 0);
   // Chosen in this flow, else the user's saved college (flow may start at step 2/3).
@@ -44,7 +51,24 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
       setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
     } finally { setBusy(false); }
   };
-  const finish = async () => { await refreshAppUser(); onDone(); };
+  const finish = async () => {
+    if (askUsername && step !== 5) { setStep(5); return; }
+    await refreshAppUser();
+    onDone();
+  };
+  const saveUsername = async () => {
+    const check = validateUsername(username);
+    if (check.ok === false) { setError(check.error); return; }
+    setBusy(true); setError(''); setSuggestion('');
+    try {
+      await ProfileService.changeUsername(check.value);
+      await finish();
+    } catch (e) {
+      const status = (e as { status?: number }).status;
+      setError(status === 409 ? 'That username is taken' : e instanceof Error ? e.message : 'Something went wrong. Try again.');
+      if (status === 409) setSuggestion(nextSuggestion(check.value));
+    } finally { setBusy(false); }
+  };
   const toStep3 = () => setStep(3);
   const toStep4 = () => setStep(4);
   // No societies to suggest (or the lookup failed): nothing to show, so finish.
@@ -55,7 +79,7 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
 
   return (
     <div>
-      <p className="text-[13px] font-semibold text-ink-muted" aria-live="polite">Step {step} of 4</p>
+      <p className="text-[13px] font-semibold text-ink-muted" aria-live="polite">Step {step} of {totalSteps}</p>
 
       {step === 1 && (
         <>
@@ -89,6 +113,19 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
       )}
       {step === 4 && <SuggestedSocieties collegeId={effective && 'id' in effective ? effective.id : null} interests={interests} onEmpty={skipSocieties} />}
 
+      {step === 5 && (
+        <>
+          <h2 className="mt-1 text-[22px] font-bold text-ink">Pick your @username</h2>
+          <label htmlFor="ob-username" className="mt-4 block text-[13px] font-semibold text-ink">Username</label>
+          <div className="flex items-center gap-1">
+            <span aria-hidden className="text-[15px] text-ink-muted">@</span>
+            <input id="ob-username" className={inputCls} maxLength={20} autoCapitalize="none" autoCorrect="off" spellCheck={false} value={username} onChange={e => { setUsername(e.target.value); setError(''); setSuggestion(''); }} />
+          </div>
+          <p className="mt-1 text-[13px] text-ink-muted">3-20 letters, numbers, dots or underscores. You can change it once every 30 days.</p>
+          {suggestion && <Button variant="secondary" className="mt-2" onClick={() => { setUsername(suggestion); setSuggestion(''); setError(''); }}>Try @{suggestion}</Button>}
+        </>
+      )}
+
       {error && <p role="alert" className="mt-3 text-[13px] text-danger">{error}</p>}
 
       <div className="mt-6 flex items-center justify-end gap-2">
@@ -97,7 +134,9 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
         {step === 1 && <Button disabled={!collegeReady} loading={busy} onClick={() => void save(collegePayload, () => setStep(2))}>Continue</Button>}
         {step === 2 && <Button disabled={!hasCourse} loading={busy} onClick={() => void save(coursePayload, toStep3)}>Continue</Button>}
         {step === 3 && <Button disabled={interests.length === 0} loading={busy} onClick={() => void save(interestsPayload, toStep4)}>Continue</Button>}
-        {step === 4 && <Button loading={busy} onClick={() => void save(null, finish)}>Done</Button>}
+        {step === 4 && <Button loading={busy} onClick={() => void save(null, finish)}>{askUsername ? 'Continue' : 'Done'}</Button>}
+        {step === 5 && <Button variant="ghost" disabled={busy} onClick={() => void save(null, finish)}>Skip</Button>}
+        {step === 5 && <Button disabled={!username.trim()} loading={busy} onClick={() => void saveUsername()}>Done</Button>}
       </div>
     </div>
   );

@@ -106,6 +106,7 @@ export function mapNote(raw: any): Resource {
     uploader: raw.uploader || '',
     uploaderId: raw.uploader_id || '',
     uploaderRole: raw.uploader_role || 'user',
+    uploaderUsername: raw.uploader_username ?? null,
     isApproved: Boolean(raw.is_approved),
     ratings: [],
     reports: [],

@@ -2462,7 +2462,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                             {u.displayName?.charAt(0).toUpperCase() || '?'}
                           </div>
                         )}
-                        {u.displayName || 'Unknown'}
+                        <Link to={`/admin/users/${u.id}`} className="hover:underline">{u.displayName || 'Unknown'}</Link>
                       </td>
                       <td className="py-4 px-4 text-gray-600 font-medium">{u.email}</td>
                       <td className="py-4 px-4 text-gray-500 text-xs">{u.college || '-'}</td>

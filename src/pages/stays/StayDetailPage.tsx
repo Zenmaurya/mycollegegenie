@@ -15,6 +15,7 @@ import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Button } from '../../components/ui/button';
 import { Skeleton } from '../../components/ui/skeleton';
+import { UserLink } from '../../components/profile/UserLink';
 
 const SAFETY = ['cctv', 'warden', 'curfew'];
 const humanize = (k: string) => k.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
@@ -174,7 +175,7 @@ export function StayDetailPage() {
 
           <div className={card}>
             <p className="text-[13px] font-semibold text-ink-muted">Listed by</p>
-            <p className="text-[15px] font-semibold text-ink">{stay.lister?.displayName || 'A student'}</p>
+            <p className="text-[15px] font-semibold text-ink"><UserLink username={stay.listerUsername}>{stay.lister?.displayName || 'A student'}</UserLink></p>
             <Badge tone={stay.listerType === 'broker' ? 'neutral' : 'brand'}>{LISTER_LABEL[stay.lister?.listerType ?? stay.listerType]}</Badge>
           </div>
 

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { validateUsername, usernameChangeOn, mapProfile, mapStats, mapProfileItem, tabFromParam } from './profiles';
+import { slugFromName, nextSuggestion, validateUsername, usernameChangeOn, mapProfile, mapStats, mapProfileItem, tabFromParam } from './profiles';
 
 test('validateUsername accepts and lowercases good names', () => {
   assert.deepStrictEqual(validateUsername('Riya.Sharma'), { ok: true, value: 'riya.sharma' });
@@ -55,4 +55,20 @@ test('mapProfileItem maps by tab, and by kind for listings and saved', () => {
   assert.deepStrictEqual(mapProfileItem('listings', { id: 'e', kind: 'exchange', title: 'Cycle', price: '500', image_url: 'u', type: 'sell' }), { kind: 'exchange', item: { id: 'e', title: 'Cycle', price: 500, imageUrl: 'u', type: 'sell' } });
   assert.strictEqual(mapProfileItem('saved', { id: 'n', kind: 'note' })?.kind, 'note');
   assert.strictEqual(mapProfileItem('saved', { id: 'x', kind: 'weird' }), null);
+});
+
+test('slugFromName makes a valid-looking base from a display name', () => {
+  assert.strictEqual(slugFromName('Riya Sharma'), 'riya.sharma');
+  assert.strictEqual(slugFromName("Renée  O'Neil"), 'renee.oneil');
+  assert.strictEqual(slugFromName('9 Lives'), 'student');
+  assert.strictEqual(slugFromName('रिया'), 'student');
+  assert.strictEqual(slugFromName(null), 'student');
+  assert.ok(slugFromName('A very long display name indeed').length <= 18);
+  assert.strictEqual(validateUsername(slugFromName('Riya Sharma')).ok, true);
+});
+
+test('nextSuggestion appends or bumps a numeric suffix', () => {
+  assert.strictEqual(nextSuggestion('riya'), 'riya2');
+  assert.strictEqual(nextSuggestion('riya2'), 'riya3');
+  assert.strictEqual(nextSuggestion('a'.repeat(20)), 'a'.repeat(19) + '2');
 });

@@ -17,7 +17,7 @@ export const LISTER_LABEL: Record<ListerType, string> = { owner: 'Owner', studen
 export interface Room { sharing: Sharing; rent: number; ac: boolean }
 export interface Insight { count: number; low: number | null; median: number | null; high: number | null }
 export interface Stay {
-  id: string; listerId: string; listerType: ListerType; type: StayType; title: string; collegeId: string | null; collegeName: string;
+  id: string; listerId: string; listerUsername: string | null; listerType: ListerType; type: StayType; title: string; collegeId: string | null; collegeName: string;
   area: string; genderFor: Gender; rooms: Room[]; deposit: number | null; meals: boolean; amenities: string[];
   rules: Record<string, unknown>; photos: string[]; description: string; availableFrom: string; createdAt: string;
   minRent: number | null; badge: Badge | null; isApproved: boolean; isHidden: boolean;
@@ -35,6 +35,7 @@ export function mapStay(raw: any): Stay {
   return {
     id: raw.id,
     listerId: raw.lister_id || '',
+    listerUsername: raw.lister_username ?? null,
     listerType: raw.lister_type,
     type: raw.type,
     title: raw.title || '',

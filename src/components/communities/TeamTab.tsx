@@ -4,6 +4,7 @@ import { Avatar } from '../ui/Avatar';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/skeleton';
 import { Button } from '../ui/button';
+import { UserLink } from '../profile/UserLink';
 
 export function TeamTab({ slug }: { slug: string }) {
   const q = useQuery({ queryKey: ['community-team', slug], queryFn: () => listMembers(slug, 'active') });
@@ -17,7 +18,7 @@ export function TeamTab({ slug }: { slug: string }) {
         <li key={m.userId} className="flex items-center gap-3 p-3">
           <Avatar src={m.avatar} name={m.displayName} />
           <span className="min-w-0">
-            <span className="block truncate text-[15px] font-semibold text-ink">{m.displayName}</span>
+            <UserLink username={m.username} className="block truncate text-[15px] font-semibold text-ink">{m.displayName}</UserLink>
             <span className="block truncate text-[13px] text-ink-muted">{m.title || (m.role === 'admin' ? 'Admin' : 'Core team')}</span>
           </span>
         </li>
