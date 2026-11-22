@@ -337,6 +337,7 @@ function normaliseResource(item: any): Resource {
     uploaderId: item.uploader_id || item.uploaderId || '',
     uploaderRole: item.uploader_role || item.uploaderRole || 'user',
     isApproved: Boolean(item.is_approved),
+    thumbnailUrl: item.thumbnail_url ?? null,
     ratings,
     averageRating,
     reports: safeArray(item.reports),

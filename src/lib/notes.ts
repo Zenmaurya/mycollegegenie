@@ -56,6 +56,7 @@ export function legacyBrowseToNotes(search: string): string {
   if (src.get('openUpload') === '1') return '/notes/upload';
   const out = new URLSearchParams();
   for (const k of KEPT) { const v = src.get(k); if (v) out.set(k, v); }
+  const sem = src.get('sem'); if (sem && !out.has('semester')) out.set('semester', sem);
   const qs = out.toString();
   return qs ? `/notes?${qs}` : '/notes';
 }

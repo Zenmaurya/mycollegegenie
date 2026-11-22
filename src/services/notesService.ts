@@ -16,8 +16,8 @@ export type NoteInput = Pick<Resource, 'title' | 'description' | 'type' | 'cours
 
 export const NotesService = {
   // sort is always sent: without sort or cursor the API returns the legacy array shape.
-  list: async (filters: NoteFilters = {}, cursor?: string): Promise<NotesPage> => {
-    const params = new URLSearchParams({ limit: '24' });
+  list: async (filters: NoteFilters = {}, cursor?: string, limit = 24): Promise<NotesPage> => {
+    const params = new URLSearchParams({ limit: String(limit) });
     for (const [k, v] of Object.entries(filters)) if (v !== undefined && v !== '') params.set(k, String(v));
     if (!params.has('sort')) params.set('sort', 'helpful');
     if (cursor) params.set('cursor', cursor);

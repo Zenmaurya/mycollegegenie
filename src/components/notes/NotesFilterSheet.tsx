@@ -1,5 +1,6 @@
 import { Fragment, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '../../hooks/useDebounce';
 import { NOTES_COURSES } from '../../lib/notes';
 import { NotesService, type NoteFilters } from '../../services/notesService';
 import { Sheet } from '../ui/Sheet';
@@ -32,9 +33,10 @@ interface Props {
 export function NotesFilterSheet({ mode, initial, q, hasCollege, onApply, onClose }: Props) {
   const [d, setD] = useState(initial);
   const set = (k: keyof FilterDraft, v: string) => setD((p) => ({ ...p, [k]: v }));
+  const dd = useDebounce(d, 300); // the count query is rate-limited, so don't refetch per keystroke
   const count = useQuery({
-    queryKey: ['notes-count', q, d],
-    queryFn: () => NotesService.list(toNoteFilters(q, d)),
+    queryKey: ['notes-count', q, dd],
+    queryFn: () => NotesService.list(toNoteFilters(q, dd), undefined, 1),
     enabled: mode === 'filters',
     select: (p) => p.total,
   });

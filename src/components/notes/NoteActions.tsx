@@ -28,7 +28,7 @@ export function NoteActions({ note, saved, onToggleSave, onRated }: Props) {
   const toLogin = () => navigate('/login', { state: { from: { pathname: location.pathname + location.search } } });
   const needLogin = (fn: () => void) => () => (user ? fn() : toLogin());
   const helped = formatHelpedPct(note.helpfulYes ?? 0, note.helpfulNo ?? 0);
-  const external = ['youtube', 'other'].includes(previewKind(note.link).kind);
+  const external = previewKind(note.link).kind !== 'pdf'; // the flipbook only renders PDFs
 
   const submit = async (nextStars: number, nextHelpful: boolean | null) => {
     const prev = { stars, helpful };

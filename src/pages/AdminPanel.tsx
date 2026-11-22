@@ -1662,7 +1662,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
                     filteredResources.map(resource => (
                       <div key={resource.id} className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
                         <div className="flex items-start gap-4 sm:gap-6 min-w-0 flex-1">
-                          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${resource.type === 'Playlist' ? 'bg-rose-50 text-rose-600' : 'bg-purple-50 text-purple-600'}`}>
+                          {resource.thumbnailUrl && <img src={resource.thumbnailUrl} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-10 h-14 sm:w-12 sm:h-16 rounded-lg object-cover flex-shrink-0 border border-gray-100" />}
+                          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${resource.thumbnailUrl ? 'hidden' : ''} ${resource.type === 'Playlist' ? 'bg-rose-50 text-rose-600' : 'bg-purple-50 text-purple-600'}`}>
                             {resource.type === 'Playlist' ? <Youtube className="w-5 h-5 sm:w-6 sm:h-6" /> : <FileText className="w-5 h-5 sm:w-6 sm:h-6" />}
                           </div>
                           <div className="min-w-0 flex-1">

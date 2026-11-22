@@ -33,7 +33,7 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
   const sub = [note.subjectCode, note.course && courseShort(note.course), note.semester ? `Sem ${note.semester}` : ''].filter(Boolean).join(' · ');
   const stats = [
     note.ratingAvg != null ? `★ ${note.ratingAvg.toFixed(1)}` : '',
-    (note.helpfulYes ?? 0) > 0 ? `Helped ${note.helpfulYes}` : '',
+    note.downloads ? `Helped ${note.downloads}` : '',
     note.pageCount ? `${note.pageCount} pages` : '',
   ].filter(Boolean).join(' · ');
 

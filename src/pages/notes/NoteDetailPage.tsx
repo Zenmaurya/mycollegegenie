@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useResources } from '../../context/ResourceContext';
 import { fetchWithAuth } from '../../lib/apiClient';
-import { courseShort } from '../../lib/notes';
+import { courseShort, previewKind } from '../../lib/notes';
 import { NotesService, type RatingResult } from '../../services/notesService';
 import type { Resource } from '../../types';
 import { CommentComposer } from '../../components/post/CommentComposer';
@@ -112,7 +112,7 @@ export function NoteDetailPage() {
           <Suspense fallback={<Skeleton className="aspect-[4/3] w-full" />}>
             {note.link ? <NotePreview link={note.link} title={note.title} /> : <EmptyState title="No preview" body="This resource has no file link." />}
           </Suspense>
-          <Link to={`/flipbook/${note.id}`} className="inline-flex min-h-11 items-center font-semibold text-brand hover:underline">Open full</Link>
+          {previewKind(note.link).kind === 'pdf' && <Link to={`/flipbook/${note.id}`} className="inline-flex min-h-11 items-center font-semibold text-brand hover:underline">Open full</Link>}
 
           <Tabs
             label="Resource details" value={tab} onChange={(v) => setTab(v as Tab)}

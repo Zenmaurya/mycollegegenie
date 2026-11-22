@@ -30,6 +30,8 @@ test('legacyBrowseToNotes redirects old browse URLs', () => {
   assert.strictEqual(legacyBrowseToNotes('?foo=1'), '/notes');
   assert.strictEqual(legacyBrowseToNotes(''), '/notes');
   assert.strictEqual(legacyBrowseToNotes('?openUpload=1'), '/notes/upload');
+  assert.strictEqual(legacyBrowseToNotes('?sem=3'), '/notes?semester=3');
+  assert.strictEqual(legacyBrowseToNotes('?sem=3&semester=5'), '/notes?semester=5');
 });
 
 test('yearFromTitle, formatHelpedPct, report reasons', () => {

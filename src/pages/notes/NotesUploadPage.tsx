@@ -127,7 +127,7 @@ export function NotesUploadPage() {
       let pageCount: number | null = null;
       const t = file ? await thumbJob.current : null;
       if (t) {
-        pageCount = t.pageCount;
+        pageCount = t.pageCount > 2000 ? null : t.pageCount; // API rejects page_count > 2000
         try {
           // Safari returns PNG for WebP requests: upload with the blob's real type.
           const ext = t.blob.type === 'image/webp' ? 'webp' : t.blob.type === 'image/jpeg' ? 'jpg' : 'png';
@@ -168,6 +168,7 @@ export function NotesUploadPage() {
           <Button variant="secondary" onClick={share}>Share</Button>
           <Button onClick={reset}>Upload another</Button>
         </div>
+        <p className="text-[13px] text-ink-muted">Others can open it once it's approved.</p>
         <Link to="/notes" className="inline-flex min-h-11 items-center text-[15px] font-semibold text-brand hover:underline">Back to notes</Link>
       </main>
     );

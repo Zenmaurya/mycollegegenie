@@ -8,7 +8,7 @@ import { Loader2, ChevronLeft, ChevronRight, Download, Maximize2, Minimize2, Ale
 import { motion } from 'motion/react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { Resource } from '../types';
-import { getResources } from '../services/resourceService';
+import { NotesService } from '../services/notesService';
 
 // Set worker source
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -57,20 +57,14 @@ export const FlipbookPage: React.FC = () => {
   useEffect(() => {
     const fetchResource = async () => {
       try {
-        // Flipbooks are public. The previous `true` flag requested the
-        // protected admin/unapproved feed, which is empty for logged-out users.
-        const publicResources = await getResources(false);
-        const found = publicResources.find(r => r.id === id);
-        if (found) {
-          setResource(found);
-          loadPdf(found.directDownloadLink || found.link || '');
-        } else {
-          setLoadError('This resource is not available for public viewing.');
-          setLoading(false);
-        }
-      } catch (error) {
+        // Single fetch: the API hides unapproved items from everyone except the uploader and staff.
+        const found = await NotesService.get(id!);
+        setResource(found);
+        loadPdf(found.directDownloadLink || found.link || '');
+      } catch (error: any) {
         console.error('Error fetching resource:', error);
-        setLoadError('We could not load this resource. Please try again.');
+        const notFound = error?.status === 404 || /not found/i.test(error?.message ?? '');
+        setLoadError(notFound ? 'This resource is not available for public viewing.' : 'We could not load this resource. Please try again.');
         setLoading(false);
       }
     };
