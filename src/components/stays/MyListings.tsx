@@ -16,7 +16,7 @@ export function MyListings() {
   const q = useQuery({ queryKey: ['my-stays'], queryFn: StaysService.mine });
   const del = useMutation({
     mutationFn: (s: Stay) => StaysService.remove(s.id),
-    onSuccess: () => { toast.success('Listing deleted'); setDeleting(null); void qc.invalidateQueries({ queryKey: ['my-stays'] }); },
+    onSuccess: () => { toast.success('Listing deleted'); setDeleting(null); void qc.invalidateQueries({ queryKey: ['my-stays'] }); void qc.invalidateQueries({ queryKey: ['stays'] }); },
     onError: (e) => toast.error(e instanceof Error ? e.message : 'Could not delete the listing'),
   });
   const items = q.data ?? [];

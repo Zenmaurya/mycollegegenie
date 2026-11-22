@@ -21,6 +21,8 @@ export interface Stay {
   area: string; genderFor: Gender; rooms: Room[]; deposit: number | null; meals: boolean; amenities: string[];
   rules: Record<string, unknown>; photos: string[]; description: string; availableFrom: string; createdAt: string;
   minRent: number | null; badge: Badge | null; isApproved: boolean; isHidden: boolean;
+  /** ISO timestamp; the admin approve call echoes it so a stay edited after review is not approved by mistake. */
+  updatedAt: string;
   /** Detail only. phone is '' unless the API sent it (opted in + logged in). */
   phone: string; insight: Insight | null; lister: { displayName: string; listerType: ListerType } | null;
 }
@@ -49,6 +51,7 @@ export function mapStay(raw: any): Stay {
     description: raw.description || '',
     availableFrom: raw.available_from ? String(raw.available_from).slice(0, 10) : '',
     createdAt: raw.created_at || '',
+    updatedAt: raw.updated_at || '',
     minRent: raw.min_rent == null ? cheapestRoom(rooms)?.rent ?? null : Number(raw.min_rent),
     isApproved: Boolean(raw.is_approved),
     isHidden: Boolean(raw.is_hidden),

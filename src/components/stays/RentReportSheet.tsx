@@ -46,6 +46,7 @@ export function RentReportSheet({ onClose, initial }: Props) {
       });
       void qc.invalidateQueries({ queryKey: ['stays-insight'] });
       void qc.invalidateQueries({ queryKey: ['stay'] });
+      void qc.invalidateQueries({ queryKey: ['stays'] });
       setDone({ insight: r.insight, place: (college && 'name' in college ? college.name : '') || area.trim() });
     } catch (err) {
       toast.error((err as { status?: number }).status === 429 ? 'Daily limit reached. Try again tomorrow.' : err instanceof Error ? err.message : "Couldn't save your rent. Please try again.");

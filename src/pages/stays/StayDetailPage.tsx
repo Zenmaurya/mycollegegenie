@@ -98,6 +98,9 @@ export function StayDetailPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-4 pb-40 md:pb-4">
       <Helmet><title>{stay.title} | MyCollegeGenie</title></Helmet>
+      {isMine && (stay.isHidden || !stay.isApproved) && (
+        <p role="status" className="rounded-sm border border-line bg-surface p-3 text-[15px] font-semibold text-ink">{stay.isHidden ? 'Hidden by moderators' : 'In review — not public yet'}</p>
+      )}
       <header className="space-y-1">
         <p className="text-[13px] text-ink-muted">{TYPE_LABEL[stay.type]} in {stay.area}</p>
         <h1 className="text-[22px] font-bold leading-tight text-ink">{stay.title}</h1>
@@ -109,6 +112,7 @@ export function StayDetailPage() {
           <Gallery photos={stay.photos} title={stay.title} />
           {stay.description && <p className="whitespace-pre-line text-[15px] text-ink">{stay.description}</p>}
 
+          {stay.rooms.length === 0 ? <p className="text-[15px] text-ink-muted">Ask the lister for rent</p> : (
           <section aria-label="Rooms and rent" className="space-y-2">
             <h2 className="text-[17px] font-bold text-ink">Rooms & rent</h2>
             <table className="w-full rounded-card bg-surface text-left text-[15px] shadow-card">
@@ -123,6 +127,7 @@ export function StayDetailPage() {
               </tbody>
             </table>
           </section>
+          )}
 
           {stay.amenities.length > 0 && (
             <section aria-label="Amenities" className="space-y-2">
@@ -163,7 +168,7 @@ export function StayDetailPage() {
             <div className="hidden gap-2 md:flex">{contact}</div>
             <div className="flex flex-wrap gap-2 border-t border-line pt-3">
               <Button variant="ghost" onClick={() => void share()}><Share2 className="h-5 w-5" aria-hidden /> Share</Button>
-              <Button variant="ghost" onClick={needLogin(() => setSheet('report'))}><Flag className="h-5 w-5" aria-hidden /> Report</Button>
+              {!isMine && <Button variant="ghost" onClick={needLogin(() => setSheet('report'))}><Flag className="h-5 w-5" aria-hidden /> Report</Button>}
             </div>
           </div>
 

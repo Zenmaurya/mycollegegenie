@@ -24,9 +24,9 @@ export function AdminStays() {
     queryFn: ({ pageParam }) => StaysService.pending(pageParam), getNextPageParam: (p) => p.nextCursor ?? undefined,
   });
   const act = useMutation({
-    mutationFn: ({ s, kind }: { s: Stay; kind: 'approve' | 'reject' }) => (kind === 'approve' ? StaysService.approve(s.id) : StaysService.remove(s.id)),
-    onSuccess: (_r, { kind }) => { toast.success(kind === 'approve' ? 'Stay approved' : 'Stay rejected'); void qc.invalidateQueries({ queryKey: ['admin-stays-pending'] }); setRejecting(null); },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Action failed'),
+    mutationFn: ({ s, kind }: { s: Stay; kind: 'approve' | 'reject' }) => (kind === 'approve' ? StaysService.approve(s.id, s.updatedAt) : StaysService.remove(s.id)),
+    onSuccess: (_r, { kind }) => { toast.success(kind === 'approve' ? 'Stay approved' : 'Stay rejected'); void qc.invalidateQueries({ queryKey: ['admin-stays-pending'] }); void qc.invalidateQueries({ queryKey: ['stays'] }); setRejecting(null); },
+    onError: (e) => { toast.error(e instanceof Error ? e.message : 'Action failed'); void qc.invalidateQueries({ queryKey: ['admin-stays-pending'] }); setRejecting(null); },
   });
   const rows = q.data?.pages.flatMap((p) => p.items) ?? [];
 

@@ -58,6 +58,8 @@ export const StaysService = {
     return { items: (d.items ?? []).map(mapStay), nextCursor: d.nextCursor ?? null, total: d.items?.length ?? 0 };
   },
 
-  approve: (id: string): Promise<{ ok: true }> => fetchWithAuth(`/api/stays/${encodeURIComponent(id)}/approve`, { method: 'PATCH' }),
+  // updated_at must match the version that was reviewed, else the API answers 409.
+  approve: (id: string, updatedAt: string): Promise<{ ok: true }> =>
+    fetchWithAuth(`/api/stays/${encodeURIComponent(id)}/approve`, { method: 'PATCH', body: JSON.stringify({ updated_at: updatedAt }) }),
 
 };

@@ -18,12 +18,14 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Button } from '../../components/ui/button';
 
-const DRAFT_KEY = 'mcg-stay-draft';
+const OLD_DRAFT_KEY = 'mcg-stay-draft'; // shared across users: removed on load
+const draftKey = (userId: string) => `mcg-stay-draft:${userId}`;
 const inputCls = 'mt-1 min-h-11 w-full rounded-sm border border-line bg-surface px-3 text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-brand';
 const LAST = WIZARD_STEPS.length - 1;
 
-const loadDraft = (): StayDraft => {
-  try { return { ...emptyDraft(), ...JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}') }; } catch { return emptyDraft(); }
+const loadDraft = (userId: string): StayDraft => {
+  try { localStorage.removeItem(OLD_DRAFT_KEY); } catch { /* ignore */ }
+  try { return { ...emptyDraft(), ...JSON.parse(localStorage.getItem(draftKey(userId)) || '{}'), phone: '' }; } catch { return emptyDraft(); }
 };
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
@@ -38,6 +40,8 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
 function Wizard({ initial, editId }: { initial: StayDraft; editId?: string }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const key = draftKey(user?.id ?? '');
   const [d, setD] = useState<StayDraft>(initial);
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -48,8 +52,8 @@ function Wizard({ initial, editId }: { initial: StayDraft; editId?: string }) {
 
   useEffect(() => {
     if (editId || done) return;
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { /* storage unavailable: draft just isn't kept */ }
-  }, [d, editId, done]);
+    try { localStorage.setItem(key, JSON.stringify({ ...d, phone: '' })); } catch { /* storage unavailable: draft just isn't kept */ } // never keep the phone
+  }, [d, editId, done, key]);
 
   const problem = stepProblem(d, step);
   const setRoom = (sharing: Sharing, patch: { rent?: number; ac?: boolean } | null) =>
@@ -78,8 +82,9 @@ function Wizard({ initial, editId }: { initial: StayDraft; editId?: string }) {
     setBusy(true);
     try {
       if (editId) await StaysService.update(editId, draftToPayload(d)); else await StaysService.create(draftToPayload(d));
-      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+      try { localStorage.removeItem(key); } catch { /* ignore */ }
       void qc.invalidateQueries({ queryKey: ['stay'] });
+      void qc.invalidateQueries({ queryKey: ['stays'] });
       void qc.invalidateQueries({ queryKey: ['my-stays'] });
       setDone(true);
     } catch (err) {
@@ -228,7 +233,7 @@ export function StayNewPage() {
 
   if (isAuthLoading) return null;
   if (!user) return <Navigate to="/login" replace state={{ from: { pathname: location.pathname } }} />;
-  if (!id) return <Wizard initial={loadDraft()} />;
+  if (!id) return <Wizard initial={loadDraft(user.id)} />;
   if (q.isLoading) return <div className="mx-auto max-w-xl space-y-4 p-4"><Skeleton className="h-8 w-2/3" /><Skeleton className="h-40 w-full" /></div>;
   if (q.isError) return <EmptyState title="Could not load this place" body="It may have been removed." action={<Link to="/stays" className="font-semibold text-brand hover:underline">Browse stays</Link>} />;
   if (q.data!.listerId !== user.id) return <Navigate to={`/stays/${id}`} replace />;

@@ -22,7 +22,7 @@ import {
 
 export type AdminTab = 'overview' | 'resources' | 'news' | 'forum' | 'pg' | 'stays' | 'exchange' | 'playlists' | 'verification' | 'testimonials' | 'users' | 'carousel' | 'ads' | 'homepage-settings' | 'contributors' | 'blogs' | 'societies' | 'reports' | 'moderation-log';
 
-export const MODERATOR_TABS: AdminTab[] = ['societies', 'reports', 'moderation-log'];
+export const MODERATOR_TABS: AdminTab[] = ['societies', 'reports', 'stays', 'moderation-log'];
 
 interface SidebarProps {
   activeTab: AdminTab;
