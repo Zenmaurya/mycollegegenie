@@ -190,10 +190,14 @@ function Wizard({ initial, editId }: { initial: StayDraft; editId?: string }) {
 
     <div className="space-y-3">
       <div>
-        <label htmlFor="stay-phone" className="block text-[13px] font-semibold text-ink">Mobile number</label>
+        <label htmlFor="stay-phone" className="block text-[13px] font-semibold text-ink">Mobile number (optional)</label>
         <input id="stay-phone" type="tel" inputMode="numeric" maxLength={10} autoComplete="tel-national" value={d.phone} onChange={(e) => set({ phone: e.target.value.replace(/\D/g, '') })} className={inputCls} />
       </div>
-      <p className="text-[13px] text-ink-muted">Your number is shown only to logged-in students on your listing page, never in search results.</p>
+      <label className="flex min-h-11 items-center gap-2 text-[15px] text-ink">
+        <input type="checkbox" checked={d.phoneVisible} disabled={!d.phone} onChange={(e) => set({ phoneVisible: e.target.checked })} className="h-5 w-5 accent-brand" />
+        Show my number to logged-in students
+      </label>
+      <p className="text-[13px] text-ink-muted">Students can always message you in the app. If you add a number and tick the box, it shows only to logged-in students on your listing page, never in search results.</p>
     </div>,
 
     <div className="space-y-4">

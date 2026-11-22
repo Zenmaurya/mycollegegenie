@@ -8,11 +8,11 @@ import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/button';
 
 type Reason = (typeof REPORT_REASONS)[number] | (typeof RESOURCE_REPORT_REASONS)[number] | (typeof STAY_REPORT_REASONS)[number];
-interface Props { open: boolean; onClose: () => void; itemType: ReportItemType; itemId: string; title: string }
+interface Props { open: boolean; onClose: () => void; itemType: ReportItemType; itemId: string; title: string; initialNote?: string }
 
-export function ReportSheet({ open, onClose, itemType, itemId, title }: Props) {
+export function ReportSheet({ open, onClose, itemType, itemId, title, initialNote = '' }: Props) {
   const [reason, setReason] = useState<Reason | ''>('');
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(initialNote);
   const [busy, setBusy] = useState(false);
   const reasons: readonly Reason[] = itemType === 'resource' ? RESOURCE_REPORT_REASONS : itemType === 'stay' ? STAY_REPORT_REASONS : REPORT_REASONS;
   const needsNote = reason === 'Other';

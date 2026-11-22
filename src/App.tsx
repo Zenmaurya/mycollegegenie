@@ -61,6 +61,7 @@ const BlogPage = lazy(() => import('./pages/BlogPage').then(m => ({ default: m.B
 const DevUiPage = import.meta.env.DEV ? lazy(() => import('./pages/DevUiPage').then(m => ({ default: m.DevUiPage }))) : null;
 const ExplorePage = lazy(() => import('./pages/ExplorePage').then(m => ({ default: m.ExplorePage })));
 const InboxPage = lazy(() => import('./pages/InboxPage').then(m => ({ default: m.InboxPage })));
+const ConversationPage = lazy(() => import('./pages/inbox/ConversationPage').then(m => ({ default: m.ConversationPage })));
 const YouPage = lazy(() => import('./pages/YouPage').then(m => ({ default: m.YouPage })));
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const CompetitionsPage = lazy(() => import('./pages/CompetitionsPage').then(m => ({ default: m.CompetitionsPage })));
@@ -106,6 +107,15 @@ function StaffOnly({ children }: { children: React.ReactNode }) {
   if (isAuthLoading || (user && !appUser)) return <PageSpinner />;
   if (appUser?.role === 'admin' || appUser?.role === 'moderator') return <>{children}</>;
   return <Navigate to={user ? '/' : '/login'} replace />;
+}
+
+/** Logged-in users only: spinner while auth loads, login (remembering where to return) for guests. */
+function LoginOnly({ children }: { children: React.ReactNode }) {
+  const { user, isAuthLoading } = useAuth();
+  const location = useLocation();
+  if (isAuthLoading) return <PageSpinner />;
+  if (!user) return <Navigate to="/login" replace state={{ from: { pathname: location.pathname } }} />;
+  return <>{children}</>;
 }
 
 /** Old /profile bookmarks: own profile when a username is set, else settings. */
@@ -296,7 +306,8 @@ function AppContent() {
               <Route path="/c/:slug/manage" element={<ManageCommunityPage />} />
               <Route path="/c/:slug/events/new" element={<NewEventPage />} />
               <Route path="/c/:slug/:tab?" element={<CommunityPage />} />
-              <Route path="/inbox" element={<InboxPage />} />
+              <Route path="/inbox" element={<LoginOnly><InboxPage /></LoginOnly>} />
+              <Route path="/inbox/:id" element={<LoginOnly><ConversationPage /></LoginOnly>} />
               <Route path="/you" element={<YouPage />} />
 
               <Route path="/upload" element={<Navigate to="/notes/upload" replace />} />

@@ -15,6 +15,7 @@ import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Button } from '../../components/ui/button';
 import { Skeleton } from '../../components/ui/skeleton';
+import { MessageButton } from '../../components/inbox/MessageButton';
 import { UserLink } from '../../components/profile/UserLink';
 
 const SAFETY = ['cctv', 'warden', 'curfew'];
@@ -84,17 +85,19 @@ export function StayDetailPage() {
 
   const btn = 'inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-sm border border-ink bg-surface px-4 text-[15px] font-semibold text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand';
   const digits = stay.phone.replace(/\D/g, '').slice(-10);
-  // Phone is the only contact path until a chat UI exists. Never empty.
   const contact = isMine ? (
     <Link to={`/stays/${stay.id}/edit`} className={btn}><Pencil className="h-5 w-5" aria-hidden /> Edit listing</Link>
   ) : !user ? (
-    <Button className="flex-1" onClick={toLogin}>Log in to see contact</Button>
-  ) : stay.phone ? (
+    <Button className="flex-1" onClick={toLogin}>Log in to contact</Button>
+  ) : (
     <>
+      <MessageButton target={{ listingType: 'stay', listingId: stay.id }} className="flex-1" />
+      {stay.phone && <>
       <a href={`tel:${stay.phone}`} className={btn}><Phone className="h-5 w-5" aria-hidden /> Call</a>
       <a href={`https://wa.me/91${digits}`} target="_blank" rel="noopener noreferrer" className={btn}><MessageCircle className="h-5 w-5" aria-hidden /> WhatsApp</a>
+      </>}
     </>
-  ) : <p className="flex-1 text-[15px] text-ink-muted">Lister hasn't shared a phone number</p>;
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-4 pb-40 md:pb-4">

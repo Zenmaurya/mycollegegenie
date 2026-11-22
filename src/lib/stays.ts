@@ -24,7 +24,7 @@ export interface Stay {
   /** ISO timestamp; the admin approve call echoes it so a stay edited after review is not approved by mistake. */
   updatedAt: string;
   /** Detail only. phone is '' unless the API sent it (opted in + logged in). */
-  phone: string; insight: Insight | null; lister: { displayName: string; listerType: ListerType } | null;
+  phone: string; phoneVisible: boolean; insight: Insight | null; lister: { displayName: string; listerType: ListerType } | null;
 }
 
 export const cheapestRoom = (rooms: Room[]): Room | null => rooms.reduce<Room | null>((a, r) => (!a || r.rent < a.rent ? r : a), null);
@@ -58,6 +58,7 @@ export function mapStay(raw: any): Stay {
     isHidden: Boolean(raw.is_hidden),
     badge: raw.badge === 'great' || raw.badge === 'fair' || raw.badge === 'above' ? raw.badge : null,
     phone: raw.phone || '',
+    phoneVisible: raw.phone_visible == null ? true : !!raw.phone_visible,
     insight: raw.insight ? { count: Number(raw.insight.count) || 0, low: raw.insight.low ?? null, median: raw.insight.median ?? null, high: raw.insight.high ?? null } : null,
     lister: raw.lister ? { displayName: raw.lister.display_name || '', listerType: raw.lister.lister_type } : null,
   };
@@ -84,18 +85,18 @@ export const MAX_PHOTOS = 10;
 export interface StayDraft {
   listerType: ListerType | ''; type: StayType | ''; title: string; collegeId: string; collegeName: string; area: string; genderFor: Gender | '';
   rooms: Room[]; deposit: string; meals: boolean; availableFrom: string; amenities: string[];
-  curfew: string; guestsAllowed: boolean; nonVeg: boolean; photos: string[]; description: string; phone: string;
+  curfew: string; guestsAllowed: boolean; nonVeg: boolean; photos: string[]; description: string; phone: string; phoneVisible: boolean;
 }
 
 export const emptyDraft = (): StayDraft => ({
   listerType: '', type: '', title: '', collegeId: '', collegeName: '', area: '', genderFor: '', rooms: [], deposit: '', meals: false, availableFrom: '',
-  amenities: [], curfew: '', guestsAllowed: true, nonVeg: true, photos: [], description: '', phone: '',
+  amenities: [], curfew: '', guestsAllowed: true, nonVeg: true, photos: [], description: '', phone: '', phoneVisible: true,
 });
 
 const isRent = (n: number) => Number.isInteger(n) && n >= 1000 && n <= 60000;
 const PHOTO_URL = /^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//;
 
-/** One check per wizard step (Preview has none). Mirrors backend validateStay (utils/stays.js), plus the phone-only contact ruling. */
+/** One check per wizard step (Preview has none). Mirrors backend validateStay (utils/stays.js). The phone is optional (chat is the main contact path). */
 const STEP_CHECKS: ((d: StayDraft) => string | null)[] = [
   (d) => (['owner', 'student', 'broker'].includes(d.listerType) ? null : 'Pick who you are'),
   (d) => (!['pg', 'room', 'flat'].includes(d.type) ? 'Pick the type of place'
@@ -110,7 +111,7 @@ const STEP_CHECKS: ((d: StayDraft) => string | null)[] = [
   },
   (d) => (d.description.trim().length > 2000 ? 'Description too long (max 2000)' : null),
   (d) => (d.photos.length < 3 || d.photos.length > MAX_PHOTOS ? 'Add 3-10 photos' : d.photos.every((p) => PHOTO_URL.test(p)) ? null : 'Invalid photo URL'),
-  (d) => (/^[6-9]\d{9}$/.test(d.phone) ? null : 'Enter a valid 10-digit mobile number'),
+  (d) => (!d.phone || /^[6-9]\d{9}$/.test(d.phone) ? null : 'Enter a valid 10-digit mobile number'),
 ];
 
 export const WIZARD_STEPS = ['Who are you', 'Place', 'Rooms & rent', 'Amenities & rules', 'Photos', 'Contact', 'Preview & publish'] as const;
@@ -120,14 +121,14 @@ export function stayProblem(d: StayDraft): string | null {
   return null;
 }
 
-/** Snake_case body for POST/PATCH /api/stays. Phone is required and always shown to logged-in students (no chat UI yet). */
+/** Snake_case body for POST/PATCH /api/stays. Phone is optional; phone_visible only counts when a phone is given. */
 export function draftToPayload(d: StayDraft) {
   return {
     type: d.type, lister_type: d.listerType, title: d.title.trim(), area: d.area.trim(), gender_for: d.genderFor,
     college_id: d.collegeId || null, rooms: d.rooms.map((r) => ({ sharing: r.sharing, rent: r.rent, ac: r.ac })),
     deposit: d.deposit.trim() ? Number(d.deposit) : null, meals: d.meals, amenities: d.amenities,
     rules: { ...(d.curfew ? { curfew: d.curfew } : {}), guests_allowed: d.guestsAllowed, non_veg: d.nonVeg },
-    photos: d.photos, description: d.description.trim() || null, phone: d.phone, phone_visible: true, available_from: d.availableFrom || null,
+    photos: d.photos, description: d.description.trim() || null, phone: d.phone || null, phone_visible: !!d.phone && d.phoneVisible, available_from: d.availableFrom || null,
   };
 }
 
@@ -135,5 +136,5 @@ export const stayToDraft = (s: Stay): StayDraft => ({
   listerType: s.listerType, type: s.type, title: s.title, collegeId: s.collegeId ?? '', collegeName: s.collegeName, area: s.area, genderFor: s.genderFor,
   rooms: s.rooms, deposit: s.deposit == null ? '' : String(s.deposit), meals: s.meals, availableFrom: s.availableFrom, amenities: s.amenities,
   curfew: typeof s.rules.curfew === 'string' ? s.rules.curfew : '', guestsAllowed: s.rules.guests_allowed !== false, nonVeg: s.rules.non_veg !== false,
-  photos: s.photos, description: s.description, phone: s.phone,
+  photos: s.photos, description: s.description, phone: s.phone, phoneVisible: s.phoneVisible,
 });

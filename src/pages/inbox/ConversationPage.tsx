@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { UNREAD_KEY } from '../../hooks/useInboxBadge';
-import { composerReason, groupByDay, MAX_MESSAGE, mergeMessages, type ChatMessage } from '../../lib/inbox';
+import { composerState, groupByDay, MAX_MESSAGE, mergeMessages, type ChatMessage } from '../../lib/inbox';
 import { InboxService, type Conversation } from '../../services/inboxService';
 import { ReportSheet } from '../../components/communities/ReportSheet';
 import { Avatar } from '../../components/ui/Avatar';
@@ -83,16 +83,11 @@ function Conversation_({ id }: { id: string }) {
   const end = useRef<HTMLDivElement>(null);
 
   const msgs = useQuery({ queryKey: ['inbox', 'messages', id], queryFn: () => InboxService.messages(id), refetchInterval: 5000, refetchIntervalInBackground: false, retry: false, staleTime: 0 });
-  // the messages response has no person/listing, so read them from the lists (looked up fresh each open)
-  const meta = useQuery({
-    queryKey: ['inbox', 'meta', id], staleTime: 0,
-    queryFn: async () => (await Promise.all([InboxService.conversations('chats'), InboxService.conversations('requests')])).flat().find((c) => c.id === id) ?? null,
-  });
-  const c = meta.data;
   const page = msgs.data;
+  const c = page?.conversation;
   const all = useMemo(() => mergeMessages(older, page?.messages ?? []), [older, page]);
   const days = useMemo(() => groupByDay(all), [all]);
-  const { role, reason } = composerReason(page?.requestStatus ?? 'accepted', all);
+  const { role, reason } = composerState(page?.requestStatus ?? 'accepted', page?.youStarted ?? true, page?.canSend ?? { ok: true });
   const lastId = all[all.length - 1]?.id;
 
   useEffect(() => { end.current?.scrollIntoView?.({ block: 'end' }); }, [lastId]);
@@ -131,7 +126,6 @@ function Conversation_({ id }: { id: string }) {
     },
     onSuccess: (kind) => {
       refresh();
-      void meta.refetch();
       if (kind === 'decline' || kind === 'block') { toast.success(kind === 'block' ? 'Blocked. You can unblock in Settings.' : 'Request declined.'); navigate('/inbox'); }
       else if (kind === 'share') toast.success('Contact sharing unlocked.');
     },
@@ -193,7 +187,7 @@ function Conversation_({ id }: { id: string }) {
           </div>
         </Dock>
       ) : <Composer onSend={onSend} sending={send.isPending} reason={reason} desktop={desktop} />}
-      {reporting && other?.id && <ReportSheet open onClose={() => setReporting(false)} itemType="user" itemId={other.id} title="Report user" />}
+      {reporting && other?.id && <ReportSheet open onClose={() => setReporting(false)} itemType="user" itemId={other.id} title="Report user" initialNote={`Conversation ${id}`} />}
     </div>
   );
 }

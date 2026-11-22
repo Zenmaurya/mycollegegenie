@@ -17,6 +17,7 @@ export interface ExchangeItem {
   contact_phone?: string;
   contact_instagram?: string;
   seller_name?: string;
+  is_mine?: boolean | number;
   seller_avatar?: string;
 }
 

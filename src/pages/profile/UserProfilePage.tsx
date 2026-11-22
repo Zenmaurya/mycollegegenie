@@ -15,6 +15,7 @@ import { VerifiedBadge } from '../../components/VerifiedBadge';
 import { PostCard } from '../../components/feed/PostCard';
 import { NoteCard } from '../../components/notes/NoteCard';
 import { StayCard } from '../../components/stays/StayCard';
+import { MessageButton } from '../../components/inbox/MessageButton';
 import { ReportSheet } from '../../components/communities/ReportSheet';
 import { Avatar } from '../../components/ui/Avatar';
 import { Badge } from '../../components/ui/Badge';
@@ -121,6 +122,7 @@ function Header({ profile, stats, isOwner }: { profile: Profile; stats: ProfileS
           <Menu label="Profile actions" items={[{ label: 'Copy link', onSelect: () => void copy() }, ...(isOwner ? [] : [{ label: 'Report user', onSelect: report, danger: true }])]} />
         </div>
       </div>
+      {!isOwner && <MessageButton target={{ userId: profile.id }} className="w-full sm:w-auto" />}
       {profile.bio && <p className="whitespace-pre-line text-[15px] text-ink">{profile.bio}</p>}
       {profile.interests.length > 0 && <p className="text-[13px] text-ink-muted">{profile.interests.join(' · ')}</p>}
       <dl className="grid grid-cols-4 gap-2 rounded-card bg-surface p-3 text-center shadow-card">

@@ -57,16 +57,10 @@ export function notificationHref(n: Pick<InboxNotification, 'type' | 'itemType' 
   }
 }
 
-/**
- * Why the composer is off, or null when the user can type. The messages response has no "side",
- * so a pending chat is read from who sent the messages: I did -> I am the requester.
- */
-export function composerReason(requestStatus: string, messages: ChatMessage[]): { role: 'sender' | 'receiver' | null; reason: string | null } {
-  if (requestStatus !== 'pending') return { role: null, reason: null };
-  const real = messages.filter((m) => !m.is_system);
-  const mine = real.some((m) => m.mine);
-  if (!mine && real.length > 0) return { role: 'receiver', reason: 'Accept the request to reply' };
-  return { role: 'sender', reason: mine ? WAIT_REASON : null };
+/** Composer state from the server's verdict: the receiver of a pending request sees Accept/Decline, otherwise canSend decides. */
+export function composerState(requestStatus: string, youStarted: boolean, canSend: { ok: boolean; error?: string }): { role: 'receiver' | null; reason: string | null } {
+  if (requestStatus === 'pending' && !youStarted) return { role: 'receiver', reason: null };
+  return { role: null, reason: canSend.ok ? null : canSend.error ?? WAIT_REASON };
 }
 
 /** Merge an older page in front of the latest page, newest copy wins, no duplicates. */

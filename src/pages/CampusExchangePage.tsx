@@ -15,6 +15,7 @@ import { ImageSlider, ImageThumbnailStrip } from '../components/ImageSlider';
 import { uploadFile } from '../services/resourceService';
 import { toast } from 'sonner';
 import { Skeleton } from '../components/ui/skeleton';
+import { MessageButton } from '../components/inbox/MessageButton';
 
 import { fetchExchangeItems, createExchangeItem } from '../services/exchangeService';
 
@@ -71,7 +72,8 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
           phone: d.contact_phone || '',
           instagram: d.contact_instagram || '',
           seller_name: d.seller_name,
-          seller_avatar: d.seller_avatar
+          seller_avatar: d.seller_avatar,
+          is_mine: !!d.is_mine
         }));
         setItems(mapped);
       } catch (err) {
@@ -928,6 +930,7 @@ export function CampusExchangePage({ user: propUser }: { user?: any }) {
               <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:p-6 border-t border-gray-100 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.05)] z-20">
                 {currentUser ? (
                   <div className="flex flex-col sm:flex-row gap-3">
+                    {!selectedItem.is_mine && <MessageButton target={{ listingType: 'exchange', listingId: selectedItem.id }} className="flex-1 py-3.5" />}
                     {selectedItem.phone && (
                       <a href={`tel:${selectedItem.phone.replace(/\s/g, '')}`} className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-colors shadow-lg shadow-emerald-500/20">
                         <MessageCircle className="w-4 h-4" />

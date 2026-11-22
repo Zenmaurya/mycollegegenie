@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { formatTimeShort, groupByDay, notificationHref, composerReason, mergeMessages, WAIT_REASON, type ChatMessage } from './inbox';
+import { formatTimeShort, groupByDay, notificationHref, composerState, mergeMessages, WAIT_REASON, type ChatMessage } from './inbox';
 
 const NOW = new Date(2026, 10, 22, 15, 30); // 22 Nov 2026, local time
 const at = (y: number, mo: number, d: number, h = 12, mi = 0) => new Date(y, mo, d, h, mi).toISOString();
@@ -36,13 +36,12 @@ test('notificationHref maps item types, falls back to /inbox', () => {
   assert.strictEqual(h('x', 'weird', 'z'), '/inbox');
 });
 
-test('composerReason: pending sender may send once, receiver must accept, others free', () => {
-  assert.deepStrictEqual(composerReason('accepted', []), { role: null, reason: null });
-  assert.deepStrictEqual(composerReason('pending', []), { role: 'sender', reason: null });
-  assert.deepStrictEqual(composerReason('pending', [msg('1', true, at(2026, 10, 22))]), { role: 'sender', reason: WAIT_REASON });
-  // a filter notice does not count as the one message
-  assert.strictEqual(composerReason('pending', [msg('1', false, at(2026, 10, 22), 1)]).reason, null);
-  assert.strictEqual(composerReason('pending', [msg('1', false, at(2026, 10, 22))]).role, 'receiver');
+test('composerState: receiver of a pending request accepts, everyone else follows canSend', () => {
+  assert.deepStrictEqual(composerState('accepted', true, { ok: true }), { role: null, reason: null });
+  assert.deepStrictEqual(composerState('pending', true, { ok: true }), { role: null, reason: null });
+  assert.deepStrictEqual(composerState('pending', true, { ok: false, error: WAIT_REASON }), { role: null, reason: WAIT_REASON });
+  assert.deepStrictEqual(composerState('pending', false, { ok: false, error: 'Accept the request to reply' }), { role: 'receiver', reason: null });
+  assert.strictEqual(composerState('accepted', false, { ok: false, error: "You can't message this person" }).reason, "You can't message this person");
 });
 
 test('mergeMessages prefers the latest copy and drops duplicates', () => {

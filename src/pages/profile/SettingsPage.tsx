@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   User, Mail, GraduationCap, BookOpen, Save, Loader2, LogOut, 
   ShieldCheck, Check, Package, HelpCircle, 
-  ChevronRight, ExternalLink, Folder
+  ChevronRight, ExternalLink, Folder, Ban
 } from 'lucide-react';
 import { supabase, logout } from '../../supabase';
 import { getUserProfile, updateUserProfile } from '../../services/userService';
@@ -19,6 +19,7 @@ import { User as AppUser } from '../../types';
 import { AVATARS, resolveAvatar, avatarToDbValue, getInitials, type Avatar } from '../../constants/avatars';
 import { ExchangeTab } from '../../components/profile/ExchangeTab';
 import { MyUploadsTab } from '../../components/profile/MyUploadsTab';
+import { BlockedTab } from '../../components/profile/BlockedTab';
 import { VerifiedBadge } from '../../components/VerifiedBadge';
 
 // Avatar category tabs for the picker
@@ -33,6 +34,7 @@ const MENU_ITEMS = [
   { id: 'profile', label: 'Profile Settings', icon: User },
   { id: 'exchange', label: 'Campus Exchange', icon: Package },
   { id: 'uploads', label: 'My Uploads', icon: Folder },
+  { id: 'blocked', label: 'Blocked people', icon: Ban },
   { id: 'help', label: 'Help & Support', icon: HelpCircle },
 ];
 
@@ -401,6 +403,8 @@ export const SettingsPage: React.FC = () => {
               {activeTab === 'uploads' && (
                 <MyUploadsTab />
               )}
+
+              {activeTab === 'blocked' && <BlockedTab />}
 
               {/* HELP & SUPPORT TAB */}
               {activeTab === 'help' && (

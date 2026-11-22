@@ -76,11 +76,17 @@ test('stayProblem accepts a complete draft and mirrors validateStay otherwise', 
   assert.ok(stayProblem({ ...good(), photos: [PHOTO, PHOTO, 'https://res.cloudinary.com/demo/image/fetch/https://evil.com/a.jpg'] }));
 });
 
-test('stayProblem requires an Indian mobile number (phone-only contact)', () => {
-  assert.ok(stayProblem({ ...good(), phone: '' }));
+test('stayProblem: phone is optional but must be a valid Indian mobile when given', () => {
+  assert.strictEqual(stayProblem({ ...good(), phone: '' }), null);
   assert.ok(stayProblem({ ...good(), phone: '1234567890' }));
   assert.ok(stayProblem({ ...good(), phone: '98765' }));
-  assert.strictEqual(stepProblem({ ...good(), phone: '' }, 5), 'Enter a valid 10-digit mobile number');
+  assert.strictEqual(stepProblem({ ...good(), phone: '98765' }, 5), 'Enter a valid 10-digit mobile number');
+});
+
+test('draftToPayload: phone_visible follows the checkbox and is false without a phone', () => {
+  assert.strictEqual(draftToPayload({ ...good(), phoneVisible: false }).phone_visible, false);
+  const none = draftToPayload({ ...good(), phone: '', phoneVisible: true });
+  assert.deepStrictEqual([none.phone, none.phone_visible], [null, false]);
 });
 
 test('draftToPayload is snake_case with phone visible', () => {
