@@ -1,3 +1,6 @@
+# .mjs must be served as JavaScript or the pdf.js worker (preview, flipbook) is blocked by nosniff
+AddType text/javascript .mjs
+
 # SPA Rewrite Rules for React Router
 <IfModule mod_rewrite.c>
   RewriteEngine On
