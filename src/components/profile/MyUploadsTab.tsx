@@ -6,6 +6,7 @@ import { fetchUserResources } from '../../services/resourceService';
 import type { Resource } from '../../types';
 import { toast } from 'sonner';
 import { uploadStatus } from '../../lib/notes';
+import { MyListings } from '../stays/MyListings';
 
 export const MyUploadsTab: React.FC = () => {
   const [resources, setResources] = useState<Resource[]>([]);
@@ -121,6 +122,8 @@ export const MyUploadsTab: React.FC = () => {
           </div>
         )}
       </div>
+
+      <MyListings />
     </motion.div>
   );
 };

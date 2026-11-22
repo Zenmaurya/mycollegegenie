@@ -23,7 +23,7 @@ const NAV_LINKS = [
   { to: '/', icon: Home, label: 'Home' },
   { to: '/notes', icon: LibraryBig, label: 'Browse' },
   { to: '/playlists', icon: Youtube, label: 'Playlists' },
-  { to: '/find-pg', icon: BedDouble, label: 'Find PG' },
+  { to: '/stays', icon: BedDouble, label: 'Find PG' },
   { to: '/campus-exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
 ] as const;
 
@@ -616,7 +616,7 @@ export function NavBar() {
               <motion.div
                 whileTap={{ scale: 0.85 }}
                 className={`relative flex items-center justify-center w-11 h-8 rounded-2xl transition-all duration-300 ${
-                  isMobileMenuOpen || location.pathname === '/playlists' || location.pathname === '/find-pg' || location.pathname === '/news' || location.pathname === '/events'
+                  isMobileMenuOpen || location.pathname === '/playlists' || location.pathname.startsWith('/stays') || location.pathname === '/news' || location.pathname === '/events'
                     ? 'bg-gradient-to-br from-purple-100 to-indigo-50 shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_2px_6px_rgba(147,51,234,0.12)] border border-purple-200/50'
                     : 'group-active:bg-gray-50'
                 }`}
@@ -624,7 +624,7 @@ export function NavBar() {
                 <Menu
                   strokeWidth={2}
                   className={`w-[20px] h-[20px] transition-all duration-300 ${
-                    isMobileMenuOpen || location.pathname === '/playlists' || location.pathname === '/find-pg' || location.pathname === '/news' || location.pathname === '/events'
+                    isMobileMenuOpen || location.pathname === '/playlists' || location.pathname.startsWith('/stays') || location.pathname === '/news' || location.pathname === '/events'
                       ? 'text-purple-700 drop-shadow-[0_2px_4px_rgba(147,51,234,0.2)] scale-105'
                       : 'text-slate-500 group-hover:text-slate-700'
                   }`}
@@ -632,7 +632,7 @@ export function NavBar() {
               </motion.div>
               <span
                 className={`text-[11px] font-semibold tracking-tight transition-all duration-300 truncate w-full text-center ${
-                  isMobileMenuOpen || location.pathname === '/playlists' || location.pathname === '/find-pg' || location.pathname === '/news' || location.pathname === '/events'
+                  isMobileMenuOpen || location.pathname === '/playlists' || location.pathname.startsWith('/stays') || location.pathname === '/news' || location.pathname === '/events'
                     ? 'text-purple-700 drop-shadow-sm'
                     : 'text-slate-500 group-hover:text-slate-700'
                 }`}

@@ -125,7 +125,7 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
           <div className="col-span-1 md:col-span-3 lg:col-span-3">
             <h4 className="text-white font-bold mb-4 lg:mb-6 text-sm">Campus Life</h4>
             <ul className="space-y-4 font-medium text-[13px]">
-              <li><Link to="/find-pg" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Find PG</Link></li>
+              <li><Link to="/stays" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Find PG</Link></li>
               <li>
                 <Link to="/campus-exchange" className="hover:text-purple-400 transition-colors flex items-center gap-2">
                   <ChevronRight className="w-3 h-3 text-purple-500" />

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { mapStay, badgeLabel, formatRent, insightLine, STAY_REPORT_REASONS } from './stays';
+import { mapStay, badgeLabel, formatRent, insightLine, STAY_REPORT_REASONS, stayProblem, stepProblem, emptyDraft, draftToPayload, stayStatus, type StayDraft } from './stays';
 
 test('badgeLabel maps API badges, null otherwise', () => {
   assert.strictEqual(badgeLabel('great'), 'Great deal');
@@ -51,4 +51,47 @@ test('mapStay detail fields and defensive defaults', () => {
   assert.strictEqual(s.minRent, 4000); // falls back to the cheapest room
   assert.strictEqual(s.badge, null);
   assert.deepStrictEqual(mapStay({ id: 'c' }).photos, []);
+});
+
+const PHOTO = 'https://res.cloudinary.com/demo/image/upload/v1/a.jpg';
+const good = (): StayDraft => ({
+  ...emptyDraft(), listerType: 'owner', type: 'pg', title: 'Sunny PG near campus', area: 'Kamla Nagar', genderFor: 'girls',
+  rooms: [{ sharing: 'double', rent: 8500, ac: false }], photos: [PHOTO, PHOTO, PHOTO], phone: '9876543210',
+});
+
+test('stayProblem accepts a complete draft and mirrors validateStay otherwise', () => {
+  assert.strictEqual(stayProblem(good()), null);
+  assert.ok(stayProblem({ ...good(), listerType: '' }));
+  assert.ok(stayProblem({ ...good(), title: 'abcd' }));
+  assert.ok(stayProblem({ ...good(), area: 'k' }));
+  assert.ok(stayProblem({ ...good(), genderFor: '' }));
+  assert.ok(stayProblem({ ...good(), rooms: [] }));
+  assert.ok(stayProblem({ ...good(), rooms: Array(5).fill({ sharing: 'single', rent: 5000, ac: false }) }));
+  assert.ok(stayProblem({ ...good(), rooms: [{ sharing: 'single', rent: 999, ac: false }] }));
+  assert.ok(stayProblem({ ...good(), rooms: [{ sharing: 'single', rent: 60001, ac: false }] }));
+  assert.ok(stayProblem({ ...good(), description: 'x'.repeat(2001) }));
+  assert.ok(stayProblem({ ...good(), photos: [PHOTO, PHOTO] }));
+  assert.ok(stayProblem({ ...good(), photos: Array(11).fill(PHOTO) }));
+  assert.ok(stayProblem({ ...good(), photos: [PHOTO, PHOTO, 'http://res.cloudinary.com/demo/image/upload/a.jpg'] }));
+  assert.ok(stayProblem({ ...good(), photos: [PHOTO, PHOTO, 'https://res.cloudinary.com/demo/image/fetch/https://evil.com/a.jpg'] }));
+});
+
+test('stayProblem requires an Indian mobile number (phone-only contact)', () => {
+  assert.ok(stayProblem({ ...good(), phone: '' }));
+  assert.ok(stayProblem({ ...good(), phone: '1234567890' }));
+  assert.ok(stayProblem({ ...good(), phone: '98765' }));
+  assert.strictEqual(stepProblem({ ...good(), phone: '' }, 5), 'Enter a valid 10-digit mobile number');
+});
+
+test('draftToPayload is snake_case with phone visible', () => {
+  const p = draftToPayload({ ...good(), title: '  Sunny PG near campus ', deposit: '10000', collegeId: 'c1', curfew: '10:30 PM' });
+  assert.deepStrictEqual([p.lister_type, p.gender_for, p.college_id, p.deposit, p.phone_visible, p.title], ['owner', 'girls', 'c1', 10000, true, 'Sunny PG near campus']);
+  assert.deepStrictEqual(p.rules, { curfew: '10:30 PM', guests_allowed: true, non_veg: true });
+  assert.strictEqual(draftToPayload(good()).college_id, null);
+});
+
+test('stayStatus: hidden wins, then approved', () => {
+  assert.strictEqual(stayStatus({ isApproved: true, isHidden: true }), 'Hidden');
+  assert.strictEqual(stayStatus({ isApproved: true, isHidden: false }), 'Live');
+  assert.strictEqual(stayStatus({ isApproved: false, isHidden: false }), 'In review');
 });

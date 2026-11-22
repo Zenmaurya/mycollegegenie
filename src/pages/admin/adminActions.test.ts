@@ -56,3 +56,10 @@ test('adminActionsFor: resource rows get no warn/ban', () => {
   assert.deepEqual(adminActionsFor('moderator', 'resource', true), ['dismiss', 'unhide']);
   assert.deepEqual(adminActionsFor('user', 'resource', false), []);
 });
+test('adminActionsFor: stay rows mirror resource rows', () => {
+  assert.deepEqual(adminActionsFor('admin', 'stay', false, true), ['dismiss', 'hide', 'delete']);
+  assert.deepEqual(adminActionsFor('admin', 'stay', true), ['dismiss', 'unhide', 'delete']);
+  assert.deepEqual(adminActionsFor('moderator', 'stay', false), ['dismiss', 'hide']);
+  assert.deepEqual(adminActionsFor('moderator', 'stay', true), ['dismiss', 'unhide']);
+  assert.deepEqual(adminActionsFor('user', 'stay', false), []);
+});

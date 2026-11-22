@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 
-export type AdminTab = 'overview' | 'resources' | 'news' | 'forum' | 'pg' | 'exchange' | 'playlists' | 'verification' | 'testimonials' | 'users' | 'carousel' | 'ads' | 'homepage-settings' | 'contributors' | 'blogs' | 'societies' | 'reports' | 'moderation-log';
+export type AdminTab = 'overview' | 'resources' | 'news' | 'forum' | 'pg' | 'stays' | 'exchange' | 'playlists' | 'verification' | 'testimonials' | 'users' | 'carousel' | 'ads' | 'homepage-settings' | 'contributors' | 'blogs' | 'societies' | 'reports' | 'moderation-log';
 
 export const MODERATOR_TABS: AdminTab[] = ['societies', 'reports', 'moderation-log'];
 
@@ -47,6 +47,7 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, 
       title: 'Academic Hub',
       items: [
         { id: 'resources', label: 'Resources', icon: FileText, badge: pendingCounts?.resources },
+        { id: 'stays', label: 'Stays', icon: Home },
         { id: 'playlists', label: 'Playlists', icon: Youtube }
       ]
     },

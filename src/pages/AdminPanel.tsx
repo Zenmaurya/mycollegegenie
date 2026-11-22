@@ -64,6 +64,7 @@ import { AdminModerationLog } from './admin/AdminModerationLog';
 import { AdminContributors } from './admin/AdminContributors';
 import { AdminSocieties } from './admin/AdminSocieties';
 import { AdminReports } from './admin/AdminReports';
+import { AdminStays } from './admin/AdminStays';
 import { AdminBlogs } from './admin/AdminBlogs';
 import { CollegeMMY_EVENTS } from '../components/UpcomingEventsCarousel';
 import { openSafeExternalUrl } from '../lib/security';
@@ -3078,6 +3079,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           <AdminSocieties />
         ) : activeTab === 'reports' ? (
           <AdminReports />
+        ) : activeTab === 'stays' ? (
+          <AdminStays />
         ) : activeTab === 'moderation-log' ? (
           <AdminModerationLog />
         ) : null}

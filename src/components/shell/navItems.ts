@@ -7,7 +7,7 @@ export const MODULES: NavItem[] = [
   { to: '/explore', label: 'Explore', icon: Compass },
   { to: '/notes', label: 'Notes & PYQs', icon: LibraryBig },
   { to: '/playlists', label: 'Playlists', icon: Youtube },
-  { to: '/find-pg', label: 'Find PG', icon: BedDouble },
+  { to: '/stays', label: 'Find PG', icon: BedDouble },
   { to: '/campus-exchange', label: 'Exchange', icon: ShoppingBag },
   { to: '/c', label: 'Societies', icon: Users },
   { to: '/events', label: 'Events', icon: Calendar },
@@ -17,7 +17,7 @@ export const MODULES: NavItem[] = [
 export const EXPLORE_TILES: NavItem[] = [
   { to: '/notes', label: 'Notes & PYQs', icon: LibraryBig },
   { to: '/playlists', label: 'Playlists', icon: Youtube },
-  { to: '/find-pg', label: 'Find PG', icon: BedDouble },
+  { to: '/stays', label: 'Find PG', icon: BedDouble },
   { to: '/campus-exchange', label: 'Exchange', icon: ShoppingBag },
   { to: '/c', label: 'Societies', icon: Users },
   { to: '/events', label: 'Events', icon: Calendar },

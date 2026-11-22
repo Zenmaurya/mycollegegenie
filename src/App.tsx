@@ -43,7 +43,9 @@ const AdminPanel = lazy(() => import('./pages/AdminPanel').then(m => ({ default:
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import('./pages/TermsPage').then(m => ({ default: m.TermsPage })));
 const ContactPage = lazy(() => import('./pages/ContactPage').then(m => ({ default: m.ContactPage })));
-const FindPGPage = lazy(() => import('./pages/FindPGPage').then(m => ({ default: m.FindPGPage })));
+const StaysBrowsePage = lazy(() => import('./pages/stays/StaysBrowsePage').then(m => ({ default: m.StaysBrowsePage })));
+const StayDetailPage = lazy(() => import('./pages/stays/StayDetailPage').then(m => ({ default: m.StayDetailPage })));
+const StayNewPage = lazy(() => import('./pages/stays/StayNewPage').then(m => ({ default: m.StayNewPage })));
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
 const FlipbookPage = lazy(() => import('./pages/FlipbookPage').then(m => ({ default: m.FlipbookPage })));
@@ -300,7 +302,11 @@ function AppContent() {
               <Route path="/post/:id" element={<PostPage />} />
               <Route path="/forum" element={<Navigate to={'/' + location.search} replace />} />
               <Route path="/forum/:postId" element={<ForumPostRedirect />} />
-              <Route path="/find-pg" element={<FindPGPage user={user} />} />
+              <Route path="/find-pg" element={<Navigate to="/stays" replace />} />
+              <Route path="/stays" element={<StaysBrowsePage />} />
+              <Route path="/stays/new" element={<StayNewPage />} />
+              <Route path="/stays/:id" element={<StayDetailPage />} />
+              <Route path="/stays/:id/edit" element={<StayNewPage />} />
               <Route path="/campus-exchange" element={<CampusExchangePage user={user} />} />
 
               <Route path="/admin" element={
