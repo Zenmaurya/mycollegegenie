@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
-import { Flag, MessageCircle, Phone, Share2 } from 'lucide-react';
+import { Flag, MessageCircle, Pencil, Phone, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { badgeLabel, cheapestRoom, formatRent, GENDER_LABEL, LISTER_LABEL, SHARING_LABEL, TYPE_LABEL, type Stay } from '../../lib/stays';
@@ -48,7 +48,6 @@ export function StayDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sheet, setSheet] = useState<'report' | 'rent' | null>(null);
-  const [messaging, setMessaging] = useState(false);
 
   // Logged-in state decides whether phone comes back, so it is part of the key.
   const q = useQuery({ queryKey: ['stay', id, user?.id ?? 'anon'], queryFn: () => StaysService.get(id), retry: false });
@@ -73,16 +72,6 @@ export function StayDetailPage() {
   const safety = stay.amenities.filter((a) => SAFETY.some((s) => a.toLowerCase().includes(s)));
   const rules = Object.entries(stay.rules).filter(([, v]) => v !== '' && v != null);
 
-  const message = async () => {
-    setMessaging(true);
-    try {
-      const sessionId = await StaysService.startChat({ id: stay.id, listerId: stay.listerId });
-      navigate('/inbox', { state: { tab: 'chats', sessionId } });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not start the chat. Try again.');
-    } finally { setMessaging(false); }
-  };
-
   const share = async () => {
     const url = `${window.location.origin}/stays/${stay.id}`;
     if (navigator.share) {
@@ -92,12 +81,19 @@ export function StayDetailPage() {
     try { await navigator.clipboard.writeText(url); toast.success('Link copied!'); } catch { /* clipboard blocked */ }
   };
 
-  const msgBtn = !isMine && <Button className="flex-1" onClick={needLogin(() => void message())} loading={messaging}><MessageCircle className="h-5 w-5" aria-hidden /> Message</Button>;
-  const callBtn = !!stay.phone && (
-    <a href={`tel:${stay.phone}`} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-sm border border-ink bg-surface px-4 text-[15px] font-semibold text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand">
-      <Phone className="h-5 w-5" aria-hidden /> Call
-    </a>
-  );
+  const btn = 'inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-sm border border-ink bg-surface px-4 text-[15px] font-semibold text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand';
+  const digits = stay.phone.replace(/\D/g, '').slice(-10);
+  // Phone is the only contact path until a chat UI exists. Never empty.
+  const contact = isMine ? (
+    <Link to={`/stays/${stay.id}/edit`} className={btn}><Pencil className="h-5 w-5" aria-hidden /> Edit listing</Link>
+  ) : !user ? (
+    <Button className="flex-1" onClick={toLogin}>Log in to see contact</Button>
+  ) : stay.phone ? (
+    <>
+      <a href={`tel:${stay.phone}`} className={btn}><Phone className="h-5 w-5" aria-hidden /> Call</a>
+      <a href={`https://wa.me/91${digits}`} target="_blank" rel="noopener noreferrer" className={btn}><MessageCircle className="h-5 w-5" aria-hidden /> WhatsApp</a>
+    </>
+  ) : <p className="flex-1 text-[15px] text-ink-muted">Lister hasn't shared a phone number</p>;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-4 pb-40 md:pb-4">
@@ -164,8 +160,7 @@ export function StayDetailPage() {
             <p className="text-[22px] font-bold text-ink">{room ? formatRent(room.rent) : 'Ask for rent'} <span className="text-[13px] font-normal text-ink-muted">/ month</span></p>
             {room && <p className="text-[13px] text-ink-muted">{SHARING_LABEL[room.sharing]} sharing, cheapest option</p>}
             {label && <Badge tone={stay.badge === 'above' ? 'neutral' : 'success'}>{label}</Badge>}
-            <div className="hidden gap-2 md:flex">{msgBtn}{callBtn}</div>
-            {isMine && <p className="text-[13px] text-ink-muted">This is your listing.</p>}
+            <div className="hidden gap-2 md:flex">{contact}</div>
             <div className="flex flex-wrap gap-2 border-t border-line pt-3">
               <Button variant="ghost" onClick={() => void share()}><Share2 className="h-5 w-5" aria-hidden /> Share</Button>
               <Button variant="ghost" onClick={needLogin(() => setSheet('report'))}><Flag className="h-5 w-5" aria-hidden /> Report</Button>
@@ -186,8 +181,7 @@ export function StayDetailPage() {
 
       {createPortal(
         <div className="fixed inset-x-0 bottom-16 z-50 flex gap-2 border-t border-line bg-surface p-3 md:hidden">
-          {msgBtn}{callBtn}
-          {isMine && <p className="flex-1 text-[15px] text-ink-muted">This is your listing.</p>}
+          {contact}
         </div>, document.body)}
 
       {sheet === 'report' && <Fragment key={stay.id}><ReportSheet open onClose={() => setSheet(null)} itemType="stay" itemId={stay.id} title="Report this place" /></Fragment>}

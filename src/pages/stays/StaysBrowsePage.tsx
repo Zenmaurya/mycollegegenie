@@ -43,9 +43,14 @@ export function StaysBrowsePage() {
 
   const get = (k: string) => params.get(k) ?? '';
   const college = get('college'), collegeName = get('cn'), area = get('area');
-  const type = get('type'), gender = get('gender'), sharing = get('sharing'), maxRent = get('maxRent');
-  const meals = get('meals'), ac = get('ac'), lister = get('lister');
-  const place = collegeName || area;
+  // URL values are untrusted: unknown enums and out-of-range budgets are ignored.
+  const oneOf = (k: string, allowed: string[]) => (allowed.includes(get(k)) ? get(k) : '');
+  const type = oneOf('type', ['pg', 'room', 'flat']), gender = oneOf('gender', Object.keys(GENDER_LABEL));
+  const sharing = oneOf('sharing', Object.keys(SHARING_LABEL)), lister = oneOf('lister', Object.keys(LISTER_LABEL));
+  const rentN = Number(get('maxRent'));
+  const maxRent = Number.isFinite(rentN) && rentN >= 1000 && rentN <= 60000 ? String(Math.round(rentN)) : '';
+  const meals = get('meals') === '1' ? '1' : '', ac = get('ac') === '1' ? '1' : '';
+  const place = collegeName || area || (college ? 'this area' : '');
 
   const set = useCallback((next: Record<string, string>) => {
     setParams((prev) => {
@@ -89,9 +94,15 @@ export function StaysBrowsePage() {
     if (!user) { navigate('/login', { state: { from: { pathname: location.pathname + location.search } } }); return; }
     setSheet('rent');
   };
+  const openPlace = () => {
+    setPickedCollege(college ? { id: college, name: collegeName || 'Selected college', short_name: '', campus: '' } : null);
+    setAreaInput(area);
+    setSheet('place');
+  };
   const applyPlace = () => {
     const c = pickedCollege && 'id' in pickedCollege ? pickedCollege : null;
-    set({ college: c?.id ?? '', cn: c?.name ?? '', area: c ? '' : areaInput.trim() });
+    const next = { college: c?.id ?? '', cn: c ? (c.id === college ? collegeName : c.name) : '', area: c ? '' : areaInput.trim() };
+    if (next.college !== college || next.cn !== collegeName || next.area !== area) set(next);
     setSheet(null);
   };
 
@@ -114,7 +125,7 @@ export function StaysBrowsePage() {
           </Link>
         </div>
         <button
-          type="button" onClick={() => { setAreaInput(area); setSheet('place'); }} aria-label="Search by college or area"
+          type="button" onClick={openPlace} aria-label="Search by college or area"
           className="flex min-h-11 w-full items-center gap-2 rounded-full border border-line bg-surface px-4 text-left text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-brand"
         >
           <MapPin className="h-5 w-5 shrink-0 text-ink-muted" aria-hidden />
@@ -127,7 +138,7 @@ export function StaysBrowsePage() {
         <Tabs label="Type" items={TABS} value={type || 'all'} onChange={(id) => set({ type: id === 'all' ? '' : id })} />
       </div>
 
-      {(college || area) && <PriceInsight insight={insight.data} placeName={place} sharing={insightSharing} onAdd={openRent} />}
+      {((college && collegeName) || area) && <PriceInsight insight={insight.data} placeName={place} sharing={insightSharing} onAdd={openRent} />}
 
       <div role="tabpanel" aria-labelledby={`tab-${type || 'all'}`} className="space-y-3">
         <p className="text-[15px] font-semibold text-ink" aria-live="polite">{results.isSuccess ? `${total} ${total === 1 ? 'place' : 'places'}` : ''}</p>
@@ -165,7 +176,8 @@ export function StaysBrowsePage() {
             <label htmlFor="stay-area" className="block text-[13px] font-semibold text-ink">Or type an area</label>
             <input id="stay-area" value={areaInput} onChange={(e) => setAreaInput(e.target.value)} maxLength={120} placeholder="e.g. Kamla Nagar" className={inputCls} />
           </div>
-          <Button onClick={applyPlace} disabled={!(pickedCollege && 'id' in pickedCollege) && !areaInput.trim() && !place}>Show stays</Button>
+          <Button onClick={applyPlace}>Show stays</Button>
+          {(college || area) && <Button variant="ghost" onClick={() => { set({ college: '', cn: '', area: '' }); setSheet(null); }}>Clear</Button>}
         </div>
       </Sheet>
 

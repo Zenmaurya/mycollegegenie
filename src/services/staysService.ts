@@ -29,8 +29,4 @@ export const StaysService = {
   reportRent: (input: RentReportInput): Promise<{ ok: true; insight: Insight }> =>
     fetchWithAuth('/api/stays/rent', { method: 'POST', body: JSON.stringify(input) }),
 
-  startChat: async (stay: { id: string; listerId: string }): Promise<string> =>
-    (await fetchWithAuth('/api/chat/sessions', {
-      method: 'POST', body: JSON.stringify({ listing_type: 'stay', listing_id: stay.id, seller_id: stay.listerId }),
-    })).sessionId,
 };
