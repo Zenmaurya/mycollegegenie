@@ -47,6 +47,8 @@ export const updateUserProfile = async (data: {
   course?: string;
   batchYear?: number;
   photoUrl?: string;
+  bio?: string;
+  profile_visibility?: string;
 }) => {
   try {
     // FIX: getUser() auto-refreshes expired token; getSession() does not
@@ -61,6 +63,8 @@ export const updateUserProfile = async (data: {
         course: data.course,
         batchYear: data.batchYear,
         photoUrl: data.photoUrl,
+        bio: data.bio,
+        profile_visibility: data.profile_visibility,
       }),
     });
   } catch (error) {

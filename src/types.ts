@@ -84,6 +84,10 @@ export interface User {
   bannedUntil?: string | null;
   banReason?: string | null;
   warnCount?: number;
+  username?: string | null;
+  bio?: string | null;
+  profile_visibility?: 'logged_in' | 'everyone' | 'only_me';
+  username_changed_at?: string | null;
 }
 
 export interface News {
