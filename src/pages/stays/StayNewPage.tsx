@@ -99,7 +99,7 @@ function Wizard({ initial, editId }: { initial: StayDraft; editId?: string }) {
       <div className="mx-auto max-w-xl space-y-4 p-4 text-center">
         <h1 className="text-[22px] font-bold text-ink">Goes live after a quick check</h1>
         <p className="text-[15px] text-ink-muted">Others can see it once it's approved.</p>
-        <Button onClick={() => navigate('/profile')}>See my listings</Button>
+        <Button onClick={() => navigate('/settings?tab=uploads')}>See my listings</Button>
         <div><Link to="/stays" className="font-semibold text-brand hover:underline">Browse stays</Link></div>
       </div>
     );

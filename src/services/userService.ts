@@ -11,6 +11,7 @@ import { supabase } from '../supabase';
 const withOnboardingFields = (raw: any) =>
   raw && {
     ...raw,
+    displayName: raw.display_name ?? null,
     collegeId: raw.college_id ?? null,
     collegeOther: raw.college_other ?? null,
     collegeName: raw.college_name ?? null,

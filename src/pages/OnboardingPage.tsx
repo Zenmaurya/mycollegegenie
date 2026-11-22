@@ -33,7 +33,7 @@ export function OnboardingPage() {
     inFlow.current = true;
   }
 
-  return <Shell><OnboardingFlow onDone={() => navigate(next, { replace: true })} /></Shell>;
+  return <Shell><OnboardingFlow askUsername onDone={() => navigate(next, { replace: true })} /></Shell>;
 }
 
 const Spinner = () => (

@@ -14,7 +14,7 @@ type Payload = Parameters<typeof saveOnboarding>[0];
 const inputCls = 'mt-1 min-h-11 w-full rounded-sm border border-line bg-surface px-3 text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-brand';
 const YEARS = ['1st', '2nd', '3rd', '4th', '5th'];
 
-export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; startStep?: 1 | 2 | 3 }) {
+export function OnboardingFlow({ onDone, startStep = 1, askUsername: wantUsername = false }: { onDone: () => void; startStep?: 1 | 2 | 3; askUsername?: boolean }) {
   const { appUser, refreshAppUser } = useAuth();
   const [step, setStep] = useState<number>(startStep);
   const [college, setCollege] = useState<CollegeValue>(null);
@@ -24,7 +24,7 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // Asked once, for users who have no @username yet; fixed at mount so saving it doesn't drop the step.
-  const [askUsername] = useState(() => !!appUser && !appUser.username);
+  const [askUsername] = useState(() => wantUsername && !!appUser && !appUser.username);
   const [username, setUsername] = useState(() => slugFromName(appUser?.displayName));
   const [suggestion, setSuggestion] = useState('');
   const totalSteps = askUsername ? 5 : 4;
@@ -66,7 +66,7 @@ export function OnboardingFlow({ onDone, startStep = 1 }: { onDone: () => void; 
     } catch (e) {
       const status = (e as { status?: number }).status;
       setError(status === 409 ? 'That username is taken' : e instanceof Error ? e.message : 'Something went wrong. Try again.');
-      if (status === 409) setSuggestion(nextSuggestion(check.value));
+      if (status === 409) setSuggestion((e as { data?: { suggestion?: string } }).data?.suggestion || nextSuggestion(check.value));
     } finally { setBusy(false); }
   };
   const toStep3 = () => setStep(3);

@@ -8,7 +8,7 @@ export interface ProfilePage { items: ProfileItem[]; nextCursor: string | null }
 const enc = encodeURIComponent;
 
 export interface AdminUser {
-  id: string; username: string | null; display_name: string; email: string; role: string; warn_count: number;
+  id: string; username: string | null; display_name: string; email?: string; role: string; warn_count: number;
   banned_until: string | null; ban_reason: string | null; created_at: string;
 }
 export interface AdminUserReport { id: string; item_type: string; item_id: string; reason: string; note: string | null; status: string; created_at: string; reporter_name: string | null }

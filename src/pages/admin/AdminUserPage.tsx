@@ -18,7 +18,7 @@ const itemHref = (type: string, id: string) => (type === 'post' ? `/post/${id}` 
 
 export const AdminUserPage: React.FC = () => {
   const { id = '' } = useParams();
-  const { appUser } = useAuth();
+  const { appUser, user: me } = useAuth();
   const qc = useQueryClient();
   const [sheet, setSheet] = useState<'warn' | 'ban' | null>(null);
   const [reason, setReason] = useState('');
@@ -42,7 +42,7 @@ export const AdminUserPage: React.FC = () => {
   const { user, reports, log } = q.data;
   const ban = banStatus({ bannedUntil: user.banned_until }, new Date());
   // Moderators get only the actions their role allows (warn); the backend enforces the same matrix.
-  const acts = adminActionsFor(appUser?.role, 'user', false, ban.banned).filter((a): a is 'warn' | 'ban' | 'unban' => a === 'warn' || a === 'ban' || a === 'unban');
+  const acts = me?.id === user.id ? [] : adminActionsFor(appUser?.role, 'user', false, ban.banned).filter((a): a is 'warn' | 'ban' | 'unban' => a === 'warn' || a === 'ban' || a === 'unban');
   const sheetError = m.isError && sheet && sheet === m.variables?.a ? (m.error instanceof Error ? m.error.message : 'Action failed') : undefined;
 
   return (
@@ -52,7 +52,7 @@ export const AdminUserPage: React.FC = () => {
         <h1 id="au-h" className="text-xl font-black text-gray-900">{user.display_name || '(no name)'}</h1>
         <p>
           {user.username ? <Link to={`/u/${user.username}`} className="font-bold text-purple-700 underline">@{user.username}</Link> : 'No username yet'}
-          {' · '}{user.email} · {user.role} · joined {new Date(user.created_at).toLocaleDateString()}
+          {' · '}{user.email ? `${user.email} · ` : ''}{user.role} · joined {new Date(user.created_at).toLocaleDateString()}
         </p>
         <p>
           {user.warn_count} warning{user.warn_count === 1 ? '' : 's'}

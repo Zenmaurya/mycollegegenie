@@ -61,12 +61,12 @@ function ItemView({ item, saved, onToggleSave }: { item: ProfileItem; saved: Rea
 }
 
 function TabPanel({ username, tab }: { username: string; tab: ProfileTab }) {
-  const { appUser } = useAuth();
+  const { user } = useAuth();
   const { savedResourceIds, toggleSave } = useResources();
   const saved = useMemo(() => new Set(savedResourceIds), [savedResourceIds]);
   const onToggleSave = useCallback((id: string) => { void toggleSave(id); }, [toggleSave]);
   const q = useInfiniteQuery({
-    queryKey: ['profile-tab', username, tab, appUser?.uid ?? 'anon'],
+    queryKey: ['profile-tab', username, tab, user?.id ?? 'anon'],
     queryFn: ({ pageParam }) => ProfileService.tab(username, tab, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (p) => p.nextCursor ?? undefined,
@@ -125,7 +125,7 @@ function Header({ profile, stats, isOwner }: { profile: Profile; stats: ProfileS
       {profile.interests.length > 0 && <p className="text-[13px] text-ink-muted">{profile.interests.join(' · ')}</p>}
       <dl className="grid grid-cols-4 gap-2 rounded-card bg-surface p-3 text-center shadow-card">
         {numbers.map(([k, v]) => (
-          <div key={k}><dd className="text-[17px] font-bold text-ink">{v || (k === 'Joined' ? '-' : 0)}</dd><dt className="text-[12px] text-ink-muted">{k}</dt></div>
+          <div key={k} className="flex flex-col-reverse"><dt className="text-[12px] text-ink-muted">{k}</dt><dd className="text-[17px] font-bold text-ink">{v || (k === 'Joined' ? '-' : 0)}</dd></div>
         ))}
       </dl>
       {!isOwner && <ReportSheet open={reporting} onClose={() => setReporting(false)} itemType="user" itemId={profile.id} title="Report user" />}
@@ -136,11 +136,11 @@ function Header({ profile, stats, isOwner }: { profile: Profile; stats: ProfileS
 export function UserProfilePage() {
   const { username = '' } = useParams();
   const [params, setParams] = useSearchParams();
-  const { appUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   // the answer depends on who is asking, so the viewer is part of the key
-  const q = useQuery({ queryKey: ['profile', username, appUser?.uid ?? 'anon'], queryFn: () => ProfileService.get(username), retry: false });
+  const q = useQuery({ queryKey: ['profile', username, user?.id ?? 'anon'], queryFn: () => ProfileService.get(username), retry: false });
   const redirect = q.data && 'redirect' in q.data ? q.data.redirect : null;
   useEffect(() => { if (redirect) navigate(`/u/${redirect}${location.search}`, { replace: true }); }, [redirect, navigate, location.search]);
 
@@ -163,7 +163,8 @@ export function UserProfilePage() {
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-4 pb-24 md:pb-4">
       <Helmet>
         <title>{`${profile.displayName} (@${profile.username}) | MyCollegeGenie`}</title>
-        {profile.visibility !== 'everyone' && <meta name="robots" content="noindex" />}
+        {/* crawlers are logged out: a logged-out 200 means the profile is public, so only signed-in views are noindex */}
+        {user && <meta name="robots" content="noindex" />}
       </Helmet>
       <Header profile={profile} stats={stats} isOwner={isOwner} />
       <Tabs label="Profile sections" items={tabs} value={tab} onChange={(id) => setParams(id === 'posts' ? {} : { tab: id }, { replace: true })} />

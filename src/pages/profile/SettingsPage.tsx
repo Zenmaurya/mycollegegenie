@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 // FIX Perf #5: Replaced 'framer-motion' with 'motion' — same library, avoids duplicate bundle code.
 import { motion, AnimatePresence } from 'motion/react';
@@ -49,7 +49,8 @@ export const SettingsPage: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [params] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => MENU_ITEMS.find((i) => i.id === params.get('tab'))?.id ?? 'profile');
 
   useEffect(() => {
     fetchProfile();
@@ -475,6 +476,7 @@ export const SettingsPage: React.FC = () => {
 const UsernameForm: React.FC<{ username: string; changedAt: string | null; onChanged: () => void }> = ({ username, changedAt, onChanged }) => {
   const [value, setValue] = useState(username);
   const [busy, setBusy] = useState(false);
+  const [suggestion, setSuggestion] = useState('');
   useEffect(() => { setValue(username); }, [username]);
   const check = validateUsername(value);
   const lockedUntil = usernameChangeOn(changedAt, new Date());
@@ -484,12 +486,13 @@ const UsernameForm: React.FC<{ username: string; changedAt: string | null; onCha
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!check.ok || unchanged || lockedUntil || busy) return;
-    setBusy(true);
+    setBusy(true); setSuggestion('');
     try {
       await ProfileService.changeUsername(check.value);
       toast.success('Username updated');
       onChanged();
     } catch (err: any) {
+      if (err?.status === 409 && err?.data?.suggestion) setSuggestion(err.data.suggestion);
       toast.error(err?.status === 409 ? 'That username is taken' : err?.status === 429 ? 'You can change your username once every 30 days' : err?.message || 'Could not change username');
     } finally {
       setBusy(false);
@@ -504,7 +507,7 @@ const UsernameForm: React.FC<{ username: string; changedAt: string | null; onCha
           id="username"
           type="text"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => { setValue(e.target.value); setSuggestion(''); }}
           maxLength={20}
           autoCapitalize="none"
           autoCorrect="off"
@@ -528,6 +531,7 @@ const UsernameForm: React.FC<{ username: string; changedAt: string | null; onCha
           ? `You can change your username again on ${lockedUntil.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}.`
           : problem ?? 'You can change your username once every 30 days. Your old name redirects to the new one for 30 days.'}
       </p>
+      {suggestion && <button type="button" onClick={() => { setValue(suggestion); setSuggestion(''); }} className="ml-1 text-sm font-bold text-[#5636A7] underline">Try @{suggestion}</button>}
     </form>
   );
 };
