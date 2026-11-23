@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { InboxService } from '../../services/inboxService';
+import { InboxService, type BlockedPerson } from '../../services/inboxService';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/button';
 import { EmptyState } from '../ui/EmptyState';
@@ -10,7 +10,7 @@ import { Skeleton } from '../ui/skeleton';
 export function BlockedTab() {
   const q = useQuery({ queryKey: ['inbox', 'blocks'], queryFn: InboxService.blocks, staleTime: 0, retry: false });
   const unblock = useMutation({
-    mutationFn: (id: string) => InboxService.unblock(id),
+    mutationFn: (p: BlockedPerson) => (p.id ? InboxService.unblock(p.id) : InboxService.unblockConversation(p.conversationId!)),
     onSuccess: () => { toast.success('Unblocked'); void q.refetch(); },
     onError: (e) => toast.error(e instanceof Error ? e.message : 'Something went wrong. Try again.'),
   });
@@ -23,13 +23,13 @@ export function BlockedTab() {
       {items.length === 0 ? <p className="text-[15px] text-ink-muted">You haven't blocked anyone.</p> : (
         <ul className="divide-y divide-line">
           {items.map((p) => (
-            <li key={p.id} className="flex items-center gap-3 py-3">
+            <li key={p.conversationId ?? p.id} className="flex items-center gap-3 py-3">
               <Avatar src={p.photoUrl} name={p.displayName} size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[15px] font-semibold text-ink">{p.displayName}</p>
                 {p.username && <p className="truncate text-[13px] text-ink-muted">@{p.username}</p>}
               </div>
-              <Button size="sm" variant="secondary" loading={unblock.isPending && unblock.variables === p.id} onClick={() => p.id && unblock.mutate(p.id)}>Unblock</Button>
+              <Button size="sm" variant="secondary" loading={unblock.isPending && unblock.variables === p} onClick={() => (p.id || p.conversationId) && unblock.mutate(p)}>Unblock</Button>
             </li>
           ))}
         </ul>

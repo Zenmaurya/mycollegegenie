@@ -88,7 +88,7 @@ function TabPanel({ username, tab }: { username: string; tab: ProfileTab }) {
   );
 }
 
-function Header({ profile, stats, isOwner }: { profile: Profile; stats: ProfileStats; isOwner: boolean }) {
+function Header({ profile, stats, isOwner, canMessage }: { profile: Profile; stats: ProfileStats; isOwner: boolean; canMessage?: boolean }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -122,7 +122,7 @@ function Header({ profile, stats, isOwner }: { profile: Profile; stats: ProfileS
           <Menu label="Profile actions" items={[{ label: 'Copy link', onSelect: () => void copy() }, ...(isOwner ? [] : [{ label: 'Report user', onSelect: report, danger: true }])]} />
         </div>
       </div>
-      {!isOwner && <MessageButton target={{ userId: profile.id }} className="w-full sm:w-auto" />}
+      {!isOwner && canMessage !== false && <MessageButton target={{ userId: profile.id }} className="w-full sm:w-auto" />}
       {profile.bio && <p className="whitespace-pre-line text-[15px] text-ink">{profile.bio}</p>}
       {profile.interests.length > 0 && <p className="text-[13px] text-ink-muted">{profile.interests.join(' · ')}</p>}
       <dl className="grid grid-cols-4 gap-2 rounded-card bg-surface p-3 text-center shadow-card">
@@ -158,7 +158,7 @@ export function UserProfilePage() {
       </>
     );
   }
-  const { profile, stats, isOwner } = q.data;
+  const { profile, stats, isOwner, canMessage } = q.data;
   const tab = tabFromParam(params.get('tab'), isOwner);
   const tabs = PROFILE_TABS.filter((t) => t.id !== 'saved' || isOwner);
   return (
@@ -168,7 +168,7 @@ export function UserProfilePage() {
         {/* crawlers are logged out: a logged-out 200 means the profile is public, so only signed-in views are noindex */}
         {user && <meta name="robots" content="noindex" />}
       </Helmet>
-      <Header profile={profile} stats={stats} isOwner={isOwner} />
+      <Header profile={profile} stats={stats} isOwner={isOwner} canMessage={canMessage} />
       <Tabs label="Profile sections" items={tabs} value={tab} onChange={(id) => setParams(id === 'posts' ? {} : { tab: id }, { replace: true })} />
       <div role="tabpanel" aria-labelledby={`tab-${tab}`}>
         <Fragment key={`${profile.username}-${tab}`}><TabPanel username={profile.username} tab={tab} /></Fragment>

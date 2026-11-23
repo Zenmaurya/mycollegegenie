@@ -13,6 +13,8 @@ export interface MessagesPage {
   status: string; kind: 'listing' | 'direct'; requestStatus: string; hasMore: boolean; messages: ChatMessage[];
   conversation: ConversationHeader; youStarted: boolean; canSend: { ok: boolean; error?: string };
 }
+/** conversationId is set (and id null) for an anonymously blocked listing partner */
+export type BlockedPerson = Conversation['other'] & { conversationId?: string };
 export interface UnreadCounts { notifications: number; chats: number; requests: number }
 
 // fetchWithAuth caches GETs for 30s; polling needs a fresh read, so every GET carries a unique `_`.
@@ -29,9 +31,11 @@ export const InboxService = {
   decline: (id: string) => post(`${conv(id)}/decline`),
   shareContact: (id: string) => post(`${conv(id)}/share-contact`),
   blockConversation: (id: string) => post(`${conv(id)}/block`),
+  unblockConversation: (id: string) => fetchWithAuth(`${conv(id)}/block`, { method: 'DELETE' }),
+  reportConversation: (id: string, reason: string, note?: string) => post(`${conv(id)}/report`, { reason, ...(note ? { note } : {}) }),
   block: (userId: string) => post('/api/chat/blocks', { userId }),
   unblock: (userId: string) => fetchWithAuth(`/api/chat/blocks/${encodeURIComponent(userId)}`, { method: 'DELETE' }),
-  blocks: async (): Promise<Conversation['other'][]> => (await fetchWithAuth(fresh('/api/chat/blocks'))).items ?? [],
+  blocks: async (): Promise<BlockedPerson[]> => (await fetchWithAuth(fresh('/api/chat/blocks'))).items ?? [],
 
   notifications: (cursor?: string): Promise<{ items: InboxNotification[]; nextCursor: string | null }> =>
     fetchWithAuth(fresh(`/api/notifications${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)),

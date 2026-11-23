@@ -2,7 +2,7 @@ import type { ModLogRow } from './reportService';
 import { fetchWithAuth } from '../lib/apiClient';
 import { mapProfile, mapProfileItem, mapStats, type Profile, type ProfileItem, type ProfileStats, type ProfileTab } from '../lib/profiles';
 
-export type ProfileResult = { redirect: string } | { profile: Profile; stats: ProfileStats; isOwner: boolean };
+export type ProfileResult = { redirect: string } | { profile: Profile; stats: ProfileStats; isOwner: boolean; canMessage?: boolean };
 export interface ProfilePage { items: ProfileItem[]; nextCursor: string | null }
 
 const enc = encodeURIComponent;
@@ -17,11 +17,15 @@ export const ProfileService = {
   // Staff only: the summary, reports against the user (or what they own) and their moderation log.
   adminUser: (id: string): Promise<{ user: AdminUser; reports: AdminUserReport[]; log: ModLogRow[] }> => fetchWithAuth(`/api/profiles/admin/users/${enc(id)}`),
 
+  // Staff only: last 20 messages of a conversation named in a report about this user.
+  adminConversation: (id: string, convId: string): Promise<{ messages: { id: string; from: 'reported user' | 'reporter'; content: string; created_at: string }[] }> =>
+    fetchWithAuth(`/api/profiles/admin/users/${enc(id)}/conversations/${enc(convId)}/messages`),
+
   // A missing, hidden or logged-out-blocked profile rejects with .status 404.
   get: async (username: string): Promise<ProfileResult> => {
     const d = await fetchWithAuth(`/api/profiles/${enc(username)}`);
     if (d.redirect) return { redirect: d.redirect };
-    return { profile: mapProfile(d.profile), stats: mapStats(d.stats), isOwner: !!d.isOwner };
+    return { profile: mapProfile(d.profile), stats: mapStats(d.stats), isOwner: !!d.isOwner, canMessage: d.canMessage };
   },
 
   tab: async (username: string, tab: ProfileTab, cursor?: string): Promise<ProfilePage> => {

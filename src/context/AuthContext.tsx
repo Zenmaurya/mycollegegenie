@@ -8,6 +8,7 @@
  *   const { user, appUser, isAuthLoading, logout } = useAuth();
  */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase, logout as supabaseLogout } from '../supabase';
 import { createUserProfile } from '../services/userService';
 import { clearAuthTokenCache } from '../lib/apiClient';
@@ -31,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SupabaseAuthUser | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const qc = useQueryClient();
   
   // Auth Modal State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -92,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (nextUserId !== currentUserId) {
           currentUserId = nextUserId;
           clearAuthTokenCache();
+          qc.clear(); // nothing cached for the previous user may show for the next one
           setAppUser(null);
         }
         setIsAuthLoading(true);
@@ -124,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [qc]);
 
   const logout = useCallback(async () => {
     try {

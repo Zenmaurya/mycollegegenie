@@ -217,7 +217,9 @@ export async function fetchWithAuth(
 
       // Store in cache for 30 seconds if it's a GET request
       if (isGet) {
-        getCache.set(cacheKey, { data: result, timestamp: Date.now() });
+        const now = Date.now();
+        for (const [k, v] of getCache) if (now - v.timestamp >= 30_000) getCache.delete(k); // drop expired entries
+        getCache.set(cacheKey, { data: result, timestamp: now });
       }
 
       return result;

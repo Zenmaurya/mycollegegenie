@@ -30,7 +30,7 @@ test('notificationHref maps item types, falls back to /inbox', () => {
   assert.strictEqual(h('upload_approved', 'resource', 'r1'), '/notes/r1');
   assert.strictEqual(h('upload_rejected', 'resource', 'r1'), '/notes/upload');
   assert.strictEqual(h('stay_approved', 'stay', 's1'), '/stays/s1');
-  assert.strictEqual(h('stay_rejected', 'stay', 's1'), '/stays/s1/edit');
+  assert.strictEqual(h('stay_rejected', 'stay', 's1'), '/stays/new');
   assert.strictEqual(h('request', 'conversation', 'c1'), '/inbox/c1');
   assert.strictEqual(h('request', 'conversation', null), '/inbox');
   assert.strictEqual(h('x', 'weird', 'z'), '/inbox');

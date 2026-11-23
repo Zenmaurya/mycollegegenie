@@ -8,9 +8,11 @@ import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/button';
 
 type Reason = (typeof REPORT_REASONS)[number] | (typeof RESOURCE_REPORT_REASONS)[number] | (typeof STAY_REPORT_REASONS)[number];
-interface Props { open: boolean; onClose: () => void; itemType: ReportItemType; itemId: string; title: string; initialNote?: string }
+interface Props { open: boolean; onClose: () => void; itemType: ReportItemType; itemId: string; title: string; initialNote?: string;
+  /** replaces the default POST /api/reports (used for anonymous chats, where the id isn't known) */
+  onSubmit?: (reason: string, note?: string) => Promise<unknown> }
 
-export function ReportSheet({ open, onClose, itemType, itemId, title, initialNote = '' }: Props) {
+export function ReportSheet({ open, onClose, itemType, itemId, title, initialNote = '', onSubmit }: Props) {
   const [reason, setReason] = useState<Reason | ''>('');
   const [note, setNote] = useState(initialNote);
   const [busy, setBusy] = useState(false);
@@ -23,7 +25,8 @@ export function ReportSheet({ open, onClose, itemType, itemId, title, initialNot
     if (!ready || busy) return;
     setBusy(true);
     try {
-      await report(itemType, itemId, reason as Reason, note.trim() || undefined);
+      if (onSubmit) await onSubmit(reason, note.trim() || undefined);
+      else await report(itemType, itemId, reason as Reason, note.trim() || undefined);
       toast.success('Thanks — our team will review this.'); // a duplicate report gets the same message
       setReason(''); setNote('');
       onClose();

@@ -2,7 +2,7 @@
  * Pure helpers for /inbox (no network/env imports so they run in node:test).
  */
 export interface ChatMessage { id: string; mine: boolean; content: string; is_system: number | boolean; created_at: string }
-export interface InboxNotification { id: string; type: string; actorId: string | null; itemType: string | null; itemId: string | null; text: string; read: boolean; createdAt: string }
+export interface InboxNotification { id: string; type: string; itemType: string | null; itemId: string | null; text: string; read: boolean; createdAt: string }
 
 export const MAX_MESSAGE = 2000;
 export const WAIT_REASON = 'Wait until they accept your request';
@@ -47,7 +47,7 @@ export function notificationHref(n: Pick<InboxNotification, 'type' | 'itemType' 
   const id = n.itemId ? encodeURIComponent(n.itemId) : '';
   if (!id) return '/inbox';
   if (n.type === 'upload_rejected') return '/notes/upload';
-  if (n.type === 'stay_rejected') return `/stays/${id}/edit`;
+  if (n.type === 'stay_rejected') return '/stays/new'; // the rejected row is deleted, so the owner starts a new listing
   switch (n.itemType) {
     case 'post': return `/post/${id}`;
     case 'resource': return `/notes/${id}`;

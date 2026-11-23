@@ -23,7 +23,9 @@ export const AdminUserPage: React.FC = () => {
   const [sheet, setSheet] = useState<'warn' | 'ban' | null>(null);
   const [reason, setReason] = useState('');
   const [duration, setDuration] = useState<BanDuration>('7d');
+  const [convId, setConvId] = useState<string | null>(null);
   const q = useQuery({ queryKey: ['admin-user', id], queryFn: () => ProfileService.adminUser(id), retry: false });
+  const conv = useQuery({ queryKey: ['admin-user-conv', id, convId], queryFn: () => ProfileService.adminConversation(id, convId!), enabled: !!convId, retry: false });
   const closeSheet = () => { setSheet(null); setReason(''); setDuration('7d'); };
   const m = useMutation({
     mutationFn: (v: { a: ModAction; reason?: string; duration?: BanDuration }) =>
@@ -79,12 +81,25 @@ export const AdminUserPage: React.FC = () => {
                 <li key={r.id} className="bg-white rounded-2xl border border-gray-200 p-3 text-sm text-gray-800">
                   <span className="font-black">{r.item_type}</span>{href && <> · <Link to={href} className="text-purple-700 underline">View</Link></>} · {r.reason} · {r.status} · {timeAgo(r.created_at)} · by {r.reporter_name ?? 'unknown'}
                   {r.note && <p className="text-gray-600">{r.note}</p>}
+                  {r.note?.startsWith('Conversation ') && <button type="button" className="min-h-[44px] text-purple-700 underline font-bold" onClick={() => setConvId(r.note!.split(' ')[1])}>View conversation</button>}
                 </li>
               );
             })}
           </ul>
         )}
       </section>
+
+      {convId && (
+        <section aria-labelledby="au-conv" className="bg-white rounded-2xl border border-gray-200 p-4 space-y-2 text-sm text-gray-800">
+          <div className="flex items-center justify-between">
+            <h2 id="au-conv" className="text-lg font-black text-gray-900">Reported conversation (last 20 messages, read only)</h2>
+            <button type="button" className="min-h-[44px] text-purple-700 underline font-bold" onClick={() => setConvId(null)}>Close</button>
+          </div>
+          {conv.isLoading ? <p>Loading...</p> : conv.isError || !conv.data ? <p className="text-rose-700">Could not load this conversation.</p> : !conv.data.messages.length ? <p>No messages</p> : (
+            <ul className="space-y-1">{conv.data.messages.map((m) => <li key={m.id}><span className="font-black">{m.from}:</span> {m.content}</li>)}</ul>
+          )}
+        </section>
+      )}
 
       <section aria-labelledby="au-log" className="space-y-2">
         <h2 id="au-log" className="text-lg font-black text-gray-900">Moderation log</h2>

@@ -82,7 +82,7 @@ function Conversation_({ id }: { id: string }) {
   const [reporting, setReporting] = useState(false);
   const end = useRef<HTMLDivElement>(null);
 
-  const msgs = useQuery({ queryKey: ['inbox', 'messages', id], queryFn: () => InboxService.messages(id), refetchInterval: 5000, refetchIntervalInBackground: false, retry: false, staleTime: 0 });
+  const msgs = useQuery({ queryKey: ['inbox', 'messages', id], queryFn: () => InboxService.messages(id), refetchInterval: (q) => (q.state.status === 'error' ? false : 5000), refetchIntervalInBackground: false, retry: false, staleTime: 0 });
   const page = msgs.data;
   const c = page?.conversation;
   const all = useMemo(() => mergeMessages(older, page?.messages ?? []), [older, page]);
@@ -95,7 +95,7 @@ function Conversation_({ id }: { id: string }) {
     if (!msgs.isSuccess) return;
     void qc.invalidateQueries({ queryKey: UNREAD_KEY });
     void qc.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
-  }, [msgs.isSuccess, id, qc]);
+  }, [msgs.isSuccess, id, lastId, qc]); // a new last message (either side) can change the badge
 
   const refresh = () => { void msgs.refetch(); void qc.invalidateQueries({ queryKey: CONVERSATIONS_KEY }); void qc.invalidateQueries({ queryKey: UNREAD_KEY }); };
   const send = useMutation({ mutationFn: (text: string) => InboxService.send(id, text) });
@@ -140,7 +140,7 @@ function Conversation_({ id }: { id: string }) {
   const name = other?.displayName || 'Student';
   const items = [
     { label: 'Block', danger: true, onSelect: () => { if (window.confirm(`Block ${name}? They won't be able to message you.`)) run.mutate('block'); } },
-    ...(other?.id ? [{ label: 'Report', onSelect: () => setReporting(true) }] : []),
+    { label: 'Report', onSelect: () => setReporting(true) },
   ];
   const hasMore = olderMore ?? page.hasMore;
 
@@ -187,7 +187,7 @@ function Conversation_({ id }: { id: string }) {
           </div>
         </Dock>
       ) : <Composer onSend={onSend} sending={send.isPending} reason={reason} desktop={desktop} />}
-      {reporting && other?.id && <ReportSheet open onClose={() => setReporting(false)} itemType="user" itemId={other.id} title="Report user" initialNote={`Conversation ${id}`} />}
+      {reporting && <ReportSheet open onClose={() => setReporting(false)} itemType="user" itemId="" title="Report user" onSubmit={(reason, note) => InboxService.reportConversation(id, reason, note)} />}
     </div>
   );
 }
