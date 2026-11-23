@@ -78,4 +78,6 @@ test('itemToDraft round-trips and drops unusable old phone formats', () => {
   assert.strictEqual(d.collegeId, 'c1');
   assert.strictEqual(exchangeProblem(d), null);
   assert.strictEqual(itemToDraft(mapItem({ id: 4, contact_phone: '12345' })).phone, '');
+  assert.strictEqual(mapItem({ id: 5, seller_verified: 1 }).sellerVerified, true);
+  assert.strictEqual(mapItem({ id: 5 }).sellerVerified, false);
 });

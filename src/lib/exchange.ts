@@ -26,7 +26,7 @@ export interface Listing {
   createdAt: string; sellerName: string; sellerAvatar: string | null; isMine: boolean; badge: ExchangeBadge;
   /** Detail only */
   description: string; details: Record<string, unknown>; views: number; isHidden: boolean; hiddenReason: string | null;
-  sellerUsername: string | null; sellerCollege: string; phone: string; instagram: string;
+  sellerUsername: string | null; sellerCollege: string; sellerVerified: boolean; phone: string; instagram: string;
 }
 
 /** Raw snake_case API row (list card or detail) to Listing. */
@@ -60,6 +60,7 @@ export function mapItem(raw: any): Listing {
     hiddenReason: raw.hidden_reason ?? null,
     sellerUsername: raw.seller_username ?? null,
     sellerCollege: raw.seller_college || '',
+    sellerVerified: Boolean(raw.seller_verified),
     phone: raw.contact_phone || '',
     instagram: raw.contact_instagram || '',
   };

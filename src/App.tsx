@@ -124,7 +124,10 @@ function LoginOnly({ children }: { children: React.ReactNode }) {
 /** Old /campus-exchange links keep their query string (?type=...). */
 function CampusExchangeRedirect() {
   const { search } = useLocation();
-  return <Navigate to={`/exchange${search}`} replace />;
+  const p = new URLSearchParams(search);
+  p.delete('college'); // old links carried a college name; the new filter takes an id
+  const qs = p.toString();
+  return <Navigate to={`/exchange${qs ? `?${qs}` : ''}`} replace />;
 }
 
 /** Old /profile bookmarks: own profile when a username is set, else settings. */

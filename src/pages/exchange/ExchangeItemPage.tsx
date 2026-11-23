@@ -9,6 +9,9 @@ import { useAuth } from '../../context/AuthContext';
 import { CONDITION_LABEL, formatPrice, priceLabel, typeLabel, type Listing } from '../../lib/exchange';
 import { timeAgo } from '../../lib/feed';
 import { ExchangeService } from '../../services/exchangeService';
+import { ProfileService } from '../../services/profileService';
+import { ItemCard } from '../../components/exchange/ItemCard';
+import { VerifiedBadge } from '../../components/VerifiedBadge';
 import { InboxService } from '../../services/inboxService';
 import { ReportSheet } from '../../components/communities/ReportSheet';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
@@ -47,7 +50,7 @@ function Gallery({ photos, title }: { photos: string[]; title: string }) {
 
 export function ExchangeItemPage() {
   const { id = '' } = useParams();
-  const { user } = useAuth();
+  const { user, appUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const qc = useQueryClient();
@@ -59,6 +62,12 @@ export function ExchangeItemPage() {
   const key = ['exchange-item', id, user?.id ?? 'anon'];
   const q = useQuery({ queryKey: key, queryFn: () => ExchangeService.get(id), retry: false });
   const item: Listing | undefined = q.data;
+  const sellerUsername = item?.sellerUsername ?? null;
+  const others = useQuery({
+    queryKey: ['exchange-seller-items', sellerUsername],
+    queryFn: () => ProfileService.tab(sellerUsername!, 'listings'),
+    enabled: !!sellerUsername, retry: false, staleTime: 60_000,
+  });
 
   const toLogin = () => navigate('/login', { state: { from: { pathname: location.pathname + location.search } } });
   const needLogin = (fn: () => void) => () => (user ? fn() : toLogin());
@@ -72,6 +81,9 @@ export function ExchangeItemPage() {
   }
 
   const sold = item.status === 'sold';
+  const deleted = item.hiddenReason === 'owner';
+  const isStaff = appUser?.role === 'admin' || appUser?.role === 'moderator';
+  const otherItems = (others.data?.items ?? []).flatMap((i) => (i.kind === 'exchange' && i.item.id !== item.id ? [i.item] : [])).slice(0, 8);
   const dropped = item.lastPrice != null && item.lastPrice > item.price;
   const place = [item.college, item.area].filter(Boolean).join(' · ');
   const facts = Object.entries(item.details).filter(([, v]) => v !== '' && v != null);
@@ -107,6 +119,7 @@ export function ExchangeItemPage() {
       qc.setQueryData<Listing>(key, { ...item, status });
       void qc.invalidateQueries({ queryKey: ['exchange'] });
       void qc.invalidateQueries({ queryKey: ['exchange-sections'] });
+      void qc.invalidateQueries({ queryKey: ['my-exchange'] });
       toast.success(status === 'sold' ? 'Marked as sold' : status === 'reserved' ? 'Marked as reserved' : 'Listing is active again');
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not update the listing.'); } finally { setBusy(false); }
   };
@@ -117,15 +130,17 @@ export function ExchangeItemPage() {
       await ExchangeService.remove(item.id);
       void qc.invalidateQueries({ queryKey: ['exchange'] });
       void qc.invalidateQueries({ queryKey: ['exchange-sections'] });
+      void qc.invalidateQueries({ queryKey: ['my-exchange'] });
       toast.success('Listing removed');
       navigate('/exchange', { replace: true });
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not remove the listing.'); setBusy(false); }
   };
 
   const digits = item.phone.replace(/\D/g, '').slice(-10);
-  const contact = item.isMine ? (
+  const contact = deleted ? null : item.isMine ? (
     <>
       <Link to={`/exchange/${item.id}/edit`} className={btn}><Pencil className="h-5 w-5" aria-hidden /> Edit</Link>
+      {sold && <Button variant="secondary" className="flex-1" loading={busy} onClick={() => void setStatus('active')}>Relist</Button>}
       {!sold && <Button variant="secondary" className="flex-1" loading={busy} onClick={() => void setStatus(item.status === 'reserved' ? 'active' : 'reserved')}>{item.status === 'reserved' ? 'Mark available' : 'Mark reserved'}</Button>}
       {!sold && <Button variant="secondary" className="flex-1" loading={busy} onClick={() => void setStatus('sold')}>Mark sold</Button>}
       <Button variant="danger" className="flex-1" disabled={busy} onClick={() => setConfirmDelete(true)}>Delete</Button>
@@ -144,7 +159,7 @@ export function ExchangeItemPage() {
     </>
   );
 
-  const quickReplies = !item.isMine && !sold && (
+  const quickReplies = !item.isMine && !sold && !deleted && (
     <div className="flex flex-wrap gap-2" role="group" aria-label="Quick replies">
       {QUICK.map((t) => (
         <button key={t} type="button" disabled={busy} onClick={() => void quick(t)} className="min-h-11 shrink-0 whitespace-nowrap rounded-full border border-line bg-surface px-4 text-[13px] font-semibold text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-50">{t}</button>
@@ -156,7 +171,8 @@ export function ExchangeItemPage() {
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-4 pb-40 md:pb-4">
       <Helmet><title>{item.title} | MyCollegeGenie</title></Helmet>
       {sold && <p role="status" className="rounded-sm border border-line bg-surface p-3 text-[15px] font-semibold text-ink">Sold. This item is no longer available.</p>}
-      {item.isMine && item.isHidden && <p role="status" className="rounded-sm border border-line bg-surface p-3 text-[15px] font-semibold text-ink">Hidden by moderators</p>}
+      {deleted && <p role="status" className="rounded-sm border border-line bg-surface p-3 text-[15px] font-semibold text-ink">You deleted this listing.</p>}
+      {item.isHidden && !deleted && (item.isMine || isStaff) && <p role="status" className="rounded-sm border border-line bg-surface p-3 text-[15px] font-semibold text-ink">Hidden by moderators</p>}
       <header className="space-y-1">
         <p className="text-[13px] text-ink-muted">{item.category} · {typeLabel(item.type)}</p>
         <h1 className="text-[22px] font-bold leading-tight text-ink">{item.title}</h1>
@@ -175,6 +191,15 @@ export function ExchangeItemPage() {
                 {item.type === 'Exchange' && item.exchangeFor && <li>Wants in exchange: {item.exchangeFor}</li>}
                 {item.originalPrice != null && <li>Original price: {formatPrice(item.originalPrice)}</li>}
                 {facts.map(([k, v]) => <li key={k}>{humanize(k)}: {detailValue(v)}</li>)}
+              </ul>
+            </section>
+          )}
+
+          {otherItems.length > 0 && (
+            <section aria-label={`Other items from ${item.sellerName || 'this seller'}`} className="space-y-2">
+              <h2 className="text-[17px] font-bold text-ink">Other items from {item.sellerName || 'this seller'}</h2>
+              <ul className="scrollbar-hide flex gap-3 overflow-x-auto">
+                {otherItems.map((o) => <li key={o.id} className="w-40 shrink-0"><ItemCard item={o} /></li>)}
               </ul>
             </section>
           )}
@@ -203,13 +228,13 @@ export function ExchangeItemPage() {
 
           <div className={card}>
             <p className="text-[13px] font-semibold text-ink-muted">Seller</p>
-            <p className="text-[15px] font-semibold text-ink"><UserLink username={item.sellerUsername}>{item.sellerName || 'A student'}</UserLink></p>
+            <p className="text-[15px] font-semibold text-ink"><UserLink username={item.sellerUsername}>{item.sellerName || 'A student'}</UserLink>{item.sellerVerified && <VerifiedBadge size="sm" showLabel={false} className="ml-1 align-middle" />}</p>
             {(item.sellerCollege || item.college) && <p className="text-[13px] text-ink-muted">{item.sellerCollege || item.college}</p>}
           </div>
         </aside>
       </div>
 
-      {createPortal(
+      {!deleted && createPortal(
         <div className="fixed inset-x-0 bottom-16 z-50 space-y-2 border-t border-line bg-surface p-3 md:hidden">
           {quickReplies && <div className="scrollbar-hide overflow-x-auto">{quickReplies}</div>}
           <div className="flex flex-wrap gap-2">{contact}</div>

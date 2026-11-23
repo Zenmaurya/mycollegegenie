@@ -40,7 +40,7 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
 function Wizard({ initial, editId }: { initial: ExchangeDraft; editId?: string }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, appUser } = useAuth();
   const key = draftKey(user?.id ?? '');
   const [d, setD] = useState<ExchangeDraft>(initial);
   const [step, setStep] = useState(0);
@@ -49,6 +49,11 @@ function Wizard({ initial, editId }: { initial: ExchangeDraft; editId?: string }
   const [doneId, setDoneId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const set = (p: Partial<ExchangeDraft>) => setD((s) => ({ ...s, ...p }));
+
+  // appUser can load after the wizard mounts: fill the college while it is still empty
+  useEffect(() => {
+    if (!editId && !d.collegeId && appUser?.collegeId) setD((s) => ({ ...s, collegeId: appUser.collegeId!, collegeName: appUser.collegeName ?? '' }));
+  }, [editId, d.collegeId, appUser?.collegeId, appUser?.collegeName]);
 
   useEffect(() => {
     if (editId || doneId) return;
@@ -229,6 +234,6 @@ export function ExchangeSellPage() {
   if (!id) return <Wizard initial={loadDraft(user.id, { id: appUser?.collegeId ?? '', name: appUser?.collegeName ?? '' })} />;
   if (q.isLoading) return <div className="mx-auto max-w-xl space-y-4 p-4"><Skeleton className="h-8 w-2/3" /><Skeleton className="h-40 w-full" /></div>;
   if (q.isError) return <EmptyState title="Could not load this item" body="It may have been removed." action={<Link to="/exchange" className="font-semibold text-brand hover:underline">Browse Campus Exchange</Link>} />;
-  if (!q.data!.isMine) return <Navigate to={`/exchange/${id}`} replace />;
+  if (!q.data!.isMine || q.data!.hiddenReason === 'owner') return <Navigate to={`/exchange/${id}`} replace />;
   return <Fragment key={id}><Wizard initial={itemToDraft(q.data!)} editId={id} /></Fragment>;
 }
