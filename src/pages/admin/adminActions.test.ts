@@ -38,6 +38,12 @@ test('adminActionsFor matches the backend matrix', () => {
     assert.deepEqual(adminActionsFor('moderator', t, true), ['dismiss', 'unhide', 'warn']);
   }
 });
+test('adminActionsFor: exchange items get hide/unhide/delete only (admin) and no delete or warn for moderators', () => {
+  assert.deepEqual(adminActionsFor('admin', 'exchange', false), ['dismiss', 'hide', 'delete']);
+  assert.deepEqual(adminActionsFor('admin', 'exchange', true), ['dismiss', 'unhide', 'delete']);
+  assert.deepEqual(adminActionsFor('moderator', 'exchange', false), ['dismiss', 'hide']);
+  assert.deepEqual(adminActionsFor('user', 'exchange', false), []);
+});
 test('adminActionsFor: unban only when the target is banned', () => {
   assert.deepEqual(adminActionsFor('admin', 'post', false), ['dismiss', 'hide', 'delete', 'warn', 'ban']);
   assert.deepEqual(adminActionsFor('admin', 'user', false), ['dismiss', 'warn', 'ban']);

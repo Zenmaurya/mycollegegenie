@@ -1,63 +1,8 @@
-import { fetchWithAuth } from '../lib/apiClient';
-import { supabase } from '../supabase';
-import { mapItem, type Listing } from '../lib/exchange';
+import { fetchWithAuth, getFreshToken } from '../lib/apiClient';
+import { config } from '../lib/config';
+import { mapItem, type draftToPayload, type Listing } from '../lib/exchange';
 
-export interface ExchangeItem {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  original_price?: number;
-  type: string;
-  category: string;
-  college: string;
-  image_url?: string;
-  created_at: string;
-  is_active: boolean;
-  exchange_for?: string;
-  contact_phone?: string;
-  contact_instagram?: string;
-  seller_name?: string;
-  is_mine?: boolean | number;
-  seller_avatar?: string;
-}
-
-export const fetchExchangeItems = async (filters?: {
-  type?: string;
-  college?: string;
-  q?: string;
-}): Promise<ExchangeItem[]> => {
-  const queryParams = new URLSearchParams();
-  if (filters?.type && filters.type !== 'All' && filters.type !== 'all') {
-    queryParams.append('type', filters.type);
-  }
-  if (filters?.college && filters.college !== 'All Campuses' && filters.college !== 'all') {
-    queryParams.append('college', filters.college);
-  }
-  if (filters?.q) {
-    queryParams.append('q', filters.q);
-  }
-
-  return await fetchWithAuth(`/api/exchange?${queryParams.toString()}`);
-};
-
-export const fetchUserListings = async (): Promise<ExchangeItem[]> => {
-  return await fetchWithAuth('/api/exchange/me');
-};
-
-export const createExchangeItem = async (itemData: Partial<ExchangeItem>): Promise<any> => {
-  return await fetchWithAuth('/api/exchange', {
-    method: 'POST',
-    body: JSON.stringify(itemData),
-  });
-};
-
-export const deleteExchangeItem = async (id: string): Promise<void> => {
-  await fetchWithAuth(`/api/exchange/${id}`, {
-    method: 'DELETE',
-  });
-};
-
+export type ExchangeBody = ReturnType<typeof draftToPayload>;
 export interface ExchangeFilters { q?: string; type?: string; category?: string; college?: string; sort?: string }
 export interface ExchangePage { items: Listing[]; nextCursor: string | null; total: number }
 export interface ExchangeSections { picks: Listing[]; free: Listing[]; categories: { category: string; count: number }[] }
@@ -80,6 +25,24 @@ export const ExchangeService = {
   },
 
   get: async (id: string): Promise<Listing> => mapItem(await fetchWithAuth(`/api/exchange/${encodeURIComponent(id)}`)),
+
+  /** Own items, hidden ones included (an owner-deleted one has hidden_reason 'owner'). */
+  mine: async (): Promise<Listing[]> => ((await fetchWithAuth('/api/exchange/me')) as unknown[]).map(mapItem),
+
+  create: (body: ExchangeBody): Promise<{ id: number }> => fetchWithAuth('/api/exchange', { method: 'POST', body: JSON.stringify(body) }),
+
+  // PATCH replaces the whole item: always pass the full payload.
+  update: (id: string, body: ExchangeBody): Promise<{ ok: true }> =>
+    fetchWithAuth(`/api/exchange/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(body) }),
+
+  uploadImage: async (file: Blob): Promise<string> => {
+    const token = await getFreshToken();
+    const form = new FormData();
+    form.append('image', file, 'photo');
+    const res = await fetch(`${config.apiUrl}/api/exchange/upload-image`, { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {}, body: form });
+    if (!res.ok) throw new Error((await res.json().catch(() => null))?.error || 'Photo upload failed');
+    return (await res.json()).url;
+  },
 
   setStatus: (id: string, status: 'active' | 'reserved' | 'sold'): Promise<{ ok: true; status: string }> =>
     fetchWithAuth(`/api/exchange/${encodeURIComponent(id)}/status`, { method: 'POST', body: JSON.stringify({ status }) }),

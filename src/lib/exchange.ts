@@ -25,7 +25,7 @@ export interface Listing {
   college: string; collegeId: string | null; area: string; photos: string[]; status: ExchangeStatus;
   createdAt: string; sellerName: string; sellerAvatar: string | null; isMine: boolean; badge: ExchangeBadge;
   /** Detail only */
-  description: string; details: Record<string, unknown>; views: number; isHidden: boolean;
+  description: string; details: Record<string, unknown>; views: number; isHidden: boolean; hiddenReason: string | null;
   sellerUsername: string | null; sellerCollege: string; phone: string; instagram: string;
 }
 
@@ -57,6 +57,7 @@ export function mapItem(raw: any): Listing {
     details: raw.details && typeof raw.details === 'object' ? raw.details : {},
     views: Number(raw.views) || 0,
     isHidden: Boolean(raw.is_hidden),
+    hiddenReason: raw.hidden_reason ?? null,
     sellerUsername: raw.seller_username ?? null,
     sellerCollege: raw.seller_college || '',
     phone: raw.contact_phone || '',
@@ -82,4 +83,79 @@ export function badgeLabel(i: Pick<Listing, 'badge' | 'status'>): string | null 
   if (i.badge === 'price_drop') return 'Price drop';
   if (i.badge === 'just_listed') return 'Just listed';
   return null;
+}
+
+// ---- Sell wizard ----
+export const MAX_PHOTOS = 8;
+export const MAX_PRICE = 500000;
+export const WIZARD_STEPS = ['Photos', 'Details', 'Price', 'Pickup', 'Preview & publish'] as const;
+export const CONDITIONS: { v: string; l: string }[] = Object.entries(CONDITION_LABEL).map(([v, l]) => ({ v, l }));
+export const RENT_PERIODS: { v: string; l: string }[] = [{ v: 'month', l: 'Per month' }, { v: 'week', l: 'Per week' }, { v: 'day', l: 'Per day' }];
+export const TYPE_CHOICES: { v: ExchangeType; l: string }[] = [{ v: 'Sell', l: 'Sell' }, { v: 'Rent', l: 'Rent' }, { v: 'Donate', l: 'Free' }, { v: 'Exchange', l: 'Exchange' }];
+
+export interface ExchangeDraft {
+  photos: string[]; title: string; category: string; condition: string; description: string;
+  brand: string; yearBought: string; hasBill: boolean | null;
+  type: ExchangeType; price: string; originalPrice: string; rentPeriod: string; exchangeFor: string;
+  collegeId: string; collegeName: string; area: string; phone: string;
+}
+
+export const emptyDraft = (): ExchangeDraft => ({
+  photos: [], title: '', category: '', condition: '', description: '', brand: '', yearBought: '', hasBill: null,
+  type: 'Sell', price: '', originalPrice: '', rentPeriod: 'month', exchangeFor: '', collegeId: '', collegeName: '', area: '', phone: '',
+});
+
+const paid = (d: Pick<ExchangeDraft, 'type'>) => d.type === 'Sell' || d.type === 'Rent';
+const validPrice = (s: string) => s.trim() !== '' && Number.isFinite(Number(s)) && Number(s) >= 0 && Number(s) <= MAX_PRICE;
+
+const STEP_CHECKS: ((d: ExchangeDraft) => string | null)[] = [
+  (d) => (d.photos.length < 1 ? 'Add at least 1 photo.' : null),
+  (d) => {
+    const t = d.title.trim().length;
+    if (t < 5 || t > 120) return 'Title must be 5 to 120 characters.';
+    if (!(EXCHANGE_CATEGORIES as readonly string[]).includes(d.category)) return 'Pick a category.';
+    if (!CONDITION_LABEL[d.condition]) return 'Pick the condition.';
+    if (d.description.trim().length > 2000) return 'Description is too long (max 2000).';
+    if (d.yearBought.trim() && !/^(19|20)\d{2}$/.test(d.yearBought.trim())) return 'Enter a valid year bought.';
+    return null;
+  },
+  (d) => {
+    if (paid(d) && !(validPrice(d.price) && Number(d.price) > 0)) return `Price must be between ₹1 and ₹${MAX_PRICE.toLocaleString('en-IN')}.`;
+    if (paid(d) && d.originalPrice.trim() && !validPrice(d.originalPrice)) return 'Original price is not valid.';
+    if (d.type === 'Rent' && !RENT_PERIODS.some((p) => p.v === d.rentPeriod)) return 'Pick a rent period.';
+    if (d.type === 'Exchange' && !d.exchangeFor.trim()) return 'Say what you would take in exchange.';
+    return null;
+  },
+  (d) => (d.area.trim().length > 120 ? 'Area is too long (max 120).' : d.phone && !/^[6-9]\d{9}$/.test(d.phone) ? 'Enter a valid 10-digit mobile number.' : null),
+  () => null,
+];
+export const stepProblem = (d: ExchangeDraft, step: number): string | null => STEP_CHECKS[step]?.(d) ?? null;
+export function exchangeProblem(d: ExchangeDraft): string | null {
+  for (let i = 0; i < STEP_CHECKS.length; i++) { const p = stepProblem(d, i); if (p) return p; }
+  return null;
+}
+
+/** Snake_case body for POST/PATCH /api/exchange. PATCH replaces the whole item, so every field is always sent. */
+export function draftToPayload(d: ExchangeDraft) {
+  const details: Record<string, unknown> = {};
+  if (d.brand.trim()) details.brand = d.brand.trim();
+  if (d.yearBought.trim()) details.year_bought = Number(d.yearBought);
+  if (d.hasBill !== null) details.has_bill = d.hasBill;
+  return {
+    type: d.type, category: d.category, condition: d.condition, title: d.title.trim(), description: d.description.trim() || null,
+    price: paid(d) ? Number(d.price) : 0, original_price: paid(d) && d.originalPrice.trim() ? Number(d.originalPrice) : null,
+    rent_period: d.type === 'Rent' ? d.rentPeriod : null, exchange_for: d.type === 'Exchange' ? d.exchangeFor.trim() : null,
+    photos: d.photos, phone: d.phone || null, area: d.area.trim() || null, college_id: d.collegeId || null, details: Object.keys(details).length ? details : null,
+  };
+}
+
+export function itemToDraft(i: Listing): ExchangeDraft {
+  const phone = i.phone.replace(/\D/g, '').slice(-10); // old items may store +91 or spaces
+  const { brand, year_bought, has_bill } = i.details;
+  return {
+    photos: i.photos, title: i.title, category: i.category, condition: i.condition, description: i.description,
+    brand: typeof brand === 'string' ? brand : '', yearBought: year_bought == null ? '' : String(year_bought), hasBill: typeof has_bill === 'boolean' ? has_bill : null,
+    type: i.type, price: i.price ? String(i.price) : '', originalPrice: i.originalPrice == null ? '' : String(i.originalPrice), rentPeriod: i.rentPeriod ?? 'month', exchangeFor: i.exchangeFor,
+    collegeId: i.collegeId ?? '', collegeName: i.college, area: i.area, phone: /^[6-9]\d{9}$/.test(phone) ? phone : '',
+  };
 }

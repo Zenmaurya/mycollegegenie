@@ -14,7 +14,6 @@ import { useAuth } from '../context/AuthContext';
 import { submitEvent, submitNews } from '../services/newsService';
 import { uploadResource } from '../services/resourceService';
 import { createPGListing } from '../services/pgService';
-import { createExchangeItem } from '../services/exchangeService';
 import { fetchWithAuth } from '../lib/apiClient';
 
 interface EventRequestModalProps {
@@ -97,19 +96,9 @@ export function EventRequestModal({ isOpen, onClose, title = 'Publish Your Event
         handleClose();
         window.location.reload();
       } else if (title === 'Post an Ad') {
-        await createExchangeItem({
-          title: formData.itemTitle,
-          category: formData.category || 'Books',
-          type: formData.transactionType || 'sell',
-          price: formData.transactionType === 'sell' ? Number(formData.price) || 0 : 0,
-          description: formData.description || '',
-          college: appUser?.college || 'St. Stephen\'s College',
-          contact_phone: formData.contactDetails || '',
-          is_active: true,
-        });
-        toast.success('Exchange ad posted successfully!');
+        // Ads need photos and more details now: hand over to the sell flow
         handleClose();
-        window.location.reload();
+        window.location.assign('/exchange/sell');
       } else if (title === 'Contribute Resource') {
         await uploadResource({
           title: formData.resourceTitle,

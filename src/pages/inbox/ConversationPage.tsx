@@ -17,7 +17,7 @@ import { CONVERSATIONS_KEY, InboxPage } from '../InboxPage';
 
 const status = (e: unknown) => (e as { status?: number }).status;
 const errText = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong. Try again.');
-const listingHref = (l: NonNullable<Conversation['listing']>) => (l.type === 'stay' ? `/stays/${encodeURIComponent(l.id)}` : l.type === 'exchange' ? '/campus-exchange' : '/stays');
+const listingHref = (l: NonNullable<Conversation['listing']>) => (l.type === 'stay' ? `/stays/${encodeURIComponent(l.id)}` : l.type === 'exchange' ? `/exchange/${encodeURIComponent(l.id)}` : '/stays');
 
 // A transformed ancestor breaks position: fixed, so the mobile composer is portaled (see NoteActions).
 function useIsDesktop() {

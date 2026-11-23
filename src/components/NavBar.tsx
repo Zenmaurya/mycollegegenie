@@ -24,13 +24,13 @@ const NAV_LINKS = [
   { to: '/notes', icon: LibraryBig, label: 'Browse' },
   { to: '/playlists', icon: Youtube, label: 'Playlists' },
   { to: '/stays', icon: BedDouble, label: 'Find PG' },
-  { to: '/campus-exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
+  { to: '/exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
 ] as const;
 
 const MOBILE_BOTTOM_NAV_LINKS = [
   { to: '/', icon: Home, label: 'Home' },
   { to: '/notes', icon: LibraryBig, label: 'Browse' },
-  { to: '/campus-exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
+  { to: '/exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
 ] as const;
 
 const MOBILE_NAV_LINKS = [

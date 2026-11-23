@@ -5,6 +5,7 @@ import type { ForumPost, Resource } from '../types';
 import { mapPost } from './feed';
 import { mapNote } from './notes';
 import { mapStay, type Stay } from './stays';
+import { mapItem, type Listing } from './exchange';
 
 // Mirrors backend/src/utils/usernames.js
 const RESERVED = ['admin', 'mcg', 'support', 'settings', 'help', 'api', 'u', 'you', 'notes', 'stays', 'login', 'explore', 'inbox', 'profile', 'about', 'root', 'moderator', 'official'];
@@ -87,13 +88,12 @@ export function mapProfile(raw: any): Profile {
 
 export const mapStats = (raw: any): ProfileStats => ({ posts: Number(raw?.posts) || 0, answers: Number(raw?.answers) || 0, notes: Number(raw?.notes) || 0, joined: raw?.joined || '' });
 
-export interface ExchangeCard { id: string; title: string; price: number; imageUrl: string | null; type: string }
 export type ProfileItem =
   | { kind: 'post'; post: ForumPost }
   | { kind: 'comment'; id: string; postId: string; postTitle: string; content: string; createdAt: string }
   | { kind: 'note'; note: Resource }
   | { kind: 'stay'; stay: Stay }
-  | { kind: 'exchange'; item: ExchangeCard };
+  | { kind: 'exchange'; item: Listing };
 
 /** One tab row to a typed item. Listings and saved rows carry their own `kind`; null for an unknown one. */
 export function mapProfileItem(tab: ProfileTab, raw: any): ProfileItem | null {
@@ -103,7 +103,7 @@ export function mapProfileItem(tab: ProfileTab, raw: any): ProfileItem | null {
     case 'comment': return { kind, id: raw.id, postId: raw.post_id, postTitle: raw.post_title || '', content: raw.content || '', createdAt: raw.created_at || '' };
     case 'note': return { kind, note: mapNote(raw) };
     case 'stay': return { kind, stay: mapStay(raw) };
-    case 'exchange': return { kind, item: { id: raw.id, title: raw.title || '', price: Number(raw.price) || 0, imageUrl: raw.image_url || null, type: raw.type || '' } };
+    case 'exchange': return { kind, item: mapItem(raw) };
     default: return null;
   }
 }
