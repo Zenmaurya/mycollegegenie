@@ -8,14 +8,18 @@ import { useResources } from '../../context/ResourceContext';
 import { resolveAvatar } from '../../constants/avatars';
 import { courseShort } from '../../lib/notes';
 import { PROFILE_TABS, tabFromParam, type Profile, type ProfileItem, type ProfileStats, type ProfileTab } from '../../lib/profiles';
+import { NO_RELATION, type Relation } from '../../lib/people';
 import { formatRent } from '../../lib/stays';
 import { timeAgo } from '../../lib/feed';
-import { ProfileService } from '../../services/profileService';
+import type { ListName } from '../../services/peopleService';
+import { ProfileService, type ProfileCounts } from '../../services/profileService';
 import { VerifiedBadge } from '../../components/VerifiedBadge';
 import { PostCard } from '../../components/feed/PostCard';
 import { NoteCard } from '../../components/notes/NoteCard';
 import { StayCard } from '../../components/stays/StayCard';
 import { MessageButton } from '../../components/inbox/MessageButton';
+import { PersonList } from '../../components/people/PersonList';
+import { RelationButtons } from '../../components/people/RelationButtons';
 import { ReportSheet } from '../../components/communities/ReportSheet';
 import { Avatar } from '../../components/ui/Avatar';
 import { Badge } from '../../components/ui/Badge';
@@ -88,7 +92,9 @@ function TabPanel({ username, tab }: { username: string; tab: ProfileTab }) {
   );
 }
 
-function Header({ profile, stats, isOwner, canMessage }: { profile: Profile; stats: ProfileStats; isOwner: boolean; canMessage?: boolean }) {
+const LISTS: { id: ListName; label: string }[] = [{ id: 'followers', label: 'Followers' }, { id: 'following', label: 'Following' }, { id: 'connections', label: 'Connections' }];
+
+function Header({ profile, stats, counts, relation, isOwner, canMessage, list }: { profile: Profile; stats: ProfileStats; counts: ProfileCounts; relation?: Relation; isOwner: boolean; canMessage?: boolean; list: ListName | null }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -122,9 +128,23 @@ function Header({ profile, stats, isOwner, canMessage }: { profile: Profile; sta
           <Menu label="Profile actions" items={[{ label: 'Copy link', onSelect: () => void copy() }, ...(isOwner ? [] : [{ label: 'Report user', onSelect: report, danger: true }])]} />
         </div>
       </div>
-      {!isOwner && canMessage !== false && <MessageButton target={{ userId: profile.id }} className="w-full sm:w-auto" />}
+      {!isOwner && canMessage !== false && (
+        <div className="flex flex-wrap items-center gap-2">
+          <MessageButton target={{ userId: profile.id }} />
+          <Fragment key={profile.id}><RelationButtons userId={profile.id} relation={relation ?? NO_RELATION} /></Fragment>
+        </div>
+      )}
       {profile.bio && <p className="whitespace-pre-line text-[15px] text-ink">{profile.bio}</p>}
       {profile.interests.length > 0 && <p className="text-[13px] text-ink-muted">{profile.interests.join(' · ')}</p>}
+      <p className="flex flex-wrap gap-x-4 text-[15px] text-ink-muted">
+        {LISTS.map(({ id, label }) => {
+          const text = <><b className="text-ink">{counts[id]}</b> {label.toLowerCase()}</>;
+          // the lists need a login, so visitors just see the numbers
+          return user
+            ? <Link key={id} to={list === id ? '?' : `?tab=${id}`} replace aria-current={list === id ? 'page' : undefined} className={`min-h-11 content-center hover:underline focus-visible:outline-2 focus-visible:outline-brand ${list === id ? 'font-semibold text-ink' : ''}`}>{text}</Link>
+            : <span key={id}>{text}</span>;
+        })}
+      </p>
       <dl className="grid grid-cols-4 gap-2 rounded-card bg-surface p-3 text-center shadow-card">
         {numbers.map(([k, v]) => (
           <div key={k} className="flex flex-col-reverse"><dt className="text-[12px] text-ink-muted">{k}</dt><dd className="text-[17px] font-bold text-ink">{v || (k === 'Joined' ? '-' : 0)}</dd></div>
@@ -158,7 +178,9 @@ export function UserProfilePage() {
       </>
     );
   }
-  const { profile, stats, isOwner, canMessage } = q.data;
+  const { profile, stats, isOwner, canMessage, counts, relation } = q.data;
+  const listParam = LISTS.find((l) => l.id === params.get('tab'));
+  const list = user && listParam ? listParam.id : null; // list API needs a login
   const tab = tabFromParam(params.get('tab'), isOwner);
   const tabs = PROFILE_TABS.filter((t) => t.id !== 'saved' || isOwner);
   return (
@@ -168,11 +190,13 @@ export function UserProfilePage() {
         {/* crawlers are logged out: a logged-out 200 means the profile is public, so only signed-in views are noindex */}
         {user && <meta name="robots" content="noindex" />}
       </Helmet>
-      <Header profile={profile} stats={stats} isOwner={isOwner} canMessage={canMessage} />
-      <Tabs label="Profile sections" items={tabs} value={tab} onChange={(id) => setParams(id === 'posts' ? {} : { tab: id }, { replace: true })} />
-      <div role="tabpanel" aria-labelledby={`tab-${tab}`}>
-        <Fragment key={`${profile.username}-${tab}`}><TabPanel username={profile.username} tab={tab} /></Fragment>
-      </div>
+      <Header profile={profile} stats={stats} counts={counts} relation={relation} isOwner={isOwner} canMessage={canMessage} list={list} />
+      <Tabs label="Profile sections" items={tabs} value={list ? '' : tab} onChange={(id) => setParams(id === 'posts' ? {} : { tab: id }, { replace: true })} />
+      {list
+        ? <div role="region" aria-label={listParam?.label}><Fragment key={`${profile.username}-${list}`}><PersonList username={profile.username} list={list} /></Fragment></div>
+        : <div role="tabpanel" aria-labelledby={`tab-${tab}`}>
+          <Fragment key={`${profile.username}-${tab}`}><TabPanel username={profile.username} tab={tab} /></Fragment>
+        </div>}
     </div>
   );
 }

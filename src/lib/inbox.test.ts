@@ -34,6 +34,9 @@ test('notificationHref maps item types, falls back to /inbox', () => {
   assert.strictEqual(h('request', 'conversation', 'c1'), '/inbox/c1');
   assert.strictEqual(h('request', 'conversation', null), '/inbox');
   assert.strictEqual(h('x', 'weird', 'z'), '/inbox');
+  assert.strictEqual(h('connect_request', 'user', 'u1'), '/people?tab=requests');
+  assert.strictEqual(h('connect_accepted', 'user', 'u1'), '/people?tab=connections');
+  assert.strictEqual(h('new_follower', 'user', 'u1'), '/people?tab=followers');
 });
 
 test('composerState: receiver of a pending request accepts, everyone else follows canSend', () => {

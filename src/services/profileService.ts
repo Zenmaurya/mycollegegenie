@@ -1,8 +1,10 @@
 import type { ModLogRow } from './reportService';
 import { fetchWithAuth } from '../lib/apiClient';
+import { mapRelation, type Relation } from '../lib/people';
 import { mapProfile, mapProfileItem, mapStats, type Profile, type ProfileItem, type ProfileStats, type ProfileTab } from '../lib/profiles';
 
-export type ProfileResult = { redirect: string } | { profile: Profile; stats: ProfileStats; isOwner: boolean; canMessage?: boolean };
+export type ProfileResult = { redirect: string } | { profile: Profile; stats: ProfileStats; isOwner: boolean; canMessage?: boolean; counts: ProfileCounts; relation?: Relation };
+export interface ProfileCounts { followers: number; following: number; connections: number }
 export interface ProfilePage { items: ProfileItem[]; nextCursor: string | null }
 
 const enc = encodeURIComponent;
@@ -25,7 +27,9 @@ export const ProfileService = {
   get: async (username: string): Promise<ProfileResult> => {
     const d = await fetchWithAuth(`/api/profiles/${enc(username)}`);
     if (d.redirect) return { redirect: d.redirect };
-    return { profile: mapProfile(d.profile), stats: mapStats(d.stats), isOwner: !!d.isOwner, canMessage: d.canMessage };
+    return { profile: mapProfile(d.profile), stats: mapStats(d.stats), isOwner: !!d.isOwner, canMessage: d.canMessage,
+      counts: { followers: Number(d.counts?.followers) || 0, following: Number(d.counts?.following) || 0, connections: Number(d.counts?.connections) || 0 },
+      ...(d.relation ? { relation: mapRelation(d.relation) } : {}) };
   },
 
   tab: async (username: string, tab: ProfileTab, cursor?: string): Promise<ProfilePage> => {

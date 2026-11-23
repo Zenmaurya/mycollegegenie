@@ -18,8 +18,9 @@ test('MODULES has Explore and no Forum', () => {
   assert.ok(!MODULES.some((m) => m.to.startsWith('/forum')));
 });
 
-test('EXPLORE_TILES has 10 tiles incl. Saved and Societies', () => {
+test('EXPLORE_TILES has 11 tiles incl. Saved, Societies and Find people', () => {
   assert.ok(EXPLORE_TILES.some((t) => t.to === '/c'));
-  assert.equal(EXPLORE_TILES.length, 10);
+  assert.equal(EXPLORE_TILES.length, 11);
+  assert.ok(EXPLORE_TILES.some((t) => t.to === '/people'));
   assert.ok(EXPLORE_TILES.find((t) => t.label === 'Saved')?.soon);
 });

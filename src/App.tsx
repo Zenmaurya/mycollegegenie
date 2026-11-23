@@ -60,6 +60,7 @@ const ContributorsPage = lazy(() => import('./pages/ContributorsPage').then(m =>
 const BlogPage = lazy(() => import('./pages/BlogPage').then(m => ({ default: m.BlogPage })));
 const DevUiPage = import.meta.env.DEV ? lazy(() => import('./pages/DevUiPage').then(m => ({ default: m.DevUiPage }))) : null;
 const ExplorePage = lazy(() => import('./pages/ExplorePage').then(m => ({ default: m.ExplorePage })));
+const FindPeoplePage = lazy(() => import('./pages/people/FindPeoplePage').then(m => ({ default: m.FindPeoplePage })));
 const InboxPage = lazy(() => import('./pages/InboxPage').then(m => ({ default: m.InboxPage })));
 const ConversationPage = lazy(() => import('./pages/inbox/ConversationPage').then(m => ({ default: m.ConversationPage })));
 const YouPage = lazy(() => import('./pages/YouPage').then(m => ({ default: m.YouPage })));
@@ -306,6 +307,7 @@ function AppContent() {
               <Route path="/c/:slug/manage" element={<ManageCommunityPage />} />
               <Route path="/c/:slug/events/new" element={<NewEventPage />} />
               <Route path="/c/:slug/:tab?" element={<CommunityPage />} />
+              <Route path="/people" element={<LoginOnly><FindPeoplePage /></LoginOnly>} />
               <Route path="/inbox" element={<LoginOnly><InboxPage /></LoginOnly>} />
               <Route path="/inbox/:id" element={<LoginOnly><ConversationPage /></LoginOnly>} />
               <Route path="/you" element={<YouPage />} />

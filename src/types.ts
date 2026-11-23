@@ -168,7 +168,7 @@ export interface ForumPost {
   community?: { slug: string; name: string; logoUrl: string | null; status: 'unverified' | 'official' | 'hidden' } | null;
 }
 
-export type FeedTab = 'foryou' | 'trending' | 'recent';
+export type FeedTab = 'foryou' | 'trending' | 'recent' | 'following';
 
 export type FeedItem =
   | { kind: 'post'; post: ForumPost }

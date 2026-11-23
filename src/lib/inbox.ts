@@ -44,6 +44,10 @@ export function groupByDay<T extends { created_at: string }>(items: T[], now: Da
 
 /** Where tapping a notification goes. Rejections link to where the owner can fix or retry. */
 export function notificationHref(n: Pick<InboxNotification, 'type' | 'itemType' | 'itemId'>): string {
+  // the notification carries the actor's id, not a username, so these land on the lists that show them
+  if (n.type === 'connect_request') return '/people?tab=requests';
+  if (n.type === 'connect_accepted') return '/people?tab=connections';
+  if (n.type === 'new_follower') return '/people?tab=followers';
   const id = n.itemId ? encodeURIComponent(n.itemId) : '';
   if (!id) return '/inbox';
   if (n.type === 'upload_rejected') return '/notes/upload';

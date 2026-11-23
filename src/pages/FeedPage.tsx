@@ -25,12 +25,13 @@ const TABS: { id: FeedTab; label: string }[] = [
   { id: 'trending', label: 'Trending' },
   { id: 'recent', label: 'Recent' },
 ];
+const FOLLOWING_TAB = { id: 'following' as const, label: 'Following' };
 const TAB_KEY = 'mcg-feed-tab';
 
 function readTab(): FeedTab {
   try {
     const t = sessionStorage.getItem(TAB_KEY);
-    if (t === 'foryou' || t === 'trending' || t === 'recent') return t;
+    if (t === 'foryou' || t === 'trending' || t === 'recent' || t === 'following') return t;
   } catch { /* storage blocked */ }
   return 'foryou';
 }
@@ -52,7 +53,9 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
   const { user, appUser } = useAuth();
   const { open, postedAt } = useComposer();
   const [params, setParams] = useSearchParams();
-  const [tab, setTab] = useState<FeedTab>(readTab);
+  const [storedTab, setTab] = useState<FeedTab>(readTab);
+  const tab: FeedTab = storedTab === 'following' && !user ? 'foryou' : storedTab; // Following needs a login
+  const tabs = user ? [TABS[0], FOLLOWING_TAB, ...TABS.slice(1)] : TABS;
   const [courseOpen, setCourseOpen] = useState(false);
   const rawTopic = params.get('topic') || '';
   const topic = (FEED_TOPIC_ORDER as readonly string[]).includes(rawTopic) ? rawTopic : '';
@@ -126,7 +129,7 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
 
       <DeadlineBanner />
 
-      <Tabs label="Feed" items={TABS} value={tab} onChange={chooseTab} />
+      <Tabs label="Feed" items={tabs} value={tab} onChange={chooseTab} />
 
       <div className="-mx-3 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:px-0" aria-label="Filters" role="group">
         <Chip selected={!topic} onToggle={() => setFilter('topic', '')}>All</Chip>
@@ -166,9 +169,11 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
         {q.isSuccess && items.length === 0 && (
           <div className="rounded-card bg-surface shadow-card">
             <EmptyState
-              title={topic ? `No posts in ${topicLabel(topic)} yet.` : course ? 'No posts for this course yet.' : 'Nothing here yet'}
-              body={topic || course ? 'Ask the first question!' : 'Be the first to ask a question!'}
-              action={<button type="button" onClick={open} className="min-h-11 rounded-full bg-ink px-5 text-[15px] font-semibold text-white">Create post</button>}
+              title={tab === 'following' ? 'No posts from people you follow' : topic ? `No posts in ${topicLabel(topic)} yet.` : course ? 'No posts for this course yet.' : 'Nothing here yet'}
+              body={tab === 'following' ? 'Follow people to see their posts here.' : topic || course ? 'Ask the first question!' : 'Be the first to ask a question!'}
+              action={tab === 'following'
+                ? <Link to="/people" className="inline-flex min-h-11 items-center rounded-full bg-ink px-5 text-[15px] font-semibold text-white focus-visible:outline-2 focus-visible:outline-brand">Find people</Link>
+                : <button type="button" onClick={open} className="min-h-11 rounded-full bg-ink px-5 text-[15px] font-semibold text-white">Create post</button>}
             />
           </div>
         )}
