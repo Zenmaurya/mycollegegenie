@@ -34,6 +34,12 @@ test('notificationHref maps item types, falls back to /inbox', () => {
   assert.strictEqual(h('request', 'conversation', 'c1'), '/inbox/c1');
   assert.strictEqual(h('request', 'conversation', null), '/inbox');
   assert.strictEqual(h('x', 'weird', 'z'), '/inbox');
+  const p = (type: string, actorUsername?: string | null) => notificationHref({ type, itemType: 'user', itemId: 'a', actorUsername });
+  assert.strictEqual(p('new_follower', 'asha k'), '/u/asha%20k');
+  assert.strictEqual(p('connect_accepted', 'asha'), '/u/asha');
+  assert.strictEqual(p('new_follower', null), '/people?tab=followers');
+  assert.strictEqual(p('connect_accepted'), '/people?tab=connections');
+  assert.strictEqual(p('connect_request', 'asha'), '/people?tab=requests');
   assert.strictEqual(h('connect_request', 'user', 'u1'), '/people?tab=requests');
   assert.strictEqual(h('connect_accepted', 'user', 'u1'), '/people?tab=connections');
   assert.strictEqual(h('new_follower', 'user', 'u1'), '/people?tab=followers');

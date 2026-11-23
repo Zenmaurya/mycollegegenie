@@ -115,7 +115,7 @@ function LoginOnly({ children }: { children: React.ReactNode }) {
   const { user, isAuthLoading } = useAuth();
   const location = useLocation();
   if (isAuthLoading) return <PageSpinner />;
-  if (!user) return <Navigate to="/login" replace state={{ from: { pathname: location.pathname } }} />;
+  if (!user) return <Navigate to="/login" replace state={{ from: { pathname: location.pathname + location.search } }} />;
   return <>{children}</>;
 }
 

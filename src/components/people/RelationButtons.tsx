@@ -27,18 +27,23 @@ export function RelationButtons({ userId, relation, compact }: { userId: string;
 
   const run = async (action: Action) => {
     if (!user) { navigate('/login', { state: { from: { pathname: location.pathname + location.search } } }); return; }
+    if (action === 'remove' && !window.confirm('Remove this connection? You will still follow each other.')) return;
     const before = rel;
     setRel(applyAction(rel, action));
     setBusy(true);
     try {
       const res = await RUN[action](userId);
       if (res && typeof res === 'object' && 'connection' in res) setRel(res as Relation); // follow/connect/accept answer with the real state
-      void qc.invalidateQueries({ queryKey: ['profile'] });
-      void qc.invalidateQueries({ queryKey: ['people', 'requests'] });
     } catch (e) {
       setRel(before);
       toast.error(e instanceof Error ? e.message : 'Something went wrong. Try again.'); // 404 unavailable / 429 daily limit carry the server's text
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+      void qc.invalidateQueries({ queryKey: ['profile'] });
+      void qc.invalidateQueries({ queryKey: ['people', 'requests'] });
+      void qc.invalidateQueries({ queryKey: ['people'], refetchType: 'none' }); // other cards/lists refetch on next view
+      void qc.invalidateQueries({ queryKey: ['feed', 'following'], refetchType: 'none' });
+    }
   };
   const size = compact ? 'sm' : 'md';
   return (

@@ -191,7 +191,7 @@ export function UserProfilePage() {
         {user && <meta name="robots" content="noindex" />}
       </Helmet>
       <Header profile={profile} stats={stats} counts={counts} relation={relation} isOwner={isOwner} canMessage={canMessage} list={list} />
-      <Tabs label="Profile sections" items={tabs} value={list ? '' : tab} onChange={(id) => setParams(id === 'posts' ? {} : { tab: id }, { replace: true })} />
+      <Tabs label="Profile sections" items={tabs} value={tab} onChange={(id) => setParams(id === 'posts' ? {} : { tab: id }, { replace: true })} />
       {list
         ? <div role="region" aria-label={listParam?.label}><Fragment key={`${profile.username}-${list}`}><PersonList username={profile.username} list={list} /></Fragment></div>
         : <div role="tabpanel" aria-labelledby={`tab-${tab}`}>

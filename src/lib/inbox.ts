@@ -2,7 +2,7 @@
  * Pure helpers for /inbox (no network/env imports so they run in node:test).
  */
 export interface ChatMessage { id: string; mine: boolean; content: string; is_system: number | boolean; created_at: string }
-export interface InboxNotification { id: string; type: string; itemType: string | null; itemId: string | null; text: string; read: boolean; createdAt: string }
+export interface InboxNotification { id: string; type: string; itemType: string | null; itemId: string | null; text: string; read: boolean; createdAt: string; actorUsername?: string | null }
 
 export const MAX_MESSAGE = 2000;
 export const WAIT_REASON = 'Wait until they accept your request';
@@ -43,11 +43,11 @@ export function groupByDay<T extends { created_at: string }>(items: T[], now: Da
 }
 
 /** Where tapping a notification goes. Rejections link to where the owner can fix or retry. */
-export function notificationHref(n: Pick<InboxNotification, 'type' | 'itemType' | 'itemId'>): string {
-  // the notification carries the actor's id, not a username, so these land on the lists that show them
+export function notificationHref(n: Pick<InboxNotification, 'type' | 'itemType' | 'itemId' | 'actorUsername'>): string {
+  const profile = n.actorUsername ? `/u/${encodeURIComponent(n.actorUsername)}` : null; // null when the actor is private or gone
   if (n.type === 'connect_request') return '/people?tab=requests';
-  if (n.type === 'connect_accepted') return '/people?tab=connections';
-  if (n.type === 'new_follower') return '/people?tab=followers';
+  if (n.type === 'connect_accepted') return profile ?? '/people?tab=connections';
+  if (n.type === 'new_follower') return profile ?? '/people?tab=followers';
   const id = n.itemId ? encodeURIComponent(n.itemId) : '';
   if (!id) return '/inbox';
   if (n.type === 'upload_rejected') return '/notes/upload';

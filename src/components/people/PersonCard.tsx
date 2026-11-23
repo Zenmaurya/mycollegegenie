@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { Avatar } from '../ui/Avatar';
 import { RelationButtons } from './RelationButtons';
 import { courseShort } from '../../lib/notes';
 import { relationLabel, type Person } from '../../lib/people';
 
 export function PersonCard({ person }: { person: Person }) {
+  const { user } = useAuth();
   const details = [person.collegeName, person.course && courseShort(person.course), person.batchYear && `Batch ${person.batchYear}`].filter(Boolean).join(' · ');
   const status = [relationLabel(person.relation), person.mutualCount ? `${person.mutualCount} mutual` : ''].filter(Boolean).join(' · ');
   return (
@@ -18,7 +20,7 @@ export function PersonCard({ person }: { person: Person }) {
           {status && <span className="block truncate text-[13px] text-ink-muted">{status}</span>}
         </span>
       </Link>
-      <RelationButtons userId={person.id} relation={person.relation} compact />
+      {person.id !== user?.id && <RelationButtons userId={person.id} relation={person.relation} compact />}
     </div>
   );
 }
