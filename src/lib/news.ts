@@ -1,4 +1,12 @@
 /** True when a notice title explicitly names an academic cycle that has ended. */
+export async function loadNewsWithFallback<T>(
+  loadPrimary: () => Promise<T[]>,
+  loadFallback: () => Promise<T[]>,
+): Promise<T[]> {
+  const items = await loadPrimary();
+  return items.length > 0 ? items : loadFallback();
+}
+
 export function mentionsPastAcademicCycle(title: string, academicEndYear?: number): boolean {
   const now = new Date();
   const currentCycleEnd = academicEndYear ?? now.getFullYear() + (now.getMonth() >= 5 ? 1 : 0);
@@ -13,3 +21,4 @@ export function mentionsPastAcademicCycle(title: string, academicEndYear?: numbe
   }
   return false;
 }
+
