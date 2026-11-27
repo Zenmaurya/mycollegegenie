@@ -46,13 +46,8 @@ export const getNews = async (
       } as News);
     });
   } catch (error) {
-    const isConnRefused = error instanceof TypeError && error.message.includes('fetch');
-    if (isConnRefused) {
-      console.warn('[newsService] Backend unavailable — falling back to mock data.');
-    } else {
-      console.error('[newsService] getNews error:', error);
-    }
-    return [];
+    console.error('[newsService] getNews error:', error);
+    throw error;
   }
 };
 
@@ -179,3 +174,4 @@ export const submitNews = async (
     }),
   });
 };
+
