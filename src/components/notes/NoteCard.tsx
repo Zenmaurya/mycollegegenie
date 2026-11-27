@@ -50,9 +50,9 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
 
   return (
     <article className="relative flex h-full flex-col rounded-card bg-surface shadow-card transition-shadow hover:shadow-float">
-      <div className={`relative aspect-[3/4] overflow-hidden rounded-t-card ${tint}`}>
+      <div className={`relative aspect-[4/3] overflow-hidden rounded-t-card ${tint}`}>
         {note.thumbnailUrl
-          ? <img src={note.thumbnailUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
+          ? <img src={note.thumbnailUrl} alt="" loading="lazy" className="h-full w-full bg-white object-cover object-top" />
           : <span className="flex h-full w-full items-center justify-center"><Icon className="h-14 w-14 opacity-70" /></span>}
         <span className="absolute left-2 top-2"><Badge tone="neutral">{label}{note.type === 'PYQ' && year ? ` ${year}` : ''}</Badge></span>
       </div>

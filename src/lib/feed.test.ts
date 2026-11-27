@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { shouldLoadMore, applyVote, removePostFromFeed, mapFeedPage, feedQuery, signupCardAfter, mapFeedItem, eventLink, outsidersAllowed, timeAgo } from './feed';
+import { shouldLoadMore, applyVote, removePostFromFeed, mapFeedPage, feedQuery, signupCardAfter, mapFeedItem, eventLink, outsidersAllowed, timeAgo, uniqueByTitle } from './feed';
+
+test('uniqueByTitle drops repeated titles (case/space-insensitive) and keeps untitled items', () => {
+  const out = uniqueByTitle([{ t: 'Placement  Drive' }, { t: 'placement drive' }, { t: null }, { t: null }, { t: 'Other' }], (x) => x.t);
+  assert.deepStrictEqual(out.map((x) => x.t), ['Placement  Drive', null, null, 'Other']);
+});
 
 const rawPost = (images: unknown) => ({
   feedType: 'forum_post', id: 'p1', title: 'T', content: 'C', author_id: 'u1', author_name: 'Aman',

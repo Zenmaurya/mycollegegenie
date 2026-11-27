@@ -6,7 +6,7 @@ const FRAME = 'aspect-[4/3] w-full rounded-card border border-line bg-canvas';
 const NOTICE = `${FRAME} flex items-center justify-center px-4 text-center text-[15px] text-ink-muted`;
 
 /** First two pages of a PDF on canvas. pdfjs is imported here only, so it stays out of the main bundle. */
-function PdfPages({ url }: { url: string }) {
+function PdfPages({ url, thumb }: { url: string; thumb?: string | null }) {
   const host = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
 
@@ -38,15 +38,15 @@ function PdfPages({ url }: { url: string }) {
   if (state === 'failed') return <p className={NOTICE}>Preview is not available. Use Open to read the full file.</p>;
   return (
     <>
-      {state === 'loading' && <Skeleton className={FRAME} />}
+      {state === 'loading' && (thumb ? <img src={thumb} alt="" className="h-auto w-full rounded-card border border-line bg-white" /> : <Skeleton className={FRAME} />)}
       <div ref={host} className="space-y-3" />
     </>
   );
 }
 
-export default function NotePreview({ link, title }: { link: string; title: string }) {
+export default function NotePreview({ link, title, thumb }: { link: string; title: string; thumb?: string | null }) {
   const { kind, id } = previewKind(link);
-  if (kind === 'pdf') return <PdfPages url={link} />;
+  if (kind === 'pdf') return <PdfPages url={link} thumb={thumb} />;
   if (kind === 'drive') return <iframe title={title} src={`https://drive.google.com/file/d/${id}/preview`} className={FRAME} allow="autoplay" loading="lazy" />;
   if (kind === 'youtube') return <iframe title={title} src={`https://www.youtube.com/embed/${id}`} className={FRAME} allow="encrypted-media; picture-in-picture" allowFullScreen loading="lazy" />;
   if (kind === 'image') return <img src={link} alt={title} className="h-auto w-full rounded-card border border-line" />;

@@ -96,6 +96,19 @@ export function mapFeedPage(raw: any): FeedPage {
   return { items, nextCursor: !Array.isArray(raw) && typeof raw?.nextCursor === 'string' ? raw.nextCursor : null };
 }
 
+/** Keeps the first item per title (scraped college notices are sometimes saved twice). */
+export function uniqueByTitle<T>(list: T[], title: (x: T) => string | null): T[] {
+  const seen = new Set<string>();
+  return list.filter((x) => {
+    const t = title(x);
+    if (t == null) return true;
+    const k = t.toLowerCase().replace(/\s+/g, ' ').trim();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 export function feedQuery(p: { tab: string; cursor?: string; topic?: string; course?: string }): string {
   const q = new URLSearchParams({ tab: p.tab });
   if (p.cursor) q.set('cursor', p.cursor);

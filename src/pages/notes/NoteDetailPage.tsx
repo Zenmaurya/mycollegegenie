@@ -110,9 +110,21 @@ export function NoteDetailPage() {
 
       <div className="grid gap-6 md:grid-cols-[1fr_320px]">
         <div className="min-w-0 space-y-6">
-          <Suspense fallback={<Skeleton className="aspect-[4/3] w-full" />}>
-            {note.link ? <NotePreview link={note.link} title={note.title} /> : <EmptyState title="No preview" body="This resource has no file link." />}
-          </Suspense>
+          {note.link ? (
+            <Suspense fallback={note.thumbnailUrl ? <img src={note.thumbnailUrl} alt="" className="h-auto w-full rounded-card border border-line bg-white" /> : <Skeleton className="aspect-[4/3] w-full" />}>
+              <NotePreview link={note.link} title={note.title} thumb={note.thumbnailUrl} />
+            </Suspense>
+          ) : (
+            // The API hides links from logged-out viewers (shared links land here): show the first page and a way in.
+            <div className="relative overflow-hidden rounded-card border border-line bg-surface">
+              {note.thumbnailUrl && <img src={note.thumbnailUrl} alt="" className="max-h-[420px] w-full object-cover object-top" />}
+              <div className={`${note.thumbnailUrl ? 'absolute inset-x-0 bottom-0 bg-gradient-to-t from-surface via-surface/95 to-transparent pt-16' : ''} p-4 text-center`}>
+                <p className="text-[17px] font-bold text-ink">Log in free to open the full {note.type === 'PYQ' ? 'paper' : 'file'}</p>
+                <p className="mb-3 text-[13px] text-ink-muted">Takes 10 seconds. Download, save and rate it.</p>
+                <Link to="/login" state={{ from: { pathname: `/notes/${note.id}` } }} className="inline-flex min-h-11 items-center rounded-full bg-brand px-6 text-[15px] font-semibold text-white focus-visible:outline-2 focus-visible:outline-brand">Log in to view</Link>
+              </div>
+            </div>
+          )}
           {previewKind(note.link).kind === 'pdf' && <Link to={`/flipbook/${note.id}`} className="inline-flex min-h-11 items-center font-semibold text-brand hover:underline">Open full</Link>}
 
           <Tabs

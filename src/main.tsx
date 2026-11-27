@@ -25,6 +25,17 @@ const updateSW = registerSW({
   },
 });
 
+// After a deploy, an open tab may ask for chunk files that no longer exist: reload once to get the new build.
+window.addEventListener('vite:preloadError', (e) => {
+  try {
+    if (sessionStorage.getItem('mcg-chunk-reload')) return;
+    sessionStorage.setItem('mcg-chunk-reload', '1');
+  } catch { return; }
+  e.preventDefault();
+  window.location.reload();
+});
+window.addEventListener('load', () => setTimeout(() => { try { sessionStorage.removeItem('mcg-chunk-reload'); } catch { /* blocked */ } }, 10_000));
+
 // Initialize monitoring before rendering
 initSentry();
 initPostHog();
