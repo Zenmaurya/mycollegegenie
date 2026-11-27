@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BadgeCheck, Bookmark, MessageCircle, Share2, Sparkles } from 'lucide-react';
+import { BadgeCheck, Bookmark, MessageCircle, Share2, Sparkles, Wind } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,6 +25,7 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
   // ✨ Spark = MCG's one positive reaction (stored as an upvote); downvotes are no longer shown
   const sparks = post.upvotes.length;
   const sparked = !!uid && post.upvotes.includes(uid);
+  const poofed = !!uid && post.downvotes.includes(uid);
   const detailUrl = `/post/${post.id}`;
 
   const vote = async (dir: 'up' | 'down') => {
@@ -123,19 +124,27 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
       {post.images && post.images.length > 0 && <div className="mt-3"><PhotoGrid images={post.images} /></div>}
 
       <footer className="mt-3 flex flex-wrap items-center gap-2 text-[13px] font-semibold text-ink-muted" onClick={stop}>
-        <button type="button" onClick={() => vote('up')} aria-pressed={sparked}
-          aria-label={`Spark, ${sparks} ${sparks === 1 ? 'spark' : 'sparks'}`}
-          className={`flex min-h-11 items-center gap-1.5 rounded-full px-4 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${sparked ? 'bg-brand-soft text-brand' : 'bg-canvas hover:bg-line'}`}>
-          <Sparkles className={`h-4 w-4 ${sparked ? 'fill-current' : ''}`} aria-hidden /> {sparks}
-        </button>
+        <span className="flex items-center rounded-full bg-canvas" role="group" aria-label="React">
+          <button type="button" onClick={() => vote('up')} aria-pressed={sparked}
+            aria-label={`Spark, ${sparks} ${sparks === 1 ? 'spark' : 'sparks'}`}
+            className={`flex min-h-11 items-center gap-1.5 rounded-l-full pl-4 pr-3 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${sparked ? 'bg-brand-soft text-brand' : 'hover:bg-line'}`}>
+            <Sparkles className={`h-4 w-4 ${sparked ? 'fill-current' : ''}`} aria-hidden /> {sparks}
+          </button>
+          <span className="h-5 w-px bg-line" aria-hidden />
+          {/* Poof = the genie's down-vote: it only lowers ranking and the count stays private */}
+          <button type="button" onClick={() => vote('down')} aria-pressed={poofed} aria-label="Poof (not useful)" title="Poof: not useful"
+            className={`flex min-h-11 items-center gap-1 rounded-r-full pl-2 pr-4 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${poofed ? 'bg-ink/10 text-ink' : 'hover:bg-line'}`}>
+            <Wind className="h-4 w-4" aria-hidden /><span className="sr-only sm:not-sr-only">Poof</span>
+          </button>
+        </span>
         <Link to={detailUrl} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand" aria-label={`${post.commentCount} comments`}>
           <MessageCircle className="h-4 w-4" /> {post.commentCount}
         </Link>
         <button type="button" onClick={share} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
-          <Share2 className="h-4 w-4" /> Share
+          <Share2 className="h-4 w-4" aria-hidden /><span className="sr-only sm:not-sr-only">Share</span>
         </button>
         <button type="button" onClick={() => onToggleSave(post.id)} aria-pressed={isSaved} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
-          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-ink' : ''}`} /> {isSaved ? 'Saved' : 'Save'}
+          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-ink' : ''}`} aria-hidden /><span className="sr-only sm:not-sr-only">{isSaved ? 'Saved' : 'Save'}</span>
         </button>
       </footer>
       {reporting && <span onClick={stop}><ReportSheet open onClose={() => setReporting(false)} itemType="post" itemId={post.id} title="Report post" /></span>}

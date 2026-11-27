@@ -31,12 +31,8 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
   const official = note.type === 'Syllabus' && (note.uploaderRole === 'admin' || note.uploaderRole === 'moderator');
   const helped = formatHelpedPct(note.helpfulYes ?? 0, note.helpfulNo ?? 0);
 
-  const sub = [note.subjectCode, note.course && courseLabel(note.course), note.semester ? `Sem ${note.semester}` : ''].filter(Boolean).join(' · ');
-  const stats = [
-    note.ratingAvg != null ? `★ ${note.ratingAvg.toFixed(1)}` : '',
-    note.downloads ? `Helped ${note.downloads}` : '',
-    note.pageCount ? `${note.pageCount} pages` : '',
-  ].filter(Boolean).join(' · ');
+  const course = note.course ? courseLabel(note.course) : '';
+  const stats = [note.downloads ? `Helped ${note.downloads}` : '', note.pageCount ? `${note.pageCount} pages` : ''].filter(Boolean).join(' · ');
 
   const share = async () => {
     const link = `${window.location.origin}${url}`;
@@ -69,8 +65,19 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
         <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-ink">
           <Link to={url} className="after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-brand">{note.title}</Link>
         </h3>
-        {sub && <p className="truncate text-[13px] text-ink-muted">{sub}</p>}
-        {stats && <p className="text-[13px] text-ink-muted" title={helped ?? undefined}>{stats}</p>}
+        {(course || note.semester > 0) && (
+          <div className="flex min-w-0 flex-wrap gap-1">
+            {course && <span className="max-w-full truncate rounded-md bg-brand-soft px-1.5 py-0.5 text-[12px] font-semibold text-brand" title={note.course}>{course}</span>}
+            {note.semester > 0 && <span className="shrink-0 rounded-md bg-canvas px-1.5 py-0.5 text-[12px] font-semibold text-ink">Sem {note.semester}</span>}
+          </div>
+        )}
+        {note.subjectCode && <p className="truncate text-[12px] text-ink-muted">Code {note.subjectCode}</p>}
+        <p className="flex flex-wrap items-center gap-x-1.5 text-[13px] text-ink-muted" title={helped ?? undefined}>
+          {note.ratingAvg != null
+            ? <span className="font-semibold text-ink"><span className="text-warning" aria-hidden>★</span> {note.ratingAvg.toFixed(1)}<span className="font-normal text-ink-muted"> ({note.ratingCount ?? 0})</span></span>
+            : <span>No ratings yet</span>}
+          {stats && <span>· {stats}</span>}
+        </p>
         <div className="mt-auto flex items-center justify-between gap-1 pt-1">
           <p className="min-w-0 truncate text-[13px] text-ink-muted">
             <UserLink username={note.uploaderUsername} className="relative z-10">{note.uploader || 'Student'}</UserLink>{note.uploaderCollege ? ` · ${note.uploaderCollege}` : ''}
