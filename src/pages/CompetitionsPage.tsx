@@ -74,7 +74,7 @@ export function CompetitionsPage() {
         </div>
       )}
 
-      <div role="tabpanel" aria-labelledby={`tab-${tab}`} className="space-y-3">
+      <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`} className="space-y-3">
         {loggedOut && (
           <div className="rounded-card bg-surface p-6 text-center shadow-card">
             <p className="mb-3 text-[15px] text-ink">Log in to see the competitions you saved</p>

@@ -54,7 +54,7 @@ export function FindPeoplePage() {
       <input type="search" value={text} onChange={(e) => setText(e.target.value)} maxLength={40} placeholder="Search by name or @username" aria-label="Search people"
         className="min-h-11 w-full rounded-full border border-line bg-surface px-4 text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-brand" />
       <Tabs label="People" items={tabs} value={tab} onChange={(id) => { setText(''); setParams(id === 'suggestions' ? {} : { tab: id }, { replace: true }); }} />
-      <div role="tabpanel" aria-labelledby={`tab-${tab}`}>{body}</div>
+      <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`}>{body}</div>
     </div>
   );
 }

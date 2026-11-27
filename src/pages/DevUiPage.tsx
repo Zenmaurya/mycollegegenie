@@ -56,6 +56,7 @@ export function DevUiPage() {
       <section className="space-y-3">
         <h2 className="font-semibold">Tabs and Segmented</h2>
         <Tabs items={[{ id: 'top', label: 'Top' }, { id: 'new', label: 'New' }, { id: 'following', label: 'Following' }]} value={tab} onChange={setTab} />
+        <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`} className="text-sm text-ink-muted">Selected tab: {tab}</div>
         <Segmented options={[{ value: 'new', label: 'New' }, { value: 'hot', label: 'Hot' }, { value: 'top', label: 'Top' }]} value={seg} onChange={setSeg} />
       </section>
 

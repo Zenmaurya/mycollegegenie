@@ -174,7 +174,7 @@ export function ManageCommunityPage() {
         <Button variant="ghost" onClick={() => navigate(`/c/${slug}`)}>View page</Button>
       </div>
       <Tabs label="Manage sections" items={tabs} value={current} onChange={setTab} />
-      <div role="tabpanel" aria-labelledby={`tab-${current}`}>
+      <div id={`panel-${current}`} role="tabpanel" aria-labelledby={`tab-${current}`}>
         {current === 'page' && <PageSection detail={d} onChanged={changed} />}
         {current === 'members' && <MembersPanel slug={slug} viewerId={uid} viewerRole={role} onChanged={changed} />}
         {current === 'events' && <EventsSection detail={d} viewer={viewer} onChanged={changed} />}

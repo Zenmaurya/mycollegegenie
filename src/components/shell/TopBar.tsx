@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Inbox, Plus, Search } from 'lucide-react';
+import { Inbox, Plus, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useComposer } from './AppShell';
 import { Avatar } from '../ui/Avatar';
@@ -58,7 +58,7 @@ export function TopBar() {
         </form>
 
         <div className="ml-auto flex items-center gap-1">
-          <Link to="/notes" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand md:hidden" aria-label="Search">
+          <Link to="/notes?focus=search" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand md:hidden" aria-label="Search notes">
             <Search className="h-5 w-5" aria-hidden />
           </Link>
           <Button onClick={open} aria-label="Create post" className="mr-1 hidden rounded-full md:inline-flex">
@@ -70,10 +70,6 @@ export function TopBar() {
               {n > 0 && <span aria-label={`${n} unread`} className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold leading-none text-white">{n > 99 ? '99+' : n}</span>}
             </span>
           </Link>
-          <Link to="/inbox" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand" aria-label="Notifications">
-            <Bell className="h-5 w-5" aria-hidden />
-          </Link>
-
           {!user && (
             <Link to="/login" className="ml-1 hidden min-h-11 items-center rounded-full bg-brand px-4 text-[15px] font-semibold text-white hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex">Login</Link>
           )}

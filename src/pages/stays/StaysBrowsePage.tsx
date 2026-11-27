@@ -140,7 +140,7 @@ export function StaysBrowsePage() {
 
       {((college && collegeName) || area) && <PriceInsight insight={insight.data} placeName={place} sharing={insightSharing} onAdd={openRent} />}
 
-      <div role="tabpanel" aria-labelledby={`tab-${type || 'all'}`} className="space-y-3">
+      <div id={`panel-${type || 'all'}`} role="tabpanel" aria-labelledby={`tab-${type || 'all'}`} className="space-y-3">
         <p className="text-[15px] font-semibold text-ink" aria-live="polite">{results.isSuccess ? `${total} ${total === 1 ? 'place' : 'places'}` : ''}</p>
         {results.isPending && <div className={GRID}>{[0, 1, 2].map((i) => <Skeleton key={i} className="aspect-[4/3] w-full rounded-card" />)}</div>}
         {results.isError && !items.length && (

@@ -150,7 +150,7 @@ export function InboxPage({ embedded = false }: { embedded?: boolean }) {
         <Tabs items={items} value={tab} onChange={setTab} label="Inbox" />
       </div>
       {!user ? <EmptyState title="Log in to see your inbox" body="Chats, requests and notifications live here." action={<Link to="/login" className="font-semibold text-brand hover:underline">Log in</Link>} /> : (
-        <div role="tabpanel" aria-labelledby={`tab-${tab}`}>
+        <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`}>
           {tab === 'chats' && <Chats activeId={activeId} />}
           {tab === 'requests' && <Requests />}
           {tab === 'notifications' && <Notifications />}

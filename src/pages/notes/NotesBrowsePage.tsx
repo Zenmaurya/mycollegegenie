@@ -38,6 +38,7 @@ export function NotesBrowsePage() {
   const { appUser } = useAuth();
   const { savedResourceIds, toggleSave } = useResources();
   const [params, setParams] = useSearchParams();
+  const searchRef = useRef<HTMLInputElement>(null);
   const [sheet, setSheet] = useState<'filters' | 'pick' | null>(null);
   const [stored, setStored] = useState<Pick | null>(readPick);
   const [yearPick, setYearPick] = useState<number | null>(null);
@@ -45,6 +46,13 @@ export function NotesBrowsePage() {
   const q = params.get('q') ?? '';
   const draft = useMemo<FilterDraft>(() => Object.fromEntries(KEYS.map((k) => [k, params.get(k) ?? ''])) as FilterDraft, [params]);
   const [qInput, setQInput] = useState(q);
+  useEffect(() => {
+    if (params.get('focus') !== 'search') return;
+    searchRef.current?.focus();
+    const next = new URLSearchParams(params);
+    next.delete('focus');
+    setParams(next, { replace: true });
+  }, [params, setParams]);
   // sort alone keeps the sections view
   const filtersActive = !!q || KEYS.some((k) => k !== 'sort' && draft[k]);
 
@@ -166,6 +174,7 @@ export function NotesBrowsePage() {
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-muted" aria-hidden />
           <input
+            ref={searchRef}
             type="search" value={qInput} onChange={(e) => setQInput(e.target.value)}
             aria-label="Search notes" placeholder="Search notes, PYQs, subject code e.g. 32341101…"
             className="min-h-11 w-full rounded-full border border-line bg-surface pl-10 pr-4 text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-brand"
@@ -186,7 +195,7 @@ export function NotesBrowsePage() {
       </div>
 
       {filtersActive ? (
-        <div role="tabpanel" aria-labelledby={`tab-${draft.type || 'all'}`} className="space-y-3">
+        <div id={`panel-${draft.type || 'all'}`} role="tabpanel" aria-labelledby={`tab-${draft.type || 'all'}`} className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-[15px] font-semibold text-ink" aria-live="polite">{results.isSuccess ? `${total} ${total === 1 ? 'result' : 'results'}` : ''}</p>
             {chips.map((c) => <Fragment key={c.key}><Chip selected removable onRemove={() => setParam({ [c.key]: '' })}>{c.label}</Chip></Fragment>)}
@@ -223,7 +232,7 @@ export function NotesBrowsePage() {
           {isError && items.length > 0 && <Button variant="secondary" className="mx-auto flex" onClick={() => void fetchNextPage()}>Couldn't load more. Retry</Button>}
         </div>
       ) : (
-        <div role="tabpanel" aria-labelledby="tab-all" className="space-y-6">
+        <div id="panel-all" role="tabpanel" aria-labelledby="tab-all" className="space-y-6">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[15px] text-ink-muted">
               {pick.course ? <>For you · {courseShort(pick.course)}{pick.semester && ` · Semester ${pick.semester}`}</> : 'Popular across DU'}

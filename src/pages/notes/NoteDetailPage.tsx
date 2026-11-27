@@ -131,7 +131,7 @@ export function NoteDetailPage() {
             label="Resource details" value={tab} onChange={(v) => setTab(v as Tab)}
             items={[{ id: 'about', label: 'About' }, { id: 'tips', label: 'Exam tips' }, { id: 'discussion', label: 'Discussion' }]}
           />
-          <div role="tabpanel" aria-labelledby={`tab-${tab}`}>
+          <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`}>
             {tab === 'about' && (
               <div className="space-y-3 py-3">
                 <p className="whitespace-pre-line text-[15px] text-ink">{note.description || 'No description yet.'}</p>

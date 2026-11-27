@@ -19,23 +19,32 @@ export const getNews = async (
 
     const data = await fetchWithAuth(`/api/news?${params}`);
 
-    return (Array.isArray(data) ? data : []).map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      summary: item.summary || item.content || '',
-      category: item.category || 'News',
-      date: item.date || new Date(item.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
-      college: item.college || '',
-      url: item.url || '',
-      imageUrl: item.image_url || item.imageUrl || '',
-      venue: item.venue || '',
-      eligibility: item.eligibility || 'All',
-      description: item.description || item.summary || '',
-      createdAt: item.created_at || new Date().toISOString(),
-      isApproved: Boolean(item.is_approved),
-      submitted_by_name: item.submitted_by_name || null,
-      submitted_by_id:   item.submitted_by_id   || null,
-    } as News));
+    return (Array.isArray(data) ? data : []).map((item: any) => {
+      const createdAt = item.created_at || undefined;
+      const hasNoticeDate = Boolean(item.date);
+      const createdDate = createdAt ? new Date(createdAt) : null;
+      const listedDate = createdDate && Number.isFinite(createdDate.getTime())
+        ? createdDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : '';
+      return ({
+        id: item.id,
+        title: item.title,
+        summary: item.summary || item.content || '',
+        category: item.category || 'News',
+        date: item.date || listedDate,
+        dateSource: hasNoticeDate ? 'notice' : listedDate ? 'listed' : undefined,
+        college: item.college || '',
+        url: item.url || '',
+        imageUrl: item.image_url || item.imageUrl || '',
+        venue: item.venue || '',
+        eligibility: item.eligibility || 'All',
+        description: item.description || item.summary || '',
+        createdAt,
+        isApproved: Boolean(item.is_approved),
+        submitted_by_name: item.submitted_by_name || null,
+        submitted_by_id: item.submitted_by_id || null,
+      } as News);
+    });
   } catch (error) {
     const isConnRefused = error instanceof TypeError && error.message.includes('fetch');
     if (isConnRefused) {

@@ -36,7 +36,15 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
   const detailUrl = `/post/${post.id}`;
 
   const vote = async (dir: 'up' | 'down') => {
-    if (!uid) { toast('Log in to vote'); return; }
+    if (!uid) {
+      toast('Log in to vote', {
+        action: {
+          label: 'Log in',
+          onClick: () => navigate('/login', { state: { from: { pathname: location.pathname + location.search } } }),
+        },
+      });
+      return;
+    }
     // Play the effect only when turning a reaction on; n restarts the animation on repeat taps.
     if (dir === 'up' ? !sparked : !poofed) setFx((f) => ({ kind: dir === 'up' ? 'spark' : 'poof', n: (f?.n ?? 0) + 1 }));
     const snapshot = qc.getQueriesData({ queryKey: ['feed'] });

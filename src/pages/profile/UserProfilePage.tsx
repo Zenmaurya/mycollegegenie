@@ -184,8 +184,8 @@ export function UserProfilePage() {
       <Header profile={profile} stats={stats} counts={counts} relation={relation} isOwner={isOwner} canMessage={canMessage} list={list} />
       <Tabs label="Profile sections" items={tabs} value={tab} onChange={(id) => setParams(id === 'posts' ? {} : { tab: id }, { replace: true })} />
       {list
-        ? <div role="region" aria-label={listParam?.label}><Fragment key={`${profile.username}-${list}`}><PersonList username={profile.username} list={list} /></Fragment></div>
-        : <div role="tabpanel" aria-labelledby={`tab-${tab}`}>
+        ? <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`}><Fragment key={`${profile.username}-${list}`}><PersonList username={profile.username} list={list} /></Fragment></div>
+        : <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`}>
           <Fragment key={`${profile.username}-${tab}`}><TabPanel username={profile.username} tab={tab} /></Fragment>
         </div>}
     </div>

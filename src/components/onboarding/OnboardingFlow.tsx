@@ -129,6 +129,7 @@ export function OnboardingFlow({ onDone, startStep = 1, askUsername: wantUsernam
       {error && <p role="alert" className="mt-3 text-[13px] text-danger">{error}</p>}
 
       <div className="mt-6 flex items-center justify-end gap-2">
+        {step > startStep && <Button variant="ghost" disabled={busy} onClick={() => setStep((current) => current - 1)}>Back</Button>}
         {step === 2 && <Button variant="ghost" disabled={busy} onClick={toStep3}>Skip</Button>}
         {step === 3 && <Button variant="ghost" disabled={busy} onClick={() => toStep4()}>Skip</Button>}
         {step === 1 && <Button disabled={!collegeReady} loading={busy} onClick={() => void save(collegePayload, () => setStep(2))}>Continue</Button>}

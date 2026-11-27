@@ -64,7 +64,7 @@ export function CommunityPage() {
         qc.invalidateQueries({ queryKey: ['community-events', viewer, slug] }),
       ])} onReport={() => setReportOpen(true)} />
       <Tabs label="Society sections" items={TABS} value={current} onChange={(id) => navigate(id === 'posts' ? `/c/${slug}` : `/c/${slug}/${id}`)} />
-      <div role="tabpanel" aria-labelledby={`tab-${current}`} className="space-y-3">
+      <div id={`panel-${current}`} role="tabpanel" aria-labelledby={`tab-${current}`} className="space-y-3">
         {current === 'posts' && <PostsTab detail={d} onCreate={() => setComposeKind('official')} />}
         {current === 'discussion' && <DiscussionTab detail={d} onStart={() => setComposeKind('discussion')} />}
         {current === 'events' && <EventsTab detail={d} />}

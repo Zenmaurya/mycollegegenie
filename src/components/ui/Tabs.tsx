@@ -27,6 +27,7 @@ export function Tabs({ items, value, onChange, label = "Tabs" }: TabsProps) {
             id={`tab-${it.id}`}
             role="tab"
             aria-selected={on}
+            aria-controls={`panel-${it.id}`}
             tabIndex={on ? 0 : -1}
             onClick={() => onChange(it.id)}
             onKeyDown={(e) => onKey(e, i)}

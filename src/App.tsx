@@ -305,7 +305,7 @@ function AppContent() {
 
       {/* Navigation */}
       {/* App shell: top bar, left nav, right rail (home only), mobile tab bar, composer */}
-      <AppShell rightRail={location.pathname === '/' ? <RightRail news={newsItems} /> : undefined}>
+      <AppShell rightRail={location.pathname === '/' && newsItems.some((item) => item.category === 'Event' || item.category === 'News') ? <RightRail news={newsItems} /> : undefined}>
         <PageTransition>
           <Suspense fallback={PageFallback}>
             <Routes location={location}>

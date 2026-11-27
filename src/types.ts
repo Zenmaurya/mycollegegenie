@@ -97,6 +97,8 @@ export interface News {
   id: string;
   title: string;
   date: string;
+  /** Whether date is the original notice date or when it was added to MCG. */
+  dateSource?: 'notice' | 'listed';
   summary: string;
   url: string;
   category: 'News' | 'Event';
@@ -113,6 +115,8 @@ export interface NewsItem {
   id?: string;
   title: string;
   date: string;
+  /** Whether date is the original notice date or when it was added to MCG. */
+  dateSource?: 'notice' | 'listed';
   summary: string;
   url: string;
   category: 'News' | 'Event';

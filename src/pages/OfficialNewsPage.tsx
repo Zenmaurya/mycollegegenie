@@ -13,6 +13,7 @@ import type { SupabaseAuthUser } from '../types';
 import { toast } from 'sonner';
 import { supabase } from '../supabase';
 import { getNews, submitNews } from '../services/newsService';
+import { mentionsPastAcademicCycle } from '../lib/news';
 import { Skeleton } from '../components/ui/skeleton';
 
 // ── DU Colleges list for dropdown ──────────────────────────────────────────
@@ -61,22 +62,31 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
     import('../lib/apiClient').then(({ fetchWithAuth }) => {
       fetchWithAuth('/api/news?limit=60')
         .then((data: any[]) => {
-          const mapped: NewsItem[] = (Array.isArray(data) ? data : []).map(item => ({
-            id: item.id,
-            title: item.title,
-            summary: item.summary || item.content || '',
-            category: item.category || 'News',
-            date: item.date || new Date(item.created_at).toLocaleDateString('en-IN'),
-            college: item.college || '',
-            url: item.url || '',
-            imageUrl: item.image_url || item.imageUrl || '',
-            venue: item.venue || '',
-            eligibility: item.eligibility || 'All',
-            description: item.description || item.summary || '',
-            createdAt: item.created_at || new Date().toISOString(),
-            submitted_by_name: item.submitted_by_name || null,
-            submitted_by_id:   item.submitted_by_id   || null,
-          }));
+          const mapped: NewsItem[] = (Array.isArray(data) ? data : []).map(item => {
+            const createdAt = item.created_at || undefined;
+            const hasNoticeDate = Boolean(item.date);
+            const createdDate = createdAt ? new Date(createdAt) : null;
+            const listedDate = createdDate && Number.isFinite(createdDate.getTime())
+              ? createdDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+              : '';
+            return {
+              id: item.id,
+              title: item.title,
+              summary: item.summary || item.content || '',
+              category: item.category || 'News',
+              date: item.date || listedDate,
+              dateSource: hasNoticeDate ? 'notice' : listedDate ? 'listed' : undefined,
+              college: item.college || '',
+              url: item.url || '',
+              imageUrl: item.image_url || item.imageUrl || '',
+              venue: item.venue || '',
+              eligibility: item.eligibility || 'All',
+              description: item.description || item.summary || '',
+              createdAt,
+              submitted_by_name: item.submitted_by_name || null,
+              submitted_by_id: item.submitted_by_id || null,
+            };
+          });
           setLocalItems(mapped);
         })
         .catch(err => {
@@ -97,8 +107,8 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
     twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
     return sourceItems.filter(item => {
       if (item.category === 'Event') return false;
-      const itemDate = new Date(item.createdAt || Date.now());
-      if (!isNaN(itemDate.getTime())) return itemDate >= twoMonthsAgo;
+      const itemDate = item.createdAt ? new Date(item.createdAt) : null;
+      if (itemDate && !isNaN(itemDate.getTime())) return itemDate >= twoMonthsAgo;
       return true; // keep items with no date
     });
   }, [sourceItems]);
@@ -348,14 +358,19 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
               >
                 {/* Thumbnail */}
                 <div className="relative w-28 sm:w-44 shrink-0 bg-gradient-to-br from-purple-50 to-indigo-100 overflow-hidden">
-                  <img
-                    src={item.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(item.title)}/300/400`}
-                    alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5" />
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt=""
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-purple-300" aria-hidden>
+                      <Newspaper className="h-9 w-9" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Content */}
@@ -366,8 +381,12 @@ export const OfficialNewsPage: React.FC<OfficialNewsPageProps> = ({ newsItems: p
                       {item.college || 'University'}
                     </span>
                     <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1 shrink-0">
-                      <Clock className="w-3 h-3" />{item.date}
+                      <Clock className="w-3 h-3 shrink-0" />
+                      {item.dateSource === 'listed' ? `Added ${item.date}` : item.dateSource === 'notice' ? `Notice date ${item.date}` : item.date}
                     </span>
+                    {mentionsPastAcademicCycle(item.title) && (
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">Past academic cycle</span>
+                    )}
                   </div>
 
                   {/* Title */}

@@ -21,10 +21,10 @@ interface OTPVerificationPageProps {
 
 export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email, onVerified }) => {
   const navigate = useNavigate();
-  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(60);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Cooldown timer for resend button
   useEffect(() => {
@@ -33,53 +33,19 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  // Auto-focus first input
+  // Focus the single OTP field so mobile autofill and paste can fill all six digits.
   useEffect(() => {
-    inputRefs.current[0]?.focus();
-  }, []);
+    if (!isLoading && otp.length === 0) inputRef.current?.focus();
+  }, [isLoading, otp]);
 
-  const handleChange = (index: number, value: string) => {
-    // Allow only single digit
-    const digit = value.replace(/\D/g, '').slice(-1);
-    const newOtp = [...otp];
-    newOtp[index] = digit;
-    setOtp(newOtp);
-
-    // Auto advance to next input
-    if (digit && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-
-    // Auto-submit when all 6 digits entered
-    if (newOtp.every(d => d !== '') && digit) {
-      handleVerify(newOtp.join(''));
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      // Move back and clear previous
-      const newOtp = [...otp];
-      newOtp[index - 1] = '';
-      setOtp(newOtp);
-      inputRefs.current[index - 1]?.focus();
-    }
-    if (e.key === 'ArrowLeft' && index > 0) inputRefs.current[index - 1]?.focus();
-    if (e.key === 'ArrowRight' && index < 5) inputRefs.current[index + 1]?.focus();
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (pasted.length === 6) {
-      setOtp(pasted.split(''));
-      inputRefs.current[5]?.focus();
-      handleVerify(pasted);
-    }
+  const handleChange = (value: string) => {
+    const code = value.replace(/\D/g, '').slice(0, 6);
+    setOtp(code);
+    if (code.length === 6) void handleVerify(code);
   };
 
   const handleVerify = async (code?: string) => {
-    const finalCode = code || otp.join('');
+    const finalCode = code ?? otp;
     if (finalCode.length !== 6) {
       toast.error('Please enter all 6 digits.');
       return;
@@ -107,12 +73,12 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
       const msg = err?.message?.toLowerCase() ?? '';
       if (msg.includes('expired')) {
         toast.error('OTP expired. Please request a new one.');
-        setOtp(['', '', '', '', '', '']);
-        inputRefs.current[0]?.focus();
+        setOtp('');
+        inputRef.current?.focus();
       } else if (msg.includes('invalid')) {
         toast.error('Incorrect OTP. Please check and try again.');
-        setOtp(['', '', '', '', '', '']);
-        inputRefs.current[0]?.focus();
+        setOtp('');
+        inputRef.current?.focus();
       } else {
         toast.error(err.message || 'Verification failed. Try again.');
       }
@@ -131,8 +97,8 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
       if (error) throw error;
       toast.success('New OTP sent! Check your inbox.');
       setResendCooldown(60);
-      setOtp(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus();
+      setOtp('');
+      inputRef.current?.focus();
     } catch (err: any) {
       toast.error(err.message || 'Failed to resend. Try again.');
     }
@@ -141,8 +107,8 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
   return (
     <div className="w-full flex flex-col items-center justify-center pt-4">
       {/* Icon */}
-      <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-        <Mail className="w-8 h-8 text-purple-600" />
+      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-soft">
+        <Mail className="h-8 w-8 text-brand" />
       </div>
 
       <div className="text-center mb-8">
@@ -152,40 +118,35 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
         <p className="text-sm text-gray-500 font-medium leading-relaxed">
           We sent a 6-digit verification code to
         </p>
-        <p className="text-sm font-black text-purple-600 mt-1 break-all">
+        <p className="mt-1 break-all text-sm font-black text-brand">
           {email || 'your email'}
         </p>
       </div>
 
-      {/* OTP Input Boxes */}
-      <div className="flex gap-2 sm:gap-3 justify-center mb-8" onPaste={handlePaste}>
-        {otp.map((digit, index) => (
-          <input
-            key={index}
-            ref={el => { inputRefs.current[index] = el; }}
-            type="text"
-            inputMode="numeric"
-            maxLength={1}
-            value={digit}
-            onChange={e => handleChange(index, e.target.value)}
-            onKeyDown={e => handleKeyDown(index, e)}
-            disabled={isLoading}
-            className={`w-11 h-14 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-black rounded-2xl border-2 transition-all outline-none
-              ${digit
-                ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-md shadow-purple-500/10'
-                : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/10'
-              }
-              disabled:opacity-50 disabled:cursor-not-allowed`}
-            aria-label={`OTP digit ${index + 1}`}
-          />
-        ))}
+      <div className="mb-8 w-full">
+        <label htmlFor="email-otp" className="sr-only">6-digit verification code</label>
+        <input
+          ref={inputRef}
+          id="email-otp"
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="[0-9]*"
+          maxLength={6}
+          value={otp}
+          onChange={e => handleChange(e.target.value)}
+          disabled={isLoading}
+          placeholder="000000"
+          className="mx-auto block h-14 w-full max-w-sm rounded-xl border-2 border-line bg-surface px-4 text-center text-2xl font-black tracking-[0.65em] text-ink placeholder:text-ink-muted/40 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="6-digit verification code"
+        />
       </div>
 
       {/* Verify Button */}
       <button
         onClick={() => handleVerify()}
-        disabled={isLoading || otp.some(d => !d)}
-        className="w-full h-12 bg-[#5636A7] hover:bg-[#4a2e92] text-white rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        disabled={isLoading || otp.length !== 6}
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-bold text-white shadow-md transition-all hover:bg-brand-hover hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isLoading ? (
           <><Loader2 className="w-5 h-5 animate-spin" /> Verifying...</>
@@ -202,7 +163,7 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
         <button
           onClick={handleResend}
           disabled={resendCooldown > 0 || isLoading}
-          className="inline-flex items-center gap-2 text-xs font-black text-purple-600 hover:text-purple-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors uppercase tracking-widest"
+          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-brand transition-colors hover:text-brand-hover disabled:cursor-not-allowed disabled:text-ink-muted"
         >
           <RefreshCw className={`w-3 h-3 ${resendCooldown > 0 ? '' : 'hover:rotate-180 transition-transform'}`} />
           {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
@@ -212,7 +173,7 @@ export const OTPVerificationPage: React.FC<OTPVerificationPageProps> = ({ email,
       {/* Help text */}
       <p className="text-center text-xs text-gray-400 font-medium mt-6 border-t border-gray-100 pt-6 w-full">
         Having trouble?{' '}
-        <a href="mailto:support@mycollegegenie.in" className="text-purple-600 hover:underline font-bold">
+          <a href="mailto:support@mycollegegenie.in" className="font-bold text-brand hover:underline">
           Email Support
         </a>
       </p>

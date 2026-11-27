@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ExternalLink, Newspaper } from 'lucide-react';
 import type { NewsItem } from '../../types';
+import { mentionsPastAcademicCycle } from '../../lib/news';
 
 // The SOL scraper fills summary with the same boilerplate on every notice; hide it.
 const BOILERPLATE = /^official notice from /i;
@@ -20,7 +21,10 @@ export function NewsCard({ item }: { item: NewsItem }) {
         <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 font-semibold text-brand">
           <Newspaper className="h-3.5 w-3.5" aria-hidden />{item.college || 'News'}
         </span>
-        {item.date && <time dateTime={item.date}>{item.date}</time>}
+        {item.date && <time dateTime={item.date}>{item.dateSource === 'listed' ? `Added ${item.date}` : item.dateSource === 'notice' ? `Notice date ${item.date}` : item.date}</time>}
+        {mentionsPastAcademicCycle(item.title) && (
+          <span className="rounded-full bg-warning/10 px-2 py-0.5 font-semibold text-ink">Past academic cycle</span>
+        )}
       </p>
       <h3 className="line-clamp-3 text-[16px] font-semibold leading-snug text-ink">{item.title}</h3>
       {summary && <p className="mt-1 line-clamp-2 text-[15px] text-ink-muted">{summary}</p>}

@@ -127,7 +127,6 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
         <button type="button" onClick={open} className="min-h-11 min-w-0 flex-1 truncate rounded-full bg-canvas px-4 py-2.5 text-left text-[15px] text-ink-muted hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
           Ask a question or share something...
         </button>
-        <button type="button" onClick={open} className="min-h-11 shrink-0 rounded-full bg-brand px-4 text-[15px] font-semibold text-white focus-visible:outline-2 focus-visible:outline-brand">Post</button>
       </div>
 
       <PickCollegeCard />
@@ -162,14 +161,14 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
       </Sheet>
 
       {tab === 'updates' ? (
-        <div role="tabpanel" aria-labelledby="tab-updates" className="space-y-3">
+        <div id="panel-updates" role="tabpanel" aria-labelledby="tab-updates" className="space-y-3">
           <p className="text-[13px] text-ink-muted">Latest notices from college and DU websites, with a link to the original.</p>
           {updates.length === 0
             ? <div className="rounded-card bg-surface shadow-card"><EmptyState title="No college updates yet" body="New notices show up here as soon as colleges post them." /></div>
             : updates.map((n, i) => <React.Fragment key={n.id ?? `${n.title}-${i}`}><NewsCard item={n} /></React.Fragment>)}
         </div>
       ) : (
-      <div role="tabpanel" aria-labelledby={`tab-${tab}`} className="space-y-3">
+      <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`} className="space-y-3">
         {q.isPending && [0, 1, 2].map((i) => <Skeleton key={i} className="h-40 w-full rounded-card" />)}
 
         {q.isError && !items.length && (
