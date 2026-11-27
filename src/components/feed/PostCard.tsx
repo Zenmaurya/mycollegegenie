@@ -161,7 +161,7 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
           {/* Poof = the genie's down-vote: it only lowers ranking and the count stays private */}
           <button type="button" onClick={() => vote('down')} aria-pressed={poofed} aria-label="Poof (not useful)" title="Poof: not useful"
             className={`relative flex min-h-11 items-center gap-1 rounded-r-full pl-2 pr-4 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${poofed ? 'bg-ink/10 text-ink' : 'hover:bg-line'}`}>
-            <Wind key={fx?.kind === 'poof' ? fx.n : 0} className={`h-4 w-4 ${fx?.kind === 'poof' ? 'mcg-pop' : ''}`} aria-hidden /><span className="sr-only sm:not-sr-only">Poof</span>
+            <Wind key={fx?.kind === 'poof' ? fx.n : 0} className={`h-4 w-4 ${fx?.kind === 'poof' ? 'mcg-pop' : ''}`} aria-hidden /><span className="sr-only xl:not-sr-only">Poof</span>
             {fx?.kind === 'poof' && POOF_DIRS.map(([dx, dy], i) => (
               <span key={`${fx.n}-${i}`} aria-hidden className="mcg-fx mcg-puff" style={{ '--dx': `${dx}px`, '--dy': `${dy}px`, animationDelay: `${i * 40}ms` } as React.CSSProperties} />
             ))}
@@ -171,10 +171,10 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
           <MessageCircle className="h-4 w-4" /> {post.commentCount}
         </Link>
         <button type="button" onClick={repost} title="Repost to your feed" className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
-          <Repeat2 className="h-4 w-4" aria-hidden /><span className="sr-only sm:not-sr-only">Repost</span>
+          <Repeat2 className="h-4 w-4" aria-hidden /><span className="sr-only xl:not-sr-only">Repost</span>
         </button>
         <button type="button" onClick={share} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
-          <Share2 className="h-4 w-4" aria-hidden /><span className="sr-only sm:not-sr-only">Share</span>
+          <Share2 className="h-4 w-4" aria-hidden /><span className="sr-only xl:not-sr-only">Share</span>
         </button>
       </footer>
       {reporting && <span onClick={stop}><ReportSheet open onClose={() => setReporting(false)} itemType="post" itemId={post.id} title="Report post" /></span>}

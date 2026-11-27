@@ -159,7 +159,7 @@ export function Composer({ open, onClose, onPosted, community, initialKind, pref
                 <div className="grid grid-cols-4 gap-2">
                   {photos.map((p, i) => (
                     <div key={p.preview} className="relative aspect-square overflow-hidden rounded-lg bg-canvas">
-                      <img src={p.preview} alt={`Selected photo ${i + 1}`} className="h-full w-full object-cover" />
+                      <img src={p.preview} alt={`Selected photo ${i + 1}`} className="h-full w-full object-contain" />
                       <button type="button" onClick={() => removePhoto(i)} aria-label={`Remove photo ${i + 1}`} className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white">
                         <X className="h-3 w-3" />
                       </button>
