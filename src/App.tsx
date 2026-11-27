@@ -89,6 +89,7 @@ import type { Resource, NewsItem } from './types';
 
 // ── Services ──────────────────────────────────────────────────────
 import { getNews } from './services/newsService';
+import { loadNewsWithFallback } from './lib/news';
 import { fetchWithAuth } from './lib/apiClient';
 import { config } from './lib/config';
 import { legacyBrowseToNotes } from './lib/notes';
@@ -178,23 +179,23 @@ function AppContent() {
     const fetchNews = async () => {
       setIsNewsLoading(true);
       try {
-        const data = await getNews();
-        if (data && data.length > 0) {
-          setNewsItems(data);
-        } else {
-          // Fallback: AI-generated updates (public endpoint — no auth needed)
+        const data = await loadNewsWithFallback(getNews, async () => {
           const ctrl = new AbortController();
           const tid = setTimeout(() => ctrl.abort(), 10_000);
           try {
             const res = await fetch(`${config.apiUrl}/api/news/ai-updates`, { signal: ctrl.signal });
+            if (!res.ok) return [];
+            const parsed = await res.json();
+            return Array.isArray(parsed) ? parsed : [];
+          } finally {
             clearTimeout(tid);
-            if (res.ok) {
-              const parsed = await res.json();
-              if (parsed && parsed.length > 0) setNewsItems(parsed);
-            }
-          } catch { clearTimeout(tid); }
-        }
-      } catch { /* silent — individual pages handle their own news loading */ }
+          }
+        });
+        setNewsItems(data);
+      } catch (error) {
+        console.error('[App] Failed to load college updates:', error);
+        toast.error('Could not load college updates. Please try again later.');
+      }
       finally { setIsNewsLoading(false); }
     };
 
@@ -424,3 +425,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
