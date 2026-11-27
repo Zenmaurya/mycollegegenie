@@ -64,6 +64,8 @@ export interface Resource {
   helpfulYes?: number;
   helpfulNo?: number;
   isHidden?: boolean;
+  /** Regular / SOL / NCWEB; null = same for all streams. */
+  stream?: string | null;
 }
 
 export interface User {

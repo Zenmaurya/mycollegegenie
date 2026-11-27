@@ -1,20 +1,20 @@
 import { Fragment, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '../../hooks/useDebounce';
-import { NOTES_COURSES } from '../../lib/notes';
+import { DIVISIONS, MAIN_COURSES, STREAMS, joinCourse, splitCourse } from '../../lib/notes';
 import { NotesService, type NoteFilters } from '../../services/notesService';
 import { Sheet } from '../ui/Sheet';
 import { Chip } from '../ui/Chip';
 import { Segmented } from '../ui/Segmented';
 import { Button } from '../ui/button';
 
-export type FilterDraft = { course: string; semester: string; subjectCode: string; type: string; year: string; minRating: string; college: string; sort: string };
+export type FilterDraft = { course: string; semester: string; subjectCode: string; type: string; year: string; minRating: string; college: string; sort: string; stream: string };
 export const TYPE_OPTIONS = [{ v: '', l: 'All' }, { v: 'PYQ', l: 'PYQs' }, { v: 'Note', l: 'Notes' }, { v: 'Syllabus', l: 'Syllabus' }, { v: 'Book', l: 'Books' }];
 export const SORT_OPTIONS = [{ value: 'helpful', label: 'Most helpful' }, { value: 'new', label: 'Newest' }, { value: 'downloads', label: 'Most downloaded' }];
 
 export const toNoteFilters = (q: string, d: FilterDraft): NoteFilters => ({
   q, type: d.type, course: d.course, semester: d.semester, subjectCode: d.subjectCode, year: d.year, minRating: d.minRating,
-  college: d.college === 'mine' ? 'mine' : undefined, sort: (d.sort || 'helpful') as NoteFilters['sort'],
+  college: d.college === 'mine' ? 'mine' : undefined, stream: d.stream, sort: (d.sort || 'helpful') as NoteFilters['sort'],
 });
 
 const field = 'min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-brand';
@@ -40,18 +40,31 @@ export function NotesFilterSheet({ mode, initial, q, hasCollege, onApply, onClos
     enabled: mode === 'filters',
     select: (p) => p.total,
   });
-  const reset: FilterDraft = { course: '', semester: '', subjectCode: '', type: '', year: '', minRating: '', college: '', sort: '' };
+  const reset: FilterDraft = { course: '', semester: '', subjectCode: '', type: '', year: '', minRating: '', college: '', sort: '', stream: '' };
+  const { main, division } = splitCourse(d.course);
+  const divisions = DIVISIONS[main] ?? [];
+  const mains = main && !MAIN_COURSES.includes(main) ? [main, ...MAIN_COURSES] : MAIN_COURSES;
 
   return (
     <Sheet open onClose={onClose} title={mode === 'pick' ? 'Pick your course' : 'Filters'}>
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         <div>
           <label htmlFor="nf-course" className={label}>Course</label>
-          <select id="nf-course" value={d.course} onChange={(e) => set('course', e.target.value)} className={field}>
+          <select id="nf-course" value={main} onChange={(e) => set('course', e.target.value)} className={field}>
             <option value="">Any course</option>
-            {NOTES_COURSES.map((c) => <option key={c} value={c}>{c}</option>)}
+            {mains.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
+        {divisions.length > 0 && (
+          <div>
+            <label htmlFor="nf-division" className={label}>Subject combination</label>
+            <select id="nf-division" value={division} onChange={(e) => set('course', joinCourse(main, e.target.value))} className={field}>
+              <option value="">All combinations</option>
+              {divisions.map((x) => <option key={x} value={x}>with {x}</option>)}
+            </select>
+            {division && <p className="mt-1 text-[13px] text-ink-muted">Also shows material common to all {main} combinations.</p>}
+          </div>
+        )}
         <div>
           <label htmlFor="nf-sem" className={label}>Semester</label>
           <select id="nf-sem" value={d.semester} onChange={(e) => set('semester', e.target.value)} className={field}>
@@ -64,6 +77,13 @@ export function NotesFilterSheet({ mode, initial, q, hasCollege, onApply, onClos
             <div>
               <label htmlFor="nf-code" className={label}>Subject / paper code</label>
               <input id="nf-code" value={d.subjectCode} onChange={(e) => set('subjectCode', e.target.value.trim())} placeholder="e.g. 32341101" className={field} />
+            </div>
+            <div>
+              <span className={label}>Stream</span>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Stream">
+                {['', ...STREAMS].map((x) => <Fragment key={x || 'all'}><Chip selected={d.stream === x} onToggle={() => set('stream', x)}>{x || 'All'}</Chip></Fragment>)}
+              </div>
+              {d.stream && <p className="mt-1 text-[13px] text-ink-muted">Also shows material marked for all streams.</p>}
             </div>
             <div>
               <span className={label}>Type</span>

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, ClipboardList, FileText, Heart, ListChecks, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
-import { courseShort, formatHelpedPct, yearFromTitle } from '../../lib/notes';
+import { courseLabel, formatHelpedPct, yearFromTitle } from '../../lib/notes';
 import type { Resource, ResourceType } from '../../types';
 import { Badge } from '../ui/Badge';
 import { Menu } from '../ui/Menu';
@@ -31,7 +31,7 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
   const official = note.type === 'Syllabus' && (note.uploaderRole === 'admin' || note.uploaderRole === 'moderator');
   const helped = formatHelpedPct(note.helpfulYes ?? 0, note.helpfulNo ?? 0);
 
-  const sub = [note.subjectCode, note.course && courseShort(note.course), note.semester ? `Sem ${note.semester}` : ''].filter(Boolean).join(' · ');
+  const sub = [note.subjectCode, note.course && courseLabel(note.course), note.semester ? `Sem ${note.semester}` : ''].filter(Boolean).join(' · ');
   const stats = [
     note.ratingAvg != null ? `★ ${note.ratingAvg.toFixed(1)}` : '',
     note.downloads ? `Helped ${note.downloads}` : '',
@@ -83,8 +83,9 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
             ]} />
           </span>
         </div>
-        {(note.uploaderVerified || official) && (
+        {(note.uploaderVerified || official || note.stream) && (
           <div className="flex flex-wrap gap-1">
+            {note.stream && <Badge tone="neutral">{note.stream} only</Badge>}
             {note.uploaderVerified && <Badge tone="success">Verified uploader</Badge>}
             {official && <Badge tone="brand">Official syllabus</Badge>}
           </div>

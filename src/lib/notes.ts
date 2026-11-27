@@ -13,6 +13,24 @@ const SEC = 'Skill Enhancement Course (SEC)';
 
 /** Course picker: the four most-used names first, then every DU UG/PG course (Ph.D. left out). */
 export const NOTES_COURSES = [...new Set([BBA, BMS, SEC, BCOM, ...College_COURSES.filter((c) => !c.startsWith('Ph.D.'))])];
+/** DU streams. A resource with no stream applies to all of them. */
+export const STREAMS = ['Regular', 'SOL', 'NCWEB'] as const;
+
+/** 'B.A. Programme with English' -> { main: 'B.A. Programme', division: 'English' }; division '' = common / not mentioned. */
+export function splitCourse(course: string): { main: string; division: string } {
+  const i = course.indexOf(' with ');
+  return i > 0 ? { main: course.slice(0, i), division: course.slice(i + 6) } : { main: course, division: '' };
+}
+export const joinCourse = (main: string, division: string) => (main && division ? `${main} with ${division}` : main);
+
+/** Pickers show main courses; a course with divisions gets a second picker. */
+export const MAIN_COURSES = NOTES_COURSES.filter((c) => !splitCourse(c).division);
+export const DIVISIONS: Record<string, string[]> = {};
+for (const c of NOTES_COURSES) {
+  const { main, division } = splitCourse(c);
+  if (division) (DIVISIONS[main] ??= []).push(division);
+}
+
 const COURSE_BY_KEY = new Map<string, string>(
   [...NOTES_COURSES, ...Object.keys(COURSE_METADATA)].map((c) => [c.toLowerCase(), c]),
 );
@@ -28,10 +46,17 @@ export function canonicalCourse(text: string | null): string | null {
   return COURSE_BY_KEY.get(k) ?? (Object.hasOwn(ALIASES, k) ? ALIASES[k] : null);
 }
 
-/** Short course label for cards, e.g. 'BBA(FIA)'. */
+/** Short course label for chips, e.g. 'BBA(FIA)', 'BA Prog · English'. */
 export function courseShort(course: string): string {
-  const m = /\[(.+)\]$|\((BMS|SEC)\)$/.exec(course);
-  return m ? (m[1] ?? m[2]) : course.replace('B.Com. (Hons.)', 'B.Com (H)');
+  const { main, division } = splitCourse(course);
+  const m = /\[(.+)\]$|\((BMS|SEC)\)$/.exec(main);
+  const short = m ? (m[1] ?? m[2]) : main.replace('B.Com. (Hons.)', 'B.Com (H)').replace('B.A. Programme', 'BA Prog').replace('B.Com. Programme', 'B.Com Prog');
+  return division ? `${short} · ${division}` : short;
+}
+
+/** Card label: material stored under a main course that has divisions is common to all of them. */
+export function courseLabel(course: string): string {
+  return DIVISIONS[course] ? `${courseShort(course)} · All` : courseShort(course);
 }
 
 /** batchYear = admission year; the academic year starts in July. null when outside 1..maxSem. */
@@ -122,6 +147,7 @@ export function mapNote(raw: any): Resource {
     helpfulYes: Number(raw.helpful_yes) || 0,
     helpfulNo: Number(raw.helpful_no) || 0,
     isHidden: Boolean(raw.is_hidden),
+    stream: raw.stream ?? null,
   };
 }
 

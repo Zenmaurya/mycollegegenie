@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { NOTES_COURSES, canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, uploadStatus, yearFromTitle, titleFromFilename, uploadProblem, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
+import { NOTES_COURSES, MAIN_COURSES, DIVISIONS, splitCourse, joinCourse, courseLabel, canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, uploadStatus, yearFromTitle, titleFromFilename, uploadProblem, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
 
 const BBA = 'Bachelor of Business Administration (Financial Investment Analysis) [BBA(FIA)]';
 
@@ -113,4 +113,31 @@ test('NOTES_COURSES keeps stored names and adds DU Programme and PG courses', ()
     assert.ok(NOTES_COURSES.includes(c), c);
   assert.strictEqual(new Set(NOTES_COURSES).size, NOTES_COURSES.length);
   assert.ok(!NOTES_COURSES.some((c) => c.startsWith('Ph.D.')));
+});
+
+test('splitCourse / joinCourse round-trip divisions; common = main course alone', () => {
+  assert.deepStrictEqual(splitCourse('B.A. Programme with Political Science'), { main: 'B.A. Programme', division: 'Political Science' });
+  assert.deepStrictEqual(splitCourse('B.Com. (Hons.)'), { main: 'B.Com. (Hons.)', division: '' });
+  assert.strictEqual(joinCourse('B.Com. Programme', 'English'), 'B.Com. Programme with English');
+  assert.strictEqual(joinCourse('B.Com. Programme', ''), 'B.Com. Programme');
+});
+
+test('MAIN_COURSES has no divisions; DIVISIONS groups them under their main course', () => {
+  assert.ok(MAIN_COURSES.includes('B.A. Programme') && MAIN_COURSES.includes('B.Com. Programme'));
+  assert.ok(!MAIN_COURSES.some((c) => c.includes(' with ')));
+  assert.ok(DIVISIONS['B.A. Programme'].includes('Urdu'));
+  assert.deepStrictEqual(DIVISIONS['B.Com. Programme'], ['English', 'Entrepreneurship']);
+  assert.strictEqual(DIVISIONS['B.Com. (Hons.)'], undefined);
+});
+
+test('courseShort / courseLabel show division or common-to-all', () => {
+  assert.strictEqual(courseShort('B.A. Programme with English'), 'BA Prog · English');
+  assert.strictEqual(courseShort('B.A. Programme'), 'BA Prog');
+  assert.strictEqual(courseLabel('B.A. Programme'), 'BA Prog · All');
+  assert.strictEqual(courseLabel('B.Com. (Hons.)'), 'B.Com (H)');
+});
+
+test('mapNote keeps stream, null when absent', () => {
+  assert.strictEqual(mapNote({ id: 'a', stream: 'SOL' }).stream, 'SOL');
+  assert.strictEqual(mapNote({ id: 'a' }).stream, null);
 });

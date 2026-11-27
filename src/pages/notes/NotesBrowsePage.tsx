@@ -22,7 +22,7 @@ import { Button } from '../../components/ui/button';
 
 const PICK_KEY = 'mcg.notes.pick';
 type Pick = { course: string; semester: string };
-const EMPTY: FilterDraft = { course: '', semester: '', subjectCode: '', type: '', year: '', minRating: '', college: '', sort: '' };
+const EMPTY: FilterDraft = { course: '', semester: '', subjectCode: '', type: '', year: '', minRating: '', college: '', sort: '', stream: '' };
 const KEYS = Object.keys(EMPTY) as (keyof FilterDraft)[];
 const TYPE_PLURAL: Record<string, string> = { PYQ: 'PYQs', Note: 'notes', Book: 'books', Syllabus: 'syllabus', Playlist: 'playlists' };
 const GRID = 'grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4';
@@ -140,6 +140,7 @@ export function NotesBrowsePage() {
   if (q) chips.push({ key: 'q', label: `"${q}"` });
   if (draft.course) chips.push({ key: 'course', label: courseShort(draft.course) });
   if (draft.semester) chips.push({ key: 'semester', label: `Sem ${draft.semester}` });
+  if (draft.stream) chips.push({ key: 'stream', label: draft.stream });
   if (draft.subjectCode) chips.push({ key: 'subjectCode', label: draft.subjectCode });
   if (draft.type) chips.push({ key: 'type', label: TYPE_OPTIONS.find((t) => t.v === draft.type)?.l ?? draft.type });
   if (draft.year) chips.push({ key: 'year', label: draft.year });

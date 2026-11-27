@@ -49,6 +49,8 @@ export const College_COURSES = [
   'Master of Business Administration (MBA)',
   'B.Com. (Hons.)',
   'B.Com. Programme',
+  'B.Com. Programme with English',
+  'B.Com. Programme with Entrepreneurship',
   'B.Sc. (Hons.) Anthropology',
   'B.Sc. (Hons.) Biological Sciences',
   'B.Sc. (Hons.) Biomedical Science',
