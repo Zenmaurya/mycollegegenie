@@ -17,13 +17,15 @@ interface ComposerProps {
   onPosted(id: string): void;
   /** Preselected kind when the Composer is opened from a tab. */
   initialKind?: PostKind;
+  /** Title/body to start with (Repost). */
+  prefill?: { title: string; content: string } | null;
   /** Post on behalf of a society page; without it the Composer posts to the normal feed. */
   community?: { id: string; name: string; kind: 'society' | 'mcg'; role: PageRole | null };
 }
 
 type Photo = { file: File; preview: string };
 
-export function Composer({ open, onClose, onPosted, community, initialKind }: ComposerProps) {
+export function Composer({ open, onClose, onPosted, community, initialKind, prefill }: ComposerProps) {
   const { user, appUser } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -34,6 +36,7 @@ export function Composer({ open, onClose, onPosted, community, initialKind }: Co
   const titleRef = useRef<HTMLInputElement>(null);
   const [pickedKind, setPickedKind] = useState<PostKind | null>(initialKind ?? null);
   useEffect(() => { if (open) setPickedKind(initialKind ?? null); }, [open, initialKind]);
+  useEffect(() => { if (open && prefill) { setTitle(prefill.title); setContent(prefill.content); } }, [open, prefill]);
   const kinds = community ? composerKinds(community.role, community.kind) : [];
   const postKind = pickedKind && kinds.includes(pickedKind) ? pickedKind : kinds[0];
 

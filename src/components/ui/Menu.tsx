@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react"
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
 import { MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface MenuProps {
   label: string
-  items: { label: string; onSelect: () => void; danger?: boolean }[]
+  items: { label: string; onSelect: () => void; danger?: boolean; icon?: ReactNode }[]
 }
 
 export function Menu({ label, items }: MenuProps) {
@@ -48,15 +48,16 @@ export function Menu({ label, items }: MenuProps) {
         <MoreHorizontal className="h-5 w-5" aria-hidden />
       </button>
       {open && (
-        <div role="menu" aria-label={label} className="absolute right-0 z-50 mt-1 min-w-44 rounded-card bg-surface py-1 shadow-float">
+        <div role="menu" aria-label={label} className="absolute right-0 z-50 mt-1 min-w-52 rounded-card border border-line/70 bg-surface py-1.5 shadow-float">
           {items.map((it) => (
             <button
               key={it.label}
               type="button"
               role="menuitem"
               onClick={() => { close(); it.onSelect() }}
-              className={cn("flex min-h-11 w-full items-center px-4 text-left text-[15px] hover:bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand", it.danger ? "text-danger" : "text-ink")}
+              className={cn("flex min-h-11 w-full items-center gap-3 px-4 text-left text-[15px] hover:bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand", it.danger ? "text-danger" : "text-ink")}
             >
+              {it.icon && <span className="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden>{it.icon}</span>}
               {it.label}
             </button>
           ))}

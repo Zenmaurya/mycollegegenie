@@ -10,7 +10,13 @@ export function PhotoGrid({ images }: { images: string[] }) {
   );
 
   if (pics.length === 1) {
-    return <div className="aspect-[16/10] overflow-hidden rounded-lg">{img(pics[0], 0)}</div>;
+    // Whole photo, never cropped: a blurred copy fills the letterbox around it.
+    return (
+      <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-line/70 bg-canvas">
+        <img src={pics[0]} alt="" aria-hidden loading="lazy" decoding="async" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-2xl" />
+        <img src={pics[0]} alt="Post photo 1" loading="lazy" decoding="async" className="relative h-full w-full object-contain" />
+      </div>
+    );
   }
   if (pics.length === 3) {
     return (

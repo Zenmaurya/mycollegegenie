@@ -8,7 +8,8 @@ import { Composer } from '../feed/Composer';
 import { useAuth } from '../../context/AuthContext';
 import { banStatus } from '../../lib/moderation';
 
-type ComposerContextValue = { open(): void; postedAt: number };
+export type ComposerPrefill = { title: string; content: string };
+type ComposerContextValue = { open(prefill?: ComposerPrefill): void; postedAt: number };
 
 const ComposerContext = createContext<ComposerContextValue>({ open: () => {}, postedAt: 0 });
 
@@ -33,7 +34,13 @@ export function AppShell({ rightRail, children }: AppShellProps) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [postedAt, setPostedAt] = useState(0);
 
-  const open = useCallback(() => setComposerOpen(true), []);
+  const [prefill, setPrefill] = useState<ComposerPrefill | null>(null);
+  // Buttons pass open straight to onClick, so ignore anything that isn't a prefill object.
+  const open = useCallback((p?: unknown) => {
+    const ok = !!p && typeof (p as ComposerPrefill).title === 'string' && typeof (p as ComposerPrefill).content === 'string';
+    setPrefill(ok ? (p as ComposerPrefill) : null);
+    setComposerOpen(true);
+  }, []);
   const close = useCallback(() => setComposerOpen(false), []);
   const onPosted = useCallback(() => setPostedAt(Date.now()), []);
   const ctx = useMemo(() => ({ open, postedAt }), [open, postedAt]);
@@ -66,12 +73,12 @@ export function AppShell({ rightRail, children }: AppShellProps) {
         </main>
         {rightRail && (
           <aside className="hidden w-80 shrink-0 px-4 py-4 lg:block" aria-label="Sidebar">
-            <div className="sticky top-[72px]">{rightRail}</div>
+            <div className="scrollbar-none sticky top-[72px] max-h-[calc(100vh-88px)] overflow-y-auto">{rightRail}</div>
           </aside>
         )}
       </div>
       {!hideTabBar && <MobileTabBar />}
-      <Composer open={composerOpen} onClose={close} onPosted={onPosted} />
+      <Composer open={composerOpen} onClose={close} onPosted={onPosted} prefill={prefill} />
     </ComposerContext.Provider>
   );
 }

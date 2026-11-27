@@ -1,8 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Newspaper } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Calendar, ClipboardList, Newspaper, Sparkles, TrendingUp } from 'lucide-react';
 import type { NewsItem } from '../../types';
 import { FOOTER_LINKS } from './navItems';
+import { getFeedPage } from '../../services/feedService';
+import { NotesService } from '../../services/notesService';
+import { uniqueByTitle } from '../../lib/feed';
+import { courseShort } from '../../lib/notes';
 
 function RailCard({ title, icon, to, children }: { title: string; icon: React.ReactNode; to: string; children: React.ReactNode }) {
   return (
@@ -18,10 +23,56 @@ function RailCard({ title, icon, to, children }: { title: string; icon: React.Re
 
 export function RightRail({ news }: { news: NewsItem[] }) {
   const events = news.filter((n) => n.category === 'Event').slice(0, 3);
-  const latest = news.filter((n) => n.category === 'News').slice(0, 3);
+  const latest = uniqueByTitle(news.filter((n) => n.category !== 'Event'), (n) => n.title).slice(0, 4);
+  const trending = useQuery({
+    queryKey: ['rail-trending'],
+    queryFn: () => getFeedPage({ tab: 'trending' }),
+    staleTime: 5 * 60_000,
+    select: (p) => p.items.flatMap((it) => (it.kind === 'post' ? [it.post] : [])).slice(0, 4),
+  }).data ?? [];
+  const pyqs = useQuery({
+    queryKey: ['rail-top-pyqs'],
+    queryFn: () => NotesService.list({ type: 'PYQ', sort: 'downloads' }, undefined, 4),
+    staleTime: 5 * 60_000,
+  }).data?.items ?? [];
 
   return (
     <div className="space-y-4">
+      {trending.length > 0 && (
+        <RailCard title="Trending on MCG" icon={<TrendingUp className="h-4 w-4 text-brand" aria-hidden />} to="/">
+          <ul className="divide-y divide-line">
+            {trending.map((p) => (
+              <li key={p.id} className="py-2.5 first:pt-0 last:pb-0">
+                <Link to={`/post/${p.id}`} className="group block">
+                  <p className="text-[12px] text-ink-muted">{p.authorName || 'Student'}{p.course ? ` · ${p.course}` : ''}</p>
+                  <p className="line-clamp-2 text-[15px] font-semibold text-ink group-hover:underline">{p.title}</p>
+                  <p className="mt-0.5 flex items-center gap-1 text-[12px] text-ink-muted"><Sparkles className="h-3 w-3" aria-hidden />{p.upvotes.length} · {p.commentCount} comments</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </RailCard>
+      )}
+
+      {pyqs.length > 0 && (
+        <RailCard title="Most downloaded PYQs" icon={<ClipboardList className="h-4 w-4 text-highlight" aria-hidden />} to="/notes?type=PYQ&sort=downloads">
+          <ul className="space-y-2.5">
+            {pyqs.map((n) => (
+              <li key={n.id}>
+                <Link to={`/notes/${n.id}`} className="group flex gap-3">
+                  {n.thumbnailUrl
+                    ? <img src={n.thumbnailUrl} alt="" loading="lazy" className="h-14 w-12 shrink-0 rounded-md border border-line bg-white object-cover object-top" />
+                    : <span className="flex h-14 w-12 shrink-0 items-center justify-center rounded-md bg-highlight/15 text-highlight"><ClipboardList className="h-5 w-5" aria-hidden /></span>}
+                  <span className="min-w-0">
+                    <span className="line-clamp-2 text-[14px] font-semibold leading-snug text-ink group-hover:underline">{n.title}</span>
+                    <span className="block truncate text-[12px] text-ink-muted">{[n.course && courseShort(n.course), n.semester ? `Sem ${n.semester}` : '', n.downloads ? `${n.downloads} downloads` : ''].filter(Boolean).join(' · ')}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </RailCard>
+      )}
       {events.length > 0 && (
         <RailCard title="Upcoming events" icon={<Calendar className="h-4 w-4 text-brand-accent" aria-hidden />} to="/events">
           <ul className="space-y-3">
@@ -38,14 +89,14 @@ export function RightRail({ news }: { news: NewsItem[] }) {
       )}
 
       {latest.length > 0 && (
-        <RailCard title="Latest news" icon={<Newspaper className="h-4 w-4 text-brand" aria-hidden />} to="/news">
+        <RailCard title="College updates" icon={<Newspaper className="h-4 w-4 text-brand" aria-hidden />} to="/news">
           <ul className="space-y-3">
             {latest.map((n, i) => (
               <li key={n.id || i}>
-                <Link to="/news" className="block">
-                  <p className="line-clamp-2 text-[15px] font-semibold text-ink">{n.title}</p>
-                  {n.date && <p className="text-[13px] text-ink-muted">{n.date}</p>}
-                </Link>
+                <a href={n.url || '/news'} target={n.url ? '_blank' : undefined} rel={n.url ? 'noopener noreferrer' : undefined} className="group block">
+                  <p className="line-clamp-2 text-[14px] font-semibold leading-snug text-ink group-hover:underline">{n.title}</p>
+                  <p className="text-[12px] text-ink-muted">{[n.college, n.date].filter(Boolean).join(' · ')}</p>
+                </a>
               </li>
             ))}
           </ul>
