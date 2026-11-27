@@ -14,6 +14,10 @@ import { Avatar } from '../ui/Avatar';
 import { UserLink } from '../profile/UserLink';
 import { ReportSheet } from '../communities/ReportSheet';
 
+// Particle end offsets (px) for the reaction effects.
+const SPARK_DIRS = [[0, -24], [17, -17], [24, 0], [17, 15], [-17, 15], [-24, 0], [-17, -17]];
+const POOF_DIRS = [[-10, -20], [0, -28], [10, -20], [-4, -12], [6, -14]];
+
 function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSaved: boolean; onToggleSave: (id: string) => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -21,6 +25,7 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
   const [reporting, setReporting] = useState(false);
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState(false);
+  const [fx, setFx] = useState<{ kind: 'spark' | 'poof'; n: number } | null>(null);
   const uid = user?.id;
   // ✨ Spark = MCG's one positive reaction (stored as an upvote); downvotes are no longer shown
   const sparks = post.upvotes.length;
@@ -30,6 +35,8 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
 
   const vote = async (dir: 'up' | 'down') => {
     if (!uid) { toast('Log in to vote'); return; }
+    // Play the effect only when turning a reaction on; n restarts the animation on repeat taps.
+    if (dir === 'up' ? !sparked : !poofed) setFx((f) => ({ kind: dir === 'up' ? 'spark' : 'poof', n: (f?.n ?? 0) + 1 }));
     const snapshot = qc.getQueriesData({ queryKey: ['feed'] });
     qc.setQueriesData({ queryKey: ['feed'] }, (d: any) => applyVote(d, post.id, uid, dir));
     try {
@@ -127,14 +134,20 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
         <span className="flex items-center rounded-full bg-canvas" role="group" aria-label="React">
           <button type="button" onClick={() => vote('up')} aria-pressed={sparked}
             aria-label={`Spark, ${sparks} ${sparks === 1 ? 'spark' : 'sparks'}`}
-            className={`flex min-h-11 items-center gap-1.5 rounded-l-full pl-4 pr-3 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${sparked ? 'bg-brand-soft text-brand' : 'hover:bg-line'}`}>
-            <Sparkles className={`h-4 w-4 ${sparked ? 'fill-current' : ''}`} aria-hidden /> {sparks}
+            className={`relative flex min-h-11 items-center gap-1.5 rounded-l-full pl-4 pr-3 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${sparked ? 'bg-brand-soft text-brand' : 'hover:bg-line'}`}>
+            <Sparkles key={fx?.kind === 'spark' ? fx.n : 0} className={`h-4 w-4 ${sparked ? 'fill-current' : ''} ${fx?.kind === 'spark' ? 'mcg-pop' : ''}`} aria-hidden /> {sparks}
+            {fx?.kind === 'spark' && SPARK_DIRS.map(([dx, dy], i) => (
+              <span key={`${fx.n}-${i}`} aria-hidden className="mcg-fx mcg-spark" style={{ '--dx': `${dx}px`, '--dy': `${dy}px` } as React.CSSProperties}>✦</span>
+            ))}
           </button>
           <span className="h-5 w-px bg-line" aria-hidden />
           {/* Poof = the genie's down-vote: it only lowers ranking and the count stays private */}
           <button type="button" onClick={() => vote('down')} aria-pressed={poofed} aria-label="Poof (not useful)" title="Poof: not useful"
-            className={`flex min-h-11 items-center gap-1 rounded-r-full pl-2 pr-4 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${poofed ? 'bg-ink/10 text-ink' : 'hover:bg-line'}`}>
-            <Wind className="h-4 w-4" aria-hidden /><span className="sr-only sm:not-sr-only">Poof</span>
+            className={`relative flex min-h-11 items-center gap-1 rounded-r-full pl-2 pr-4 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${poofed ? 'bg-ink/10 text-ink' : 'hover:bg-line'}`}>
+            <Wind key={fx?.kind === 'poof' ? fx.n : 0} className={`h-4 w-4 ${fx?.kind === 'poof' ? 'mcg-pop' : ''}`} aria-hidden /><span className="sr-only sm:not-sr-only">Poof</span>
+            {fx?.kind === 'poof' && POOF_DIRS.map(([dx, dy], i) => (
+              <span key={`${fx.n}-${i}`} aria-hidden className="mcg-fx mcg-puff" style={{ '--dx': `${dx}px`, '--dy': `${dy}px`, animationDelay: `${i * 40}ms` } as React.CSSProperties} />
+            ))}
           </button>
         </span>
         <Link to={detailUrl} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand" aria-label={`${post.commentCount} comments`}>
