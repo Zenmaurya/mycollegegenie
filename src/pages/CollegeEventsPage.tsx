@@ -34,7 +34,11 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
     setLocalLoading(true);
     getNews('Event')
       .then(data => setLocalItems(data))
-      .catch(() => setLocalItems([]))
+      .catch((error) => {
+        console.error('[CollegeEventsPage] Failed to load events:', error);
+        setLocalItems([]);
+        toast.error('Could not load events. Please try again later.');
+      })
       .finally(() => setLocalLoading(false));
   }, []);
 
@@ -923,4 +927,5 @@ export const CollegeEventsPage: React.FC<CollegeEventsPageProps> = ({ newsItems:
     </div>
   );
 };
+
 
