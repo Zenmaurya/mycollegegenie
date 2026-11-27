@@ -49,8 +49,8 @@ export const PageTransition: React.FC<PageTransitionProps> = ({ children, classN
         initial="initial"
         animate="animate"
         exit="exit"
+        // No will-change: it would make this wrapper the containing block for every position:fixed modal/bar inside the page.
         className={className}
-        style={{ willChange: 'transform, opacity' }}
       >
         {children}
       </motion.div>
