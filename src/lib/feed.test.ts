@@ -71,6 +71,7 @@ test('timeAgo', () => {
   assert.strictEqual(timeAgo('2026-11-19T09:00:00Z', now), '3h');
   assert.strictEqual(timeAgo('2026-11-17T12:00:00Z', now), '2d');
   assert.strictEqual(timeAgo('2026-11-01T12:00:00Z', now), '1 Nov');
+  assert.strictEqual(timeAgo('2025-03-10T12:00:00Z', now), '10 Mar 2025'); // older than this year shows the year
   assert.strictEqual(timeAgo('', now), '');
 });
 

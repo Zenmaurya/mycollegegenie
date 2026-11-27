@@ -108,12 +108,12 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
                 <span className="truncate">{post.community.name}</span>
                 {post.community.status === 'official' && <BadgeCheck className="h-4 w-4 shrink-0 text-highlight" aria-label="Official" />}
               </Link>
-              <span aria-hidden>·</span><UserLink username={post.authorUsername} className="truncate">{post.authorName || 'Student'}</UserLink>
+              <span aria-hidden>·</span><UserLink username={post.authorUsername} className="inline-flex min-w-0 items-center truncate">{post.authorName || 'Student'}</UserLink>
             </>
           ) : (
             <>
               <Avatar name={post.authorName || 'Student'} size="sm" />
-              <UserLink username={post.authorUsername} className="truncate font-semibold text-ink">{post.authorName || 'Student'}</UserLink>
+              <UserLink username={post.authorUsername} className="inline-flex min-w-0 items-center truncate font-semibold text-ink">{post.authorName || 'Student'}</UserLink>
             </>
           )}
           {post.course && <><span aria-hidden>·</span><span className="truncate">{post.course}</span></>}

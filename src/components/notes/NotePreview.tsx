@@ -20,7 +20,10 @@ function PdfPages({ url, thumb }: { url: string; thumb?: string | null }) {
       doc = pdf;
       for (let n = 1; n <= Math.min(2, pdf.numPages); n++) {
         const page = await pdf.getPage(n);
-        const viewport = page.getViewport({ scale: 1.5 });
+        // Render at shown width x screen density (capped) so text is sharp on phones/retina, not a blurry upscale.
+        const cssWidth = host.current?.clientWidth || 800;
+        const scale = Math.min(4, (cssWidth / page.getViewport({ scale: 1 }).width) * (window.devicePixelRatio || 1));
+        const viewport = page.getViewport({ scale: Math.max(1.5, scale) });
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;

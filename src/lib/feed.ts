@@ -84,7 +84,8 @@ export function timeAgo(iso: string, now: Date = new Date()): string {
   if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d`;
-  return `${then.getUTCDate()} ${MONTHS[then.getUTCMonth()]}`;
+  const date = `${then.getDate()} ${MONTHS[then.getMonth()]}`; // viewer's local date, not UTC
+  return then.getFullYear() === now.getFullYear() ? date : `${date} ${then.getFullYear()}`;
 }
 
 export type FeedPage = { items: FeedItem[]; nextCursor: string | null };
