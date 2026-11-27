@@ -2,7 +2,7 @@
  * Pure helpers for /notes (no network/env imports so they run in node:test).
  */
 import type { Resource, ResourceType } from '../types';
-import { COURSE_METADATA } from '../constants';
+import { COURSE_METADATA, College_COURSES } from '../constants';
 
 export const RESOURCE_REPORT_REASONS = ['Wrong file', 'Copyright', 'Low quality', 'Spam', 'Other'] as const;
 
@@ -11,11 +11,11 @@ const BMS = 'Bachelor of Management Studies (BMS)';
 const BCOM = 'B.Com. (Hons.)';
 const SEC = 'Skill Enhancement Course (SEC)';
 
+/** Course picker: the four most-used names first, then every DU UG/PG course (Ph.D. left out). */
+export const NOTES_COURSES = [...new Set([BBA, BMS, SEC, BCOM, ...College_COURSES.filter((c) => !c.startsWith('Ph.D.'))])];
 const COURSE_BY_KEY = new Map<string, string>(
-  [BBA, BMS, SEC, BCOM, ...Object.keys(COURSE_METADATA)].map((c) => [c.toLowerCase(), c]),
+  [...NOTES_COURSES, ...Object.keys(COURSE_METADATA)].map((c) => [c.toLowerCase(), c]),
 );
-/** The four course names live resources use, for the course picker. */
-export const NOTES_COURSES = [BBA, BMS, SEC, BCOM];
 
 const ALIASES: Record<string, string> = {
   'bba': BBA, 'bba-fia': BBA, 'bba fia': BBA, 'bba(fia)': BBA,

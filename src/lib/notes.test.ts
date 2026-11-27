@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, uploadStatus, yearFromTitle, titleFromFilename, uploadProblem, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
+import { NOTES_COURSES, canonicalCourse, courseShort, withPickDefaults, currentSemester, legacyBrowseToNotes, uploadStatus, yearFromTitle, titleFromFilename, uploadProblem, formatHelpedPct, mapNote, RESOURCE_REPORT_REASONS, previewKind } from './notes';
 
 const BBA = 'Bachelor of Business Administration (Financial Investment Analysis) [BBA(FIA)]';
 
@@ -11,6 +11,7 @@ test('canonicalCourse maps aliases and exact names, rejects unknown', () => {
   for (const a of ['bcom', 'b.com', 'B.Com (Hons)']) assert.strictEqual(canonicalCourse(a), 'B.Com. (Hons.)');
   assert.strictEqual(canonicalCourse('skill enhancement course (sec)'), 'Skill Enhancement Course (SEC)');
   assert.strictEqual(canonicalCourse('b.sc. (hons.) mathematics'), 'B.Sc. (Hons.) Mathematics');
+  assert.strictEqual(canonicalCourse('b.a. programme with english'), 'B.A. Programme with English');
   assert.strictEqual(canonicalCourse(null), null);
   assert.strictEqual(canonicalCourse('Physics'), null);
   assert.strictEqual(canonicalCourse('constructor'), null);
@@ -104,4 +105,12 @@ test('uploadStatus: hidden beats approved, unapproved is in review', () => {
   assert.strictEqual(uploadStatus({ isApproved: true, isHidden: true }), 'Hidden');
   assert.strictEqual(uploadStatus({ isApproved: false }), 'In review');
   assert.strictEqual(uploadStatus({ isApproved: true }), 'Live');
+});
+
+test('NOTES_COURSES keeps stored names and adds DU Programme and PG courses', () => {
+  for (const c of [BBA, 'Bachelor of Management Studies (BMS)', 'Skill Enhancement Course (SEC)', 'B.Com. (Hons.)', 'B.Com. Programme',
+    'B.A. Programme with Urdu', 'B.A. (Hons.) English', 'M.A. Hindi (One Year Programme)', 'Master of Library and Information Science (MLISc)'])
+    assert.ok(NOTES_COURSES.includes(c), c);
+  assert.strictEqual(new Set(NOTES_COURSES).size, NOTES_COURSES.length);
+  assert.ok(!NOTES_COURSES.some((c) => c.startsWith('Ph.D.')));
 });
