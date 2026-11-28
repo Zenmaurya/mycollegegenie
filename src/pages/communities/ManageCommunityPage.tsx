@@ -3,13 +3,13 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
+import { PendingEvents } from '../../components/events/PendingEvents';
 import { getCommunity, updateCommunity, type CommunityInput } from '../../services/communityService';
 import { deleteEvent, listCommunityEvents } from '../../services/eventService';
 import { validateCommunityForm, type CommunityDetail, type CommunityForm, type EventCard } from '../../lib/communities';
 import { CommunityFields, Field, field, pickImage, uploadImage } from '../../components/communities/CommunityFields';
 import { MembersPanel } from '../../components/communities/MembersPanel';
 import { VerificationPanel } from '../../components/communities/VerificationPanel';
-import { EventForm } from '../../components/communities/EventForm';
 import { ConfirmSheet } from '../../components/communities/ConfirmSheet';
 import { Tabs } from '../../components/ui/Tabs';
 import { Skeleton } from '../../components/ui/skeleton';
@@ -100,7 +100,6 @@ function PageSection({ detail, onChanged }: { detail: CommunityDetail; onChanged
 
 function EventsSection({ detail, viewer, onChanged }: { detail: CommunityDetail; viewer: string; onChanged: () => Promise<unknown> }) {
   const q = useQuery({ queryKey: ['community-events', viewer, detail.slug], queryFn: () => listCommunityEvents(detail.slug) });
-  const [editing, setEditing] = useState<EventCard | null>(null);
   const [deleting, setDeleting] = useState<EventCard | null>(null);
   const [error, setError] = useState('');
   const del = useMutation({
@@ -108,15 +107,11 @@ function EventsSection({ detail, viewer, onChanged }: { detail: CommunityDetail;
     onSuccess: async () => { setDeleting(null); setError(''); await onChanged(); },
     onError: (e: Error) => { setDeleting(null); setError(e.message || 'Could not delete the event'); },
   });
-  const isOfficial = detail.status === 'official' || detail.kind === 'mcg';
-
-  if (editing) {
-    return <EventForm slug={detail.slug} isOfficial={isOfficial} initial={editing} onCancel={() => setEditing(null)}
-      onSaved={() => { setEditing(null); toast.success('Event saved'); void onChanged(); }} />;
-  }
   return (
     <div className="space-y-3">
       <Link to={`/c/${detail.slug}/events/new`} className="inline-flex min-h-11 items-center rounded-sm bg-brand px-4 text-[15px] font-semibold text-white hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-brand">Add event</Link>
+      <PendingEvents slug={detail.slug} />
+      <h2 className="text-[17px] font-bold text-ink">Published events</h2>
       {error && <p role="alert" className="text-[15px] text-danger">{error}</p>}
       {q.isPending && <Skeleton className="h-20 w-full rounded-card" />}
       {q.isError && <Button onClick={() => void q.refetch()}>Retry loading events</Button>}
@@ -129,7 +124,7 @@ function EventsSection({ detail, viewer, onChanged }: { detail: CommunityDetail;
                 <span className="block truncate text-[15px] font-semibold text-ink">{e.title}</span>
                 <span className="block text-[13px] text-ink-muted">{e.type} · {new Date(e.starts_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
               </span>
-              <Button variant="secondary" onClick={() => setEditing(e)} aria-label={`Edit ${e.title}`}>Edit</Button>
+              <Link to={`/events/${e.id}/edit`} aria-label={`Edit ${e.title}`} className="inline-flex min-h-11 items-center rounded-sm border border-ink px-4 text-[15px] font-semibold text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand">Edit</Link>
               <Button variant="danger" onClick={() => setDeleting(e)} aria-label={`Delete ${e.title}`}>Delete</Button>
             </li>
           ))}

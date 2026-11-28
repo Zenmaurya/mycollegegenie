@@ -1,4 +1,6 @@
 import { Fragment, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { eventHref } from '../../lib/events';
 import { ExternalLink, Heart } from 'lucide-react';
 import { eventBadges, linkLabel, type EventCard } from '../../lib/communities';
 import { Badge } from '../ui/Badge';
@@ -35,7 +37,7 @@ export function EventCardView({ event: e, now, canRegister, onToggleInterest, on
       {e.poster_url && <img src={e.poster_url} alt={`Poster for ${e.title}`} loading="lazy" className="max-h-72 w-full object-cover" />}
       <div className="space-y-2 p-4">
         <div className="flex items-start gap-2">
-          <h3 className="min-w-0 flex-1 text-[17px] font-bold leading-snug text-ink">{e.title}</h3>
+          <h3 className="min-w-0 flex-1 text-[17px] font-bold leading-snug text-ink"><Link to={eventHref(e.id)} className="hover:underline">{e.title}</Link></h3>
           {onReport && <Menu label={`More actions for ${e.title}`} items={[{ label: 'Report event', onSelect: () => onReport(e), danger: true }]} />}
         </div>
         <p className="text-[14px] text-ink-muted">{meta.join(' · ')}</p>

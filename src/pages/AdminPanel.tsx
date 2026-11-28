@@ -62,6 +62,7 @@ import { ConfirmationModal } from '../components/ConfirmationModal';
 import { AdminSidebar, AdminTab, MODERATOR_TABS } from './admin/AdminSidebar';
 import { AdminModerationLog } from './admin/AdminModerationLog';
 import { AdminJobs } from './admin/AdminJobs';
+import { PendingEvents } from '../components/events/PendingEvents';
 import { AdminSocieties } from './admin/AdminSocieties';
 import { AdminReports } from './admin/AdminReports';
 import { actOnReport } from '../services/reportService';
@@ -3059,6 +3060,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           <AdminBlogs defaultAuthorName={appUser?.displayName || 'MyCollegeGenie Editorial'} />
         ) : activeTab === 'jobs' ? (
           <AdminJobs />
+        ) : activeTab === 'events' ? (
+          <PendingEvents />
         ) : activeTab === 'societies' ? (
           <AdminSocieties />
         ) : activeTab === 'reports' ? (

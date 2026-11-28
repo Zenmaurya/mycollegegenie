@@ -108,46 +108,6 @@ export const approveNews = async (id: string): Promise<void> => {
   }
 };
 
-// ── POST /api/news (Event with image upload) ────────────────
-export const submitEvent = async (
-  formData: { title: string; college: string; date: string; venue: string; eligibility: string; description: string; image?: File | null; imageUrl?: string }
-) => {
-  // FIX: getUser() auto-refreshes expired token; getSession() does not
-  const token = await getFreshToken();
-  if (!token) throw new Error('Not authenticated.');
-
-  let imageUrl = formData.imageUrl || '';
-  if (formData.image && !imageUrl) {
-    const uploadForm = new FormData();
-    uploadForm.append('image', formData.image);
-    const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.mycollegegenie.in'}/api/news/upload-image`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: uploadForm,
-    });
-    if (uploadRes.ok) {
-      const uploadData = await uploadRes.json();
-      imageUrl = uploadData.url || '';
-    }
-  }
-
-  return await fetchWithAuth('/api/news', {
-    method: 'POST',
-    body: JSON.stringify({
-      title: formData.title,
-      college: formData.college,
-      date: formData.date,
-      venue: formData.venue,
-      eligibility: formData.eligibility,
-      summary: formData.description,
-      description: formData.description,
-      category: 'Event',
-      image_url: imageUrl,
-      is_approved: false,
-    }),
-  });
-};
-
 // ── POST /api/news (News submission by student) ─────────────
 export const submitNews = async (
   formData: { title: string; college: string; date: string; summary: string; url?: string; category?: string }

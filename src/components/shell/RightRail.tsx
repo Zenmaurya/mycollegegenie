@@ -8,6 +8,8 @@ import { getFeedPage } from '../../services/feedService';
 import { NotesService } from '../../services/notesService';
 import { uniqueByTitle } from '../../lib/feed';
 import { courseShort } from '../../lib/notes';
+import { useUpcomingEvents } from '../feed/EventsStrip';
+import { dateBlock, eventHref } from '../../lib/events';
 
 function RailCard({ title, icon, to, children }: { title: string; icon: React.ReactNode; to: string; children: React.ReactNode }) {
   return (
@@ -22,7 +24,7 @@ function RailCard({ title, icon, to, children }: { title: string; icon: React.Re
 }
 
 export function RightRail({ news }: { news: NewsItem[] }) {
-  const events = news.filter((n) => n.category === 'Event').slice(0, 3);
+  const events = useUpcomingEvents().slice(0, 3);
   const latest = uniqueByTitle(news.filter((n) => n.category !== 'Event'), (n) => n.title).slice(0, 4);
   const trending = useQuery({
     queryKey: ['rail-trending'],
@@ -76,11 +78,11 @@ export function RightRail({ news }: { news: NewsItem[] }) {
       {events.length > 0 && (
         <RailCard title="Upcoming events" icon={<Calendar className="h-4 w-4 text-brand-accent" aria-hidden />} to="/events">
           <ul className="space-y-3">
-            {events.map((e, i) => (
-              <li key={e.id || i}>
-                <Link to="/events" className="block">
+            {events.map((e) => (
+              <li key={e.id}>
+                <Link to={eventHref(e.id)} className="block">
                   <p className="line-clamp-2 text-[15px] font-semibold text-ink">{e.title}</p>
-                  <p className="text-[13px] text-ink-muted">{[e.date, e.college].filter(Boolean).join(' · ')}</p>
+                  <p className="text-[13px] text-ink-muted">{[`${dateBlock(e.starts_at).day} ${dateBlock(e.starts_at).month}`, e.community.college_short || e.community.name].join(' · ')}</p>
                 </Link>
               </li>
             ))}

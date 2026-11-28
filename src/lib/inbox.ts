@@ -54,6 +54,7 @@ export function notificationHref(n: Pick<InboxNotification, 'type' | 'itemType' 
   if (n.type === 'stay_rejected') return '/stays/new'; // the rejected row is deleted, so the owner starts a new listing
   if (n.type === 'job_rejected') return '/jobs/new'; // the rejected row is deleted
   switch (n.itemType) {
+    case 'event': return `/events/${id}`; // event_approved / event_rejected: the page shows the status
     case 'job': return `/jobs/${id}`;
     case 'post': return `/post/${id}`;
     case 'resource': return `/notes/${id}`;

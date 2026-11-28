@@ -18,12 +18,13 @@ import {
   Flag,
   ScrollText,
   Briefcase,
+  CalendarCheck,
 } from 'lucide-react';
 
 
-export type AdminTab = 'overview' | 'resources' | 'news' | 'forum' | 'pg' | 'stays' | 'exchange' | 'playlists' | 'verification' | 'testimonials' | 'users' | 'carousel' | 'ads' | 'homepage-settings' | 'jobs' | 'blogs' | 'societies' | 'reports' | 'moderation-log';
+export type AdminTab = 'overview' | 'resources' | 'news' | 'forum' | 'pg' | 'stays' | 'exchange' | 'playlists' | 'verification' | 'testimonials' | 'users' | 'carousel' | 'ads' | 'homepage-settings' | 'jobs' | 'events' | 'blogs' | 'societies' | 'reports' | 'moderation-log';
 
-export const MODERATOR_TABS: AdminTab[] = ['societies', 'reports', 'stays', 'jobs', 'moderation-log'];
+export const MODERATOR_TABS: AdminTab[] = ['societies', 'reports', 'stays', 'jobs', 'events', 'moderation-log'];
 
 interface SidebarProps {
   activeTab: AdminTab;
@@ -77,6 +78,7 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, 
         { id: 'users', label: 'User Directory', icon: Users },
         { id: 'testimonials', label: 'Testimonials', icon: MessageSquare },
         { id: 'jobs', label: 'Jobs', icon: Briefcase },
+        { id: 'events', label: 'Events', icon: CalendarCheck },
         { id: 'societies', label: 'Societies', icon: GraduationCap },
         { id: 'reports', label: 'Reports', icon: Flag },
         { id: 'moderation-log', label: 'Moderation log', icon: ScrollText }

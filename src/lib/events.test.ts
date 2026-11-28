@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyInterest, dateBlock, deadlineLabel, eventHref, feeLabel } from './events';
+import { cleanRows } from './eventForm';
+import { applyInterest, competitionsRedirect, dateBlock, deadlineLabel, eventHref, feeLabel } from './events';
 
 test('dateBlock uses the IST date', () => {
   assert.deepEqual(dateBlock('2026-12-05T10:00:00+05:30'), { day: '05', month: 'DEC' });
@@ -34,4 +35,17 @@ test('applyInterest moves the viewer between counts', () => {
   assert.deepEqual(applyInterest(e, 'going'), { my_status: 'going', interested: true, interested_count: 2, going_count: 2 });
   assert.deepEqual(applyInterest(e, null), { my_status: null, interested: false, interested_count: 2, going_count: 1 });
   assert.deepEqual(applyInterest(e, 'interested'), e);
+});
+
+test('competitionsRedirect keeps the other query', () => {
+  assert.equal(competitionsRedirect(''), '/events?type=Competition');
+  assert.equal(competitionsRedirect('?college=abc'), '/events?college=abc&type=Competition');
+  assert.equal(competitionsRedirect('?tab=saved'), '/events?tab=saved');
+});
+
+test('cleanRows drops blank rows and rejects half-filled ones', () => {
+  const ok = cleanRows([{ time: '', label: ' Opening ' }, { time: ' ', label: '' }], [{ q: '', a: '' }]);
+  assert.deepEqual(ok, { schedule: [{ time: '', label: 'Opening' }], faqs: [], error: '' });
+  assert.ok(cleanRows([{ time: '10 AM', label: '' }], []).error);
+  assert.ok(cleanRows([], [{ q: 'Fee?', a: '' }]).error);
 });

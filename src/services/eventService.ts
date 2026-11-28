@@ -1,6 +1,7 @@
 import { fetchWithAuth } from '../lib/apiClient';
 import type { EventCard, InterestStatus } from '../lib/communities';
 import { config } from '../lib/config';
+import type { FaqRow, ScheduleRow } from '../lib/eventForm';
 
 export type EventInput = {
   title: string; type: string; mode: string; eligibility: string; starts_at: string; ends_at?: string | null; register_by?: string | null;
@@ -8,8 +9,6 @@ export type EventInput = {
   venue?: string | null; eligibility_note?: string | null; contact?: string | null; rounds?: string | null; rules?: string | null; poster_url?: string | null;
   description?: string | null; schedule?: ScheduleRow[] | null; faqs?: FaqRow[] | null;
 };
-export type ScheduleRow = { time: string; label: string };
-export type FaqRow = { q: string; a: string };
 export type EventStatus = 'live' | 'pending' | 'rejected';
 export type MyEvent = EventCard & { status: EventStatus; reject_reason: string | null };
 export type PendingEvent = MyEvent & { orphan: boolean; submitter: string | null };
@@ -41,8 +40,6 @@ export const listSavedEvents = (cursor?: string): Promise<Page> => fetchWithAuth
 export async function listCommunityEvents(slug: string): Promise<EventCard[]> {
   return (await fetchWithAuth(`/api/communities/${encodeURIComponent(slug)}/events`)).items;
 }
-export const createEvent = (slug: string, e: EventInput): Promise<{ id: string }> =>
-  fetchWithAuth(`/api/communities/${encodeURIComponent(slug)}/events`, { method: 'POST', body: JSON.stringify(e) });
 export const updateEvent = (id: string, patch: Partial<EventInput>) => fetchWithAuth(`/api/events/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(patch) });
 export const deleteEvent = (id: string) => fetchWithAuth(`/api/events/${encodeURIComponent(id)}`, { method: 'DELETE' });
 export const setInterest = (id: string, on: boolean): Promise<{ interested: boolean; interested_count: number }> =>

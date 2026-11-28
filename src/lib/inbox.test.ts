@@ -60,3 +60,9 @@ test('mergeMessages prefers the latest copy and drops duplicates', () => {
   const l = [msg('2', false, at(2026, 10, 2)), msg('3', false, at(2026, 10, 3))];
   assert.deepStrictEqual(mergeMessages(o, l).map((m) => m.id), ['1', '2', '3']);
 });
+
+test('event review notifications open the event', () => {
+  for (const type of ['event_approved', 'event_rejected']) {
+    assert.equal(notificationHref({ type, itemType: 'event', itemId: 'e1', actorUsername: null }), '/events/e1');
+  }
+});

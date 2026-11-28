@@ -105,7 +105,6 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
     return () => io.disconnect();
   }, [hasNextPage, isFetchingNextPage, isError, fetchNextPage, items.length]);
 
-  const events = news.filter((n) => n.category === 'Event').slice(0, 10);
   const name = appUser?.displayName || (user?.user_metadata?.full_name as string) || '';
   const photo = appUser?.photoURL || (user?.user_metadata?.avatar_url as string | undefined);
   const signupAt = signupCardAfter(items.length, !!user);
@@ -114,7 +113,7 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
   return (
     <div className="mx-auto w-full max-w-[680px] space-y-4 px-3 py-4 sm:px-4">
       {!online && <p role="status" className="rounded-card bg-canvas px-4 py-2 text-center text-[13px] text-ink-muted">You're offline. Showing what's already loaded.</p>}
-      {!filtered && <EventsStrip events={events} />}
+      {!filtered && <EventsStrip />}
 
       <div className="flex items-center gap-3 rounded-card bg-surface p-3 shadow-card">
         {photo ? (

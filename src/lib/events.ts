@@ -49,3 +49,11 @@ export function applyInterest<T extends Interest>(e: T, next: T['my_status']): T
   const delta = (s: 'interested' | 'going') => (next === s ? 1 : 0) - (e.my_status === s ? 1 : 0);
   return { ...e, my_status: next, interested: !!next, interested_count: e.interested_count + delta('interested'), going_count: e.going_count + delta('going') };
 }
+
+/** Old /explore/competitions links keep their other query params. */
+export function competitionsRedirect(search: string): string {
+  const p = new URLSearchParams(search);
+  // the Saved tab lists every saved event, so no type filter there
+  if (p.get('tab') !== 'saved') p.set('type', 'Competition');
+  return `/events?${p}`;
+}

@@ -24,7 +24,7 @@ export const EXPLORE_TILES: NavItem[] = [
   { to: '/jobs', label: 'Jobs', icon: Briefcase },
   { to: '/c', label: 'Societies', icon: Users },
   { to: '/events', label: 'Events', icon: Calendar },
-  { to: '/explore/competitions', label: 'Competitions', icon: Trophy },
+  { to: '/events?type=Competition', label: 'Competitions', icon: Trophy },
   { to: '/news', label: 'News', icon: Newspaper },
   { to: '/profile?tab=saved', label: 'Saved', icon: Bookmark, soon: true },
   { to: '/people', label: 'Find people', icon: UserPlus },

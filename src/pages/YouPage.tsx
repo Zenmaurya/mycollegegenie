@@ -21,7 +21,7 @@ export function YouPage() {
   const username = appUser?.username;
 
   const links = [
-    ...(user ? [{ to: '/profile', label: 'Profile' }, { to: '/people', label: 'Find people' }] : []),
+    ...(user ? [{ to: '/profile', label: 'Profile' }, { to: '/people', label: 'Find people' }, { to: '/events/new#mine', label: 'My events' }] : []),
     ...(isStaff ? [{ to: '/admin', label: 'Admin panel' }] : []),
     ...FOOTER_LINKS,
   ];

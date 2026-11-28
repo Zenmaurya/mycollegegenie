@@ -8,6 +8,18 @@ export type EventFormValues = {
   venue: string; contact: string; rounds: string; rules: string;
 };
 
+export type ScheduleRow = { time: string; label: string };
+export type FaqRow = { q: string; a: string };
+
+/** Drops untouched rows and checks the rest. Mirrors backend validateDetails. */
+export function cleanRows(schedule: ScheduleRow[], faqs: FaqRow[]) {
+  const s = schedule.map((r) => ({ time: r.time.trim(), label: r.label.trim() })).filter((r) => r.time || r.label);
+  const f = faqs.map((r) => ({ q: r.q.trim(), a: r.a.trim() })).filter((r) => r.q || r.a);
+  const error = s.some((r) => !r.label) ? 'Every schedule row needs a description'
+    : f.some((r) => !r.q || !r.a) ? 'Every FAQ needs a question and an answer' : '';
+  return { schedule: s, faqs: f, error };
+}
+
 export const emptyEventForm = (): EventFormValues => ({
   title: '', type: '', mode: '', eligibility: '', eligibility_note: '', starts_at: '', ends_at: '', register_by: '',
   team_size_min: '', team_size_max: '', entry_fee: '', prize: '', register_url: '', venue: '', contact: '', rounds: '', rules: '',

@@ -50,7 +50,6 @@ const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
 const FlipbookPage = lazy(() => import('./pages/FlipbookPage').then(m => ({ default: m.FlipbookPage })));
 const OfficialNewsPage = lazy(() => import('./pages/OfficialNewsPage').then(m => ({ default: m.OfficialNewsPage })));
-const CollegeEventsPage = lazy(() => import('./pages/CollegeEventsPage').then(m => ({ default: m.CollegeEventsPage })));
 const UserProfilePage = lazy(() => import('./pages/profile/UserProfilePage').then(m => ({ default: m.UserProfilePage })));
 const SettingsPage = lazy(() => import('./pages/profile/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const AdminUserPage = lazy(() => import('./pages/admin/AdminUserPage').then(m => ({ default: m.AdminUserPage })));
@@ -69,12 +68,10 @@ const InboxPage = lazy(() => import('./pages/InboxPage').then(m => ({ default: m
 const ConversationPage = lazy(() => import('./pages/inbox/ConversationPage').then(m => ({ default: m.ConversationPage })));
 const YouPage = lazy(() => import('./pages/YouPage').then(m => ({ default: m.YouPage })));
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
-const CompetitionsPage = lazy(() => import('./pages/CompetitionsPage').then(m => ({ default: m.CompetitionsPage })));
 const CommunitiesPage = lazy(() => import('./pages/communities/CommunitiesPage').then(m => ({ default: m.CommunitiesPage })));
 const CreateCommunityPage = lazy(() => import('./pages/communities/CreateCommunityPage').then(m => ({ default: m.CreateCommunityPage })));
 const CommunityPage = lazy(() => import('./pages/communities/CommunityPage').then(m => ({ default: m.CommunityPage })));
 const ManageCommunityPage = lazy(() => import('./pages/communities/ManageCommunityPage').then(m => ({ default: m.ManageCommunityPage })));
-const NewEventPage = lazy(() => import('./pages/communities/NewEventPage').then(m => ({ default: m.NewEventPage })));
 const FeedPage = lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
 
 // ── Components ────────────────────────────────────────────────────
@@ -82,6 +79,10 @@ import { PageTransition } from './components/PageTransition';
 import { AppShell } from './components/shell/AppShell';
 import { RightRail } from './components/shell/RightRail';
 import { AnnouncementBanner } from './components/AnnouncementBanner';
+const EventsBrowsePage = lazy(() => import('./pages/events/EventsBrowsePage').then(m => ({ default: m.EventsBrowsePage })));
+const EventPage = lazy(() => import('./pages/events/EventPage').then(m => ({ default: m.EventPage })));
+const SubmitEventPage = lazy(() => import('./pages/events/SubmitEventPage').then(m => ({ default: m.SubmitEventPage })));
+import { competitionsRedirect } from './lib/events';
 import { EventRequestModal } from './components/EventRequestModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -115,6 +116,11 @@ function StaffOnly({ children }: { children: React.ReactNode }) {
 }
 
 /** Logged-in users only: spinner while auth loads, login (remembering where to return) for guests. */
+function CompetitionsRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={competitionsRedirect(search)} replace />;
+}
+
 function LoginOnly({ children }: { children: React.ReactNode }) {
   const { user, isAuthLoading } = useAuth();
   const location = useLocation();
@@ -314,11 +320,11 @@ function AppContent() {
               <Route path="/" element={<FeedPage news={newsItems} />} />
 
               <Route path="/explore" element={<ExplorePage />} />
-              <Route path="/explore/competitions" element={<CompetitionsPage />} />
+              <Route path="/explore/competitions" element={<CompetitionsRedirect />} />
               <Route path="/c" element={<CommunitiesPage />} />
               <Route path="/c/new" element={<CreateCommunityPage />} />
               <Route path="/c/:slug/manage" element={<ManageCommunityPage />} />
-              <Route path="/c/:slug/events/new" element={<NewEventPage />} />
+              <Route path="/c/:slug/events/new" element={<LoginOnly><SubmitEventPage /></LoginOnly>} />
               <Route path="/c/:slug/:tab?" element={<CommunityPage />} />
               <Route path="/people" element={<LoginOnly><FindPeoplePage /></LoginOnly>} />
               <Route path="/inbox" element={<LoginOnly><InboxPage /></LoginOnly>} />
@@ -380,7 +386,10 @@ function AppContent() {
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/news" element={<OfficialNewsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
-              <Route path="/events" element={<CollegeEventsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
+              <Route path="/events" element={<EventsBrowsePage />} />
+              <Route path="/events/new" element={<LoginOnly><SubmitEventPage /></LoginOnly>} />
+              <Route path="/events/:id" element={<EventPage />} />
+              <Route path="/events/:id/edit" element={<LoginOnly><SubmitEventPage /></LoginOnly>} />
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/otp-verify" element={<OTPVerificationPage />} />
               <Route path="/contributors" element={<Navigate to="/jobs" replace />} />

@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { closesIn, deadlineSoon } from '../../lib/communities';
 import { listSavedEvents } from '../../services/eventService';
+import { eventHref } from '../../lib/events';
 
 const KEY = 'mcg_deadline_banner_dismissed';
 
@@ -30,7 +31,7 @@ export function DeadlineBanner() {
         <span className="font-semibold">{first.title}</span> — registration closes {closesIn(first.register_by!, now)}
         {soon.length > 1 && <span className="text-ink-muted"> · +{soon.length - 1} more</span>}
       </p>
-      <Link to="/explore/competitions?tab=saved" className="inline-flex min-h-11 items-center px-2 font-semibold text-brand-hover underline focus-visible:outline-2 focus-visible:outline-brand">View</Link>
+      <Link to={eventHref(first.id)} className="inline-flex min-h-11 items-center px-2 font-semibold text-brand-hover underline focus-visible:outline-2 focus-visible:outline-brand">View</Link>
       <button type="button" onClick={dismiss} aria-label="Dismiss" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand">
         <X className="h-4 w-4" aria-hidden />
       </button>

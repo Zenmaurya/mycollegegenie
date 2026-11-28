@@ -5,13 +5,14 @@
  * Previously inlined in App.tsx lines 2328–2490.
  */
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ForumService } from '../services/forumService';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { Calendar, X, AlertCircle, Plus, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { submitEvent, submitNews } from '../services/newsService';
+import { submitNews } from '../services/newsService';
 import { uploadResource } from '../services/resourceService';
 import { createPGListing } from '../services/pgService';
 import { fetchWithAuth } from '../lib/apiClient';
@@ -29,6 +30,13 @@ export function EventRequestModal({ isOpen, onClose, title = 'Publish Your Event
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [guilds, setGuilds] = useState<any[]>([]);
+  const navigate = useNavigate();
+  // events are submitted through the wizard, not this modal
+  const isEvent = title === 'Publish Your Event' || title === 'Post Event';
+
+  useEffect(() => {
+    if (isOpen && isEvent) { onClose(); navigate('/events/new'); }
+  }, [isOpen, isEvent, onClose, navigate]);
 
   useEffect(() => {
     ForumService.getGuilds()
@@ -128,20 +136,6 @@ export function EventRequestModal({ isOpen, onClose, title = 'Publish Your Event
         toast.success('News update submitted for review!');
         handleClose();
         window.location.reload();
-      } else {
-        // Default: Post Event
-        await submitEvent({
-          title: formData.eventTitle,
-          college: formData.college || '',
-          date: formData.date || '',
-          venue: formData.venue || '',
-          eligibility: formData.eligibility || 'All',
-          description: formData.description || '',
-          imageUrl: '',
-        });
-        toast.success('Event request submitted for review!');
-        handleClose();
-        window.location.reload();
       }
     } catch (err) {
       console.error('[EventRequestModal] submit error:', err);
@@ -156,6 +150,8 @@ export function EventRequestModal({ isOpen, onClose, title = 'Publish Your Event
 
   const labelClass =
     'block text-[10px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-1.5';
+
+  if (isEvent) return null;
 
   return createPortal(
     <AnimatePresence>
@@ -500,49 +496,6 @@ export function EventRequestModal({ isOpen, onClose, title = 'Publish Your Event
                           <textarea required rows={4} placeholder="Summarize the announcement details here..."
                             className={`${inputClass} resize-none`} value={formData.summary || ''}
                             onChange={e => setFormData({ ...formData, summary: e.target.value })} />
-                        </div>
-                      </>
-                    )}
-
-                    {(title === 'Publish Your Event' || title === 'Post Event') && (
-                      <>
-                        <div>
-                          <label className={labelClass}>Event Title</label>
-                          <input required type="text" placeholder="e.g. Tarang 2026 - LSR Annual Cultural Fest"
-                            className={inputClass} value={formData.eventTitle || ''}
-                            onChange={e => setFormData({ ...formData, eventTitle: e.target.value })} />
-                        </div>
-                        <div>
-                          <label className={labelClass}>Organizing College</label>
-                          <input required type="text" placeholder="e.g. Lady Shri Ram College"
-                            className={inputClass} value={formData.college || ''}
-                            onChange={e => setFormData({ ...formData, college: e.target.value })} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className={labelClass}>Event Date</label>
-                            <input required type="date"
-                              className={inputClass} value={formData.date || ''}
-                              onChange={e => setFormData({ ...formData, date: e.target.value })} />
-                          </div>
-                          <div>
-                            <label className={labelClass}>Venue</label>
-                            <input required type="text" placeholder="e.g. College Auditorium"
-                              className={inputClass} value={formData.venue || ''}
-                              onChange={e => setFormData({ ...formData, venue: e.target.value })} />
-                          </div>
-                        </div>
-                        <div>
-                          <label className={labelClass}>Eligibility / Allowed Students</label>
-                          <input required type="text" placeholder="e.g. All undergraduate students"
-                            className={inputClass} value={formData.eligibility || 'All'}
-                            onChange={e => setFormData({ ...formData, eligibility: e.target.value })} />
-                        </div>
-                        <div>
-                          <label className={labelClass}>Description / Schedule Details</label>
-                          <textarea required rows={4} placeholder="Describe the event events, performers, registers details..."
-                            className={`${inputClass} resize-none`} value={formData.description || ''}
-                            onChange={e => setFormData({ ...formData, description: e.target.value })} />
                         </div>
                       </>
                     )}
