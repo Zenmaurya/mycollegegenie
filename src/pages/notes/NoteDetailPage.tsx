@@ -18,7 +18,10 @@ import { Skeleton } from '../../components/ui/skeleton';
 import { Tabs } from '../../components/ui/Tabs';
 import { UserLink } from '../../components/profile/UserLink';
 
-const NotePreview = lazy(() => import('../../components/notes/NotePreview'));
+const loadNotePreview = () => import('../../components/notes/NotePreview');
+const NotePreview = lazy(loadNotePreview);
+// Fetch the preview code and PDF engine alongside the note data, not after it. A failed warm-up is ignored; the preview imports them again.
+void Promise.all([loadNotePreview(), import('pdfjs-dist')]).catch(() => {});
 
 type Tab = 'about' | 'tips' | 'discussion';
 // exam-tips rows carry `tip`, comments rows carry `content`
