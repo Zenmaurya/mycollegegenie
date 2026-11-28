@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { peopleTabFromParam } from '../../lib/people';
 import { PeopleService } from '../../services/peopleService';
-import { PersonList, PersonResults } from '../../components/people/PersonList';
+import { EveryoneList, PersonList, PersonResults } from '../../components/people/PersonList';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Tabs } from '../../components/ui/Tabs';
 
@@ -29,7 +29,7 @@ export function FindPeoplePage() {
 
   const n = requests.data?.length ?? 0;
   const tabs = [
-    { id: 'suggestions', label: 'Suggestions' }, { id: 'requests', label: n ? `Requests (${n})` : 'Requests' },
+    { id: 'suggestions', label: 'Suggestions' }, { id: 'everyone', label: 'Everyone' }, { id: 'requests', label: n ? `Requests (${n})` : 'Requests' },
     { id: 'connections', label: 'Connections' }, { id: 'following', label: 'Following' }, { id: 'followers', label: 'Followers' },
   ];
   const searching = text.trim().length >= 2;
@@ -39,6 +39,8 @@ export function FindPeoplePage() {
     body = <PersonResults people={search.data ?? []} loading={term.length < 2 || search.isLoading} error={search.isError} onRetry={() => void search.refetch()} empty={['No one found', 'Try another name or username.']} />;
   } else if (tab === 'suggestions') {
     body = <PersonResults people={suggestions.data ?? []} loading={suggestions.isLoading} error={suggestions.isError} onRetry={() => void suggestions.refetch()} empty={EMPTY.suggestions} />;
+  } else if (tab === 'everyone') {
+    body = <EveryoneList />;
   } else if (tab === 'requests') {
     body = <PersonResults people={requests.data ?? []} loading={requests.isLoading} error={requests.isError} onRetry={() => void requests.refetch()} empty={EMPTY.requests} />;
   } else if (!username) {

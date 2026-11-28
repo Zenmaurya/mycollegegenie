@@ -5,7 +5,7 @@ import type { STAY_REPORT_REASONS } from '../lib/stays';
 import type { EXCHANGE_REPORT_REASONS } from '../lib/exchange';
 import type { JOB_REPORT_REASONS } from '../lib/jobs';
 
-export type ReportItemType = 'community' | 'event' | 'post' | 'comment' | 'user' | 'resource' | 'stay' | 'exchange' | 'job';
+export type ReportItemType = 'community' | 'event' | 'post' | 'comment' | 'user' | 'resource' | 'stay' | 'exchange' | 'job' | 'group';
 export type ReportRow = {
   itemType: ReportItemType; itemId: string; title: string; slug: string; status: string; is_hidden: boolean;
   reporters: number; reasons: Record<string, number>; latest: string;
@@ -23,6 +23,9 @@ export const listReports = (cursor?: string, type?: ReportItemType, status: 'ope
   if (cursor) q.set('cursor', cursor);
   return fetchWithAuth(`/api/reports/admin?${q}`);
 };
+export type ReportedChat = { id: string; name: string; messages: { id: string; sender: string | null; content: string; createdAt: string }[] };
+export const reportedChat = (itemType: ReportItemType, itemId: string): Promise<{ groups: ReportedChat[] }> =>
+  fetchWithAuth(`/api/reports/admin/chat/${itemType}/${encodeURIComponent(itemId)}?_=${Date.now()}`);
 export const actOnReport = (itemType: ReportItemType, itemId: string, action: ModAction, extra: { reason?: string; duration?: BanDuration } = {}) =>
   fetchWithAuth(`/api/reports/admin/${itemType}/${encodeURIComponent(itemId)}`, { method: 'PATCH', body: JSON.stringify({ action, ...extra }) });
 export const listModerationLog = (cursor?: string): Promise<{ items: ModLogRow[]; nextCursor: string | null }> =>

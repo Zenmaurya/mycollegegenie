@@ -20,6 +20,10 @@ export const PeopleService = {
 
   requests: () => cards(fetchWithAuth(fresh('/api/people/requests'))),
   suggestions: () => cards(fetchWithAuth(fresh('/api/people/suggestions'))),
+  everyone: async (cursor?: string): Promise<{ items: Person[]; nextCursor: string | null }> => {
+    const d = await fetchWithAuth(fresh(`/api/people/everyone${cursor ? `?cursor=${enc(cursor)}` : ''}`));
+    return { items: d.items.map(mapPerson), nextCursor: d.nextCursor ?? null };
+  },
   search: (q: string) => cards(fetchWithAuth(fresh(`/api/people/search?q=${enc(q)}`))),
   list: async (username: string, list: ListName, cursor?: string): Promise<{ items: Person[]; nextCursor: string | null }> => {
     const d = await fetchWithAuth(fresh(`/api/people/${enc(username)}/${list}${cursor ? `?cursor=${enc(cursor)}` : ''}`));

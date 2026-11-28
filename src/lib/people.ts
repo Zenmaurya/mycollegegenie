@@ -7,8 +7,8 @@ export interface Person {
   id: string; username: string; displayName: string; photoUrl: string | null;
   collegeName: string | null; course: string | null; batchYear: number | null; mutualCount?: number; relation: Relation;
 }
-export type PeopleTab = 'suggestions' | 'requests' | 'connections' | 'following' | 'followers';
-export const PEOPLE_TABS: PeopleTab[] = ['suggestions', 'requests', 'connections', 'following', 'followers'];
+export type PeopleTab = 'suggestions' | 'everyone' | 'requests' | 'connections' | 'following' | 'followers';
+export const PEOPLE_TABS: PeopleTab[] = ['suggestions', 'everyone', 'requests', 'connections', 'following', 'followers'];
 export const peopleTabFromParam = (p: string | null): PeopleTab => (PEOPLE_TABS as (string | null)[]).includes(p) ? (p as PeopleTab) : 'suggestions';
 
 export const NO_RELATION: Relation = { following: false, followsYou: false, connection: 'none' };

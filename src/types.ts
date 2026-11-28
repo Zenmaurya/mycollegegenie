@@ -91,6 +91,7 @@ export interface User {
   bio?: string | null;
   profile_visibility?: 'logged_in' | 'everyone' | 'only_me';
   username_changed_at?: string | null;
+  usernameAuto?: boolean;
 }
 
 export interface News {

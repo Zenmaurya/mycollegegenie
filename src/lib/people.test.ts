@@ -37,3 +37,7 @@ test('mapRelation tolerates junk; peopleTabFromParam falls back to suggestions',
   assert.strictEqual(peopleTabFromParam('nope'), 'suggestions');
   assert.strictEqual(peopleTabFromParam(null), 'suggestions');
 });
+
+test('the Everyone tab is reachable from the URL', () => {
+  assert.strictEqual(peopleTabFromParam('everyone'), 'everyone');
+});

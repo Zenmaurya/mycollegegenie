@@ -22,7 +22,8 @@ export function proofLink(proof: string): string | null {
 
 /** Mirrors backend moderationActionsFor (utils/moderation.js), with hide/unhide narrowed to the item's current state. */
 export function adminActionsFor(role: string | undefined, itemType: string, isHidden: boolean, targetBanned = false): ModAction[] {
-  if (!['community', 'event', 'post', 'comment', 'user', 'resource', 'stay', 'exchange', 'job'].includes(itemType)) return [];
+  if (!['community', 'event', 'post', 'comment', 'user', 'resource', 'stay', 'exchange', 'job', 'group'].includes(itemType)) return [];
+  if (itemType === 'group') return role === 'admin' ? ['dismiss', 'delete'] : role === 'moderator' ? ['dismiss'] : [];
   let a: ModAction[];
   // Resources, stays, exchange items and job posts have no author sanction: no warn/ban (backend moderationActionsFor).
   if (itemType === 'resource' || itemType === 'stay' || itemType === 'exchange' || itemType === 'job') {

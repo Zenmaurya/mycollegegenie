@@ -1,10 +1,12 @@
-import React, { Fragment, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Fragment, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { SquarePen, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { useInboxBadge, UNREAD_KEY } from '../hooks/useInboxBadge';
-import { formatTimeShort, notificationHref, type InboxNotification } from '../lib/inbox';
+import { chatRows, formatTimeShort, matchesQuery, notificationHref, type ChatRow, type InboxNotification } from '../lib/inbox';
+import { NewGroupSheet, NewMessageSheet } from '../components/inbox/pickers';
 import { InboxService, type Conversation } from '../services/inboxService';
 import { Avatar } from '../components/ui/Avatar';
 import { Button } from '../components/ui/button';
@@ -17,17 +19,19 @@ const Dot = () => <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-brand" r
 const status = (e: unknown) => (e as { status?: number }).status;
 const errText = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong. Try again.');
 
-function ConversationRow({ c, active }: { c: Conversation; active: boolean }) {
+function ConversationRow({ c, active }: { c: ChatRow; active: boolean }) {
   return (
     <li>
-      <Link to={`/inbox/${c.id}`} aria-current={active ? 'page' : undefined} className={`flex min-h-16 items-center gap-3 px-4 py-2.5 hover:bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand ${active ? 'bg-brand-soft' : ''}`}>
-        <Avatar src={c.other.photoUrl} name={c.other.displayName} />
+      <Link to={c.href} aria-current={active ? 'page' : undefined} className={`flex min-h-16 items-center gap-3 px-4 py-2.5 hover:bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand ${active ? 'bg-brand-soft' : ''}`}>
+        {c.group
+          ? <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-hover"><Users className="h-5 w-5" aria-hidden /></span>
+          : <Avatar src={c.photoUrl} name={c.name} />}
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline justify-between gap-2">
-            <span className={`truncate text-[15px] text-ink ${c.unread ? 'font-bold' : 'font-semibold'}`}>{c.other.displayName}</span>
+            <span className={`truncate text-[15px] text-ink ${c.unread ? 'font-bold' : 'font-semibold'}`}>{c.name}</span>
             <span className="shrink-0 text-[12px] text-ink-muted">{formatTimeShort(c.lastMessageAt)}</span>
           </span>
-          {c.listing?.title && <span className="block truncate text-[12px] text-ink-muted">{c.listing.title}</span>}
+          {c.sub && <span className="block truncate text-[12px] text-ink-muted">{c.sub}</span>}
           <span className="flex items-center gap-2">
             <span className={`block flex-1 truncate text-[14px] ${c.unread ? 'font-semibold text-ink' : 'text-ink-muted'}`}>{c.lastMessage ?? 'No messages yet'}</span>
             {c.unread && <Dot />}
@@ -39,11 +43,38 @@ function ConversationRow({ c, active }: { c: Conversation; active: boolean }) {
 }
 
 function Chats({ activeId }: { activeId?: string }) {
+  const [text, setText] = useState('');
+  const [sheet, setSheet] = useState<'message' | 'group' | null>(null);
   const q = useQuery({ queryKey: [...CONVERSATIONS_KEY, 'chats'], queryFn: () => InboxService.conversations('chats'), refetchInterval: 30_000 });
-  if (q.isLoading) return <div className="space-y-3 p-4"><Skeleton className="h-14 w-full" /><Skeleton className="h-14 w-full" /><Skeleton className="h-14 w-full" /></div>;
-  if (q.isError) return <EmptyState title="Could not load chats" body="Check your connection and try again." action={<Button onClick={() => void q.refetch()}>Try again</Button>} />;
-  if (!q.data?.length) return <EmptyState title="No chats yet" body="Message a lister from a stay or exchange item, or a student from their profile." />;
-  return <ul className="divide-y divide-line">{q.data.map((c) => <Fragment key={c.id}><ConversationRow c={c} active={c.id === activeId} /></Fragment>)}</ul>;
+  const groups = useQuery({ queryKey: [...CONVERSATIONS_KEY, 'groups'], queryFn: InboxService.groups, refetchInterval: 30_000 });
+  const all = chatRows(q.data ?? [], groups.data ?? []);
+  const rows = all.filter((c) => matchesQuery(text, c.name, c.group ? null : c.sub));
+
+  let body;
+  if (q.isLoading || groups.isLoading) body = <div className="space-y-3 p-4"><Skeleton className="h-14 w-full" /><Skeleton className="h-14 w-full" /><Skeleton className="h-14 w-full" /></div>;
+  else if (q.isError) body = <EmptyState title="Could not load chats" body="Check your connection and try again." action={<Button onClick={() => void q.refetch()}>Try again</Button>} />;
+  else if (!all.length) body = <EmptyState title="No chats yet" body="Message a lister from a stay or exchange item, a student from their profile, or start a chat here." />;
+  else if (!rows.length) body = <EmptyState title="No chats found" body="Try another name." />;
+  else body = <ul className="divide-y divide-line">{rows.map((c) => <Fragment key={c.id}><ConversationRow c={c} active={c.id === activeId} /></Fragment>)}</ul>;
+
+  return (
+    <div>
+      <div className="flex gap-2 px-4 pt-3">
+        <Button size="sm" className="flex-1" onClick={() => setSheet('message')}><SquarePen className="h-4 w-4" aria-hidden /> New message</Button>
+        <Button size="sm" variant="secondary" className="flex-1" onClick={() => setSheet('group')}><Users className="h-4 w-4" aria-hidden /> New group</Button>
+      </div>
+      {groups.isError && <p role="alert" className="px-4 pt-2 text-[13px] text-danger">Could not load your groups.</p>}
+      {all.length > 0 && (
+        <div className="px-4 py-3">
+          <input type="search" value={text} onChange={(e) => setText(e.target.value)} placeholder="Search chats" aria-label="Search chats"
+            className="min-h-11 w-full rounded-full border border-line bg-surface px-4 text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-brand" />
+        </div>
+      )}
+      {body}
+      {sheet === 'message' && <NewMessageSheet onClose={() => setSheet(null)} />}
+      {sheet === 'group' && <NewGroupSheet onClose={() => setSheet(null)} />}
+    </div>
+  );
 }
 
 function Requests() {
@@ -135,7 +166,10 @@ function Notifications() {
 export function InboxPage({ embedded = false }: { embedded?: boolean }) {
   const { user } = useAuth();
   const { id: activeId } = useParams();
-  const [tab, setTab] = useState('chats');
+  const [params, setParams] = useSearchParams();
+  const asked = params.get('tab');
+  const tab = asked === 'requests' || asked === 'notifications' ? asked : 'chats';
+  const setTab = (id: string) => setParams(id === 'chats' ? {} : { tab: id }, { replace: true });
   const badge = useInboxBadge();
   const items = [
     { id: 'chats', label: 'Chats' },

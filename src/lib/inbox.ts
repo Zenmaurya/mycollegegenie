@@ -1,10 +1,11 @@
 /**
  * Pure helpers for /inbox (no network/env imports so they run in node:test).
  */
-export interface ChatMessage { id: string; mine: boolean; content: string; is_system: number | boolean; created_at: string }
+export interface ChatMessage { id: string; mine: boolean; content: string; is_system: number | boolean; created_at: string; senderName?: string }
 export interface InboxNotification { id: string; type: string; itemType: string | null; itemId: string | null; text: string; read: boolean; createdAt: string; actorUsername?: string | null }
 
 export const MAX_MESSAGE = 2000;
+export const MAX_GROUP_NAME = 50;
 export const WAIT_REASON = 'Wait until they accept your request';
 
 const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -60,6 +61,7 @@ export function notificationHref(n: Pick<InboxNotification, 'type' | 'itemType' 
     case 'resource': return `/notes/${id}`;
     case 'stay': return `/stays/${id}`;
     case 'conversation': return `/inbox/${id}`;
+    case 'group': return `/inbox/g/${id}`;
     default: return '/inbox';
   }
 }
@@ -74,4 +76,36 @@ export function composerState(requestStatus: string, youStarted: boolean, canSen
 export function mergeMessages(older: ChatMessage[], latest: ChatMessage[]): ChatMessage[] {
   const seen = new Set(latest.map((m) => m.id));
   return [...older.filter((m) => !seen.has(m.id)), ...latest];
+}
+
+/** One row of the Chats tab: a 1:1 conversation or a group. */
+export interface ChatRow {
+  id: string; href: string; name: string; sub: string | null; photoUrl: string | null; group: boolean;
+  lastMessage: string | null; lastMessageAt: string | null; unread: boolean;
+}
+type DirectRow = { id: string; other: { displayName: string; photoUrl: string | null }; listing: { title: string | null } | null; lastMessage: string | null; lastMine?: boolean; lastMessageAt: string | null; unread: boolean };
+type GroupRow = { id: string; name: string; memberCount: number; lastMessage: string | null; lastMessageAt: string | null; unread: boolean };
+
+/** 1:1 chats and groups in one list, newest activity first. */
+export function chatRows(chats: DirectRow[], groups: GroupRow[]): ChatRow[] {
+  const rows: ChatRow[] = [
+    ...chats.map((c) => ({ id: c.id, href: `/inbox/${c.id}`, name: c.other.displayName, sub: c.listing?.title ?? null, photoUrl: c.other.photoUrl, group: false,
+      lastMessage: c.lastMessage && c.lastMine ? `You: ${c.lastMessage}` : c.lastMessage, lastMessageAt: c.lastMessageAt, unread: c.unread })),
+    ...groups.map((g) => ({ id: g.id, href: `/inbox/g/${g.id}`, name: g.name, sub: `Group · ${g.memberCount} member${g.memberCount === 1 ? '' : 's'}`, photoUrl: null, group: true,
+      lastMessage: g.lastMessage, lastMessageAt: g.lastMessageAt, unread: g.unread })),
+  ];
+  const time = (s: string | null) => (s ? new Date(s).getTime() : 0);
+  return rows.sort((a, b) => time(b.lastMessageAt) - time(a.lastMessageAt));
+}
+
+/** Case-insensitive "contains" over any of the fields; an empty query matches everything. */
+export function matchesQuery(query: string, ...fields: (string | null | undefined)[]): boolean {
+  const q = query.trim().toLowerCase();
+  return !q || fields.some((f) => !!f && f.toLowerCase().includes(q));
+}
+
+/** The message that gets the "Seen" label: my newest one, only if nothing came after it and they read since. */
+export function seenMessageId(messages: ChatMessage[], seenAt: string | null | undefined): string | null {
+  const last = [...messages].reverse().find((m) => !m.is_system);
+  return last?.mine && seenAt && new Date(seenAt) >= new Date(last.created_at) ? last.id : null;
 }

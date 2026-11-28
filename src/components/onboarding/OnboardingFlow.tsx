@@ -23,9 +23,9 @@ export function OnboardingFlow({ onDone, startStep = 1, askUsername: wantUsernam
   const [interests, setInterests] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  // Asked once, for users who have no @username yet; fixed at mount so saving it doesn't drop the step.
-  const [askUsername] = useState(() => wantUsername && !!appUser && !appUser.username);
-  const [username, setUsername] = useState(() => slugFromName(appUser?.displayName));
+  // Asked once, for users who haven't chosen a @username yet; fixed at mount so saving it doesn't drop the step.
+  const [askUsername] = useState(() => wantUsername && !!appUser && (!appUser.username || !!appUser.usernameAuto));
+  const [username, setUsername] = useState(() => appUser?.username || slugFromName(appUser?.displayName));
   const [suggestion, setSuggestion] = useState('');
   const totalSteps = askUsername ? 5 : 4;
 

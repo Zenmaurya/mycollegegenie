@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { REPORT_REASONS } from '../../lib/communities';
 import { useAuth } from '../../context/AuthContext';
-import { actOnReport, listReports, type BanDuration, type ModAction, type ReportItemType, type ReportRow } from '../../services/reportService';
+import { actOnReport, listReports, reportedChat, type BanDuration, type ModAction, type ReportItemType, type ReportRow } from '../../services/reportService';
 import { timeAgo } from '../../lib/feed';
 import { ConfirmSheet } from './ConfirmSheet';
 import { adminActionsFor } from './adminActions';
@@ -12,10 +12,10 @@ import { banStatus } from '../../lib/moderation';
 
 const btn = 'min-h-[44px] min-w-[44px] px-4 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50';
 const LABEL: Record<ModAction, string> = { dismiss: 'Dismiss', hide: 'Hide', unhide: 'Unhide', delete: 'Delete', warn: 'Warn', ban: 'Ban', unban: 'Unban', remove_official: 'Remove official' };
-const TYPE_LABEL: Record<ReportItemType, string> = { community: 'Page', event: 'Event', post: 'Post', comment: 'Comment', user: 'User', resource: 'Resource', stay: 'Stay', exchange: 'Exchange', job: 'Job post' };
+const TYPE_LABEL: Record<ReportItemType, string> = { community: 'Page', event: 'Event', post: 'Post', comment: 'Comment', user: 'User', resource: 'Resource', stay: 'Stay', exchange: 'Exchange', job: 'Job post', group: 'Group' };
 const FILTERS: { v: ReportItemType | undefined; label: string }[] = [
   { v: undefined, label: 'All' }, { v: 'post', label: 'Posts' }, { v: 'comment', label: 'Comments' },
-  { v: 'user', label: 'Users' }, { v: 'community', label: 'Pages' }, { v: 'event', label: 'Events' }, { v: 'resource', label: 'Resources' }, { v: 'stay', label: 'Stays' }, { v: 'exchange', label: 'Exchange' }, { v: 'job', label: 'Jobs' },
+  { v: 'user', label: 'Users' }, { v: 'community', label: 'Pages' }, { v: 'event', label: 'Events' }, { v: 'resource', label: 'Resources' }, { v: 'stay', label: 'Stays' }, { v: 'exchange', label: 'Exchange' }, { v: 'job', label: 'Jobs' }, { v: 'group', label: 'Groups' },
 ];
 const DURATIONS: { v: BanDuration; label: string }[] = [{ v: '1d', label: '1 day' }, { v: '7d', label: '7 days' }, { v: '30d', label: '30 days' }, { v: 'permanent', label: 'Permanent' }];
 const chip = (on: boolean) => `min-h-[44px] px-4 rounded-full text-sm font-bold border ${on ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-800 border-gray-300'}`;
@@ -23,6 +23,26 @@ const chip = (on: boolean) => `min-h-[44px] px-4 rounded-full text-sm font-bold 
 // the target (author, or the user on user rows) is currently banned
 const isBanned = (r: ReportRow) => banStatus({ bannedUntil: r.target_banned_until ?? r.banned_until }, new Date()).banned;
 const banBadge = (r: ReportRow) => (new Date(r.banned_until!).getFullYear() >= 9999 ? 'Banned' : `Banned until ${new Date(r.banned_until!).toLocaleDateString()}`);
+
+// last 20 messages of the group(s) named in this item's reports
+function GroupMessages({ r }: { r: ReportRow }) {
+  const [open, setOpen] = useState(false);
+  const q = useQuery({ queryKey: ['admin-report-chat', r.itemType, r.itemId], queryFn: () => reportedChat(r.itemType, r.itemId), enabled: open });
+  return (
+    <div className="space-y-2">
+      <button type="button" aria-expanded={open} className={`${btn} bg-gray-100 text-gray-900`} onClick={() => setOpen(!open)}>{open ? 'Hide group messages' : 'Group messages'}</button>
+      {open && (q.isLoading ? <p className="text-sm text-gray-600">Loading...</p>
+        : q.isError ? <p className="text-sm text-rose-700">Could not load messages.</p>
+        : !q.data?.groups.length ? <p className="text-sm text-gray-600">No group messages are attached to these reports.</p>
+        : q.data.groups.map((g) => (
+          <div key={g.id} className="rounded-xl border border-gray-200 p-3 text-sm text-gray-800">
+            <p className="font-black">{g.name}</p>
+            <ul className="mt-2 space-y-1">{g.messages.map((m) => <li key={m.id} className="break-words">{m.sender ? <><span className="font-bold">{m.sender}:</span> {m.content}</> : <em>{m.content}</em>}</li>)}</ul>
+          </div>
+        )))}
+    </div>
+  );
+}
 
 export const AdminReports: React.FC = () => {
   const { appUser } = useAuth();
@@ -86,6 +106,7 @@ export const AdminReports: React.FC = () => {
                   </p>
                   <p>{REPORT_REASONS.filter((k) => r.reasons[k]).map((k) => `${k}: ${r.reasons[k]}`).join(' · ')}</p>
                 </div>
+                {(r.itemType === 'group' || r.itemType === 'user') && <GroupMessages r={r} />}
                 <div className="flex flex-wrap gap-2">
                   {acts.map((a) => (
                     <button key={a} disabled={m.isPending} aria-label={`${LABEL[a]} ${name(r)}`}

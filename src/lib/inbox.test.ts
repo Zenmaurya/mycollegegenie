@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { formatTimeShort, groupByDay, notificationHref, composerState, mergeMessages, WAIT_REASON, type ChatMessage } from './inbox';
+import { chatRows, matchesQuery, seenMessageId, formatTimeShort, groupByDay, notificationHref, composerState, mergeMessages, WAIT_REASON, type ChatMessage } from './inbox';
 
 const NOW = new Date(2026, 10, 22, 15, 30); // 22 Nov 2026, local time
 const at = (y: number, mo: number, d: number, h = 12, mi = 0) => new Date(y, mo, d, h, mi).toISOString();
@@ -65,4 +65,31 @@ test('event review notifications open the event', () => {
   for (const type of ['event_approved', 'event_rejected']) {
     assert.equal(notificationHref({ type, itemType: 'event', itemId: 'e1', actorUsername: null }), '/events/e1');
   }
+});
+
+test('chatRows merges chats and groups by latest activity and prefixes my own 1:1 message', () => {
+  const rows = chatRows(
+    [{ id: 'c1', other: { displayName: 'Asha', photoUrl: null }, listing: null, lastMessage: 'hi', lastMine: true, lastMessageAt: at(2026, 10, 20), unread: false },
+      { id: 'c2', other: { displayName: 'Ravi', photoUrl: null }, listing: null, lastMessage: null, lastMessageAt: null, unread: false }],
+    [{ id: 'g1', name: 'Hostel 4', memberCount: 1, lastMessage: 'Asha: yo', lastMessageAt: at(2026, 10, 21), unread: true }]);
+  assert.deepStrictEqual(rows.map((r) => [r.href, r.lastMessage, r.sub]), [['/inbox/g/g1', 'Asha: yo', 'Group · 1 member'], ['/inbox/c1', 'You: hi', null], ['/inbox/c2', null, null]]);
+});
+
+test('matchesQuery is a case-insensitive contains over any field', () => {
+  assert.ok(matchesQuery('', null));
+  assert.ok(matchesQuery(' SHA ', 'Asha', null));
+  assert.ok(!matchesQuery('zed', 'Asha', undefined));
+});
+
+test('seenMessageId labels only my newest message once they have read it', () => {
+  const mine = msg('a', true, at(2026, 10, 22, 10));
+  assert.strictEqual(seenMessageId([mine], at(2026, 10, 22, 11)), 'a');
+  assert.strictEqual(seenMessageId([mine], at(2026, 10, 22, 9)), null);
+  assert.strictEqual(seenMessageId([mine], null), null);
+  assert.strictEqual(seenMessageId([mine, msg('b', false, at(2026, 10, 22, 10, 5))], at(2026, 10, 22, 11)), null);
+  assert.strictEqual(seenMessageId([mine, msg('s', false, at(2026, 10, 22, 10, 5), 1)], at(2026, 10, 22, 11)), 'a');
+});
+
+test('group notifications open the group', () => {
+  assert.strictEqual(notificationHref({ type: 'group_added', itemType: 'group', itemId: 'g1' }), '/inbox/g/g1');
 });

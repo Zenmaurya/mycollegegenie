@@ -26,6 +26,19 @@ export function PersonResults({ people, loading, error, onRetry, empty, more }: 
   );
 }
 
+/** Every student you can see, paged. */
+export function EveryoneList() {
+  const q = useInfiniteQuery({
+    queryKey: ['people', 'everyone'],
+    queryFn: ({ pageParam }) => PeopleService.everyone(pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (p) => p.nextCursor ?? undefined,
+    retry: false,
+  });
+  return <PersonResults people={q.data?.pages.flatMap((p) => p.items) ?? []} loading={q.isLoading} error={q.isError} onRetry={() => void q.refetch()} empty={['No one here yet', 'Students show up here as they join.']}
+    more={{ has: !!q.hasNextPage, busy: q.isFetchingNextPage, load: () => void q.fetchNextPage() }} />;
+}
+
 /** A profile's followers / following / connections, paged. Login required by the API. */
 export function PersonList({ username, list }: { username: string; list: ListName }) {
   const q = useInfiniteQuery({

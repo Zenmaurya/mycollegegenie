@@ -1,11 +1,11 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { UNREAD_KEY } from '../../hooks/useInboxBadge';
-import { composerState, groupByDay, MAX_MESSAGE, mergeMessages, type ChatMessage } from '../../lib/inbox';
+import { composerState, groupByDay, mergeMessages, seenMessageId, type ChatMessage } from '../../lib/inbox';
+import { Bubble, Composer, Dock, useIsDesktop, useStickToBottom } from '../../components/inbox/thread';
 import { InboxService, type Conversation } from '../../services/inboxService';
 import { ReportSheet } from '../../components/communities/ReportSheet';
 import { Avatar } from '../../components/ui/Avatar';
@@ -19,59 +19,6 @@ const status = (e: unknown) => (e as { status?: number }).status;
 const errText = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong. Try again.');
 const listingHref = (l: NonNullable<Conversation['listing']>) => (l.type === 'stay' ? `/stays/${encodeURIComponent(l.id)}` : l.type === 'exchange' ? `/exchange/${encodeURIComponent(l.id)}` : '/stays');
 
-// A transformed ancestor breaks position: fixed, so the mobile composer is portaled (see NoteActions).
-function useIsDesktop() {
-  const mq = () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
-  const [on, setOn] = useState(mq);
-  useEffect(() => {
-    const m = window.matchMedia('(min-width: 768px)');
-    const f = () => setOn(m.matches);
-    m.addEventListener('change', f);
-    return () => m.removeEventListener('change', f);
-  }, []);
-  return on;
-}
-
-function Dock({ desktop, children }: { desktop: boolean; children: React.ReactNode }) {
-  const box = <div className={desktop ? 'border-t border-line bg-surface p-3' : 'fixed inset-x-0 bottom-16 z-50 border-t border-line bg-surface p-3'}>{children}</div>;
-  return desktop ? box : createPortal(box, document.body);
-}
-
-function Composer({ onSend, sending, reason, desktop }: { onSend: (text: string) => Promise<boolean>; sending: boolean; reason: string | null; desktop: boolean }) {
-  const [text, setText] = useState('');
-  const trimmed = text.trim();
-  const off = !!reason;
-  const submit = async () => {
-    if (!trimmed || sending || off) return;
-    if (await onSend(trimmed)) setText('');
-  };
-  return (
-    <Dock desktop={desktop}>
-      {reason && <p className="mb-2 text-[13px] text-ink-muted">{reason}</p>}
-      <div className="flex items-end gap-2">
-        <textarea
-          value={text} rows={2} maxLength={MAX_MESSAGE} disabled={off} aria-label="Message"
-          placeholder={off ? reason! : 'Write a message'}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void submit(); } }}
-          className="min-h-11 flex-1 resize-none rounded-lg border border-line bg-surface px-3 py-2 text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-brand disabled:bg-canvas"
-        />
-        <Button onClick={() => void submit()} disabled={!trimmed || off} loading={sending} aria-label="Send message" className="h-11 w-11 shrink-0 px-0"><Send className="h-5 w-5" aria-hidden /></Button>
-      </div>
-      {text.length > MAX_MESSAGE - 200 && <p className="mt-1 text-right text-[12px] text-ink-muted">{text.length}/{MAX_MESSAGE}</p>}
-    </Dock>
-  );
-}
-
-function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
-  if (m.is_system) return <li className="py-1 text-center text-[13px] italic text-ink-muted">{m.content.replace(/^System:\s*/, '')}</li>;
-  return (
-    <li className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-      <p className={`max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-[15px] ${mine ? 'bg-brand text-white' : 'bg-surface text-ink shadow-card'}`}>{m.content}</p>
-    </li>
-  );
-}
-
 function Conversation_({ id }: { id: string }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -80,7 +27,6 @@ function Conversation_({ id }: { id: string }) {
   const [olderMore, setOlderMore] = useState<boolean | null>(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [reporting, setReporting] = useState(false);
-  const end = useRef<HTMLDivElement>(null);
 
   const msgs = useQuery({ queryKey: ['inbox', 'messages', id], queryFn: () => InboxService.messages(id), refetchInterval: (q) => (q.state.status === 'error' ? false : 5000), refetchIntervalInBackground: false, retry: false, staleTime: 0 });
   const page = msgs.data;
@@ -89,8 +35,9 @@ function Conversation_({ id }: { id: string }) {
   const days = useMemo(() => groupByDay(all), [all]);
   const { role, reason } = composerState(page?.requestStatus ?? 'accepted', page?.youStarted ?? true, page?.canSend ?? { ok: true });
   const lastId = all[all.length - 1]?.id;
+  const end = useStickToBottom(lastId, !!all[all.length - 1]?.mine);
+  const seenId = seenMessageId(all, page?.seenAt);
 
-  useEffect(() => { end.current?.scrollIntoView?.({ block: 'end' }); }, [lastId]);
   useEffect(() => {
     if (!msgs.isSuccess) return;
     void qc.invalidateQueries({ queryKey: UNREAD_KEY });
@@ -166,15 +113,18 @@ function Conversation_({ id }: { id: string }) {
       </header>
 
       <div className="flex-1 space-y-3 px-4 py-3 pb-36 md:overflow-y-auto md:pb-3">
+        {(page.requestStatus === 'pending' || page.kind === 'listing') && (
+          <p role="note" className="rounded-card border border-line bg-brand-soft px-3 py-2 text-[13px] text-ink">Stay safe: never pay in advance or share OTPs, passwords or ID documents. Report anything that feels wrong.</p>
+        )}
         {hasMore && <div className="flex justify-center"><Button size="sm" variant="ghost" loading={loadingOlder} onClick={() => void loadOlder()}>Load earlier messages</Button></div>}
         {all.length === 0 && <p className="py-8 text-center text-[15px] text-ink-muted">Say hello to start the conversation.</p>}
         {days.map((d) => (
           <section key={d.key} aria-label={d.label}>
             <p className="py-2 text-center text-[12px] font-semibold text-ink-muted">{d.label}</p>
-            <ul className="space-y-2">{d.items.map((m) => <Fragment key={m.id}><Bubble m={m} mine={m.mine} /></Fragment>)}</ul>
+            <ul className="space-y-2">{d.items.map((m) => <Fragment key={m.id}><Bubble m={m} seen={m.id === seenId} /></Fragment>)}</ul>
           </section>
         ))}
-        <div ref={end} />
+        <div ref={end} className="scroll-mb-40 md:scroll-mb-0" />
       </div>
 
       {role === 'receiver' ? (
