@@ -1,4 +1,4 @@
-import { BedDouble, UserPlus, Calendar, Compass, Bookmark, Heart, Home, Users, LibraryBig, Newspaper, ShoppingBag, Trophy, Youtube, type LucideIcon } from 'lucide-react';
+import { BedDouble, UserPlus, Calendar, Compass, Bookmark, Briefcase, Home, Users, LibraryBig, Newspaper, ShoppingBag, Trophy, Youtube, type LucideIcon } from 'lucide-react';
 
 export type NavItem = { to: string; label: string; icon: LucideIcon; soon?: boolean };
 
@@ -10,6 +10,7 @@ export const MODULES: NavItem[] = [
   { to: '/playlists', label: 'Playlists', icon: Youtube },
   { to: '/stays', label: 'Find PG', icon: BedDouble },
   { to: '/exchange', label: 'Exchange', icon: ShoppingBag },
+  { to: '/jobs', label: 'Jobs', icon: Briefcase },
   { to: '/c', label: 'Societies', icon: Users },
   { to: '/events', label: 'Events', icon: Calendar },
   { to: '/news', label: 'News', icon: Newspaper },
@@ -20,13 +21,13 @@ export const EXPLORE_TILES: NavItem[] = [
   { to: '/playlists', label: 'Playlists', icon: Youtube },
   { to: '/stays', label: 'Find PG', icon: BedDouble },
   { to: '/exchange', label: 'Exchange', icon: ShoppingBag },
+  { to: '/jobs', label: 'Jobs', icon: Briefcase },
   { to: '/c', label: 'Societies', icon: Users },
   { to: '/events', label: 'Events', icon: Calendar },
   { to: '/explore/competitions', label: 'Competitions', icon: Trophy },
   { to: '/news', label: 'News', icon: Newspaper },
   { to: '/profile?tab=saved', label: 'Saved', icon: Bookmark, soon: true },
   { to: '/people', label: 'Find people', icon: UserPlus },
-  { to: '/contributors', label: 'Contributors', icon: Heart },
 ];
 
 export const FOOTER_LINKS = [
@@ -34,7 +35,6 @@ export const FOOTER_LINKS = [
   { to: '/terms', label: 'Terms' },
   { to: '/contact', label: 'Contact' },
   { to: '/blog', label: 'Blog' },
-  { to: '/contributors', label: 'Contributors' },
 ];
 
 /** Active-state matcher: '/' is exact; others match the path or a sub-path (segment boundary). */

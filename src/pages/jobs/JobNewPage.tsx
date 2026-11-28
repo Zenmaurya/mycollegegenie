@@ -48,7 +48,7 @@ function WorkEmailCard({ domain, pending }: { domain: string | null; pending: st
 }
 
 export function JobNewPage() {
-  const { user, loading } = useAuth();
+  const { user, isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [d, setD] = useState<JobDraft>(emptyJobDraft());
@@ -61,7 +61,7 @@ export function JobNewPage() {
     onError: (e) => toast.error(errMsg(e)),
   });
 
-  if (loading) return <div className="mx-auto max-w-2xl p-4"><Skeleton className="h-40 w-full" /></div>;
+  if (isAuthLoading) return <div className="mx-auto max-w-2xl p-4"><Skeleton className="h-40 w-full" /></div>;
   if (!user) return <Navigate to="/login" state={{ from: { pathname: '/jobs/new' } }} replace />;
 
   const referral = d.kind === 'referral';
@@ -77,7 +77,7 @@ export function JobNewPage() {
       <form onSubmit={submit} className={card} noValidate>
         <fieldset>
           <legend className="mb-1 text-[13px] font-semibold text-ink">What are you posting?</legend>
-          <div className="flex flex-wrap gap-2">{(Object.keys(KIND_LABEL) as JobKind[]).map((k) => <Chip key={k} selected={d.kind === k} onToggle={() => upd({ kind: k })}>{k === 'referral' ? 'I can refer' : KIND_LABEL[k]}</Chip>)}</div>
+          <div className="flex flex-wrap gap-2">{(Object.keys(KIND_LABEL) as JobKind[]).map((k) => <span key={k}><Chip selected={d.kind === k} onToggle={() => upd({ kind: k })}>{k === 'referral' ? 'I can refer' : KIND_LABEL[k]}</Chip></span>)}</div>
           {referral && <p className="mt-2 text-[13px] text-ink-muted">Students send you a request with their resume. You accept or decline each one. Accepting opens a chat.</p>}
         </fieldset>
         <Field id="jn-title" label={referral ? 'Roles or teams you can refer for' : 'Role title'}><input id="jn-title" value={d.title} onChange={(e) => upd({ title: e.target.value })} maxLength={120} placeholder={referral ? 'e.g. SDE and analyst roles' : 'e.g. Marketing Intern'} className={inputCls} /></Field>
@@ -85,7 +85,7 @@ export function JobNewPage() {
         <Field id="jn-loc" label="City (optional)"><input id="jn-loc" value={d.location} onChange={(e) => upd({ location: e.target.value })} maxLength={80} placeholder="e.g. Delhi" className={inputCls} /></Field>
         <fieldset>
           <legend className="mb-1 text-[13px] font-semibold text-ink">Work mode</legend>
-          <div className="flex flex-wrap gap-2">{(Object.keys(MODE_LABEL) as WorkMode[]).map((m) => <Chip key={m} selected={d.mode === m} onToggle={() => upd({ mode: m })}>{MODE_LABEL[m]}</Chip>)}</div>
+          <div className="flex flex-wrap gap-2">{(Object.keys(MODE_LABEL) as WorkMode[]).map((m) => <span key={m}><Chip selected={d.mode === m} onToggle={() => upd({ mode: m })}>{MODE_LABEL[m]}</Chip></span>)}</div>
         </fieldset>
         {!referral && (
           <>
@@ -105,7 +105,7 @@ export function JobNewPage() {
         <Field id="jn-desc" label="Details" hint="Skills needed, duration, eligibility. Never ask students for money."><textarea id="jn-desc" rows={6} value={d.description} onChange={(e) => upd({ description: e.target.value })} maxLength={4000} className={inputCls} /></Field>
         <fieldset>
           <legend className="mb-1 text-[13px] font-semibold text-ink">Close after</legend>
-          <div className="flex flex-wrap gap-2">{EXPIRY_DAYS.map((n) => <Chip key={n} selected={d.expiresInDays === n} onToggle={() => upd({ expiresInDays: n })}>{`${n} days`}</Chip>)}</div>
+          <div className="flex flex-wrap gap-2">{EXPIRY_DAYS.map((n) => <span key={n}><Chip selected={d.expiresInDays === n} onToggle={() => upd({ expiresInDays: n })}>{`${n} days`}</Chip></span>)}</div>
         </fieldset>
         <Button type="submit" className="w-full" loading={create.isPending} disabled={referral && !domain}>{domain ? 'Publish' : 'Send for review'}</Button>
       </form>

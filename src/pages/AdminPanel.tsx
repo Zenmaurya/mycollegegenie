@@ -61,7 +61,7 @@ import { toast } from 'sonner';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { AdminSidebar, AdminTab, MODERATOR_TABS } from './admin/AdminSidebar';
 import { AdminModerationLog } from './admin/AdminModerationLog';
-import { AdminContributors } from './admin/AdminContributors';
+import { AdminJobs } from './admin/AdminJobs';
 import { AdminSocieties } from './admin/AdminSocieties';
 import { AdminReports } from './admin/AdminReports';
 import { actOnReport } from '../services/reportService';
@@ -3057,8 +3057,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, appUser, isAuthLoa
           </motion.div>
         ) : activeTab === 'blogs' ? (
           <AdminBlogs defaultAuthorName={appUser?.displayName || 'MyCollegeGenie Editorial'} />
-        ) : activeTab === 'contributors' ? (
-          <AdminContributors />
+        ) : activeTab === 'jobs' ? (
+          <AdminJobs />
         ) : activeTab === 'societies' ? (
           <AdminSocieties />
         ) : activeTab === 'reports' ? (

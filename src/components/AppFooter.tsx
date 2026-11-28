@@ -157,7 +157,7 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
                   </span>
                 </Link>
               </li>
-              <li><Link to="/contributors" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Our Team &amp; Contributors</Link></li>
+              <li><Link to="/jobs" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Internships &amp; Jobs</Link></li>
               <li><Link to="/privacy" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Terms of Service</Link></li>
               {appUser?.role === 'admin' && (

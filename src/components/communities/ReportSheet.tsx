@@ -4,11 +4,12 @@ import { REPORT_REASONS } from '../../lib/communities';
 import { RESOURCE_REPORT_REASONS } from '../../lib/notes';
 import { STAY_REPORT_REASONS } from '../../lib/stays';
 import { EXCHANGE_REPORT_REASONS } from '../../lib/exchange';
+import { JOB_REPORT_REASONS } from '../../lib/jobs';
 import { report, type ReportItemType } from '../../services/reportService';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/button';
 
-type Reason = (typeof REPORT_REASONS)[number] | (typeof RESOURCE_REPORT_REASONS)[number] | (typeof STAY_REPORT_REASONS)[number] | (typeof EXCHANGE_REPORT_REASONS)[number];
+type Reason = (typeof REPORT_REASONS)[number] | (typeof RESOURCE_REPORT_REASONS)[number] | (typeof STAY_REPORT_REASONS)[number] | (typeof EXCHANGE_REPORT_REASONS)[number] | (typeof JOB_REPORT_REASONS)[number];
 interface Props { open: boolean; onClose: () => void; itemType: ReportItemType; itemId: string; title: string; initialNote?: string;
   /** replaces the default POST /api/reports (used for anonymous chats, where the id isn't known) */
   onSubmit?: (reason: string, note?: string) => Promise<unknown> }
@@ -17,7 +18,7 @@ export function ReportSheet({ open, onClose, itemType, itemId, title, initialNot
   const [reason, setReason] = useState<Reason | ''>('');
   const [note, setNote] = useState(initialNote);
   const [busy, setBusy] = useState(false);
-  const reasons: readonly Reason[] = itemType === 'resource' ? RESOURCE_REPORT_REASONS : itemType === 'stay' ? STAY_REPORT_REASONS : itemType === 'exchange' ? EXCHANGE_REPORT_REASONS : REPORT_REASONS;
+  const reasons: readonly Reason[] = itemType === 'resource' ? RESOURCE_REPORT_REASONS : itemType === 'stay' ? STAY_REPORT_REASONS : itemType === 'exchange' ? EXCHANGE_REPORT_REASONS : itemType === 'job' ? JOB_REPORT_REASONS : REPORT_REASONS;
   const needsNote = reason === 'Other';
   const ready = !!reason && (!needsNote || note.trim().length > 0);
 

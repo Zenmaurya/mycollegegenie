@@ -14,7 +14,7 @@ const btn = 'min-h-[44px] min-w-[44px] px-4 rounded-xl text-xs font-black upperc
 const LABEL: Partial<Record<ModAction, string>> = { warn: 'Warn', ban: 'Ban', unban: 'Unban' };
 const DURATIONS: { v: BanDuration; label: string }[] = [{ v: '1d', label: '1 day' }, { v: '7d', label: '7 days' }, { v: '30d', label: '30 days' }, { v: 'permanent', label: 'Permanent' }];
 // Only these have an id-based public route.
-const itemHref = (type: string, id: string) => (type === 'post' ? `/post/${id}` : type === 'resource' ? `/notes/${id}` : type === 'stay' ? `/stays/${id}` : null);
+const itemHref = (type: string, id: string) => (type === 'post' ? `/post/${id}` : type === 'resource' ? `/notes/${id}` : type === 'stay' ? `/stays/${id}` : type === 'job' ? `/jobs/${id}` : null);
 
 export const AdminUserPage: React.FC = () => {
   const { id = '' } = useParams();

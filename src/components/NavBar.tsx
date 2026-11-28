@@ -13,7 +13,7 @@ import { motion, AnimatePresence, useScroll } from 'motion/react';
 import {
   Home, Youtube, Newspaper, Calendar, ChevronDown, X, Menu,
   User, LogOut, Loader2, LibraryBig, BedDouble, ShoppingBag,
-  MessagesSquare, Rss, LayoutDashboard, ArrowUp,
+  MessagesSquare, Rss, LayoutDashboard, ArrowUp, Briefcase,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ScrollProgressBar } from './PageTransition';
@@ -24,6 +24,7 @@ const NAV_LINKS = [
   { to: '/notes', icon: LibraryBig, label: 'Browse' },
   { to: '/playlists', icon: Youtube, label: 'Playlists' },
   { to: '/stays', icon: BedDouble, label: 'Find PG' },
+  { to: '/jobs', icon: Briefcase, label: 'Jobs' },
   { to: '/exchange', icon: ShoppingBag, label: 'Exchange', isNew: true },
 ] as const;
 

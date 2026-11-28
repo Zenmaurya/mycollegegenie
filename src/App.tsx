@@ -58,7 +58,9 @@ const ExchangeBrowsePage = lazy(() => import('./pages/exchange/ExchangeBrowsePag
 const ExchangeItemPage = lazy(() => import('./pages/exchange/ExchangeItemPage').then(m => ({ default: m.ExchangeItemPage })));
 const ExchangeSellPage = lazy(() => import('./pages/exchange/ExchangeSellPage').then(m => ({ default: m.ExchangeSellPage })));
 const OTPVerificationPage = lazy(() => import('./pages/OTPVerificationPage').then(m => ({ default: m.OTPVerificationPage })));
-const ContributorsPage = lazy(() => import('./pages/ContributorsPage').then(m => ({ default: m.ContributorsPage })));
+const JobsBrowsePage = lazy(() => import('./pages/jobs/JobsBrowsePage').then(m => ({ default: m.JobsBrowsePage })));
+const JobDetailPage = lazy(() => import('./pages/jobs/JobDetailPage').then(m => ({ default: m.JobDetailPage })));
+const JobNewPage = lazy(() => import('./pages/jobs/JobNewPage').then(m => ({ default: m.JobNewPage })));
 const BlogPage = lazy(() => import('./pages/BlogPage').then(m => ({ default: m.BlogPage })));
 const DevUiPage = import.meta.env.DEV ? lazy(() => import('./pages/DevUiPage').then(m => ({ default: m.DevUiPage }))) : null;
 const ExplorePage = lazy(() => import('./pages/ExplorePage').then(m => ({ default: m.ExplorePage })));
@@ -381,7 +383,10 @@ function AppContent() {
               <Route path="/events" element={<CollegeEventsPage newsItems={newsItems} isLoading={isNewsLoading} user={user} />} />
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/otp-verify" element={<OTPVerificationPage />} />
-              <Route path="/contributors" element={<ContributorsPage />} />
+              <Route path="/contributors" element={<Navigate to="/jobs" replace />} />
+              <Route path="/jobs" element={<JobsBrowsePage />} />
+              <Route path="/jobs/new" element={<JobNewPage />} />
+              <Route path="/jobs/:id" element={<JobDetailPage />} />
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/blog/:slug" element={<BlogPage />} />
 

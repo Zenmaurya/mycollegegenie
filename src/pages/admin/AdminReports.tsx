@@ -12,10 +12,10 @@ import { banStatus } from '../../lib/moderation';
 
 const btn = 'min-h-[44px] min-w-[44px] px-4 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50';
 const LABEL: Record<ModAction, string> = { dismiss: 'Dismiss', hide: 'Hide', unhide: 'Unhide', delete: 'Delete', warn: 'Warn', ban: 'Ban', unban: 'Unban', remove_official: 'Remove official' };
-const TYPE_LABEL: Record<ReportItemType, string> = { community: 'Page', event: 'Event', post: 'Post', comment: 'Comment', user: 'User', resource: 'Resource', stay: 'Stay', exchange: 'Exchange' };
+const TYPE_LABEL: Record<ReportItemType, string> = { community: 'Page', event: 'Event', post: 'Post', comment: 'Comment', user: 'User', resource: 'Resource', stay: 'Stay', exchange: 'Exchange', job: 'Job post' };
 const FILTERS: { v: ReportItemType | undefined; label: string }[] = [
   { v: undefined, label: 'All' }, { v: 'post', label: 'Posts' }, { v: 'comment', label: 'Comments' },
-  { v: 'user', label: 'Users' }, { v: 'community', label: 'Pages' }, { v: 'event', label: 'Events' }, { v: 'resource', label: 'Resources' }, { v: 'stay', label: 'Stays' }, { v: 'exchange', label: 'Exchange' },
+  { v: 'user', label: 'Users' }, { v: 'community', label: 'Pages' }, { v: 'event', label: 'Events' }, { v: 'resource', label: 'Resources' }, { v: 'stay', label: 'Stays' }, { v: 'exchange', label: 'Exchange' }, { v: 'job', label: 'Jobs' },
 ];
 const DURATIONS: { v: BanDuration; label: string }[] = [{ v: '1d', label: '1 day' }, { v: '7d', label: '7 days' }, { v: '30d', label: '30 days' }, { v: 'permanent', label: 'Permanent' }];
 const chip = (on: boolean) => `min-h-[44px] px-4 rounded-full text-sm font-bold border ${on ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-800 border-gray-300'}`;
@@ -73,7 +73,7 @@ export const AdminReports: React.FC = () => {
           {rows.map((r) => {
             const acts = adminActionsFor(role, r.itemType, r.is_hidden, isBanned(r))
               .filter((a) => status === 'open' || a !== 'dismiss');
-            const href = r.itemType === 'resource' ? `/notes/${r.itemId}` : r.itemType === 'stay' ? `/stays/${r.itemId}` : r.itemType === 'exchange' ? `/exchange/${r.itemId}` : r.itemType === 'community' ? `/c/${r.slug}` : r.itemType === 'event' ? `/c/${r.slug}/events` : r.itemType !== 'user' && r.postId ? `/post/${r.postId}` : null;
+            const href = r.itemType === 'job' ? `/jobs/${r.itemId}` : r.itemType === 'resource' ? `/notes/${r.itemId}` : r.itemType === 'stay' ? `/stays/${r.itemId}` : r.itemType === 'exchange' ? `/exchange/${r.itemId}` : r.itemType === 'community' ? `/c/${r.slug}` : r.itemType === 'event' ? `/c/${r.slug}/events` : r.itemType !== 'user' && r.postId ? `/post/${r.postId}` : null;
             const label = r.itemType === 'user' ? (r.displayName ?? '(deleted user)') : (r.title ?? '(deleted item)');
             return (
               <li key={`${r.itemType}:${r.itemId}`} className="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col gap-3">
