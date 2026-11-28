@@ -33,8 +33,9 @@ export interface EventCard {
   team_size_min: number | null; team_size_max: number | null; entry_fee: number; prize: string | null; rounds: string | null; rules: string | null;
   contact: string | null; poster_url: string | null; register_url: string | null;
   community: { slug: string; name: string; logo_url: string | null; status: CommunityStatus; college_short: string | null };
-  interested: boolean; interested_count: number;
+  interested: boolean; interested_count: number; my_status: InterestStatus | null; going_count: number;
 }
+export type InterestStatus = 'interested' | 'going';
 
 export type JoinButton = {
   label: 'Join' | 'Request to join' | 'Requested' | 'Member' | 'Pick your college to join' | 'Log in to join';
