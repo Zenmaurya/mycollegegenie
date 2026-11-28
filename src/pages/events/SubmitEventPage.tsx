@@ -29,13 +29,18 @@ const isOfficialPage = (d: CommunityDetail) => d.status === 'official' || d.kind
 export function SubmitEventPage() {
   // /events/:id/edit has an id, /c/:slug/events/new has a slug, /events/new has neither
   const { id, slug } = useParams();
-  const { user } = useAuth();
+  const { user, appUser } = useAuth();
   const event = useQuery({ queryKey: ['event-edit', id, user?.id], queryFn: () => getEvent(id!), enabled: !!id, retry: false, gcTime: 0 });
 
   if (!id) return <Fragment key={slug ?? 'new'}><Wizard presetSlug={slug} /></Fragment>;
   if (event.isPending) return <div className={wrap}><Skeleton className="h-56 w-full rounded-card" /></div>;
   if (event.isError) {
     return <EmptyState title="Couldn't load this event" body="It may have been removed." action={<Button onClick={() => void event.refetch()}>Retry</Button>} />;
+  }
+  // mirrors the server: page mods, or the submitter (a non-staff viewer of a non-live event) until it goes live
+  const staff = appUser?.role === 'admin' || appUser?.role === 'moderator';
+  if (!event.data.can_manage && (event.data.status === 'live' || staff)) {
+    return <EmptyState title="You can't edit this event" body="Only the organiser's moderators can edit it." action={<Link to={eventHref(id)} className="font-semibold text-brand hover:underline">Back to the event</Link>} />;
   }
   return <Fragment key={id}><Wizard initial={event.data} presetSlug={event.data.community.slug} /></Fragment>;
 }

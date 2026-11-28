@@ -401,7 +401,7 @@ function AppContent() {
 
               <Route path="*" element={
                 <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 px-4 text-center">
-                  <div className="text-8xl font-black bg-gradient-to-br from-purple-500 to-pink-500 bg-clip-text text-transparent">404</div>
+                  <div className="text-8xl font-black text-brand">404</div>
                   <div>
                     <h1 className="text-2xl font-black text-gray-900 mb-2">Page Not Found</h1>
                     <p className="text-gray-500 font-medium">The page you're looking for doesn't exist or has been moved.</p>

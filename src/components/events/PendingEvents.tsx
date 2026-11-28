@@ -43,8 +43,10 @@ export function PendingEvents({ slug }: { slug?: string }) {
                 <p className="text-[13px] text-ink-muted">{[!slug && e.community.name, e.submitter && `by @${e.submitter}`, !slug && e.orphan && 'No active page moderator'].filter(Boolean).join(' · ')}</p>
                 {e.register_url && <p className="break-all text-[13px] text-ink-muted">Register link: {e.register_url}</p>}
               </div>
-              <Button disabled={act.isPending} onClick={() => act.mutate({ e, action: 'approve' })} aria-label={`Approve ${e.title}`}>Approve</Button>
-              <Button variant="danger" disabled={act.isPending} onClick={() => setRejecting(e)} aria-label={`Reject ${e.title}`}>Reject</Button>
+              <div className="flex gap-2">
+                <Button disabled={act.isPending} onClick={() => act.mutate({ e, action: 'approve' })} aria-label={`Approve ${e.title}`}>Approve</Button>
+                <Button variant="danger" disabled={act.isPending} onClick={() => setRejecting(e)} aria-label={`Reject ${e.title}`}>Reject</Button>
+              </div>
             </li>
           ))}
         </ul>

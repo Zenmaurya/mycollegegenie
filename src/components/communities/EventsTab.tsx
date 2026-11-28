@@ -20,7 +20,8 @@ export function EventsTab({ detail }: { detail: CommunityDetail }) {
   const key = ['community-events', appUser?.uid ?? 'anon', detail.slug];
   const q = useQuery({ queryKey: key, queryFn: () => listCommunityEvents(detail.slug) });
   const register = canRegister(detail, appUser?.collegeId);
-  const canAdd = detail.viewer.status === 'active' && (detail.viewer.role === 'admin' || detail.viewer.role === 'core');
+  const isMember = detail.viewer.status === 'active' && !!detail.viewer.role;
+  const isMod = isMember && (detail.viewer.role === 'admin' || detail.viewer.role === 'core');
   const toLogin = () => navigate('/login', { state: { from: { pathname: location.pathname } } });
 
   const toggle = async (e: EventCard) => {
@@ -32,7 +33,7 @@ export function EventsTab({ detail }: { detail: CommunityDetail }) {
 
   return (
     <div className="space-y-3">
-      {canAdd && <Link to={`/c/${detail.slug}/events/new`} className="inline-flex min-h-11 items-center rounded-sm bg-brand px-4 text-[15px] font-semibold text-white hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-brand">Add event</Link>}
+      {isMember && <Link to={`/c/${detail.slug}/events/new`} className="inline-flex min-h-11 items-center rounded-sm bg-brand px-4 text-[15px] font-semibold text-white hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-brand">{isMod ? 'Add event' : 'Submit event'}</Link>}
       {q.isPending && [0, 1].map((i) => <Skeleton key={i} className="h-40 w-full rounded-card" />)}
       {q.isError && (
         <div className="rounded-card bg-surface p-6 text-center shadow-card">
