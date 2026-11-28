@@ -9,7 +9,6 @@ import { resolveAvatar } from '../../constants/avatars';
 import { courseShort } from '../../lib/notes';
 import { PROFILE_TABS, tabFromParam, type Profile, type ProfileItem, type ProfileStats, type ProfileTab } from '../../lib/profiles';
 import { NO_RELATION, type Relation } from '../../lib/people';
-import { formatRent } from '../../lib/stays';
 import { timeAgo } from '../../lib/feed';
 import type { ListName } from '../../services/peopleService';
 import { ProfileService, type ProfileCounts } from '../../services/profileService';
@@ -17,6 +16,7 @@ import { VerifiedBadge } from '../../components/VerifiedBadge';
 import { PostCard } from '../../components/feed/PostCard';
 import { NoteCard } from '../../components/notes/NoteCard';
 import { StayCard } from '../../components/stays/StayCard';
+import { ItemCard } from '../../components/exchange/ItemCard';
 import { MessageButton } from '../../components/inbox/MessageButton';
 import { PersonList } from '../../components/people/PersonList';
 import { RelationButtons } from '../../components/people/RelationButtons';
@@ -52,16 +52,7 @@ function ItemView({ item, saved, onToggleSave }: { item: ProfileItem; saved: Rea
           <p className="mt-1 line-clamp-3 text-[15px] text-ink">{item.content}</p>
         </Link>
       );
-    case 'exchange':
-      return (
-        <Link to="/campus-exchange" className="flex items-center gap-3 rounded-card bg-surface p-3 shadow-card hover:shadow-float focus-visible:outline-2 focus-visible:outline-brand">
-          {item.item.imageUrl && <img src={item.item.imageUrl} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-lg object-cover" />}
-          <div className="min-w-0">
-            <p className="line-clamp-1 text-[15px] font-semibold text-ink">{item.item.title}</p>
-            <p className="text-[13px] text-ink-muted">{item.item.type} · {formatRent(item.item.price)}</p>
-          </div>
-        </Link>
-      );
+    case 'exchange': return <ItemCard item={item.item} />;
   }
 }
 

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { COURSE_METADATA } from '../../constants';
-import { NOTES_COURSES, canonicalCourse, currentSemester, titleFromFilename, uploadProblem, yearFromTitle } from '../../lib/notes';
+import { DIVISIONS, MAIN_COURSES, STREAMS, canonicalCourse, joinCourse, splitCourse, currentSemester, titleFromFilename, uploadProblem, yearFromTitle } from '../../lib/notes';
 import { renderPdfThumb } from '../../lib/pdfThumb';
 import { uploadFile } from '../../services/resourceService';
 import { NotesService } from '../../services/notesService';
@@ -37,7 +37,9 @@ export function NotesUploadPage() {
   const [link, setLink] = useState('');
   const [type, setType] = useState<ResourceType>('Note');
   const [title, setTitle] = useState('');
-  const [course, setCourse] = useState('');
+  const [mainCourse, setMainCourse] = useState('');
+  const [division, setDivision] = useState(''); // '' = common to all divisions / not mentioned
+  const [stream, setStream] = useState(''); // '' = same for Regular, SOL and NCWEB
   const [semester, setSemester] = useState('');
   const [subjectCode, setSubjectCode] = useState('');
   const [yearInput, setYearInput] = useState<string | null>(null); // null = follow the title
@@ -57,10 +59,15 @@ export function NotesUploadPage() {
     prefilled.current = true;
     const c = canonicalCourse(appUser.course ?? null);
     if (!c) return;
-    setCourse(c);
+    const sp = splitCourse(c);
+    setMainCourse(sp.main);
+    setDivision(sp.division);
     const sem = currentSemester(appUser.batchYear ?? null, new Date(), COURSE_METADATA[c]?.semesters ?? 6);
     if (sem) setSemester(String(sem));
   }, [appUser]);
+
+  const course = joinCourse(mainCourse, division);
+  const divisions = DIVISIONS[mainCourse] ?? [];
 
   const clearFile = () => { setFile(null); setThumb(null); thumbJob.current = Promise.resolve(null); };
 
@@ -100,8 +107,8 @@ export function NotesUploadPage() {
   const year = type === 'PYQ' ? (yearInput ?? String(yearFromTitle(title) ?? '')) : '';
   const yearNum = year ? Number(year) : null;
   const trimmedLink = link.trim();
-  const maxSem = COURSE_METADATA[course]?.semesters ?? 8;
-  const courseOptions = course && !NOTES_COURSES.includes(course) ? [course, ...NOTES_COURSES] : NOTES_COURSES;
+  const maxSem = COURSE_METADATA[course]?.semesters ?? COURSE_METADATA[mainCourse]?.semesters ?? 8;
+  const courseOptions = mainCourse && !MAIN_COURSES.includes(mainCourse) ? [mainCourse, ...MAIN_COURSES] : MAIN_COURSES;
 
   const fileProblem = uploadProblem({ type, hasFile: !!file, link }) ?? '';
   const detailsProblem = !title.trim() ? 'Add a title.' : !course ? 'Pick a course.' : !semester ? 'Pick a semester.'
@@ -110,8 +117,8 @@ export function NotesUploadPage() {
   const preview = useMemo<Resource>(() => ({
     id: 'preview', title: title.trim() || 'Untitled', description, type, subCategory: SUBCATEGORY[type], course, semester: Number(semester) || 0,
     subjectCode, tags: [], link: '', uploader: appUser?.displayName ?? '', uploadDate: '', ratings: [], reports: [],
-    thumbnailUrl: thumbUrl, pageCount: thumb?.pageCount ?? null, year: yearNum, isApproved: false,
-  }), [title, description, type, course, semester, subjectCode, thumbUrl, thumb, yearNum, appUser]);
+    thumbnailUrl: thumbUrl, pageCount: thumb?.pageCount ?? null, year: yearNum, isApproved: false, stream: stream || null,
+  }), [title, description, type, course, semester, subjectCode, thumbUrl, thumb, yearNum, appUser, stream]);
 
   if (isAuthLoading) return null;
   if (!user) return <Navigate to="/login" replace state={{ from: { pathname: location.pathname } }} />;
@@ -138,7 +145,7 @@ export function NotesUploadPage() {
       const id = await NotesService.create({
         title: title.trim(), description, type, course, semester: Number(semester), subCategory: SUBCATEGORY[type], subjectCode,
         tags: tags.split(',').map((x) => x.trim()).filter(Boolean), link: finalLink,
-        directDownloadLink: file ? finalLink : isDirectLink ? trimmedLink : '', thumbnailUrl, pageCount, year: yearNum,
+        directDownloadLink: file ? finalLink : isDirectLink ? trimmedLink : '', thumbnailUrl, pageCount, year: yearNum, stream: stream || null,
       });
       setDoneId(id);
     } catch (e) {
@@ -223,17 +230,32 @@ export function NotesUploadPage() {
             </div>
             <div>
               <label htmlFor="up-course" className={label}>Course</label>
-              <select id="up-course" value={course} onChange={(e) => setCourse(e.target.value)} className={field}>
+              <select id="up-course" value={mainCourse} onChange={(e) => { setMainCourse(e.target.value); setDivision(''); }} className={field}>
                 <option value="">Select a course</option>
                 {courseOptions.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
+            {divisions.length > 0 && (
+              <div>
+                <label htmlFor="up-division" className={label}>Subject combination</label>
+                <select id="up-division" value={division} onChange={(e) => setDivision(e.target.value)} className={field} aria-describedby="up-division-hint">
+                  <option value="">Not mentioned / common to all</option>
+                  {divisions.map((d) => <option key={d} value={d}>with {d}</option>)}
+                </select>
+                <p id="up-division-hint" className="mt-1 text-[13px] text-ink-muted">If the paper only names the course, keep "common to all". It will show for every combination.</p>
+              </div>
+            )}
             <div>
               <label htmlFor="up-sem" className={label}>Semester</label>
               <select id="up-sem" value={semester} onChange={(e) => setSemester(e.target.value)} className={field}>
                 <option value="">Select a semester</option>
                 {Array.from({ length: maxSem }, (_, i) => i + 1).map((s) => <option key={s} value={s}>Semester {s}</option>)}
               </select>
+            </div>
+            <div>
+              <span className={label}>For students of</span>
+              <Segmented label="For students of" options={[{ value: '', label: 'All' }, ...STREAMS.map((x) => ({ value: x, label: x }))]} value={stream} onChange={setStream} />
+              <p className="mt-1 text-[13px] text-ink-muted">Pick SOL, NCWEB or Regular only if this paper or material is just for them. "All" shows it to everyone.</p>
             </div>
             <div>
               <label htmlFor="up-code" className={label}>Subject or paper code (optional)</label>

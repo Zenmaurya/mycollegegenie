@@ -54,7 +54,9 @@ const CollegeEventsPage = lazy(() => import('./pages/CollegeEventsPage').then(m 
 const UserProfilePage = lazy(() => import('./pages/profile/UserProfilePage').then(m => ({ default: m.UserProfilePage })));
 const SettingsPage = lazy(() => import('./pages/profile/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const AdminUserPage = lazy(() => import('./pages/admin/AdminUserPage').then(m => ({ default: m.AdminUserPage })));
-const CampusExchangePage = lazy(() => import('./pages/CampusExchangePage').then(m => ({ default: m.CampusExchangePage })));
+const ExchangeBrowsePage = lazy(() => import('./pages/exchange/ExchangeBrowsePage').then(m => ({ default: m.ExchangeBrowsePage })));
+const ExchangeItemPage = lazy(() => import('./pages/exchange/ExchangeItemPage').then(m => ({ default: m.ExchangeItemPage })));
+const ExchangeSellPage = lazy(() => import('./pages/exchange/ExchangeSellPage').then(m => ({ default: m.ExchangeSellPage })));
 const OTPVerificationPage = lazy(() => import('./pages/OTPVerificationPage').then(m => ({ default: m.OTPVerificationPage })));
 const ContributorsPage = lazy(() => import('./pages/ContributorsPage').then(m => ({ default: m.ContributorsPage })));
 const BlogPage = lazy(() => import('./pages/BlogPage').then(m => ({ default: m.BlogPage })));
@@ -117,6 +119,15 @@ function LoginOnly({ children }: { children: React.ReactNode }) {
   if (isAuthLoading) return <PageSpinner />;
   if (!user) return <Navigate to="/login" replace state={{ from: { pathname: location.pathname + location.search } }} />;
   return <>{children}</>;
+}
+
+/** Old /campus-exchange links keep their query string (?type=...). */
+function CampusExchangeRedirect() {
+  const { search } = useLocation();
+  const p = new URLSearchParams(search);
+  p.delete('college'); // old links carried a college name; the new filter takes an id
+  const qs = p.toString();
+  return <Navigate to={`/exchange${qs ? `?${qs}` : ''}`} replace />;
 }
 
 /** Old /profile bookmarks: own profile when a username is set, else settings. */
@@ -345,7 +356,11 @@ function AppContent() {
               <Route path="/stays/new" element={<StayNewPage />} />
               <Route path="/stays/:id" element={<StayDetailPage />} />
               <Route path="/stays/:id/edit" element={<StayNewPage />} />
-              <Route path="/campus-exchange" element={<CampusExchangePage user={user} />} />
+              <Route path="/campus-exchange" element={<CampusExchangeRedirect />} />
+              <Route path="/exchange" element={<ExchangeBrowsePage />} />
+              <Route path="/exchange/sell" element={<LoginOnly><ExchangeSellPage /></LoginOnly>} />
+              <Route path="/exchange/:id" element={<ExchangeItemPage />} />
+              <Route path="/exchange/:id/edit" element={<LoginOnly><ExchangeSellPage /></LoginOnly>} />
 
               <Route path="/admin" element={<StaffOnly><AdminPanel user={user} appUser={appUser} isAuthLoading={isAuthLoading} /></StaffOnly>} />
               <Route path="/admin/users/:id" element={<StaffOnly><AdminUserPage /></StaffOnly>} />

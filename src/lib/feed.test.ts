@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { shouldLoadMore, applyVote, removePostFromFeed, mapFeedPage, feedQuery, signupCardAfter, mapFeedItem, eventLink, outsidersAllowed, timeAgo } from './feed';
+import { shouldLoadMore, applyVote, removePostFromFeed, mapFeedPage, feedQuery, signupCardAfter, mapFeedItem, eventLink, outsidersAllowed, timeAgo, uniqueByTitle } from './feed';
+
+test('uniqueByTitle drops repeated titles (case/space-insensitive) and keeps untitled items', () => {
+  const out = uniqueByTitle([{ t: 'Placement  Drive' }, { t: 'placement drive' }, { t: null }, { t: null }, { t: 'Other' }], (x) => x.t);
+  assert.deepStrictEqual(out.map((x) => x.t), ['Placement  Drive', null, null, 'Other']);
+});
 
 const rawPost = (images: unknown) => ({
   feedType: 'forum_post', id: 'p1', title: 'T', content: 'C', author_id: 'u1', author_name: 'Aman',
@@ -66,6 +71,7 @@ test('timeAgo', () => {
   assert.strictEqual(timeAgo('2026-11-19T09:00:00Z', now), '3h');
   assert.strictEqual(timeAgo('2026-11-17T12:00:00Z', now), '2d');
   assert.strictEqual(timeAgo('2026-11-01T12:00:00Z', now), '1 Nov');
+  assert.strictEqual(timeAgo('2025-03-10T12:00:00Z', now), '10 Mar 2025'); // older than this year shows the year
   assert.strictEqual(timeAgo('', now), '');
 });
 

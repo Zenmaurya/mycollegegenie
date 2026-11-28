@@ -38,7 +38,7 @@ export function CommentItem(props: Props): ReactElement {
         <div className="min-w-0 flex-1">
           <div className={`rounded-card px-3 py-2 ${isBest ? 'border-2 border-ink bg-surface' : 'bg-canvas'}`}>
             <div className="flex flex-wrap items-center gap-x-2 text-[13px] text-ink-muted">
-              <UserLink username={node.authorUsername} className="font-semibold text-ink">{node.authorName || 'Student'}</UserLink>
+              <UserLink username={node.authorUsername} className="inline-flex items-center font-semibold text-ink">{node.authorName || 'Student'}</UserLink>
               {isBest && !deleted && <Badge tone="success">Best answer</Badge>}
             </div>
             <p className={`mt-1 whitespace-pre-wrap break-words text-[15px] leading-relaxed ${deleted ? 'italic text-ink-muted' : 'text-ink'}`}>{node.content}</p>

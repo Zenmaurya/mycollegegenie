@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BadgeCheck, Bookmark, MessageCircle, Share2, Sparkles } from 'lucide-react';
+import { BadgeCheck, Bookmark, EyeOff, Flag, Link2, MessageCircle, Repeat2, Share2, Sparkles, Wind } from 'lucide-react';
+import { useComposer } from '../shell/AppShell';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -14,6 +15,10 @@ import { Avatar } from '../ui/Avatar';
 import { UserLink } from '../profile/UserLink';
 import { ReportSheet } from '../communities/ReportSheet';
 
+// Particle end offsets (px) for the reaction effects.
+const SPARK_DIRS = [[0, -24], [17, -17], [24, 0], [17, 15], [-17, 15], [-24, 0], [-17, -17]];
+const POOF_DIRS = [[-10, -20], [0, -28], [10, -20], [-4, -12], [6, -14]];
+
 function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSaved: boolean; onToggleSave: (id: string) => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -21,14 +26,19 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
   const [reporting, setReporting] = useState(false);
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState(false);
+  const { open: openComposer } = useComposer();
+  const [fx, setFx] = useState<{ kind: 'spark' | 'poof'; n: number } | null>(null);
   const uid = user?.id;
   // ✨ Spark = MCG's one positive reaction (stored as an upvote); downvotes are no longer shown
   const sparks = post.upvotes.length;
   const sparked = !!uid && post.upvotes.includes(uid);
+  const poofed = !!uid && post.downvotes.includes(uid);
   const detailUrl = `/post/${post.id}`;
 
   const vote = async (dir: 'up' | 'down') => {
     if (!uid) { toast('Log in to vote'); return; }
+    // Play the effect only when turning a reaction on; n restarts the animation on repeat taps.
+    if (dir === 'up' ? !sparked : !poofed) setFx((f) => ({ kind: dir === 'up' ? 'spark' : 'poof', n: (f?.n ?? 0) + 1 }));
     const snapshot = qc.getQueriesData({ queryKey: ['feed'] });
     qc.setQueriesData({ queryKey: ['feed'] }, (d: any) => applyVote(d, post.id, uid, dir));
     try {
@@ -68,6 +78,14 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
     try { await navigator.clipboard.writeText(url); toast.success('Link copied!'); } catch { /* clipboard blocked */ }
   };
 
+  // Repost = a new post of your own that quotes this one and links back to it.
+  const repost = () => {
+    if (!uid) { navigate('/login', { state: { from: { pathname: location.pathname } } }); return; }
+    const body = (post.content || '').trim();
+    const quote = body.length > 240 ? `${body.slice(0, 240)}…` : body;
+    openComposer({ title: `Repost: ${post.title}`.slice(0, 150), content: `${quote ? `${quote}\n\n` : ''}Original post: ${window.location.origin}${detailUrl}` });
+  };
+
   const copyLink = async () => {
     try { await navigator.clipboard.writeText(`${window.location.origin}${detailUrl}`); toast.success('Link copied!'); } catch { /* clipboard blocked */ }
   };
@@ -78,32 +96,39 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
   return (
     <article
       onClick={() => navigate(detailUrl)}
-      className="cursor-pointer rounded-card bg-surface p-4 shadow-card transition-shadow hover:shadow-float"
+      className="cursor-pointer rounded-card border border-line/70 bg-surface p-4 shadow-card transition-[box-shadow,border-color] hover:border-brand/25 hover:shadow-float"
     >
-      <header className="mb-2 flex flex-wrap items-center gap-x-1.5 text-[13px] text-ink-muted">
-        {post.community ? (
-          <>
-            <Link to={`/c/${post.community.slug}`} onClick={stop} className="inline-flex min-h-6 items-center gap-1.5 font-semibold text-ink hover:underline focus-visible:outline-2 focus-visible:outline-brand">
-              <Avatar src={post.community.logoUrl} name={post.community.name} size="sm" />
-              {post.community.name}
-              {post.community.status === 'official' && <BadgeCheck className="h-4 w-4 text-highlight" aria-label="Official" />}
-            </Link>
-            <span aria-hidden>·</span><UserLink username={post.authorUsername}>{post.authorName || 'Student'}</UserLink>
-          </>
-        ) : (
-          <UserLink username={post.authorUsername} className="font-semibold text-ink">{post.authorName || 'Student'}</UserLink>
-        )}
-        {post.course && <><span aria-hidden>·</span><span className="truncate">{post.course}</span></>}
-        <span aria-hidden>·</span>
-        <time dateTime={post.createdAt}>{timeAgo(post.createdAt)}</time>
+      {/* One row: who · course · when on the left (truncates), topic and menu pinned right */}
+      <header className="mb-2 flex items-center gap-2 text-[13px] text-ink-muted">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap">
+          {post.community ? (
+            <>
+              <Link to={`/c/${post.community.slug}`} onClick={stop} className="inline-flex min-h-6 min-w-0 shrink items-center gap-1.5 font-semibold text-ink hover:underline focus-visible:outline-2 focus-visible:outline-brand">
+                <Avatar src={post.community.logoUrl} name={post.community.name} size="sm" />
+                <span className="truncate">{post.community.name}</span>
+                {post.community.status === 'official' && <BadgeCheck className="h-4 w-4 shrink-0 text-highlight" aria-label="Official" />}
+              </Link>
+              <span aria-hidden>·</span><UserLink username={post.authorUsername} className="inline-flex min-w-0 items-center truncate">{post.authorName || 'Student'}</UserLink>
+            </>
+          ) : (
+            <>
+              <Avatar name={post.authorName || 'Student'} size="sm" />
+              <UserLink username={post.authorUsername} className="inline-flex min-w-0 items-center truncate font-semibold text-ink">{post.authorName || 'Student'}</UserLink>
+            </>
+          )}
+          {post.course && <><span aria-hidden>·</span><span className="truncate">{post.course}</span></>}
+          <span aria-hidden>·</span>
+          <time dateTime={post.createdAt} className="shrink-0">{timeAgo(post.createdAt)}</time>
+        </div>
         {post.topic && (
-          <span className="ml-auto rounded-full border border-line px-2 py-0.5 text-[12px] font-semibold text-ink">{topicLabel(post.topic)}</span>
+          <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[12px] font-semibold text-ink">{topicLabel(post.topic)}</span>
         )}
-        <span className={post.topic ? '' : 'ml-auto'} onClick={stop}>
+        <span className="-mr-2 shrink-0" onClick={stop}>
           <Menu label="More actions" items={[
-            { label: 'Copy link', onSelect: copyLink },
-            ...(uid && post.authorId === uid ? [] : [{ label: 'Not interested', onSelect: notInterested }]),
-            ...(uid && post.authorId === uid ? [] : [{ label: 'Report', danger: true, onSelect: () => (uid ? setReporting(true) : navigate('/login', { state: { from: { pathname: location.pathname } } })) }]),
+            { label: isSaved ? 'Remove from saved' : 'Save', icon: <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />, onSelect: () => onToggleSave(post.id) },
+            { label: 'Copy link', icon: <Link2 className="h-5 w-5" />, onSelect: copyLink },
+            ...(uid && post.authorId === uid ? [] : [{ label: 'Hide (not interested)', icon: <EyeOff className="h-5 w-5" />, onSelect: notInterested }]),
+            ...(uid && post.authorId === uid ? [] : [{ label: 'Report', icon: <Flag className="h-5 w-5" />, danger: true, onSelect: () => (uid ? setReporting(true) : navigate('/login', { state: { from: { pathname: location.pathname } } })) }]),
           ]} />
         </span>
       </header>
@@ -123,19 +148,33 @@ function PostCardImpl({ post, isSaved, onToggleSave }: { post: ForumPost; isSave
       {post.images && post.images.length > 0 && <div className="mt-3"><PhotoGrid images={post.images} /></div>}
 
       <footer className="mt-3 flex flex-wrap items-center gap-2 text-[13px] font-semibold text-ink-muted" onClick={stop}>
-        <button type="button" onClick={() => vote('up')} aria-pressed={sparked}
-          aria-label={`Spark, ${sparks} ${sparks === 1 ? 'spark' : 'sparks'}`}
-          className={`flex min-h-11 items-center gap-1.5 rounded-full px-4 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${sparked ? 'bg-brand-soft text-brand' : 'bg-canvas hover:bg-line'}`}>
-          <Sparkles className={`h-4 w-4 ${sparked ? 'fill-current' : ''}`} aria-hidden /> {sparks}
-        </button>
+        <span className="flex items-center rounded-full bg-canvas" role="group" aria-label="React">
+          <button type="button" onClick={() => vote('up')} aria-pressed={sparked}
+            aria-label={`Spark, ${sparks} ${sparks === 1 ? 'spark' : 'sparks'}`}
+            className={`relative flex min-h-11 items-center gap-1.5 rounded-l-full pl-4 pr-3 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${sparked ? 'bg-brand-soft text-brand' : 'hover:bg-line'}`}>
+            <Sparkles key={fx?.kind === 'spark' ? fx.n : 0} className={`h-4 w-4 ${sparked ? 'fill-current' : ''} ${fx?.kind === 'spark' ? 'mcg-pop' : ''}`} aria-hidden /> {sparks}
+            {fx?.kind === 'spark' && SPARK_DIRS.map(([dx, dy], i) => (
+              <span key={`${fx.n}-${i}`} aria-hidden className="mcg-fx mcg-spark" style={{ '--dx': `${dx}px`, '--dy': `${dy}px` } as React.CSSProperties}>✦</span>
+            ))}
+          </button>
+          <span className="h-5 w-px bg-line" aria-hidden />
+          {/* Poof = the genie's down-vote: it only lowers ranking and the count stays private */}
+          <button type="button" onClick={() => vote('down')} aria-pressed={poofed} aria-label="Poof (not useful)" title="Poof: not useful"
+            className={`relative flex min-h-11 items-center gap-1 rounded-r-full pl-2 pr-4 transition-colors focus-visible:outline-2 focus-visible:outline-brand ${poofed ? 'bg-ink/10 text-ink' : 'hover:bg-line'}`}>
+            <Wind key={fx?.kind === 'poof' ? fx.n : 0} className={`h-4 w-4 ${fx?.kind === 'poof' ? 'mcg-pop' : ''}`} aria-hidden /><span className="sr-only xl:not-sr-only">Poof</span>
+            {fx?.kind === 'poof' && POOF_DIRS.map(([dx, dy], i) => (
+              <span key={`${fx.n}-${i}`} aria-hidden className="mcg-fx mcg-puff" style={{ '--dx': `${dx}px`, '--dy': `${dy}px`, animationDelay: `${i * 40}ms` } as React.CSSProperties} />
+            ))}
+          </button>
+        </span>
         <Link to={detailUrl} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand" aria-label={`${post.commentCount} comments`}>
           <MessageCircle className="h-4 w-4" /> {post.commentCount}
         </Link>
-        <button type="button" onClick={share} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
-          <Share2 className="h-4 w-4" /> Share
+        <button type="button" onClick={repost} title="Repost to your feed" className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
+          <Repeat2 className="h-4 w-4" aria-hidden /><span className="sr-only xl:not-sr-only">Repost</span>
         </button>
-        <button type="button" onClick={() => onToggleSave(post.id)} aria-pressed={isSaved} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
-          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-ink' : ''}`} /> {isSaved ? 'Saved' : 'Save'}
+        <button type="button" onClick={share} className="flex min-h-11 items-center gap-1.5 rounded-full bg-canvas px-4 hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
+          <Share2 className="h-4 w-4" aria-hidden /><span className="sr-only xl:not-sr-only">Share</span>
         </button>
       </footer>
       {reporting && <span onClick={stop}><ReportSheet open onClose={() => setReporting(false)} itemType="post" itemId={post.id} title="Report post" /></span>}

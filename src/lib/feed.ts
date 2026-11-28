@@ -84,7 +84,8 @@ export function timeAgo(iso: string, now: Date = new Date()): string {
   if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d`;
-  return `${then.getUTCDate()} ${MONTHS[then.getUTCMonth()]}`;
+  const date = `${then.getDate()} ${MONTHS[then.getMonth()]}`; // viewer's local date, not UTC
+  return then.getFullYear() === now.getFullYear() ? date : `${date} ${then.getFullYear()}`;
 }
 
 export type FeedPage = { items: FeedItem[]; nextCursor: string | null };
@@ -94,6 +95,19 @@ export function mapFeedPage(raw: any): FeedPage {
   const list: unknown[] = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
   const items = list.map(mapFeedItem).filter((i): i is FeedItem => i !== null);
   return { items, nextCursor: !Array.isArray(raw) && typeof raw?.nextCursor === 'string' ? raw.nextCursor : null };
+}
+
+/** Keeps the first item per title (scraped college notices are sometimes saved twice). */
+export function uniqueByTitle<T>(list: T[], title: (x: T) => string | null): T[] {
+  const seen = new Set<string>();
+  return list.filter((x) => {
+    const t = title(x);
+    if (t == null) return true;
+    const k = t.toLowerCase().replace(/\s+/g, ' ').trim();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 export function feedQuery(p: { tab: string; cursor?: string; topic?: string; course?: string }): string {

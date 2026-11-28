@@ -4,7 +4,7 @@ import type { Resource } from '../types';
 
 export interface NoteFilters {
   q?: string; type?: string; course?: string; semester?: number | string; subjectCode?: string;
-  year?: number | string; minRating?: number | string; college?: 'mine'; sort?: 'helpful' | 'new' | 'downloads';
+  year?: number | string; minRating?: number | string; college?: 'mine'; stream?: string; sort?: 'helpful' | 'new' | 'downloads';
 }
 export interface NotesPage { items: Resource[]; nextCursor: string | null; total: number }
 export interface NoteSections {
@@ -12,7 +12,7 @@ export interface NoteSections {
   subjects: { code: string; title: string; count: number }[]; newThisWeek: Resource[];
 }
 export interface RatingResult { ratingAvg: number | null; ratingCount: number; helpfulYes: number; helpfulNo: number }
-export type NoteInput = Pick<Resource, 'title' | 'description' | 'type' | 'course' | 'semester' | 'subCategory' | 'subjectCode' | 'tags' | 'link' | 'directDownloadLink' | 'thumbnailUrl' | 'pageCount' | 'year'>;
+export type NoteInput = Pick<Resource, 'title' | 'description' | 'type' | 'course' | 'semester' | 'subCategory' | 'subjectCode' | 'tags' | 'link' | 'directDownloadLink' | 'thumbnailUrl' | 'pageCount' | 'year' | 'stream'>;
 
 export const NotesService = {
   // sort is always sent: without sort or cursor the API returns the legacy array shape.
@@ -56,7 +56,7 @@ export const NotesService = {
         title: input.title, description: input.description, type: input.type, course: input.course,
         semester: input.semester, subCategory: input.subCategory, subjectCode: input.subjectCode || '',
         tags: input.tags ?? [], link: input.link, directDownloadLink: input.directDownloadLink || '',
-        thumbnail_url: input.thumbnailUrl ?? null, page_count: input.pageCount ?? null, year: input.year ?? null,
+        thumbnail_url: input.thumbnailUrl ?? null, page_count: input.pageCount ?? null, year: input.year ?? null, stream: input.stream ?? null,
       }),
       timeoutMs: 30_000,
     });

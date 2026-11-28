@@ -175,7 +175,7 @@ export function PostPage() {
           </button>
           <header className="mb-2 flex flex-wrap items-center gap-x-1.5 text-[13px] text-ink-muted">
             <Avatar name={post.authorName || 'Student'} size="sm" />
-            <UserLink username={post.authorUsername} className="font-semibold text-ink">{post.authorName || 'Student'}</UserLink>
+            <UserLink username={post.authorUsername} className="inline-flex items-center font-semibold text-ink">{post.authorName || 'Student'}</UserLink>
             {post.course && <><span aria-hidden>·</span><span className="truncate">{post.course}</span></>}
             <span aria-hidden>·</span><time dateTime={post.createdAt}>{timeAgo(post.createdAt)}</time>
             {post.topic && <span className="ml-auto rounded-full border border-line px-2 py-0.5 text-[12px] font-semibold text-ink">{topicLabel(post.topic)}</span>}

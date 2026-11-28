@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode, type RefObject } from "react"
+import { createPortal } from "react-dom"
 import { X } from "lucide-react"
 
 interface SheetProps {
@@ -54,7 +55,8 @@ export function Sheet({ open, onClose, title, children, dismissible = true, init
   }, [open])
 
   if (!open) return null
-  return (
+  // Portal to <body>: page-transition transforms on ancestors would otherwise trap this fixed overlay inside the page column.
+  return createPortal(
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 md:items-center md:p-4" onClick={() => dismissible && onClose()}>
       <div
         ref={dialogRef}
@@ -72,6 +74,7 @@ export function Sheet({ open, onClose, title, children, dismissible = true, init
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

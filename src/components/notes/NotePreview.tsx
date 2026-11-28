@@ -6,7 +6,7 @@ const FRAME = 'aspect-[4/3] w-full rounded-card border border-line bg-canvas';
 const NOTICE = `${FRAME} flex items-center justify-center px-4 text-center text-[15px] text-ink-muted`;
 
 /** First two pages of a PDF on canvas. pdfjs is imported here only, so it stays out of the main bundle. */
-function PdfPages({ url }: { url: string }) {
+function PdfPages({ url, thumb }: { url: string; thumb?: string | null }) {
   const host = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
 
@@ -20,7 +20,10 @@ function PdfPages({ url }: { url: string }) {
       doc = pdf;
       for (let n = 1; n <= Math.min(2, pdf.numPages); n++) {
         const page = await pdf.getPage(n);
-        const viewport = page.getViewport({ scale: 1.5 });
+        // Render at shown width x screen density (capped) so text is sharp on phones/retina, not a blurry upscale.
+        const cssWidth = host.current?.clientWidth || 800;
+        const scale = Math.min(4, (cssWidth / page.getViewport({ scale: 1 }).width) * (window.devicePixelRatio || 1));
+        const viewport = page.getViewport({ scale: Math.max(1.5, scale) });
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
@@ -38,15 +41,15 @@ function PdfPages({ url }: { url: string }) {
   if (state === 'failed') return <p className={NOTICE}>Preview is not available. Use Open to read the full file.</p>;
   return (
     <>
-      {state === 'loading' && <Skeleton className={FRAME} />}
+      {state === 'loading' && (thumb ? <img src={thumb} alt="" className="h-auto w-full rounded-card border border-line bg-white" /> : <Skeleton className={FRAME} />)}
       <div ref={host} className="space-y-3" />
     </>
   );
 }
 
-export default function NotePreview({ link, title }: { link: string; title: string }) {
+export default function NotePreview({ link, title, thumb }: { link: string; title: string; thumb?: string | null }) {
   const { kind, id } = previewKind(link);
-  if (kind === 'pdf') return <PdfPages url={link} />;
+  if (kind === 'pdf') return <PdfPages url={link} thumb={thumb} />;
   if (kind === 'drive') return <iframe title={title} src={`https://drive.google.com/file/d/${id}/preview`} className={FRAME} allow="autoplay" loading="lazy" />;
   if (kind === 'youtube') return <iframe title={title} src={`https://www.youtube.com/embed/${id}`} className={FRAME} allow="encrypted-media; picture-in-picture" allowFullScreen loading="lazy" />;
   if (kind === 'image') return <img src={link} alt={title} className="h-auto w-full rounded-card border border-line" />;

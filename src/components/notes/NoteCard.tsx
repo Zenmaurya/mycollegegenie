@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, ClipboardList, FileText, Heart, ListChecks, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
-import { courseShort, formatHelpedPct, yearFromTitle } from '../../lib/notes';
+import { courseLabel, formatHelpedPct, yearFromTitle } from '../../lib/notes';
 import type { Resource, ResourceType } from '../../types';
 import { Badge } from '../ui/Badge';
 import { Menu } from '../ui/Menu';
@@ -31,12 +31,8 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
   const official = note.type === 'Syllabus' && (note.uploaderRole === 'admin' || note.uploaderRole === 'moderator');
   const helped = formatHelpedPct(note.helpfulYes ?? 0, note.helpfulNo ?? 0);
 
-  const sub = [note.subjectCode, note.course && courseShort(note.course), note.semester ? `Sem ${note.semester}` : ''].filter(Boolean).join(' · ');
-  const stats = [
-    note.ratingAvg != null ? `★ ${note.ratingAvg.toFixed(1)}` : '',
-    note.downloads ? `Helped ${note.downloads}` : '',
-    note.pageCount ? `${note.pageCount} pages` : '',
-  ].filter(Boolean).join(' · ');
+  const course = note.course ? courseLabel(note.course) : '';
+  const stats = [note.downloads ? `Helped ${note.downloads}` : '', note.pageCount ? `${note.pageCount} pages` : ''].filter(Boolean).join(' · ');
 
   const share = async () => {
     const link = `${window.location.origin}${url}`;
@@ -50,9 +46,9 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
 
   return (
     <article className="relative flex h-full flex-col rounded-card bg-surface shadow-card transition-shadow hover:shadow-float">
-      <div className={`relative aspect-[3/4] overflow-hidden rounded-t-card ${tint}`}>
+      <div className={`relative aspect-[4/3] overflow-hidden rounded-t-card ${tint}`}>
         {note.thumbnailUrl
-          ? <img src={note.thumbnailUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
+          ? <img src={note.thumbnailUrl} alt="" loading="lazy" className="h-full w-full bg-white object-cover object-top" />
           : <span className="flex h-full w-full items-center justify-center"><Icon className="h-14 w-14 opacity-70" /></span>}
         <span className="absolute left-2 top-2"><Badge tone="neutral">{label}{note.type === 'PYQ' && year ? ` ${year}` : ''}</Badge></span>
       </div>
@@ -69,8 +65,19 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
         <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-ink">
           <Link to={url} className="after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-brand">{note.title}</Link>
         </h3>
-        {sub && <p className="truncate text-[13px] text-ink-muted">{sub}</p>}
-        {stats && <p className="text-[13px] text-ink-muted" title={helped ?? undefined}>{stats}</p>}
+        {(course || note.semester > 0) && (
+          <div className="flex min-w-0 flex-wrap gap-1">
+            {course && <span className="max-w-full truncate rounded-md bg-brand-soft px-1.5 py-0.5 text-[12px] font-semibold text-brand" title={note.course}>{course}</span>}
+            {note.semester > 0 && <span className="shrink-0 rounded-md bg-canvas px-1.5 py-0.5 text-[12px] font-semibold text-ink">Sem {note.semester}</span>}
+          </div>
+        )}
+        {note.subjectCode && <p className="truncate text-[12px] text-ink-muted">Code {note.subjectCode}</p>}
+        <p className="flex flex-wrap items-center gap-x-1.5 text-[13px] text-ink-muted" title={helped ?? undefined}>
+          {note.ratingAvg != null
+            ? <span className="font-semibold text-ink"><span className="text-warning" aria-hidden>★</span> {note.ratingAvg.toFixed(1)}<span className="font-normal text-ink-muted"> ({note.ratingCount ?? 0})</span></span>
+            : <span>No ratings yet</span>}
+          {stats && <span>· {stats}</span>}
+        </p>
         <div className="mt-auto flex items-center justify-between gap-1 pt-1">
           <p className="min-w-0 truncate text-[13px] text-ink-muted">
             <UserLink username={note.uploaderUsername} className="relative z-10">{note.uploader || 'Student'}</UserLink>{note.uploaderCollege ? ` · ${note.uploaderCollege}` : ''}
@@ -83,8 +90,9 @@ function NoteCardImpl({ note, saved, onToggleSave }: Props) {
             ]} />
           </span>
         </div>
-        {(note.uploaderVerified || official) && (
+        {(note.uploaderVerified || official || note.stream) && (
           <div className="flex flex-wrap gap-1">
+            {note.stream && <Badge tone="neutral">{note.stream} only</Badge>}
             {note.uploaderVerified && <Badge tone="success">Verified uploader</Badge>}
             {official && <Badge tone="brand">Official syllabus</Badge>}
           </div>

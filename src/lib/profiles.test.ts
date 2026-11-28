@@ -52,7 +52,9 @@ test('mapProfileItem maps by tab, and by kind for listings and saved', () => {
   assert.deepStrictEqual(mapProfileItem('comments', { id: 'c', post_id: 'p', post_title: 'T', content: 'hi', created_at: 'd' }), { kind: 'comment', id: 'c', postId: 'p', postTitle: 'T', content: 'hi', createdAt: 'd' });
   assert.strictEqual(mapProfileItem('notes', { id: 'n', title: 'N' })?.kind, 'note');
   assert.strictEqual(mapProfileItem('listings', { id: 's', kind: 'stay', rooms: [] })?.kind, 'stay');
-  assert.deepStrictEqual(mapProfileItem('listings', { id: 'e', kind: 'exchange', title: 'Cycle', price: '500', image_url: 'u', type: 'sell' }), { kind: 'exchange', item: { id: 'e', title: 'Cycle', price: 500, imageUrl: 'u', type: 'sell' } });
+  const ex = mapProfileItem('listings', { id: 7, kind: 'exchange', title: 'Cycle', price: '500', image_url: 'u', type: 'Sell' });
+  assert.strictEqual(ex?.kind, 'exchange');
+  assert.ok(ex?.kind === 'exchange' && ex.item.id === '7' && ex.item.price === 500 && ex.item.photos[0] === 'u' && ex.item.phone === '');
   assert.strictEqual(mapProfileItem('saved', { id: 'n', kind: 'note' })?.kind, 'note');
   assert.strictEqual(mapProfileItem('saved', { id: 'x', kind: 'weird' }), null);
 });

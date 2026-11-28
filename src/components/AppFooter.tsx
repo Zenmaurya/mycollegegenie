@@ -127,7 +127,7 @@ export function AppFooter({ onOpenUpload }: AppFooterProps) {
             <ul className="space-y-4 font-medium text-[13px]">
               <li><Link to="/stays" className="hover:text-purple-400 transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3 text-purple-500" /> Find PG</Link></li>
               <li>
-                <Link to="/campus-exchange" className="hover:text-purple-400 transition-colors flex items-center gap-2">
+                <Link to="/exchange" className="hover:text-purple-400 transition-colors flex items-center gap-2">
                   <ChevronRight className="w-3 h-3 text-purple-500" />
                   <ShoppingBag className="w-3 h-3" /> Campus Exchange
                   {showNewBadge && <span className="bg-[#FF0080] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1">NEW</span>}

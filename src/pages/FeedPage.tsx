@@ -4,7 +4,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useComposer } from '../components/shell/AppShell';
 import { getFeedPage } from '../services/feedService';
-import { signupCardAfter, shouldLoadMore, FEED_TOPIC_ORDER } from '../lib/feed';
+import { signupCardAfter, shouldLoadMore, uniqueByTitle, FEED_TOPIC_ORDER } from '../lib/feed';
 import { useResources } from '../context/ResourceContext';
 import { College_COURSES, topicLabel } from '../constants';
 import type { FeedItem, FeedTab, NewsItem } from '../types';
@@ -20,18 +20,20 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { DeadlineBanner } from '../components/feed/DeadlineBanner';
 import { PickCollegeCard } from '../components/feed/PickCollegeCard';
 
-const TABS: { id: FeedTab; label: string }[] = [
+type View = FeedTab | 'updates'; // 'updates' = college website notices, served from the news list, not the feed API
+const TABS: { id: View; label: string }[] = [
   { id: 'foryou', label: 'For You' },
   { id: 'trending', label: 'Trending' },
   { id: 'recent', label: 'Recent' },
+  { id: 'updates', label: 'Updates' },
 ];
 const FOLLOWING_TAB = { id: 'following' as const, label: 'Following' };
 const TAB_KEY = 'mcg-feed-tab';
 
-function readTab(): FeedTab {
+function readTab(): View {
   try {
     const t = sessionStorage.getItem(TAB_KEY);
-    if (t === 'foryou' || t === 'trending' || t === 'recent' || t === 'following') return t;
+    if (t === 'foryou' || t === 'trending' || t === 'recent' || t === 'following' || t === 'updates') return t;
   } catch { /* storage blocked */ }
   return 'foryou';
 }
@@ -53,8 +55,8 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
   const { user, appUser } = useAuth();
   const { open, postedAt } = useComposer();
   const [params, setParams] = useSearchParams();
-  const [storedTab, setTab] = useState<FeedTab>(readTab);
-  const tab: FeedTab = storedTab === 'following' && !user ? 'foryou' : storedTab; // Following needs a login
+  const [storedTab, setTab] = useState<View>(readTab);
+  const tab: View = storedTab === 'following' && !user ? 'foryou' : storedTab; // Following needs a login
   const tabs = user ? [TABS[0], FOLLOWING_TAB, ...TABS.slice(1)] : TABS;
   const [courseOpen, setCourseOpen] = useState(false);
   const rawTopic = params.get('topic') || '';
@@ -67,15 +69,16 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
     setParams(next, { replace: true });
   };
   const chooseTab = (t: string) => {
-    setTab(t as FeedTab);
+    setTab(t as View);
     try { sessionStorage.setItem(TAB_KEY, t); } catch { /* storage blocked */ }
   };
 
   const q = useInfiniteQuery({
     queryKey: ['feed', tab, topic, course, postedAt],
-    queryFn: ({ pageParam }) => getFeedPage({ tab, cursor: pageParam, topic, course }),
+    queryFn: ({ pageParam }) => getFeedPage({ tab: tab as FeedTab, cursor: pageParam, topic, course }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (p) => p.nextCursor ?? undefined,
+    enabled: tab !== 'updates',
   });
   const { savedResourceIds, toggleSave } = useResources();
   const toggleRef = useRef(toggleSave);
@@ -89,7 +92,8 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
     window.addEventListener('offline', off);
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
-  const items = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const items = uniqueByTitle(q.data?.pages.flatMap((p) => p.items) ?? [], (it) => (it.kind === 'news' ? it.item.title : null));
+  const updates = uniqueByTitle(news.filter((n) => n.category !== 'Event'), (n) => n.title);
 
   const sentinel = useRef<HTMLDivElement>(null);
   const { hasNextPage, isFetchingNextPage, fetchNextPage, isError } = q;
@@ -120,9 +124,10 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
             {(name || '?').charAt(0).toUpperCase()}
           </span>
         )}
-        <button type="button" onClick={open} className="min-h-11 flex-1 rounded-full bg-canvas px-4 py-2.5 text-left text-[15px] text-ink-muted hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
+        <button type="button" onClick={open} className="min-h-11 min-w-0 flex-1 truncate rounded-full bg-canvas px-4 py-2.5 text-left text-[15px] text-ink-muted hover:bg-line focus-visible:outline-2 focus-visible:outline-brand">
           Ask a question or share something...
         </button>
+        <button type="button" onClick={open} className="min-h-11 shrink-0 rounded-full bg-brand px-4 text-[15px] font-semibold text-white focus-visible:outline-2 focus-visible:outline-brand">Post</button>
       </div>
 
       <PickCollegeCard />
@@ -131,7 +136,7 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
 
       <Tabs label="Feed" items={tabs} value={tab} onChange={chooseTab} />
 
-      <div className="-mx-3 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:px-0" aria-label="Filters" role="group">
+      {tab !== 'updates' && <div className="scrollbar-none -mx-3 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:px-0" aria-label="Filters" role="group">
         <Chip selected={!topic} onToggle={() => setFilter('topic', '')}>All</Chip>
         {FEED_TOPIC_ORDER.map((t) => (
           <React.Fragment key={t}>
@@ -141,7 +146,7 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
         <Chip selected={!!course} onToggle={() => setCourseOpen(true)} removable={!!course} onRemove={() => setFilter('course', '')}>
           {course || 'Course'}
         </Chip>
-      </div>
+      </div>}
 
       <Sheet open={courseOpen} onClose={() => setCourseOpen(false)} title="Filter by course">
         <ul className="flex-1 overflow-y-auto py-1">
@@ -156,6 +161,14 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
         </ul>
       </Sheet>
 
+      {tab === 'updates' ? (
+        <div role="tabpanel" aria-labelledby="tab-updates" className="space-y-3">
+          <p className="text-[13px] text-ink-muted">Latest notices from college and DU websites, with a link to the original.</p>
+          {updates.length === 0
+            ? <div className="rounded-card bg-surface shadow-card"><EmptyState title="No college updates yet" body="New notices show up here as soon as colleges post them." /></div>
+            : updates.map((n, i) => <React.Fragment key={n.id ?? `${n.title}-${i}`}><NewsCard item={n} /></React.Fragment>)}
+        </div>
+      ) : (
       <div role="tabpanel" aria-labelledby={`tab-${tab}`} className="space-y-3">
         {q.isPending && [0, 1, 2].map((i) => <Skeleton key={i} className="h-40 w-full rounded-card" />)}
 
@@ -196,6 +209,7 @@ export function FeedPage({ news }: { news: NewsItem[] }) {
           <p className="py-3 text-center text-[13px] text-ink-muted">You're all caught up</p>
         )}
       </div>
+      )}
     </div>
   );
 }
