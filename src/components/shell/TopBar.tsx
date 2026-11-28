@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { searchPath } from '../../lib/search';
 import { Bell, Inbox, Plus, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useComposer } from './AppShell';
@@ -12,7 +13,10 @@ export function TopBar() {
   const { open } = useComposer();
   const { total: n } = useInboxBadge();
   const navigate = useNavigate();
+  const { pathname, search } = useLocation();
   const [query, setQuery] = useState('');
+  // on /search the box mirrors the URL (recent searches, back button); elsewhere it starts empty
+  useEffect(() => setQuery(pathname === '/search' ? new URLSearchParams(search).get('q') ?? '' : ''), [pathname, search]);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -27,8 +31,7 @@ export function TopBar() {
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const q = query.trim();
-    navigate(q ? `/notes?q=${encodeURIComponent(q)}` : '/notes');
+    navigate(searchPath(query));
   };
 
   const name = appUser?.displayName || (user?.user_metadata?.full_name as string) || user?.email || '';
@@ -50,7 +53,7 @@ export function TopBar() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search notes, PYQs, playlists..."
+              placeholder="Search notes, stays, events, people..."
               aria-label="Search"
               className="w-full bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-muted"
             />
@@ -58,7 +61,7 @@ export function TopBar() {
         </form>
 
         <div className="ml-auto flex items-center gap-1">
-          <Link to="/notes" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand md:hidden" aria-label="Search">
+          <Link to="/search" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-brand md:hidden" aria-label="Search">
             <Search className="h-5 w-5" aria-hidden />
           </Link>
           <Button onClick={open} aria-label="Create post" className="mr-1 hidden rounded-full md:inline-flex">

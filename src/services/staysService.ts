@@ -3,7 +3,7 @@ import { config } from '../lib/config';
 import { mapStay, type draftToPayload, type Insight, type Stay, type StayType, type Sharing } from '../lib/stays';
 
 export interface StayFilters {
-  college?: string; area?: string; type?: string; gender?: string; sharing?: string;
+  q?: string; college?: string; area?: string; type?: string; gender?: string; sharing?: string;
   maxRent?: string; meals?: string; ac?: string; lister?: string;
 }
 export interface StaysPage { items: Stay[]; nextCursor: string | null; total: number }

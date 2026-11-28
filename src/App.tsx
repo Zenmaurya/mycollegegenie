@@ -37,6 +37,7 @@ import { ResourceProvider, useResources } from './context/ResourceContext';
 const NotesBrowsePage = lazy(() => import('./pages/notes/NotesBrowsePage').then(m => ({ default: m.NotesBrowsePage })));
 const NoteDetailPage = lazy(() => import('./pages/notes/NoteDetailPage').then(m => ({ default: m.NoteDetailPage })));
 const NotesUploadPage = lazy(() => import('./pages/notes/NotesUploadPage').then(m => ({ default: m.NotesUploadPage })));
+const SearchPage = lazy(() => import('./pages/SearchPage').then(m => ({ default: m.SearchPage })));
 const PlaylistPage = lazy(() => import('./pages/PlaylistPage').then(m => ({ default: m.PlaylistPage })));
 const PostPage = lazy(() => import('./pages/PostPage').then(m => ({ default: m.PostPage })));
 const AdminPanel = lazy(() => import('./pages/AdminPanel').then(m => ({ default: m.AdminPanel })));
@@ -333,6 +334,7 @@ function AppContent() {
 
               <Route path="/upload" element={<Navigate to="/notes/upload" replace />} />
               <Route path="/browse" element={<Navigate to={legacyBrowseToNotes(location.search)} replace />} />
+              <Route path="/search" element={<SearchPage />} />
               <Route path="/notes" element={<NotesBrowsePage />} />
               <Route path="/notes/upload" element={<NotesUploadPage />} />
               <Route path="/notes/:id" element={<NoteDetailPage />} />

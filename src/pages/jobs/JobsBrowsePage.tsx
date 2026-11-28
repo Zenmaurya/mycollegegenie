@@ -15,7 +15,7 @@ import { Skeleton } from '../../components/ui/skeleton';
 const TABS: { v: JobKind; l: string }[] = [{ v: 'internship', l: 'Internships' }, { v: 'job', l: 'Jobs' }, { v: 'referral', l: 'Referrals' }];
 const card = 'block space-y-1.5 rounded-card bg-surface p-4 shadow-card hover:shadow-float focus-visible:outline-2 focus-visible:outline-brand';
 
-function JobRow({ job, mine }: { job: Job; mine?: boolean }) {
+export function JobRow({ job, mine }: { job: Job; mine?: boolean }) {
   const left = slotsLeft(job);
   const state = !mine ? null : job.isHidden ? 'Hidden' : !job.isApproved ? 'In review' : job.isClosed ? 'Closed' : new Date(job.expiresAt) < new Date() ? 'Expired' : 'Live';
   return (
