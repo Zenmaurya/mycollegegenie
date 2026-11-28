@@ -175,6 +175,7 @@ function Wizard({ initial, presetSlug }: { initial?: EventDetail; presetSlug?: s
         <h2 ref={heading} tabIndex={-1} className="text-[17px] font-bold text-ink">{`Step ${step - first + 1} of ${STEPS.length - first}: ${STEPS[step]}`}</h2>
         {slug && page.isError && <p role="alert" className="text-[15px] text-danger">Couldn't load the organiser page. <button type="button" onClick={() => void page.refetch()} className="min-h-11 font-semibold underline">Retry</button></p>}
 
+        {step > 0 && !initial && d && !isMember && <p role="alert" className="text-[15px] text-danger">You're not a member of {d.name}. <Link to={`/c/${d.slug}`} className="font-semibold underline">Join the page</Link> before you submit.</p>}
         {step === 0 && (
           <>
             <p className="text-[15px] text-ink-muted">Pick a society you are a member of. Its moderators publish straight away; other submissions are reviewed first.</p>
