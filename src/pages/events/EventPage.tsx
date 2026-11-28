@@ -165,7 +165,8 @@ export function EventPage() {
         <p className="text-[15px] text-ink">{dateRange(e.starts_at, e.ends_at)}</p>
         <p className="text-[15px] text-ink-muted">{[e.mode, e.venue].filter(Boolean).join(' · ')}</p>
         <div className="flex flex-wrap gap-2">
-          {live && <a href={icsUrl(e.id)} className={outline}><CalendarPlus className="h-5 w-5" aria-hidden /> Add to calendar</a>}
+          {/* a plain link sends no login, so the server only serves .ics for publicly listed (official) pages */}
+          {live && !unverified && <a href={icsUrl(e.id)} className={outline}><CalendarPlus className="h-5 w-5" aria-hidden /> Add to calendar</a>}
           {live && <a href={e.google_calendar_url} target="_blank" rel="noopener noreferrer" className={outline}>Google Calendar</a>}
           {e.mode !== 'Online' && e.venue && <a href={mapsUrl(e.venue)} target="_blank" rel="noopener noreferrer" className={outline}><MapPin className="h-5 w-5" aria-hidden /> Open in Google Maps</a>}
         </div>
